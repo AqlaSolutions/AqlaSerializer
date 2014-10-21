@@ -13,4 +13,4 @@ MS .NET 3.5+, Mono, Unity3D
 
 <b>Will it be compatible with Protobuf-net? </b>
 
-It will accept Protobuf-net attributes but it's binary format will not be compatible with Google Protocol Buffers.
+It will accept Protobuf-net attributes but its binary format will not be compatible with Google Protocol Buffers.
