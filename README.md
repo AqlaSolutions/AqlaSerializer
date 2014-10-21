@@ -20,3 +20,9 @@ It will accept Protobuf-net attributes but its binary format will not be compati
 Now it's the same protobuf-net but with fixes and improvement on reference tracking.
 
 Everything is subject to change. Don't rely on API.
+
+<b>Known issues</b>
+
+1. Tuples as reference are not supported.
+
+2. Array resizing when deserializing on exisiting object can break references.
