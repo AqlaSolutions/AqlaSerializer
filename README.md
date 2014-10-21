@@ -33,16 +33,18 @@ Everything is subject to change. Don't rely on API.
 2. Array resizing when deserializing on exisiting object can break references.
 
 <b>Binary format description</b> (name:)(type)example_value
-
-	//reference-tracked-objects (rto) = 20
+	//reference-tracked-objects (rto) - class and dynamic types
+	//non-rto - structs
 	
 	// field number - byte/ushort - per type
 	
 	(rto_count:)(varint)20
 	// all rtos, 1 - has values, 0 - null
 	(has_value:)(bits)10101010101010101010
-	// all that has value, 1 - ref, 0 - first encounter
+	// all rtos that has value, 1 - ref, 0 - first encounter
 	(refs:)(bits)1010101010
+	// all rtos with first encounter, 0 - default type, 1 - specified type
+	(specified_type:)(bits)101010
 	
 	[:if dynamic_types allowed]
 	
@@ -60,26 +62,28 @@ Everything is subject to change. Don't rely on API.
 	
 	// object data
 	[:for types from base to current]
-	  
+	
 	  [:if all fields has number or used setting in MetaType]
 	
 	    [:for every field]
 	
+	       [if rto && type specified:] (type:)(varint)0 [/if]
 	       (field_number:)0
 	       (value:)...
 	
 	    [:endfor]
-	    
+	
 	    (end of numbered fields:)(field_number)field_number.MaxValue
 	
 	  [:else]
 	
 	    [:for every field]
-	
+
+	      [if rto && type specified:] (type:)(varint)0 [/if]	
 	      (value:)...
 	
 	    [:endfor]
-	  
+	
 	[:endfor]
 	
 	
