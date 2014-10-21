@@ -70,9 +70,7 @@ if you want to become a collaborator you should make a significant contribution 
 	
 	--
 	// rto object (first-encounter), ref_id++
-	(type_id:)(varint)1
-	
-	// object data
+
 	[:for types from base to current]
 	
 	  [:if all fields has number or used setting in MetaType]
