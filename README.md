@@ -38,7 +38,7 @@ I accept pull requests. By submitting your code you agree that it will be covere
 
 If you are not sure whether your pull request will be accepted please contact me preliminary.
 
-if you want to become a collaborator first you should make a significant contribution to the project with pull requests.
+if you want to become a collaborator you should make a significant contribution to the project with pull requests first.
 
 <b>Binary format description</b> (name:)(type)example_value
 
