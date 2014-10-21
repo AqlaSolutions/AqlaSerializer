@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.Collections.Generic;
 using NUnit.Framework;
 using ProtoBuf;
 using System.IO;
@@ -46,6 +47,7 @@ namespace Examples.Issues
             Assert.AreEqual(4, clone.Stations[1].Ticket);
         }
 
+        [Ignore("Aqla serializer is more tolerant to constructors")]
         [Test, ExpectedException(typeof(ProtoException), ExpectedMessage = "No parameterless constructor found for WithoutParameterlessCtor", MatchType=MessageMatch.Exact)]
         public void CheckMeaningfulErrorIfNoParameterlessCtor()
         {

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.IO;
 using NUnit.Framework.SyntaxHelpers;
 using System;
 using NUnit.Framework;
@@ -96,6 +97,7 @@ namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
             }
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Conflicting item/add type")]// needs dynamic handling of list itself
         public void TestBaseClassArrayContainerClass()
         {

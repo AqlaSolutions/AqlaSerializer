@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 
 #if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
 using System.Runtime.Serialization;

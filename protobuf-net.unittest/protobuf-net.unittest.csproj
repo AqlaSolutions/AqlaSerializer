@@ -162,6 +162,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
+    </None>
     <None Include="..\Tools\PEVerify.exe.config">
       <Link>PEVerify.exe.config</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -1,9 +1,11 @@
-﻿using NUnit.Framework;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using NUnit.Framework;
 using ProtoBuf;
 using ProtoBuf.Meta;
 using System;
 namespace Examples.Issues
 {
+    [Ignore("Not introduced with AqlaSerializer")]
     [TestFixture]
     public class SO16838287
     {
@@ -14,6 +16,8 @@ namespace Examples.Issues
             Execute(model, 20, 0, 20, "Runtime");
             Execute(model, 1, 0, 18, "Runtime");
         }
+
+
         [Test]
         public void ExecuteCompileInPlace()
         {

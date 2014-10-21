@@ -1,4 +1,5 @@
-﻿#if FEAT_COMPILER
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if FEAT_COMPILER
 using System;
 #if FEAT_IKVM
 using IKVM.Reflection.Emit;

@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using NUnit.Framework;
 using ProtoBuf;
 using ProtoBuf.Meta;
 using System;
@@ -224,6 +225,7 @@ namespace Examples.Issues
             Assert.AreSame(clone.Items[0], clone.Items[1]);
         }
 
+        [Ignore("AqlaSerializer is more tolerant to references")]
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "AsReference cannot be used with value-types; please see http://stackoverflow.com/q/14436606/")]
         public void AreObjectReferencesSameAfterDeserialization()
         {

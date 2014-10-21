@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using NUnit.Framework;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO18663361
     {
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteFloat()
         {
@@ -19,6 +21,7 @@ namespace Examples.Issues
             Assert.AreEqual(123.45F, clone.EntryPrice);
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteDouble()
         {
@@ -27,6 +30,7 @@ namespace Examples.Issues
             Assert.AreEqual(123.45, clone.EntryPrice);
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteDecimal()
         {
@@ -35,6 +39,7 @@ namespace Examples.Issues
             Assert.AreEqual(123.45M, clone.EntryPrice);
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteFloat2()
         {
@@ -43,6 +48,7 @@ namespace Examples.Issues
             Assert.AreEqual(123.45F, clone.EntryPrice);
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteDouble2()
         {
@@ -51,6 +57,7 @@ namespace Examples.Issues
             Assert.AreEqual(123.45, clone.EntryPrice);
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteDecimal2()
         {

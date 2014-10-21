@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;

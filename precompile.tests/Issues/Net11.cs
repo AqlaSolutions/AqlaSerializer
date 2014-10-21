@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using NUnit.Framework;
 using ProtoBuf.Precompile;
 
@@ -7,6 +8,7 @@ namespace precompile.tests.Issues
     [TestFixture]
     public class Net11
     {
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteNet11()
         {

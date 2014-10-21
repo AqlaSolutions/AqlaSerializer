@@ -86,6 +86,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="Service1.svc" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>

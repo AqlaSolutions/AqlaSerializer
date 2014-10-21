@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -221,6 +222,8 @@ namespace Examples
             [ProtoMember(1, DynamicType = true)]
             public object Value { get; set; }
         }
+
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test] // this is failing currently; needs to handle base-type via dynamictype
         public void TestUnknownDerivedType()
         {

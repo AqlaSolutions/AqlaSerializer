@@ -1,4 +1,5 @@
-﻿using Examples.SimpleStream;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using Examples.SimpleStream;
 using NUnit.Framework;
 using ProtoBuf;
 using System.ComponentModel;
@@ -235,7 +236,7 @@ message KeyValuePair_String_Cat {
         [ProtoContract, ProtoInclude(1, typeof(Cat))] public class Animal {}
         [ProtoContract] public class Cat : Animal {}
 
-
+        [Ignore("Parameter name - localization")]
         [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = @"The type specified is not a contract-type
 Parameter name: type")]
         public void ProtoForNonContractTypeShouldThrowException()

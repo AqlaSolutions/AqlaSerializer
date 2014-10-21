@@ -1,3 +1,5 @@
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
 //#if DEBUG
 //    // Generated from rpc.proto
 //    // Option: xml serialization enabled  

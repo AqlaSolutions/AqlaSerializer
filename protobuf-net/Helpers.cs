@@ -1,4 +1,4 @@
-﻿
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using System.Collections;
 
@@ -268,6 +268,15 @@ namespace ProtoBuf
         };
 
 #endif
+
+        public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance, object[] index = null)
+        {
+#if !UNITY && (PORTABLE || WINRT|| CF2||CF35)
+            return prop.GetValue(instance, index);
+#else
+            return prop.GetValue(instance, index);
+#endif
+        }
 
 #if FEAT_IKVM
         public static ProtoTypeCode GetTypeCode(IKVM.Reflection.Type type)

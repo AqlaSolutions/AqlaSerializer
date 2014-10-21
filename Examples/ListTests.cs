@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using NUnit.Framework;
 using Examples.Ppt;
 using System.Collections.Generic;
 using ProtoBuf;
@@ -8,6 +9,7 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Net;
+using ProtoBuf.Meta;
 
 namespace Examples
 {
@@ -459,7 +461,7 @@ namespace Examples
         public void TestListBytes()
         {
             List<Test3> list = new List<Test3> { new Test3 { C = new Test1 { A= 150} } };
-            Assert.IsTrue(Program.CheckBytes(list, 0x0A, 0x05, 0x1a, 0x03, 0x08, 0x96, 0x01));
+            Assert.IsTrue(Program.CheckBytes(list, 0x0A, 0x09, 0x1a, 0x07, 0x10, 0x01, 0x52, 0x03, 0x08, 0x96, 0x01));
         }
         [Test]
         public void TestListContents()
@@ -496,7 +498,7 @@ namespace Examples
         public void TestEnumerableBytes()
         {
             Test3Enumerable list = new Test3Enumerable { new Test3 { C = new Test1 { A = 150 } } };
-            Assert.IsTrue(Program.CheckBytes(list, 0x0A, 0x05, 0x1a, 0x03, 0x08, 0x96, 0x01));
+            Assert.IsTrue(Program.CheckBytes(list, 0x0A, 0x09, 0x1a, 0x07, 0x10, 0x01, 0x52, 0x03, 0x08, 0x96, 0x01));
         }
 
         [Test]
@@ -517,7 +519,7 @@ namespace Examples
         public void TestArrayBytes()
         {
             Test3[] list = new Test3[] { new Test3 { C = new Test1 { A = 150 } } };
-            Assert.IsTrue(Program.CheckBytes(list, 0x0A, 0x05, 0x1a, 0x03, 0x08, 0x96, 0x01));
+            Assert.IsTrue(Program.CheckBytes(list, 0x0A, 0x09, 0x1a, 0x07, 0x10, 0x01, 0x52, 0x03, 0x08, 0x96, 0x01));
         }
 
         [Test]

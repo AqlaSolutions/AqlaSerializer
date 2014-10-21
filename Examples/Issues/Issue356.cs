@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.Text;
 using System.Xml;
 
 namespace test

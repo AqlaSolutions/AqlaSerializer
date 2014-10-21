@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.Runtime.Serialization;
 using System.ServiceModel;
 
 namespace Examples.Ppt

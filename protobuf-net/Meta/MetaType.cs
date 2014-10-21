@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 using System.Collections;
 using System.Text;
@@ -329,7 +330,10 @@ namespace ProtoBuf.Meta
             this.factory = factory;
             if (model == null) throw new ArgumentNullException("model");
             if (type == null) throw new ArgumentNullException("type");
-            
+
+            if (!model.NotAsReferenceDefault && ValueMember.CheckCanBeAsReference(type))
+                AsReferenceDefault = true;
+
             IProtoSerializer coreSerializer = model.TryGetBasicTypeSerializer(type);
             if (coreSerializer != null)
             {
@@ -497,7 +501,7 @@ namespace ProtoBuf.Meta
         [Flags]
         internal enum AttributeFamily
         {
-            None = 0, ProtoBuf = 1, DataContractSerialier = 2, XmlSerializer = 4, AutoTuple = 8
+            None = 0, ProtoBuf = 1, DataContractSerialier = 2, XmlSerializer = 4, AutoTuple = 8, Aqla = 16
         }
         static Type GetBaseType(MetaType type)
         {
@@ -514,13 +518,18 @@ namespace ProtoBuf.Meta
             AttributeMap[] typeAttribs = AttributeMap.Create(model, type, false);
             for (int i = 0; i < typeAttribs.Length; i++)
             {
+                if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute")
+                {
+                    object tmp;
+                    if (typeAttribs[i].TryGet("NotAsReferenceDefault", out tmp)) return !(bool)tmp;
+                }
                 if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute")
                 {
                     object tmp;
                     if (typeAttribs[i].TryGet("AsReferenceDefault", out tmp)) return (bool)tmp;
                 }
             }
-            return false;
+            return true;
         }
         internal void ApplyDefaultBehaviour()
         {
@@ -543,6 +552,8 @@ namespace ProtoBuf.Meta
             int dataMemberOffset = 0, implicitFirstTag = 1;
             bool inferTagByName = model.InferTagFromNameDefault;
             ImplicitFields implicitMode = ImplicitFields.None;
+            bool implicitAqla = false;
+            bool explicitPropertiesContract = false;
             string name = null;
             for (int i = 0; i < typeAttribs.Length; i++)
             {
@@ -587,7 +598,21 @@ namespace ProtoBuf.Meta
                         partialIgnores.Add((string)tmp);
                     }
                 }
+                else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMember")
+                {
+                    if (item.TryGet("MemberName", out tmp) && tmp != null)
+                    {
+                        if (partialIgnores == null) partialIgnores = new BasicList();
+                        partialIgnores.Add((string)tmp);
+                    }
+                }
+
                 if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute")
+                {
+                    if (partialMembers == null) partialMembers = new BasicList();
+                    partialMembers.Add(item);
+                }
+                else if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializablePartialMemberAttribute")
                 {
                     if (partialMembers == null) partialMembers = new BasicList();
                     partialMembers.Add(item);
@@ -626,10 +651,58 @@ namespace ProtoBuf.Meta
                         {
                             implicitMode = (ImplicitFields) (int) tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
                         }
-
+                        if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
+                        {
+                            explicitPropertiesContract = (bool)tmp;
+                        }
                         if (item.TryGet("SkipConstructor", out tmp)) UseConstructor = !(bool) tmp;
                         if (item.TryGet("IgnoreListHandling", out tmp)) IgnoreListHandling = (bool) tmp;
                         if (item.TryGet("AsReferenceDefault", out tmp)) AsReferenceDefault = (bool) tmp;
+                        if (item.TryGet("ImplicitFirstTag", out tmp) && (int) tmp > 0) implicitFirstTag = (int) tmp;
+                    }
+                }
+
+                if (fullAttributeTypeName == "AqlaSerializer.SerializableTypeAttribute")
+                {
+                    if (item.TryGet("Name", out tmp)) name = (string) tmp;
+                    if (Helpers.IsEnum(type)) // note this is subtly different to isEnum; want to do this even if [Flags]
+                    {
+#if !FEAT_IKVM
+                        // IKVM can't access EnumPassthruHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
+                        if (item.TryGet("EnumPassthruHasValue", false, out tmp) && (bool)tmp)
+#endif
+                        {
+                            if (item.TryGet("EnumPassthru", out tmp))
+                            {
+                                EnumPassthru = (bool)tmp;
+                                if (EnumPassthru) isEnum = false; // no longer treated as an enum
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (item.TryGet("DataMemberOffset", out tmp)) dataMemberOffset = (int) tmp;
+
+#if !FEAT_IKVM
+                        // IKVM can't access InferTagFromNameHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
+                        if (item.TryGet("InferTagFromNameHasValue", false, out tmp) && (bool) tmp)
+#endif
+                        {
+                            if (item.TryGet("InferTagFromName", out tmp)) inferTagByName = (bool) tmp;
+                        }
+
+                        if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
+                        {
+                            implicitMode = (ImplicitFields) (int) tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
+                            if (implicitMode != ImplicitFields.None) implicitAqla = true;
+                        }
+                        if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
+                        {
+                            explicitPropertiesContract = (bool)tmp;
+                        }
+                        if (item.TryGet("SkipConstructor", out tmp)) UseConstructor = !(bool) tmp;
+                        if (item.TryGet("IgnoreListHandling", out tmp)) IgnoreListHandling = (bool) tmp;
+                        if (item.TryGet("NotAsReferenceDefault", out tmp)) AsReferenceDefault = !(bool) tmp;
                         if (item.TryGet("ImplicitFirstTag", out tmp) && (int) tmp > 0) implicitFirstTag = (int) tmp;
                     }
                 }
@@ -646,7 +719,10 @@ namespace ProtoBuf.Meta
             if (!Helpers.IsNullOrEmpty(name)) Name = name;
             if (implicitMode != ImplicitFields.None)
             {
-                family &= AttributeFamily.ProtoBuf; // with implicit fields, **only** proto attributes are important
+                if (implicitAqla)
+                    family &= AttributeFamily.Aqla;
+                else
+                    family &= AttributeFamily.ProtoBuf; // with implicit fields, **only** proto attributes are important
             }
             MethodInfo[] callbacks = null;
 
@@ -691,6 +767,8 @@ namespace ProtoBuf.Meta
 
                     effectiveType = property.PropertyType;
                     isPublic = Helpers.GetGetMethod(property, false, false) != null;
+                    if (isPublic && explicitPropertiesContract)
+                        isPublic = Helpers.GetSetMethod(property, false, false) != null;
                     isField = false;
                     ApplyDefaultBehaviour_AddMembers(model, family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
                 } else if ((field = member as FieldInfo) != null)
@@ -720,14 +798,14 @@ namespace ProtoBuf.Meta
                     }
                 }
             }
-            ProtoMemberAttribute[] arr = new ProtoMemberAttribute[members.Count];
+            var arr = new AqlaSerializer.SerializableMemberAttribute[members.Count];
             members.CopyTo(arr, 0);
             
             if (inferTagByName || implicitMode != ImplicitFields.None)
             {
                 Array.Sort(arr);
                 int nextTag = implicitFirstTag;
-                foreach (ProtoMemberAttribute normalizedAttribute in arr)
+                foreach (var normalizedAttribute in arr)
                 {
                     if (!normalizedAttribute.TagIsPinned) // if ProtoMember etc sets a tag, we'll trust it
                     {
@@ -736,7 +814,7 @@ namespace ProtoBuf.Meta
                 }
             }
 
-            foreach (ProtoMemberAttribute normalizedAttribute in arr)
+            foreach (var normalizedAttribute in arr)
             {
                 ValueMember vm = ApplyDefaultBehaviour(isEnum, normalizedAttribute);
                 if (vm != null)
@@ -756,11 +834,17 @@ namespace ProtoBuf.Meta
         {
             switch (implicitMode)
             {
+                case ImplicitFields.PublicFields:
+                    if (isField & isPublic) forced = true;
+                    break;
                 case ImplicitFields.AllFields:
                     if (isField) forced = true;
                     break;
-                case ImplicitFields.AllPublic:
+                case ImplicitFields.PublicFieldsAndProperties:
                     if (isPublic) forced = true;
+                    break;
+                case ImplicitFields.PublicProperties:
+                    if (isPublic && !isField) forced = true;
                     break;
             }
 
@@ -772,7 +856,7 @@ namespace ProtoBuf.Meta
 #endif
             if (effectiveType != null)
             {
-                ProtoMemberAttribute normalizedAttribute = NormalizeProtoMember(model, member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName);
+                var normalizedAttribute = NormalizeProtoMember(model, member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName);
                 if (normalizedAttribute != null) members.Add(normalizedAttribute);
             }
         }
@@ -796,10 +880,23 @@ namespace ProtoBuf.Meta
                 switch (attributes[i].AttributeType.FullName)
                 {
                     case "ProtoBuf.ProtoContractAttribute":
-                        bool tmp = false;
-                        GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
-                        if (tmp) return AttributeFamily.ProtoBuf;
-                        family |= AttributeFamily.ProtoBuf;
+                        {
+                            bool tmp = false;
+                            GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
+                            if (tmp) return AttributeFamily.ProtoBuf;
+                            family |= AttributeFamily.ProtoBuf;
+                        }
+                        break;
+                    case "AqlaSerializer.SerializableTypeAttribute":
+                        {
+                            if (!model.AutoAddProtoContractTypesOnly)
+                            {
+                                bool tmp = false;
+                                GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
+                                if (tmp) return AttributeFamily.Aqla;
+                                family |= AttributeFamily.Aqla;
+                            }
+                        }
                         break;
                     case "System.Xml.Serialization.XmlTypeAttribute":
                         if (!model.AutoAddProtoContractTypesOnly)
@@ -937,13 +1034,13 @@ namespace ProtoBuf.Meta
         {
             return (value & required) == required;
         }
-        
-        private static ProtoMemberAttribute NormalizeProtoMember(TypeModel model, MemberInfo member, AttributeFamily family, bool forced, bool isEnum, BasicList partialMembers, int dataMemberOffset, bool inferByTagName)
+
+        private static AqlaSerializer.SerializableMemberAttribute NormalizeProtoMember(TypeModel model, MemberInfo member, AttributeFamily family, bool forced, bool isEnum, BasicList partialMembers, int dataMemberOffset, bool inferByTagName)
         {
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
             string name = null;
-            bool isPacked = false, ignore = false, done = false, isRequired = false, asReference = false, asReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false;
+            bool isPacked = false, ignore = false, done = false, isRequired = false, notAsReference = false, notAsReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false;
             DataFormat dataFormat = DataFormat.Default;
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(model, member, true);
@@ -958,25 +1055,33 @@ namespace ProtoBuf.Meta
                 }
                 else
                 {
-                    attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
+                    attrib = GetAttribute(attribs, "AqlaSerializer.NonSerializableMember");
+                    if (attrib != null)
+                    {
+                        ignore = true;
+                    }
+                    else
+                    {
+                        attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
 #if WINRT || PORTABLE || CF || FX11
                     fieldNumber = Convert.ToInt32(((FieldInfo)member).GetValue(null));
 #else
-                    fieldNumber = Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
+                        fieldNumber = Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
 #endif
-                    if (attrib != null)
-                    {
-                        GetFieldName(ref name, attrib, "Name");
+                        if (attrib != null)
+                        {
+                            GetFieldName(ref name, attrib, "Name");
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
-                        if ((bool)Helpers.GetInstanceMethod(attrib.AttributeType
+                            if ((bool)Helpers.GetInstanceMethod(attrib.AttributeType
 #if WINRT
                              .GetTypeInfo()
 #endif
-                            ,"HasValue").Invoke(attrib.Target, null))
+, "HasValue").Invoke(attrib.Target, null))
 #endif
-                        {
-                            object tmp;
-                            if(attrib.TryGet("Value", out tmp)) fieldNumber = (int)tmp;
+                            {
+                                object tmp;
+                                if (attrib.TryGet("Value", out tmp)) fieldNumber = (int)tmp;
+                            }
                         }
                     }
 
@@ -998,16 +1103,58 @@ namespace ProtoBuf.Meta
                     GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
                     GetDataFormat(ref dataFormat, attrib, "DataFormat");
 
+                    bool asRefHasValue = false;
 #if !FEAT_IKVM
                     // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
-                    GetFieldBoolean(ref asReferenceHasValue, attrib, "AsReferenceHasValue", false);
-                    if(asReferenceHasValue)
+                    GetFieldBoolean(ref asRefHasValue, attrib, "AsReferenceHasValue", false);
+                    if (asRefHasValue)
 #endif
                     {
-                        asReferenceHasValue = GetFieldBoolean(ref asReference, attrib, "AsReference", true);
+                        bool value = false;
+                        asRefHasValue = GetFieldBoolean(ref value, attrib, "AsReference", true);
+                        if (asRefHasValue && !value) // if AsReference = true - use defaults
+                        {
+                            notAsReferenceHasValue = true;
+                            notAsReference = true;
+                        }
                     }
+
+                    if (!asRefHasValue)
+                    {
+                        // by default enable for ProtoMember
+                        notAsReferenceHasValue = true;
+                        notAsReference = true;
+                    }
+
                     GetFieldBoolean(ref dynamicType, attrib, "DynamicType");
                     done = tagIsPinned = fieldNumber > 0; // note minAcceptFieldNumber only applies to non-proto
+                }
+
+                if (!done && HasFamily(family, AttributeFamily.Aqla))
+                {
+                    attrib = GetAttribute(attribs, "AqlaSerializer.SerializableMemberAttribute");
+                    GetIgnore(ref ignore, attrib, attribs, "AqlaSerializer.NonSerializableMember");
+
+                    if (!ignore && attrib != null)
+                    {
+                        GetFieldNumber(ref fieldNumber, attrib, "Tag");
+                        GetFieldName(ref name, attrib, "Name");
+                        GetFieldBoolean(ref isRequired, attrib, "IsRequired");
+                        GetFieldBoolean(ref isPacked, attrib, "IsPacked");
+                        GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
+                        GetDataFormat(ref dataFormat, attrib, "DataFormat");
+
+#if !FEAT_IKVM //
+                        // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
+                        GetFieldBoolean(ref notAsReferenceHasValue, attrib, "NotAsReferenceHasValue", false);
+                        if (notAsReferenceHasValue)
+#endif
+                        {
+                            notAsReferenceHasValue = GetFieldBoolean(ref notAsReference, attrib, "NotAsReference", true);
+                        }
+                        GetFieldBoolean(ref dynamicType, attrib, "DynamicType");
+                        done = tagIsPinned = fieldNumber > 0; // note minAcceptFieldNumber only applies to non-proto
+                    }
                 }
 
                 if (!done && partialMembers != null)
@@ -1024,14 +1171,45 @@ namespace ProtoBuf.Meta
                             GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
                             GetDataFormat(ref dataFormat, ppma, "DataFormat");
 
-#if !FEAT_IKVM
-                            // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
-                            GetFieldBoolean(ref asReferenceHasValue, attrib, "AsReferenceHasValue", false);
-                            if (asReferenceHasValue)
-#endif
+                            if (ppma.AttributeType.FullName == "AqlaSerializer.NonSerializableMember")
                             {
-                                asReferenceHasValue = GetFieldBoolean(ref asReference, ppma, "AsReference", true);
+
+#if !FEAT_IKVM //
+                                // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
+                                GetFieldBoolean(ref notAsReferenceHasValue, attrib, "NotAsReferenceHasValue", false);
+                                if (notAsReferenceHasValue)
+#endif
+                                {
+                                    notAsReferenceHasValue = GetFieldBoolean(ref notAsReference, attrib, "NotAsReference", true);
+                                }
                             }
+                            else // proto
+                            {
+                                bool asRefHasValue = false;
+#if !FEAT_IKVM
+                                // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
+                                GetFieldBoolean(ref asRefHasValue, attrib, "AsReferenceHasValue", false);
+                                if (asRefHasValue)
+#endif
+                                {
+                                    bool value = false;
+                                    asRefHasValue = GetFieldBoolean(ref value, attrib, "AsReference", true);
+                                    if (asRefHasValue && !value) // if AsReference = true - use defaults
+                                    {
+                                        notAsReferenceHasValue = true;
+                                        notAsReference = true;
+                                    }
+                                }
+
+                                if (!asRefHasValue)
+                                {
+                                    // by default enable for ProtoMember
+                                    notAsReferenceHasValue = true;
+                                    notAsReference = true;
+                                }
+
+                            }
+
                             GetFieldBoolean(ref dynamicType, ppma, "DynamicType");
                             if (done = tagIsPinned = fieldNumber > 0) break; // note minAcceptFieldNumber only applies to non-proto
                         }
@@ -1068,9 +1246,9 @@ namespace ProtoBuf.Meta
                 if (GetAttribute(attribs, "System.NonSerializedAttribute") != null) ignore = true;
             }
             if (ignore || (fieldNumber < minAcceptFieldNumber && !forced)) return null;
-            ProtoMemberAttribute result = new ProtoMemberAttribute(fieldNumber, forced || inferByTagName);
-            result.AsReference = asReference;
-            result.AsReferenceHasValue = asReferenceHasValue;
+            var result = new AqlaSerializer.SerializableMemberAttribute(fieldNumber, forced || inferByTagName);
+            result.NotAsReference = notAsReference;
+            result.NotAsReferenceHasValue = notAsReferenceHasValue;
             result.DataFormat = dataFormat;
             result.DynamicType = dynamicType;
             result.IsPacked = isPacked;
@@ -1082,7 +1260,7 @@ namespace ProtoBuf.Meta
             return result;
         }
         
-        private ValueMember ApplyDefaultBehaviour(bool isEnum, ProtoMemberAttribute normalizedAttribute)
+        private ValueMember ApplyDefaultBehaviour(bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute)
         {
             MemberInfo member;
             if (normalizedAttribute == null || (member = normalizedAttribute.Member) == null) return null; // nix
@@ -1165,10 +1343,10 @@ namespace ProtoBuf.Meta
                 vm.IsPacked = normalizedAttribute.IsPacked;
                 vm.IsRequired = normalizedAttribute.IsRequired;
                 vm.OverwriteList = normalizedAttribute.OverwriteList;
-                if (normalizedAttribute.AsReferenceHasValue)
-                {
-                    vm.AsReference = normalizedAttribute.AsReference;
-                }
+                vm.AsReference = true;
+                if (normalizedAttribute.NotAsReferenceHasValue)
+                    vm.AsReference = !normalizedAttribute.NotAsReference;
+                
                 vm.DynamicType = normalizedAttribute.DynamicType;
             }
             return vm;

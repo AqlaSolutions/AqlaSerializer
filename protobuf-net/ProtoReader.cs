@@ -1,4 +1,4 @@
-﻿
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 
 using System.IO;
@@ -1281,7 +1281,20 @@ namespace ProtoBuf
             trapCount--;
         }
 
-        
+
+        /// <summary>
+        /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
+        /// </summary>
+        public static void NoteRootObjectIfNotSet(object value, ProtoReader reader)
+        {
+            if (reader == null) throw new ArgumentNullException("reader");
+            if (reader.trapCount != 0)
+            {
+                if (reader.netCache.RegisterTrappedRootObject(value))
+                    reader.trapCount--;
+            }
+        }
+
         /// <summary>
         /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
         /// </summary>

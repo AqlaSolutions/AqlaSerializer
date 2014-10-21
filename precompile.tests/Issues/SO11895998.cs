@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using NUnit.Framework;
 using ProtoBuf;
 using ProtoBuf.Precompile;
 using System;
@@ -8,6 +9,7 @@ namespace precompile.tests.Issues
     [TestFixture]
     public class SO11895998
     {
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecutePhone7()
         {
@@ -18,6 +20,7 @@ namespace precompile.tests.Issues
             Assert.IsTrue(ctx.Execute(), "Execute");
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecutePortable()
         {

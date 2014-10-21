@@ -1,4 +1,6 @@
-﻿using Phone8_DevRig.Resources;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+using Phone8_DevRig.Resources;
 
 namespace Phone8_DevRig
 {

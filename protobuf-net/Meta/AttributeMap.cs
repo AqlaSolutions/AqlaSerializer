@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -164,7 +165,7 @@ namespace ProtoBuf.Meta
                     {
                         PropertyInfo prop = member as PropertyInfo;
                         if (prop != null) {
-                            value = prop.GetValue(attribute, null);
+                            value = Helpers.GetPropertyValue(prop, attribute);
                             return true;
                         }
                         FieldInfo field = member as FieldInfo;

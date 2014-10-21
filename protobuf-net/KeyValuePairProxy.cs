@@ -1,4 +1,6 @@
-﻿//#if !NO_GENERICS
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+//#if !NO_GENERICS
 //using System.Collections.Generic;
 
 //namespace ProtoBuf

@@ -1,4 +1,5 @@
-﻿namespace ProtoBuf
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+namespace ProtoBuf
 {
     /// <summary>
     /// Indicates the encoding used to represent an individual value in a protobuf stream

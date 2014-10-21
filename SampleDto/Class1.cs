@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 #if !FX11
 using System.Collections.Generic;
 #endif

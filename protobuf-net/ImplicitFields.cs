@@ -1,4 +1,5 @@
-﻿using System;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 
 namespace ProtoBuf
 {
@@ -21,11 +22,19 @@ namespace ProtoBuf
         /// Public properties and fields are eligible for implicit serialization;
         /// this treats the public API as a contract. Ordering beings from ImplicitFirstTag.
         /// </summary>
-        AllPublic= 1,
+        PublicFieldsAndProperties = 1,
         /// <summary>
         /// Public and non-public fields are eligible for implicit serialization;
         /// this acts as a state/implementation serializer. Ordering beings from ImplicitFirstTag.
         /// </summary>
-        AllFields = 2
+        AllFields = 2,
+        /// <summary>
+        /// Public fields are eligible for implicit serialization
+        /// </summary>
+        PublicFields = 3,
+        /// <summary>
+        /// Public properties are eligible for implicit serialization
+        /// </summary>
+        PublicProperties = 4
     }
 }

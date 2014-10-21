@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 
 using ProtoBuf.Meta;
@@ -66,14 +67,14 @@ namespace ProtoBuf.Serializers
         public override void Write(object value, ProtoWriter dest)
         {
             Helpers.DebugAssert(value != null);
-            value = property.GetValue(value, null);
+            value = Helpers.GetPropertyValue(property, value);
             if(value != null) Tail.Write(value, dest);
         }
         public override object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value != null);
 
-            object oldVal = Tail.RequiresOldValue ? property.GetValue(value, null) : null;
+            object oldVal = Tail.RequiresOldValue ? Helpers.GetPropertyValue(property, value) : null;
             object newVal = Tail.Read(oldVal, source);
             if (readOptionsWriteValue && newVal != null) // if the tail returns a null, intepret that as *no assign*
             {

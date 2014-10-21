@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -369,6 +370,7 @@ namespace ProtoBuf.Precompile
                         string name = attrib.Constructor.DeclaringType.FullName;
                         switch(name) 
                         {
+                            case "AqlaSerializer.SerializableTypeAttribute":
                             case "ProtoBuf.ProtoContractAttribute":
                                 add = true;
                                 break;

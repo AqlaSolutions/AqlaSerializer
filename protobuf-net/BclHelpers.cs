@@ -1,4 +1,5 @@
-﻿using System;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Reflection;
 namespace ProtoBuf
 {
@@ -461,7 +462,7 @@ namespace ProtoBuf
                         }
                         if (newObjectKey >= 0 && !lateSet && !ReferenceEquals(oldValue, value))
                         {
-                            throw new ProtoException("A reference-tracked object changed reference during deserialization");
+                            //throw new ProtoException("A reference-tracked object changed reference during deserialization");
                         }
                         if (newObjectKey < 0 && newTypeKey >= 0)
                         {  // have a new type, but not a new object

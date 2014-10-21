@@ -1,4 +1,5 @@
-﻿#if !FX11
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !FX11
 namespace NETCFClient
 {
     public partial class Order

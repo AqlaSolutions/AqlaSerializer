@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 
 #if FEAT_IKVM
@@ -17,7 +18,8 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(Uri);
 #endif
-        public UriDecorator(ProtoBuf.Meta.TypeModel model, IProtoSerializer tail) : base(tail)
+        public UriDecorator(ProtoBuf.Meta.TypeModel model, IProtoSerializer tail)
+            : base(tail)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(Uri));
@@ -26,7 +28,7 @@ namespace ProtoBuf.Serializers
         public override Type ExpectedType { get { return expectedType; } }
         public override bool RequiresOldValue { get { return false; } }
         public override bool ReturnsValue { get { return true; } }
-        
+
 
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
@@ -37,7 +39,14 @@ namespace ProtoBuf.Serializers
         {
             Helpers.DebugAssert(value == null); // not expecting incoming
             string s = (string)Tail.Read(null, source);
-            return s.Length == 0 ? null : new Uri(s);
+            return s.Length == 0 ? null : CreateUri(s, source);
+        }
+
+        private Uri CreateUri(string s, ProtoReader source)
+        {
+            var u = new Uri(s);
+            ProtoReader.NoteObject(u, source);
+            return u;
         }
 #endif
 
@@ -60,10 +69,13 @@ namespace ProtoBuf.Serializers
             ctx.Branch(@end, true);
             ctx.MarkLabel(@nonEmpty);
             ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)));
+            ctx.CopyValue();
+            ctx.CastToObject(ctx.MapType(typeof(Uri)));
+            ctx.EmitCallNoteObject();
             ctx.MarkLabel(@end);
-            
+
         }
-#endif 
+#endif
     }
 }
 #endif

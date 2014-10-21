@@ -1,4 +1,5 @@
-﻿
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
 namespace QuickStart
 {
     class Program

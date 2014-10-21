@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -275,12 +276,14 @@ namespace Examples
             Assert.AreEqual(SOME_VALUE, big.SomeFloat, "deserialize");
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test, ExpectedException(typeof(ArgumentException))]
         public void TestReadShouldUsePropertySmaller()
         {
             TestReadShouldUseProperty<SmallerObject>();
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test, ExpectedException(typeof(ArgumentException))]
         public void TestReadShouldUsePropertyInterfaceBased()
         {

@@ -1,4 +1,6 @@
-﻿[global::ProtoBuf.ProtoContract(Name = @"StatusHistPair")]
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+[global::ProtoBuf.ProtoContract(Name = @"StatusHistPair")]
 public partial class StatusHistPair : global::ProtoBuf.IExtensible
 {
     public StatusHistPair() { }

@@ -1,4 +1,5 @@
-﻿#if FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER && !NO_GENERICS
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER && !NO_GENERICS
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;

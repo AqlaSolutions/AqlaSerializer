@@ -1,4 +1,5 @@
-﻿#if FEAT_COMPILER && !(FX11 || FEAT_IKVM)
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if FEAT_COMPILER && !(FX11 || FEAT_IKVM)
 using System;
 using ProtoBuf.Meta;
 

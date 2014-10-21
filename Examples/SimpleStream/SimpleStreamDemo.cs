@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -36,7 +37,7 @@ namespace Examples.SimpleStream
         public void StringSample()
         {
             Test2 t2 = new Test2 { B = "testing" };
-            Assert.IsTrue(Program.CheckBytes(t2, 0x12, 0x07, 0x74, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67));
+            Assert.IsTrue(Program.CheckBytes(t2, 0x12, 0x0b, 0x10, 0x01, 0x52, 0x07, 0x74, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67));
         }
         [Test]
         public void MultiByteUTF8()
@@ -97,7 +98,7 @@ namespace Examples.SimpleStream
         public void EmbeddedMessageSample()
         {
             Test3 t3 = new Test3 { C = new Test1 { A = 150 } };
-            Assert.IsTrue(Program.CheckBytes(t3, 0x1a, 0x03, 0x08, 0x96, 0x01));
+            Assert.IsTrue(Program.CheckBytes(t3, 0x1a, 0x07,  0x10, 0x01, 0x52, 0x03, 0x08, 0x96, 0x01));
         }
 
         public void PerfTestSimple(int count, bool runLegacy)
@@ -254,6 +255,8 @@ namespace Examples.SimpleStream
             SomeEnumEntity dee = new SomeEnumEntity { Enum = 0 };
             Serializer.Serialize(Stream.Null, dee);
         }
+
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void TestDeserializeUndefinedEnum()
         { // this looks insane but is correct; it drops data on the floor to match the expected
@@ -270,6 +273,8 @@ namespace Examples.SimpleStream
             Assert.AreEqual(SomeEnum.Foo, see.Enum.Value);
 
         }
+
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void TestDeserializeUndefinedEnumWithoutDefault()
         {

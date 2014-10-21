@@ -76,6 +76,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
+    </None>
     <None Include="precompile.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

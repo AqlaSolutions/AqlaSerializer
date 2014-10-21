@@ -1,4 +1,5 @@
-﻿using System;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -200,7 +201,7 @@ namespace Examples
 
         }
 
-        [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, ImplicitFirstTag = 4)]
+        [ProtoContract(ImplicitFields = ImplicitFields.PublicFieldsAndProperties, ImplicitFirstTag = 4)]
         [ProtoPartialIgnore("IgnoreIndirect")]
         public class ImplicitPublicPOCO
         {

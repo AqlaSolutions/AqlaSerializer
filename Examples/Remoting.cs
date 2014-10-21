@@ -1,4 +1,5 @@
-﻿#if REMOTING
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if REMOTING
 using System;
 using System.IO;
 using System.Reflection;

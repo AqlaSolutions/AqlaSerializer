@@ -1,4 +1,6 @@
-﻿using TestWcfDto;
+﻿D:\My Documents\Aqla\protobuf-net-fork\protobuf-net\protobuf-net.licenseheader
+
+using TestWcfDto;
 
 namespace TestWcfServer
 {

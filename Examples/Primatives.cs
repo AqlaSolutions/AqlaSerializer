@@ -1,5 +1,7 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
@@ -398,13 +400,13 @@ namespace Examples
             //Assert.AreEqual(p.TestDecimalTwos, clone.TestDecimalTwos, "Twos 0");
             //Assert.AreEqual(p.TestDecimalZigZag, clone.TestDecimalZigZag, "ZigZag 0");
 
-            p.TestDecimalDefault = decimal.Parse("0.000"); // p.TestDecimalTwos = p.TestDecimalZigZag =
+            p.TestDecimalDefault = decimal.Parse("0.000", CultureInfo.InvariantCulture); // p.TestDecimalTwos = p.TestDecimalZigZag =
              clone = Serializer.DeepClone(p);
             Assert.AreEqual(p.TestDecimalDefault, clone.TestDecimalDefault, "Default 0.000");
             //Assert.AreEqual(p.TestDecimalTwos, clone.TestDecimalTwos, "Twos 0.000");
             //Assert.AreEqual(p.TestDecimalZigZag, clone.TestDecimalZigZag, "ZigZag 0.000");
 
-            p.TestDecimalDefault = decimal.Parse("1.000"); //p.TestDecimalTwos = p.TestDecimalZigZag = 
+            p.TestDecimalDefault = decimal.Parse("1.000", CultureInfo.InvariantCulture); //p.TestDecimalTwos = p.TestDecimalZigZag = 
             clone = Serializer.DeepClone(p);
             Assert.AreEqual(p.TestDecimalDefault, clone.TestDecimalDefault, "Default 1.000");
             //Assert.AreEqual(p.TestDecimalTwos, clone.TestDecimalTwos, "Twos 1.000");

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
 using ProtoBuf;

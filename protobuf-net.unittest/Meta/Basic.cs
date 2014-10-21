@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using ProtoBuf.Meta;
@@ -17,9 +18,10 @@ namespace ProtoBuf.unittest.Meta
             public static RuntimeTypeModel BuildMeta()
             {
                 var model = TypeModel.Create();
-                model.Add(typeof(Customer), false)
-                    .Add(1, "Id")
-                    .Add(2, "Name");
+                model.NotAsReferenceDefault = true;
+                var t=model.Add(typeof(Customer), false);
+                t.Add(1, "Id");
+                t.AddField(2, "Name").AsReference = false;
                 return model;
             }
         }

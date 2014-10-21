@@ -1,8 +1,9 @@
-﻿#if !NO_RUNTIME
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 using ProtoBuf.Meta;
 #if FEAT_COMPILER
-
+using ProtoBuf.Compiler;
 #endif
 
 #if FEAT_IKVM
@@ -219,6 +220,8 @@ namespace ProtoBuf.Serializers
                             {
                                 value = ProtoReader.Merge(source, value, ((IProtoTypeSerializer)ser).CreateInstance(source));
                             }
+                            else if (!ExpectedType.IsValueType || (!ExpectedType.IsPrimitive && !ExpectedType.IsEnum))
+                                ProtoReader.NoteRootObjectIfNotSet(value, source);
                         }
 
                         if (ser.ReturnsValue) {
@@ -308,9 +311,8 @@ namespace ProtoBuf.Serializers
             {
                 obj = InvokeCallback(factory, null, source.Context);
             }
-            else if (useConstructor)
+            else if (useConstructor && hasConstructor)
             {
-                if (!hasConstructor) TypeModel.ThrowCannotCreateInstance(constructType);
                 obj = Activator.CreateInstance(constructType
 #if !CF && !SILVERLIGHT && !WINRT && !PORTABLE 
                     , true
@@ -640,8 +642,39 @@ namespace ProtoBuf.Serializers
         {
             ctx.MarkLabel(handler);
             Type serType = serializer.ExpectedType;
-            if (serType == forType) {
-                EmitCreateIfNull(ctx, loc);
+            if (serType == forType)
+            {
+                // emit create if null
+                Helpers.DebugAssert(loc != null);
+                if (!ExpectedType.IsValueType)
+                {
+                    // changes: create instance if null, otherwise call NoteRootObjectIfNotSet
+
+                    Compiler.CodeLabel afterIf = ctx.DefineLabel();
+                    Compiler.CodeLabel elseBranch = ctx.DefineLabel();
+                    ctx.LoadValue(loc);
+
+                    // if == null
+                    ctx.BranchIfTrue(elseBranch, false);
+                    {
+                        ((IProtoTypeSerializer)this).EmitCreateInstance(ctx);
+
+                        if (callbacks != null) EmitInvokeCallback(ctx, callbacks.BeforeDeserialize, true, null, forType);
+                        ctx.StoreValue(loc);
+                        ctx.Branch(afterIf, false);
+                    }
+                    // else
+                    {
+                        ctx.MarkLabel(elseBranch);
+                        EmitNoteRootObjectIfNotSet(ctx, loc);
+                    }
+                    ctx.MarkLabel(afterIf);
+                }
+                else if (!ExpectedType.IsPrimitive && !ExpectedType.IsEnum)
+                {
+                    EmitNoteRootObjectIfNotSet(ctx, loc);
+                }
+
                 serializer.EmitRead(ctx, loc);
             }
             else {
@@ -668,6 +701,20 @@ namespace ProtoBuf.Serializers
                     // nothing needs doing
                     ctx.MarkLabel(allDone);
                 }
+                else
+                {
+                    // changes: call NoteRootObjectIfNotSet if not null
+                    Compiler.CodeLabel afterIf = ctx.DefineLabel();
+
+                    ctx.LoadValue(loc);
+
+                    // if != null
+                    ctx.BranchIfFalse(afterIf, false);
+                    {
+                        EmitNoteRootObjectIfNotSet(ctx, loc);
+                    }
+                    ctx.MarkLabel(afterIf);
+                }
                 ctx.LoadValue(loc);
                 ctx.Cast(serType);
                 serializer.EmitRead(ctx, null);
@@ -681,6 +728,16 @@ namespace ProtoBuf.Serializers
             ctx.Branch(@continue, false); // "continue"
         }
 
+        private static void EmitNoteRootObjectIfNotSet(CompilerContext ctx, Local loc)
+        {
+            ctx.LoadValue(loc);
+            if (loc.Type.IsValueType)
+                ctx.CastToObject(loc.Type);
+            ctx.LoadReaderWriter();
+            ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("NoteRootObjectIfNotSet",
+                    BindingFlags.Static | BindingFlags.Public));
+        }
+
         void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx)
         {
             // different ways of creating a new instance
@@ -689,7 +746,7 @@ namespace ProtoBuf.Serializers
             {
                 EmitInvokeCallback(ctx, factory, false, constructType, forType);
             }
-            else if (!useConstructor)
+            else if (!useConstructor || (useConstructor && !hasConstructor))
             {   // DataContractSerializer style
                 ctx.LoadValue(constructType);
                 ctx.EmitCall(ctx.MapType(typeof(BclHelpers)).GetMethod("GetUninitializedObject"));

@@ -1,4 +1,5 @@
-﻿#if !SILVERLIGHT
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !SILVERLIGHT && false
 using System;
 using System.Linq.Expressions;
 using System.Reflection;

@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 using System.Collections;
 using System.Text;
@@ -33,9 +34,9 @@ namespace ProtoBuf.Meta
            OPTIONS_Frozen = 4,
            OPTIONS_AutoAddMissingTypes = 8,
 #if FEAT_COMPILER && !FX11
-           OPTIONS_AutoCompile = 16,
+ OPTIONS_AutoCompile = 16,
 #endif
-           OPTIONS_UseImplicitZeroDefaults = 32,
+ OPTIONS_UseImplicitZeroDefaults = 32,
            OPTIONS_AllowParseableTypes = 64,
            OPTIONS_AutoAddProtoContractTypesOnly = 128;
         private bool GetOption(byte option)
@@ -102,7 +103,7 @@ namespace ProtoBuf.Meta
             get { return GetOption(OPTIONS_AllowParseableTypes); }
             set { SetOption(OPTIONS_AllowParseableTypes, value); }
         }
-        
+
 
         private sealed class Singleton
         {
@@ -290,6 +291,9 @@ namespace ProtoBuf.Meta
                     {
                         Type type = member.ItemType;
                         if (type == null) type = member.MemberType;
+                        var fieldMetaType = FindWithoutAdd(type);
+                        if (fieldMetaType != null)
+                            type = fieldMetaType.GetSurrogateOrSelf().Type;
                         WireType defaultWireType;
                         IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false);
                         if (coreSerializer == null)
@@ -393,7 +397,7 @@ namespace ProtoBuf.Meta
         /// allowing additional configuration.
         /// </summary>
         public MetaType this[Type type] { get { return (MetaType)types[FindOrAddAuto(type, true, false, false)]; } }
-        
+
         internal MetaType FindWithoutAdd(Type type)
         {
             // this list is thread-safe for reading
@@ -532,7 +536,7 @@ namespace ProtoBuf.Meta
                         }
                         metaType = Create(type);
                     }
-                    metaType.Pending = true;                    
+                    metaType.Pending = true;
                     bool weAdded = false;
 
                     // double-checked
@@ -563,26 +567,26 @@ namespace ProtoBuf.Meta
 
         private MetaType RecogniseCommonTypes(Type type)
         {
-//#if !NO_GENERICS
-//            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.KeyValuePair<,>))
-//            {
-//                MetaType mt = new MetaType(this, type);
+            //#if !NO_GENERICS
+            //            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.KeyValuePair<,>))
+            //            {
+            //                MetaType mt = new MetaType(this, type);
 
-//                Type surrogate = typeof (KeyValuePairSurrogate<,>).MakeGenericType(type.GetGenericArguments());
+            //                Type surrogate = typeof (KeyValuePairSurrogate<,>).MakeGenericType(type.GetGenericArguments());
 
-//                mt.SetSurrogate(surrogate);
-//                mt.IncludeSerializerMethod = false;
-//                mt.Freeze();
+            //                mt.SetSurrogate(surrogate);
+            //                mt.IncludeSerializerMethod = false;
+            //                mt.Freeze();
 
-//                MetaType surrogateMeta = (MetaType)types[FindOrAddAuto(surrogate, true, true, true)]; // this forcibly adds it if needed
-//                if(surrogateMeta.IncludeSerializerMethod)
-//                { // don't blindly set - it might be frozen
-//                    surrogateMeta.IncludeSerializerMethod = false;
-//                }
-//                surrogateMeta.Freeze();
-//                return mt;
-//            }
-//#endif
+            //                MetaType surrogateMeta = (MetaType)types[FindOrAddAuto(surrogate, true, true, true)]; // this forcibly adds it if needed
+            //                if(surrogateMeta.IncludeSerializerMethod)
+            //                { // don't blindly set - it might be frozen
+            //                    surrogateMeta.IncludeSerializerMethod = false;
+            //                }
+            //                surrogateMeta.Freeze();
+            //                return mt;
+            //            }
+            //#endif
             return null;
         }
         private MetaType Create(Type type)
@@ -590,6 +594,8 @@ namespace ProtoBuf.Meta
             ThrowIfFrozen();
             return new MetaType(this, type, defaultFactory);
         }
+
+        public bool NotAsReferenceDefault { get; set; }
 
         /// <summary>
         /// Adds support for an additional type in this model, optionally
@@ -615,14 +621,14 @@ namespace ProtoBuf.Meta
             MetaType newType = FindWithoutAdd(type);
             if (newType != null) return newType; // return existing
             int opaqueToken = 0;
-            
+
 #if WINRT
             System.Reflection.TypeInfo typeInfo = System.Reflection.IntrospectionExtensions.GetTypeInfo(type);
             if (typeInfo.IsInterface && MetaType.ienumerable.IsAssignableFrom(typeInfo)
 #else
             if (type.IsInterface && MapType(MetaType.ienumerable).IsAssignableFrom(type)
 #endif
-                    && GetListItemType(this, type) == null)
+ && GetListItemType(this, type) == null)
             {
                 throw new ArgumentException("IEnumerable[<T>] data cannot be used as a meta-type unless an Add method can be resolved");
             }
@@ -653,7 +659,7 @@ namespace ProtoBuf.Meta
             {
                 ReleaseLock(opaqueToken);
             }
-            
+
             return newType;
         }
 
@@ -722,7 +728,7 @@ namespace ProtoBuf.Meta
                     if (getBaseKey)
                     {
                         mt = MetaType.GetRootType(mt);
-                        typeIndex = FindOrAddAuto(mt.Type, true, true, false);                        
+                        typeIndex = FindOrAddAuto(mt.Type, true, true, false);
                     }
                 }
                 return typeIndex;
@@ -768,14 +774,27 @@ namespace ProtoBuf.Meta
 #else
             //Helpers.DebugWriteLine("Deserialize", value);
             IProtoSerializer ser = ((MetaType)types[key]).Serializer;
-            if (value == null && Helpers.IsValueType(ser.ExpectedType)) {
-                if(ser.RequiresOldValue) value = Activator.CreateInstance(ser.ExpectedType);
+            if (value == null && Helpers.IsValueType(ser.ExpectedType))
+            {
+                if (ser.RequiresOldValue) value = CreateInstance(ser, source);
                 return ser.Read(value, source);
-            } else {
+            }
+            else
+            {
                 return ser.Read(value, source);
             }
 #endif
         }
+
+#if !FEAT_IKVM
+        private object CreateInstance(IProtoSerializer ser, ProtoReader source)
+        {
+            var obj = Activator.CreateInstance(ser.ExpectedType);
+            ProtoReader.NoteObject(obj, source);
+            return obj;
+        }
+#endif
+
 
 #if FEAT_COMPILER
         // this is used by some unit-tests; do not remove
@@ -820,7 +839,7 @@ namespace ProtoBuf.Meta
 
         //}
 
-        
+
 #if FEAT_COMPILER
         private void BuildAllSerializers()
         {
@@ -1140,7 +1159,7 @@ namespace ProtoBuf.Meta
             Compiler.CompilerContext ctx = WriteSerializeDeserialize(assemblyName, type, methodPairs, ilVersion, ref il);
 
             WriteConstructors(type, ref index, methodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
-            
+
 
 
             Type finalType = type.CreateType();
@@ -1324,7 +1343,7 @@ namespace ProtoBuf.Meta
 
             il = Override(type, "GetKeyImpl");
             Compiler.CompilerContext ctx = new Compiler.CompilerContext(il, false, false, methodPairs, this, ilVersion, assemblyName, MapType(typeof(System.Type), true));
-            
+
             if (types.Count <= KnownTypes_ArrayCutoff)
             {
                 knownTypesCategory = KnownTypes_Array;
@@ -1646,7 +1665,7 @@ namespace ProtoBuf.Meta
             }
             return boxedSerializer;
         }
-        
+
 #endif
 #endif
         //internal bool IsDefined(Type type, int fieldNumber)
@@ -1776,7 +1795,7 @@ namespace ProtoBuf.Meta
                         {
                             stackTrace = ex.StackTrace;
                         }
-                        
+
                         handler(this, new LockContentedEventArgs(stackTrace));
                     }
                 }
@@ -1870,7 +1889,7 @@ namespace ProtoBuf.Meta
             }
         }
 
-      
+
 #if FEAT_IKVM
         internal override Type GetType(string fullName, Assembly context)
         {
@@ -1978,6 +1997,32 @@ namespace ProtoBuf.Meta
 
                 if (!CallbackSet.CheckCallbackParameters(this, factory)) throw new ArgumentException("Invalid factory signature in " + factory.DeclaringType.FullName + "." + factory.Name, "factory");
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public delegate Type ImplementationMappingResolveFunc(Type interfaceType);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event ImplementationMappingResolveFunc ImplementationMapping;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Type FindDefaultImplementation(Type interfaceType)
+        {
+            var mapping = ImplementationMapping;
+            if (mapping != null)
+                foreach (ImplementationMappingResolveFunc d in mapping.GetInvocationList())
+                {
+                    Type r = d(interfaceType);
+                    if (r != null)
+                        return r;
+                }
+            return null;
         }
     }
     /// <summary>

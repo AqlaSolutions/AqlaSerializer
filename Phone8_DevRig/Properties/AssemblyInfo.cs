@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Resources;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -47,6 +48,7 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue185
     {
+        [Ignore("Parameter name - localization")]
         [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = @"The supplied default implementation cannot be created: Examples.Issues.O
 Parameter name: constructType")]
         public void ExecuteWithConstructType()

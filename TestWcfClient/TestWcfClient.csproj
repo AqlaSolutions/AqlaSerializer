@@ -78,6 +78,9 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
+    </None>
     <None Include="app.config" />
     <None Include="Service References\ServiceReference1\Service1.wsdl" />
     <None Include="Service References\ServiceReference1\Service1.xsd" />

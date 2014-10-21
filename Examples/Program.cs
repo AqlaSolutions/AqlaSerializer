@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -62,6 +63,10 @@ namespace Examples
         public static bool CheckBytes<T>(T item, TypeModel model, params byte[] expected)
         {
             if (model == null) model = RuntimeTypeModel.Default;
+            var rtm = model as RuntimeTypeModel;
+            if (rtm != null)
+                rtm.NotAsReferenceDefault = true;
+
             using (MemoryStream ms = new MemoryStream())
             {
                 model.Serialize(ms, item);

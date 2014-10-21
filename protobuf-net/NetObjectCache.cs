@@ -1,4 +1,5 @@
-﻿using System;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections;
 using ProtoBuf.Meta;
 
@@ -167,6 +168,16 @@ namespace ProtoBuf
 
         private int trapStartIndex; // defaults to 0 - optimization for RegisterTrappedObject
                                     // to make it faster at seeking to find deferred-objects
+
+        internal bool RegisterTrappedRootObject(object value)
+        {
+            if (rootObject == null)
+            {
+                rootObject = value;
+                return true;
+            }
+            return false;
+        }
 
         internal void RegisterTrappedObject(object value)
         {

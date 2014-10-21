@@ -1,4 +1,6 @@
-﻿extern alias so11;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+extern alias so11;
 using System;
 using System.Collections.Generic;
 using System.Linq;

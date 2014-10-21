@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using ProtoBuf;
 
 namespace demo_rpc_client_silverlight.Northwind
 {

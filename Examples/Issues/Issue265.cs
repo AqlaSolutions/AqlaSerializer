@@ -1,4 +1,4 @@
-﻿
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using NUnit.Framework;
 using ProtoBuf;

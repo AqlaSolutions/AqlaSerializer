@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 using ProtoBuf.Meta;
 
@@ -93,7 +94,7 @@ namespace ProtoBuf.Serializers
             {
                 if (obj == null)
                     return Helpers.IsValueType(prop.PropertyType) ? Activator.CreateInstance(prop.PropertyType) : null;
-                return prop.GetValue(obj, null);
+                return Helpers.GetPropertyValue(prop, obj);
             }
             else if ((field = members[index] as FieldInfo) != null)
             {

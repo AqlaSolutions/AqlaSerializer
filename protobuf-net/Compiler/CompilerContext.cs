@@ -1,4 +1,5 @@
-﻿#if FEAT_COMPILER
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if FEAT_COMPILER
 //#define DEBUG_COMPILE
 using System;
 using System.Threading;
@@ -313,7 +314,7 @@ namespace ProtoBuf.Compiler
 
 #endif
         private readonly ILGenerator il;
-
+        
         private void Emit(OpCode opcode)
         {
             il.Emit(opcode);
@@ -552,6 +553,14 @@ namespace ProtoBuf.Compiler
             LoadReaderWriter();
             EmitCall(method);
         }
+        
+        public void EmitCallNoteObject()
+        {
+            LoadReaderWriter();
+            EmitCall(MapType(typeof(ProtoReader)).GetMethod("NoteObject",
+                    BindingFlags.Static | BindingFlags.Public));
+        }
+
         public void EmitCall(MethodInfo method)
         {
             Helpers.DebugAssert(method != null);
@@ -640,6 +649,9 @@ namespace ProtoBuf.Compiler
                 {
                     // now re-wrap the value
                     EmitCtor(type, underlyingType);
+                    CopyValue();
+                    CastToObject(type);
+                    EmitCallNoteObject();
                 }
                 return;
             }

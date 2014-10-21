@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.Net;
 using NUnit.Framework;
 using ProtoBuf;
 using ProtoBuf.Meta;

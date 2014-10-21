@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using NUnit.Framework;
 using System.IO;
 using ProtoBuf;
 using System.Linq;

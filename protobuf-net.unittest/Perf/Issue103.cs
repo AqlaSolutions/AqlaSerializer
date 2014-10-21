@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 
 namespace ProtoBuf.unittest.Perf.Issue103Types
 {

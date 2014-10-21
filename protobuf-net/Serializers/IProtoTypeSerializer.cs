@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using ProtoBuf.Meta;
 namespace ProtoBuf.Serializers
 {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.IO;
 
 using System.Collections;
@@ -75,7 +76,7 @@ namespace ProtoBuf.Meta
                 case ProtoTypeCode.Uri:
                     return WireType.String;
             }
-            
+
             if ((modelKey = GetKey(ref type)) >= 0)
             {
                 return WireType.String;
@@ -93,7 +94,7 @@ namespace ProtoBuf.Meta
         ///  - IEnumerable sequences of any type handled by TrySerializeAuxiliaryType
         ///  
         /// </summary>
-        internal bool TrySerializeAuxiliaryType(ProtoWriter writer,  Type type, DataFormat format, int tag, object value, bool isInsideList)
+        internal bool TrySerializeAuxiliaryType(ProtoWriter writer, Type type, DataFormat format, int tag, object value, bool isInsideList)
         {
             if (type == null) { type = value.GetType(); }
 
@@ -130,7 +131,7 @@ namespace ProtoBuf.Meta
                     }
                 }
             }
-            
+
             if(wireType != WireType.None) {
                 ProtoWriter.WriteFieldHeader(tag, wireType, writer);
             }
@@ -313,7 +314,7 @@ namespace ProtoBuf.Meta
             int actualField;
             do
             {
-                
+
                 bool expectPrefix = expectedField > 0 || resolver != null;
                 len = ProtoReader.ReadLengthPrefix(source, expectPrefix, style, out actualField, out tmpBytesRead);
                 if (tmpBytesRead == 0) return value;
@@ -730,7 +731,7 @@ namespace ProtoBuf.Meta
 #if WINRT
                     .GetTypeInfo()
 #endif
-                    ;
+;
 
 #if WINRT
                 TypeInfo constuctedListType = typeof(System.Collections.Generic.ICollection<>).MakeGenericType(types).GetTypeInfo();
@@ -745,7 +746,7 @@ namespace ProtoBuf.Meta
 
             if (add == null)
             {
-                
+
 #if WINRT
                 foreach (Type tmpType in listTypeInfo.ImplementedInterfaces)
 #else
@@ -787,7 +788,7 @@ namespace ProtoBuf.Meta
             if (listType == model.MapType(typeof(string)) || listType.IsArray
                 || !model.MapType(typeof(IEnumerable)).IsAssignableFrom(listType)) return null;
 #endif
-            
+
             BasicList candidates = new BasicList();
 #if WINRT
             foreach (MethodInfo method in listType.GetRuntimeMethods())
@@ -899,7 +900,7 @@ namespace ProtoBuf.Meta
 
         private static bool CheckDictionaryAccessors(TypeModel model, Type pair, Type value)
         {
-            
+
 #if NO_GENERICS
             return false;
 #elif WINRT
@@ -930,6 +931,8 @@ namespace ProtoBuf.Meta
                 if (value == null && arraySurrogate == null)
                 {
                     value = CreateListInstance(listType, itemType);
+                    if (value != null)
+                        ProtoReader.NoteObject(value, reader);
                     list = value as IList;
                 }
                 if (list != null)
@@ -956,7 +959,7 @@ namespace ProtoBuf.Meta
                     {   // we'll stay with what we had, thanks
                     }
                     else
-                    { 
+                    {
                         Array existing = (Array)value;
                         newArray = Array.CreateInstance(itemType, existing.Length + arraySurrogate.Count);
                         Array.Copy(existing, newArray, existing.Length);
@@ -969,6 +972,7 @@ namespace ProtoBuf.Meta
                     newArray = Array.CreateInstance(itemType, arraySurrogate.Count);
                     arraySurrogate.CopyTo(newArray, 0);
                     value = newArray;
+                    ProtoReader.NoteObject(value, reader);
                 }
             }
             return found;
@@ -999,7 +1003,7 @@ namespace ProtoBuf.Meta
 #else
                 if (listType.IsInterface &&
 #endif
-                    (fullName = listType.FullName) != null && fullName.IndexOf("Dictionary") >= 0) // have to try to be frugal here...
+ (fullName = listType.FullName) != null && fullName.IndexOf("Dictionary") >= 0) // have to try to be frugal here...
                 {
 #if !NO_GENERICS
 #if WINRT
@@ -1078,6 +1082,8 @@ namespace ProtoBuf.Meta
                     if (!found && autoCreate)
                     {
                         value = CreateListInstance(type, itemType);
+                        if (value != null)
+                            ProtoReader.NoteObject(value, reader);
                     }
                     return found;
                 }
@@ -1085,7 +1091,7 @@ namespace ProtoBuf.Meta
                 // otherwise, not a happy bunny...
                 ThrowUnexpectedType(type);
             }
-            
+
             // to treat correctly, should read all values
 
             while (true)
@@ -1146,7 +1152,7 @@ namespace ProtoBuf.Meta
                     case ProtoTypeCode.ByteArray: value = ProtoReader.AppendBytes((byte[])value, reader); continue;
                     case ProtoTypeCode.TimeSpan: value = BclHelpers.ReadTimeSpan(reader); continue;
                     case ProtoTypeCode.Guid: value = BclHelpers.ReadGuid(reader); continue;
-                    case ProtoTypeCode.Uri: value = new Uri(reader.ReadString()); continue; 
+                    case ProtoTypeCode.Uri: value = new Uri(reader.ReadString()); continue;
                 }
 
             }
@@ -1180,10 +1186,10 @@ namespace ProtoBuf.Meta
         protected internal static Type ResolveProxies(Type type)
         {
             if (type == null) return null;
-#if !NO_GENERICS            
+#if !NO_GENERICS
             if (type.IsGenericParameter) return null;
             // Nullable<T>
-            Type tmp =  Helpers.GetUnderlyingType(type);
+            Type tmp = Helpers.GetUnderlyingType(type);
             if (tmp != null) return tmp;
 #endif
 
@@ -1254,7 +1260,7 @@ namespace ProtoBuf.Meta
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
         protected internal abstract object Deserialize(int key, object value, ProtoReader source);
-        
+
         //internal ProtoSerializer Create(IProtoSerializer head)
         //{
         //    return new RuntimeSerializer(head, this);
@@ -1349,7 +1355,7 @@ namespace ProtoBuf.Meta
                     ProtoReader.Recycle(reader);
                 }
             }
-#endif       
+#endif
 
         }
 
@@ -1414,7 +1420,7 @@ namespace ProtoBuf.Meta
 
         internal static System.Type DeserializeType(TypeModel model, string value)
         {
-            
+
             if (model != null)
             {
                 TypeFormatEventHandler handler = model.DynamicTypeFormatting;

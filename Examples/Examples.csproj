@@ -172,9 +172,8 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.Bcl.Immutable.1.0.27\lib\portable-net45+win8+wp8\System.Collections.Immutable.dll</HintPath>
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>..\lib\System.Collections.Immutable.dll</HintPath>
     </Reference>
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
@@ -267,10 +266,8 @@
     <Compile Include="Issues\Issue307.cs" />
     <Compile Include="Issues\Issue310.cs" />
     <Compile Include="Issues\Issue312.cs" />
-    <Compile Include="Issues\Issue32.cs" />
     <Compile Include="Issues\Issue41.cs" />
     <Compile Include="Issues\Issue45.cs" />
-    <Compile Include="Issues\Issue48.cs" />
     <Compile Include="Issues\Issue48\Issue202.cs" />
     <Compile Include="Issues\Issue54.cs" />
     <Compile Include="Issues\Issue62.cs" />
@@ -380,17 +377,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="ProtoGeneration.cs" />
-    <Compile Include="ProtoGen\Generator.cs" />
-    <Compile Include="ProtoGen\InputLoader.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
-    <Compile Include="ProtoGen\OptionParser.cs" />
-    <Compile Include="ProtoGen\searchRequest.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>searchRequest.proto</DependentUpon>
-    </Compile>
     <Compile Include="Recursion.cs" />
     <Compile Include="Remoting.cs" />
     <Compile Include="Remoting\RemotingDemo.cs" />
@@ -420,9 +406,8 @@
     <Compile Include="WcfProtoBridge.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\ProtoGen\descriptor.proto">
-      <Link>ProtoGen\descriptor.proto</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Include="..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
     </None>
     <None Include="..\Tools\nwind.proto.bin">
       <Link>NWind\nwind.proto.bin</Link>
@@ -443,33 +428,6 @@
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="ProtoGen\keywords.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\Enums.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\LITE.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\gps.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\csharp_options.proto">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\jons.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\person.bin">
-    </None>
-    <None Include="ProtoGen\person.proto">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\rpc.bin" />
-    <None Include="ProtoGen\rpc.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -503,46 +461,18 @@
       <Link>PEVerify.exe</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\Tools\protoc-license.txt">
-      <Link>protoc-license.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Include="..\ProtoGen\protobuf-net.proto">
-      <Link>protobuf-net.proto</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\Tools\protoc.exe">
-      <Link>protoc.exe</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\Empty.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ProtoGen\searchRequest.proto">
-      <CustomToolNamespace>%3bfixCase%3bdatacontract</CustomToolNamespace>
-      <Generator>ProtoBufTool</Generator>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <LastGenOutput>searchRequest.cs</LastGenOutput>
-    </None>
-    <None Include="ProtoGen\WithBom.proto">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net\protobuf-net.csproj">
-      <Project>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</Project>
-      <Name>protobuf-net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ProtoGen\ProtoGen.csproj">
-      <Project>{F6CBE303-3B5F-4CCC-B0B7-D81A6BD462C9}</Project>
-      <Name>ProtoGen</Name>
-    </ProjectReference>
+    <Folder Include="bin\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="bin\" />
+    <ProjectReference Include="..\protobuf-net\protobuf-net.csproj">
+      <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
+      <Name>protobuf-net</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

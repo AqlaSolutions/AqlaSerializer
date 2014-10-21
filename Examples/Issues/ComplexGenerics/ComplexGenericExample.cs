@@ -1,4 +1,5 @@
-﻿namespace Examples.Issues.ComplexGenerics
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+namespace Examples.Issues.ComplexGenerics
 {
 /* Written in response to a question about how to handle multiple "packet" subclasses;
  * may as well keep it as a test...

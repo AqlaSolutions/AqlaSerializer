@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,8 +17,11 @@ namespace Examples.Issues
         public void Execute()
         {
             var model = TypeModel.Create();
-            model.Add(typeof(hierarchy.B), false)
-                .Add("prop1", "prop2");
+            MetaType t = model.Add(typeof (hierarchy.B), false);
+            t.Add("prop1", "prop2");
+            t[1].AsReference = false;
+            t[2].AsReference = false;
+            
 
             var hb = new hierarchy.B();
             hb.prop1 = "prop1";

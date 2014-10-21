@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.Collections.Generic;
 using NUnit.Framework;
 using ProtoBuf;
 using Examples.Ppt;

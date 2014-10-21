@@ -1,3 +1,5 @@
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

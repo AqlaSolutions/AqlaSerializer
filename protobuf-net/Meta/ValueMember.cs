@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 
 using ProtoBuf.Serializers;
@@ -38,10 +39,14 @@ namespace ProtoBuf.Meta
         /// The underlying type of the member
         /// </summary>
         public Type MemberType { get { return memberType; } }
+
+        Type _defaultTypeCache;
+
         /// <summary>
         /// For abstract types (IList etc), the type of concrete object to create (if required)
         /// </summary>
-        public Type DefaultType { get { return defaultType; } }
+        public Type DefaultType { get { return _defaultTypeCache ?? (_defaultTypeCache = defaultType ?? model.FindDefaultImplementation(memberType) ?? memberType); } }
+        
         /// <summary>
         /// The type the defines the member
         /// </summary>
@@ -53,7 +58,8 @@ namespace ProtoBuf.Meta
         public object DefaultValue
         {
             get { return defaultValue; }
-            set {
+            set
+            {
                 ThrowIfFrozen();
                 defaultValue = value;
             }
@@ -64,7 +70,7 @@ namespace ProtoBuf.Meta
         /// Creates a new ValueMember instance
         /// </summary>
         public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat, object defaultValue) 
-            : this(model, fieldNumber,memberType, itemType, defaultType, dataFormat)
+            : this(model, fieldNumber, memberType, itemType, defaultType, dataFormat)
         {
             if (member == null) throw new ArgumentNullException("member");
             if (parentType == null) throw new ArgumentNullException("parentType");
@@ -83,16 +89,26 @@ namespace ProtoBuf.Meta
             }
             this.defaultValue = defaultValue;
 
-            MetaType type = model.FindWithoutAdd(memberType);
-            if (type != null)
+            if (CheckCanBeAsReference(memberType))
             {
-                this.asReference = type.AsReferenceDefault;
-            }
-            else
-            { // we need to scan the hard way; can't risk recursion by fully walking it
-                this.asReference = MetaType.GetAsReferenceDefault(model, memberType);
+                MetaType type = model.FindWithoutAdd(memberType);
+                if (type != null)
+                {
+                    type = type.GetSurrogateOrSelf();
+                    this.asReference = type.AsReferenceDefault;
+                }
+                else
+                { // we need to scan the hard way; can't risk recursion by fully walking it
+                    this.asReference = MetaType.GetAsReferenceDefault(model, memberType);
+                }
             }
         }
+
+        internal static bool CheckCanBeAsReference(Type type)
+        {
+            return !Helpers.IsValueType(type);// && Helpers.GetTypeCode(type) != ProtoTypeCode.String;
+        }
+
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
@@ -205,7 +221,8 @@ namespace ProtoBuf.Meta
         /// Specifies the rules used to process the field; this is used to determine the most appropriate
         /// wite-type, but also to describe subtypes <i>within</i> that wire-type (such as SignedVariant)
         /// </summary>
-        public DataFormat DataFormat {
+        public DataFormat DataFormat
+        {
             get { return dataFormat; }
             set { ThrowIfFrozen(); this.dataFormat = value; }
         }
@@ -257,7 +274,11 @@ namespace ProtoBuf.Meta
         public bool AsReference
         {
             get { return asReference; }
-            set { ThrowIfFrozen(); asReference = value; }
+            set { 
+                ThrowIfFrozen();
+                if (!CheckCanBeAsReference(memberType)) value = false;
+                asReference = value;
+            }
         }
 
         private bool dynamicType;
@@ -319,7 +340,7 @@ namespace ProtoBuf.Meta
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
                 WireType wireType;
                 Type finalType = itemType == null ? memberType : itemType;
-                IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, asReference, dynamicType, OverwriteList, true);
+                IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, OverwriteList, true);
                 if (ser == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
@@ -328,7 +349,7 @@ namespace ProtoBuf.Meta
                 // apply tags
                 if (itemType != null && SupportNull)
                 {
-                    if(IsPacked)
+                    if (IsPacked)
                     {
                         throw new NotSupportedException("Packed encodings cannot support null values");
                     }
@@ -355,7 +376,7 @@ namespace ProtoBuf.Meta
                     }
                     else
                     {
-                        ser = ListDecorator.Create(model, memberType, defaultType, ser, fieldNumber, IsPacked, wireType, member != null && PropertyDecorator.CanWrite(model, member), OverwriteList, SupportNull);
+                        ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType, member != null && PropertyDecorator.CanWrite(model, member), OverwriteList, SupportNull);
                     }
                 }
                 else if (defaultValue != null && !IsRequired && getSpecified == null)
@@ -399,8 +420,10 @@ namespace ProtoBuf.Meta
             }
         }
 
-        private static WireType GetIntWireType(DataFormat format, int width) {
-            switch(format) {
+        private static WireType GetIntWireType(DataFormat format, int width)
+        {
+            switch (format)
+            {
                 case DataFormat.ZigZag: return WireType.SignedVariant;
                 case DataFormat.FixedSize: return width == 32 ? WireType.Fixed32 : WireType.Fixed64;
                 case DataFormat.TwosComplement:
@@ -428,6 +451,9 @@ namespace ProtoBuf.Meta
                 if (tmp != null) type = tmp;
             }
 #endif
+            if (asReference && !CheckCanBeAsReference(type))
+                asReference = false;
+
             if (Helpers.IsEnum(type))
             {
                 if (allowComplexTypes && model != null)
@@ -600,14 +626,14 @@ namespace ProtoBuf.Meta
         public bool SupportNull
         {
             get { return HasFlag(OPTIONS_SupportNull); }
-            set { SetFlag(OPTIONS_SupportNull, value, true);}
+            set { SetFlag(OPTIONS_SupportNull, value, true); }
         }
 
         internal string GetSchemaTypeName(bool applyNetObjectProxy, ref bool requiresBclImport)
         {
             Type effectiveType = ItemType;
             if (effectiveType == null) effectiveType = MemberType;
-            return model.GetSchemaTypeName(effectiveType, DataFormat, applyNetObjectProxy && asReference, applyNetObjectProxy && dynamicType, ref requiresBclImport);
+            return model.GetSchemaTypeName(effectiveType, DataFormat, applyNetObjectProxy && AsReference, applyNetObjectProxy && dynamicType, ref requiresBclImport);
         }
 
         

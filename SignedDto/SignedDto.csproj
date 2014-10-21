@@ -48,6 +48,9 @@
   <ItemGroup>
     <!-- A reference to the entire .NET Framework is automatically included -->
     <None Include="ProtoBuf.snk" />
+    <None Include="..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />

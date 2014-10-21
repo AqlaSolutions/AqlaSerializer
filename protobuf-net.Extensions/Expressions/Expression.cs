@@ -1,4 +1,5 @@
-﻿#if CF35
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if CF35
 using System.Collections.Generic;
 using System.Reflection;
 using System;

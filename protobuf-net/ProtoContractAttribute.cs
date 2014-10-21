@@ -1,3 +1,4 @@
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 
 namespace ProtoBuf
@@ -56,6 +57,11 @@ namespace ProtoBuf
         /// </summary>
         public ImplicitFields ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
         private ImplicitFields implicitFields;
+
+        /// <summary>
+        /// Property is treated as public only if both get and set accessors are public
+        /// </summary>
+        public bool ExplicitPropertiesContract { get; set; }
 
 
         /// <summary>

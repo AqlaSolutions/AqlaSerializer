@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 

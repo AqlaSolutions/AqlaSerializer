@@ -1,4 +1,5 @@
-﻿#if REMOTING
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if REMOTING
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -35,6 +36,7 @@ namespace Examples.Remoting
     [TestFixture]
     public class DbRemoting
     {
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void LargePayload()
         {

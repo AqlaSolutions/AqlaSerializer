@@ -1,4 +1,5 @@
-﻿
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
 using TestWcfClient.ServiceReference1;
 using TestWcfDto;
 namespace TestWcfClient

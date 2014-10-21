@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 using System.Collections;
 using ProtoBuf.Meta;
@@ -184,6 +185,7 @@ namespace ProtoBuf.Serializers
             }
             int oldLen = AppendToCollection ? ((value == null ? 0 : ((Array)value).Length)) : 0;
             Array result = Array.CreateInstance(itemType, oldLen + list.Count);
+            ProtoReader.NoteObject(result, source);
             if (oldLen != 0) ((Array)value).CopyTo(result, 0);
             list.CopyTo(result, oldLen);
             return result;
@@ -205,6 +207,9 @@ namespace ProtoBuf.Serializers
             using (Compiler.Local list = new Compiler.Local(ctx, listType))
             {
                 ctx.EmitCtor(listType);
+                ctx.CopyValue();
+                ctx.CastToObject(listType);
+                ctx.EmitCallNoteObject();
                 ctx.StoreValue(list);
                 ListDecorator.EmitReadList(ctx, list, Tail, listType.GetMethod("Add"), packedWireType, false);
 

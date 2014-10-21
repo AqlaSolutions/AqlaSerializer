@@ -1,4 +1,5 @@
-﻿using Examples;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using Examples;
 using NUnit.Framework;
 using ProtoBuf.Precompile;
 using System;
@@ -12,6 +13,7 @@ namespace precompile.tests
     [TestFixture]
     public class BasicTests
     {
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecutePhone8()
         {
@@ -33,6 +35,7 @@ namespace precompile.tests
             PEVerify.AssertValid(@"..\..\..\Net45Dto\bin\release\Net45Serializer.dll");
         }
 
+        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecuteSigned()
         {

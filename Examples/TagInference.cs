@@ -1,4 +1,5 @@
-﻿using System;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -111,7 +112,7 @@ namespace Examples
             Assert.AreEqual("abc", clone.Y);
         }
 
-        [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+        [ProtoContract(ImplicitFields = ImplicitFields.PublicFieldsAndProperties)]
         public class WithImplicitFields
         {
             public int X { get; set; }

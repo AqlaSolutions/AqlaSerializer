@@ -1,4 +1,5 @@
-﻿#if !NO_RUNTIME
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+#if !NO_RUNTIME
 using System;
 using System.Collections;
 using ProtoBuf.Meta;
@@ -150,6 +151,9 @@ namespace ProtoBuf.Serializers
                     Compiler.CodeLabel notNull = ctx.DefineLabel();
                     ctx.BranchIfTrue(notNull, true);
                     ctx.EmitCtor(concreteType);
+                    ctx.CopyValue();
+                    ctx.CastToObject(concreteType);
+                    ctx.EmitCallNoteObject();
                     ctx.StoreValue(list);
                     ctx.MarkLabel(notNull);
                 }
@@ -493,7 +497,11 @@ namespace ProtoBuf.Serializers
         {
             int field = source.FieldNumber;
             object origValue = value;
-            if (value == null) value = Activator.CreateInstance(concreteType);
+            if (value == null)
+            {
+                value = Activator.CreateInstance(concreteType);
+                ProtoReader.NoteObject(value, source);
+            }
             bool isList = IsList && !SuppressIList;
             if (packedWireType != WireType.None && source.WireType == WireType.String)
             {
