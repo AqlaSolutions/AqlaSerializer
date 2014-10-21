@@ -6,6 +6,7 @@ AqlaSerializer
 Protobuf-net have problems with inheritance, reference tracking and can't pack data optimally because of Protocol Buffers format compatibility. I'm reworking Protobuf-net to make a binary serializer with its own format which is dedicated to support all the .NET-specific features. 
 
 <b>Features</b>
+
 1 .Object tree comparsion related features. 
 2. Field numbering will be only an option.
 
