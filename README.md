@@ -50,7 +50,7 @@ Everything is subject to change. Don't rely on API.
 	(dynamic_types_count:)(varint)1
 	(dynamic_type_fullnames:)(string[])System.Guid
 	
-	// dynamic type mapping settings should be possible to et with attribute on field
+	// dynamic type mapping settings should be possible to specify with attribute on field
 	
 	[:endif]
 	
