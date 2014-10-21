@@ -58,7 +58,9 @@ Everything is subject to change. Don't rely on API.
 	
 	[:endif]
 	
+	// data entries:
 	
+	--
 	// rto object (first-encounter), ref_id++
 	(type_id:)(varint)1
 	
