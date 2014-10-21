@@ -3,7 +3,7 @@ AqlaSerializer
 
 <b>What is it?</b>
 
-I'm reworking Protobuf-net to make a binary serializer with its own format which is specifically dedicated to support all .NET specific features.
+I'm reworking Protobuf-net to make a binary serializer with its own format which is dedicated to support all .NET specific features.
 
 Also I'm planning to add object tree comparsion related features.
 
