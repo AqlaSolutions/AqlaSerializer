@@ -32,6 +32,13 @@ Everything is subject to change. Don't rely on API.
 
 2. Array resizing when deserializing on exisiting object can break references.
 
+<b>Contribution</b>
+I accept pull requests. By submitting your code you agree that it will be covered by the same license as the whole project. If a new version of the project uses another license you agree that your code will stay there.
+
+If you are not sure whether your pull request will be accepted please contact me preliminary.
+
+if you want to become a collaborator first you should make a significant contribution to the project with pull requests.
+
 <b>Binary format description</b> (name:)(type)example_value
 
 
