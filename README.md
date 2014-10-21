@@ -31,8 +31,8 @@ Everything is subject to change. Don't rely on API.
 
 2. Array resizing when deserializing on exisiting object can break references.
 
-<b>Binary format description</b>
-	
+<b>Binary format description</b> (name:)(type)example_value
+
 	//reference-tracked-objects (rto) = 20
 	
 	// field number - byte/ushort - per type
