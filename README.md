@@ -7,7 +7,7 @@ Protobuf-net have problems with inheritance, reference tracking and can't pack d
 
 <b>Features</b>
 
-1 .Object tree comparsion related features. 
+1 Object tree comparsion related features. 
 2. Field numbering will be only an option.
 
 Other features later.
