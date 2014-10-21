@@ -88,6 +88,8 @@ Everything is subject to change. Don't rely on API.
 	
 	    [:endfor]
 	
+	  [:endif]
+	  
 	[:endfor]
 	
 	
