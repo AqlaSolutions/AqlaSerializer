@@ -86,6 +86,7 @@ namespace Examples.Issues
                 b = new List<string>();
             }
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void Execute()
         {

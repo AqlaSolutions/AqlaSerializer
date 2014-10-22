@@ -51,6 +51,7 @@ namespace Examples.Issues
         {
             var model = TypeModel.Create();
             model.AutoCompile = false;
+            
             // message hierarchy
             {
                 var messages = model.Add(typeof(Message), true);

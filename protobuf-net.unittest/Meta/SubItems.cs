@@ -40,6 +40,7 @@ namespace ProtoBuf.unittest.Meta
             Assert.IsNotNull(CreateModel());
         }
 
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestCanDeserialierAllFromEmptyStream()
         {

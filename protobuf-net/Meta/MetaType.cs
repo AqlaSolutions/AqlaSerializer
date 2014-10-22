@@ -78,7 +78,7 @@ namespace ProtoBuf.Meta
         }
 
         /// <summary>
-        /// Should this type be treated as a reference by default?
+        /// Should this type be treated as a reference by default FOR MISSING TYPE MEMBERS ONLY?
         /// </summary>
         public bool AsReferenceDefault
         { 
@@ -384,11 +384,7 @@ namespace ProtoBuf.Meta
                         if (serializer == null)
                         { // double-check, but our main purpse with this lock is to ensure thread-safety with
                             // serializers needing to wait until another thread has finished adding the properties
-                            SetFlag(OPTIONS_Frozen, true, false);
-                            serializer = BuildSerializer();
-#if FEAT_COMPILER && !FX11
-                            if (model.AutoCompile) CompileInPlace();
-#endif
+                            InitSerializers();
                         }
                     }
                     finally
@@ -399,6 +395,44 @@ namespace ProtoBuf.Meta
                 return serializer;
             }
         }
+
+        void InitSerializers()
+        {
+            SetFlag(OPTIONS_Frozen, true, false);
+            serializer = BuildSerializer();
+            var s = BuildSerializer();
+            rootSerializer = new RootDecorator(model, type, model.GetKey(type, false, false), s);
+#if FEAT_COMPILER && !FX11
+            if (model.AutoCompile) CompileInPlace();
+#endif
+        }
+
+    private IProtoTypeSerializer rootSerializer;
+    internal IProtoTypeSerializer RootSerializer
+    {
+            get {
+                if (rootSerializer == null)
+                {
+                    int opaqueToken = 0;
+                    try
+                    {
+                        model.TakeLock(ref opaqueToken);
+                        if (rootSerializer == null)
+                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
+                            // serializers needing to wait until another thread has finished adding the properties
+                            InitSerializers();
+                        }
+                    }
+                    finally
+                    {
+                        model.ReleaseLock(opaqueToken);
+                    }
+                }
+                return rootSerializer;
+            }
+        }
+
+
         internal bool IsList
         {
             get
@@ -1774,6 +1808,7 @@ namespace ProtoBuf.Meta
             // just no nothing, quietely; don't want to break the API
 #else
             serializer = CompiledSerializer.Wrap(Serializer, model);
+            rootSerializer = CompiledSerializer.Wrap(RootSerializer, model);
 #endif
         }
 #endif

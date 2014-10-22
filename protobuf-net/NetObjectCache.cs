@@ -7,7 +7,13 @@ namespace ProtoBuf
 {
     internal sealed class NetObjectCache
     {
-        internal const int Root = 0;
+        const int Root = 0;
+
+        internal void ResetRoot()
+        {
+            
+        }
+
         private MutableList underlyingList;
 
         private MutableList List
@@ -42,18 +48,21 @@ namespace ProtoBuf
             }
             return tmp;
         }
-
+        
         internal void SetKeyedObject(int key, object value)
         {
             if (key-- == Root)
             {
-                if (value == null) throw new ArgumentNullException("value");
                 if (rootObject != null && ((object)rootObject != (object)value)) throw new ProtoException("The root object cannot be reassigned");
                 rootObject = value;
             }
             else
             {
                 MutableList list = List;
+
+                while (key > list.Count)
+                    list.Add(null); 
+                
                 if (key < list.Count)
                 {
                     object oldVal = list[key];
@@ -77,6 +86,13 @@ namespace ProtoBuf
         internal int AddObjectKey(object value, out bool existing)
         {
             if (value == null) throw new ArgumentNullException("value");
+
+            if ((object)rootObject==null)
+            {
+                rootObject = value;
+                existing = false;
+                return Root;
+            }
 
             if ((object)value == (object)rootObject) // (object) here is no-op, but should be
             {                                        // preserved even if this was typed - needs ref-check

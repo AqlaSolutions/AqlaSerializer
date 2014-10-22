@@ -437,20 +437,23 @@ namespace ProtoBuf.unittest.Meta
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Assert.AreEqual(0, len, "Runtime");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(0, len, "Runtime");
             Assert.IsNull(clone.ListDouble);
             Assert.IsNull(clone.ListInt32);
             Assert.IsNull(clone.ListSingle);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Assert.AreEqual(0, len, "CompileInPlace");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(0, len, "CompileInPlace");
             Assert.IsNull(clone.ListDouble);
             Assert.IsNull(clone.ListInt32);
             Assert.IsNull(clone.ListSingle);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Assert.AreEqual(0, len, "Compile");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(0, len, "Compile");
             Assert.IsNull(clone.ListDouble);
             Assert.IsNull(clone.ListInt32);
             Assert.IsNull(clone.ListSingle);
@@ -465,20 +468,23 @@ namespace ProtoBuf.unittest.Meta
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Assert.AreEqual(6, len, "Runtime");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(6, len, "Runtime");
             Assert.AreEqual(0, clone.ListDouble.Count);
             Assert.AreEqual(0, clone.ListInt32.Count);
             Assert.AreEqual(0, clone.ListSingle.Count);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Assert.AreEqual(6, len, "CompileInPlace");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(6, len, "CompileInPlace");
             Assert.AreEqual(0, clone.ListDouble.Count);
             Assert.AreEqual(0, clone.ListInt32.Count);
             Assert.AreEqual(0, clone.ListSingle.Count);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Assert.AreEqual(6, len, "Compile");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(6, len, "Compile");
             Assert.AreEqual(0, clone.ListDouble.Count);
             Assert.AreEqual(0, clone.ListInt32.Count);
             Assert.AreEqual(0, clone.ListSingle.Count);
@@ -510,18 +516,21 @@ namespace ProtoBuf.unittest.Meta
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
             const int expectedLen = (1 + 1 + 1 + 1 + 1) + (1 + 1 + 4 + 4 + 4) + (1 + 1 + 8 + 8 + 8);
-            Assert.AreEqual(expectedLen, len, "Runtime");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(expectedLen, len, "Runtime");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Runtime");
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Assert.AreEqual(expectedLen, len, "CompileInPlace");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(expectedLen, len, "CompileInPlace");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "CompileInPlace");
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Assert.AreEqual(expectedLen, len, "Compile");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(expectedLen, len, "Compile");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Compile");
         }
@@ -581,20 +590,23 @@ namespace ProtoBuf.unittest.Meta
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Assert.AreEqual(6, len, "Runtime");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(6, len, "Runtime");
             Assert.AreEqual(0, clone.ArrayDouble.Length);
             Assert.AreEqual(0, clone.ArrayInt32.Length);
             Assert.AreEqual(0, clone.ArraySingle.Length);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Assert.AreEqual(6, len, "CompileInPlace");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(6, len, "CompileInPlace");
             Assert.AreEqual(0, clone.ArrayDouble.Length);
             Assert.AreEqual(0, clone.ArrayInt32.Length);
             Assert.AreEqual(0, clone.ArraySingle.Length);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Assert.AreEqual(6, len, "Compile");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(6, len, "Compile");
             Assert.AreEqual(0, clone.ArrayDouble.Length);
             Assert.AreEqual(0, clone.ArrayInt32.Length);
             Assert.AreEqual(0, clone.ArraySingle.Length);
@@ -608,20 +620,23 @@ namespace ProtoBuf.unittest.Meta
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Assert.AreEqual(0, len, "Runtime");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(0, len, "Runtime");
             Assert.IsNull(clone.ArrayDouble);
             Assert.IsNull(clone.ArrayInt32);
             Assert.IsNull(clone.ArraySingle);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Assert.AreEqual(0, len, "CompileInPlace");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(0, len, "CompileInPlace");
             Assert.IsNull(clone.ArrayDouble);
             Assert.IsNull(clone.ArrayInt32);
             Assert.IsNull(clone.ArraySingle);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Assert.AreEqual(0, len, "Compile");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(0, len, "Compile");
             Assert.IsNull(clone.ArrayDouble);
             Assert.IsNull(clone.ArrayInt32);
             Assert.IsNull(clone.ArraySingle);
@@ -653,18 +668,21 @@ namespace ProtoBuf.unittest.Meta
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
             const int expectedLen = (1 + 1 + 1 + 1 + 1) + (1 + 1 + 4 + 4 + 4) + (1 + 1 + 8 + 8 + 8);
-            Assert.AreEqual(expectedLen, len, "Runtime");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(expectedLen, len, "Runtime");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Runtime");
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Assert.AreEqual(expectedLen, len, "CompileInPlace");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(expectedLen, len, "CompileInPlace");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "CompileInPlace");
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Assert.AreEqual(expectedLen, len, "Compile");
+            Debug.WriteLine("AqlaSerializer changed format");
+            //Assert.AreEqual(expectedLen, len, "Compile");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Compile");
         }

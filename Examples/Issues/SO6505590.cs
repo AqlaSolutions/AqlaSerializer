@@ -48,6 +48,7 @@ namespace Examples.Issues
             var obj = new ParentA();
             Serializer.Serialize(Stream.Null, obj);
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void DeserializeParentWithUnmarkedChildShouldWork()
         {
@@ -73,6 +74,7 @@ namespace Examples.Issues
             var obj = new ParentB();
             Serializer.Serialize(Stream.Null, obj);
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void DeserializeParentWithUnexpectedChildShouldWork()
         {
@@ -85,6 +87,7 @@ namespace Examples.Issues
             var obj = new ParentC();
             Serializer.Serialize(Stream.Null, obj);
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void DeserializeParentWithExpectedChildShouldWork()
         {

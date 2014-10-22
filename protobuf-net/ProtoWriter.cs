@@ -44,9 +44,9 @@ namespace ProtoBuf
             SubItemToken token = StartSubItem(value, writer);
             if (key >= 0)
             {
-                writer.model.Serialize(key, value, writer);
+                writer.model.Serialize(key, value, writer, false);
             }
-            else if (writer.model != null && writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), DataFormat.Default, Serializer.ListItemTag, value, false))
+            else if (writer.model != null && writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), DataFormat.Default, Serializer.ListItemTag, value, false, false))
             {
                 // all ok
             }
@@ -73,10 +73,16 @@ namespace ProtoBuf
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
             SubItemToken token = StartSubItem(null, writer);
-            writer.model.Serialize(key, value, writer);
+            writer.model.Serialize(key, value, writer, false);
             EndSubItem(token, writer);
         }
+
         internal static void WriteObject(object value, int key, ProtoWriter writer, PrefixStyle style, int fieldNumber)
+        {
+            WriteObject(value, key, writer, style, fieldNumber, false);
+        }
+
+        internal static void WriteObject(object value, int key, ProtoWriter writer, PrefixStyle style, int fieldNumber, bool isRoot)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -105,14 +111,14 @@ namespace ProtoBuf
             SubItemToken token = StartSubItem(value, writer, true);
             if (key < 0)
             {
-                if (!writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), DataFormat.Default, Serializer.ListItemTag, value, false))
+                if (!writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), DataFormat.Default, Serializer.ListItemTag, value, false, isRoot))
                 {
                     TypeModel.ThrowUnexpectedType(value.GetType());
                 }
             }
             else
             {
-                writer.model.Serialize(key, value, writer);
+                writer.model.Serialize(key, value, writer, isRoot);
             }
             EndSubItem(token, writer, style);
 #endif       
@@ -937,7 +943,7 @@ namespace ProtoBuf
         /// </summary>
         public void SetRootObject(object value)
         {
-            NetCache.SetKeyedObject(NetObjectCache.Root, value);
+            //NetCache.SetKeyedObject(NetObjectCache.Root, value);
         }
 
         /// <summary>

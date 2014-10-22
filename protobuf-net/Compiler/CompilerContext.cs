@@ -357,6 +357,12 @@ namespace ProtoBuf.Compiler
             Helpers.DebugWriteLine(OpCodes.Ldc_I8 + ": " + value);
 #endif
         }
+
+        public void LoadValue(bool value)
+        {
+            LoadValue(value ? 1 : 0);
+        }
+
         public void LoadValue(int value)
         {
             switch (value)
@@ -558,6 +564,20 @@ namespace ProtoBuf.Compiler
         {
             LoadReaderWriter();
             EmitCall(MapType(typeof(ProtoReader)).GetMethod("NoteObject",
+                    BindingFlags.Static | BindingFlags.Public));
+        }
+
+        public void EmitCallNoteReservedTrappedObject()
+        {
+            LoadReaderWriter();
+            EmitCall(MapType(typeof(ProtoReader)).GetMethod("NoteReservedTrappedObject",
+                    BindingFlags.Static | BindingFlags.Public));
+        }
+
+        public void EmitCallReserveNoteObject()
+        {
+            LoadReaderWriter();
+            EmitCall(MapType(typeof(ProtoReader)).GetMethod("ReserveNoteObject",
                     BindingFlags.Static | BindingFlags.Public));
         }
 
@@ -1446,6 +1466,13 @@ namespace ProtoBuf.Compiler
         {
             return model.MapType(type);
         }
+
+#if FEAT_IKVM
+        internal Type MapType(Type type)
+        {
+            return type;
+        }
+#endif
 
         private readonly ILVersion metadataVersion;
         public ILVersion MetadataVersion { get { return metadataVersion; } }

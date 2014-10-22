@@ -1,6 +1,6 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
-
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using ProtoBuf.Meta;
@@ -98,8 +98,11 @@ namespace ProtoBuf
             reader.blockEnd = int.MaxValue;
             reader.internStrings = true;
             reader.wireType = WireType.None;
-            reader.trapCount = 1;
-            if(reader.netCache == null) reader.netCache = new NetObjectCache();            
+            reader.trapCount = 0;
+            reader._trappedKey = 0;
+            reader._trapNoteReserved.Clear();
+            if(reader.netCache == null) reader.netCache = new NetObjectCache();
+            reader.netCache.ResetRoot();
         }
 
         private SerializationContext context;
@@ -576,9 +579,9 @@ namespace ProtoBuf
             SubItemToken token = ProtoReader.StartSubItem(reader);
             if (key >= 0)
             {
-                value = reader.model.Deserialize(key, value, reader);
+                value = reader.model.Deserialize(key, value, reader, false);
             }
-            else if (type != null && reader.model.TryDeserializeAuxiliaryType(reader, DataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false))
+            else if (type != null && reader.model.TryDeserializeAuxiliaryType(reader, DataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
             {
                 // ok
             }
@@ -1277,8 +1280,8 @@ namespace ProtoBuf
 
         internal void SetRootObject(object value)
         {
-            netCache.SetKeyedObject(NetObjectCache.Root, value);
-            trapCount--;
+            //netCache.SetKeyedObject(NetObjectCache.Root, value);
+            //trapCount--;
         }
 
 
@@ -1291,7 +1294,11 @@ namespace ProtoBuf
             if (reader.trapCount != 0)
             {
                 if (reader.netCache.RegisterTrappedRootObject(value))
+                {
+                    if (reader._trappedKey != 0)
+                        throw new InvalidOperationException("TrappedKey != 0");
                     reader.trapCount--;
+                }
             }
         }
 
@@ -1303,9 +1310,24 @@ namespace ProtoBuf
             if (reader == null) throw new ArgumentNullException("reader");
             if(reader.trapCount != 0)
             {
-                reader.netCache.RegisterTrappedObject(value);
+                reader.netCache.SetKeyedObject(reader._trappedKey, value);
                 reader.trapCount--;
             }
+        }
+
+        /// <summary>
+        /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
+        /// </summary>
+        public static void NoteReservedTrappedObject(int trappedKey, object value, ProtoReader reader)
+        {
+            if (reader == null) throw new ArgumentNullException("reader");
+            if (trappedKey == -1) return;
+            if (reader.trapCount != 0) throw new InvalidOperationException("NoteReservedTrappedObject called while new not reserved trap present");
+            var stack = reader._trapNoteReserved;
+            var trueKey = stack.Peek();
+            if (trappedKey != trueKey) throw new InvalidOperationException("NoteReservedTrappedObject called for " + trappedKey + " but waiting for " + trueKey);
+            stack.Pop();
+            reader.netCache.SetKeyedObject(trueKey, value);
         }
 
         /// <summary>
@@ -1316,12 +1338,25 @@ namespace ProtoBuf
             return TypeModel.DeserializeType(model, ReadString());
         }
 
+        readonly Stack<int> _trapNoteReserved = new Stack<int>();
+
+        int _trappedKey;
+
+        public static int ReserveNoteObject(ProtoReader reader)
+        {
+            if (reader.trapCount == 0) return -1;
+            reader._trapNoteReserved.Push(reader._trappedKey);
+            reader.trapCount--;
+            return reader._trappedKey;
+        }
+
         internal void TrapNextObject(int newObjectKey)
         {
             trapCount++;
             if (trapCount > 1)
                 throw new ProtoException("Trap count > 1, will be mismatched with next NoteObject");
             netCache.SetKeyedObject(newObjectKey, null); // use null as a temp
+            _trappedKey = newObjectKey;
         }
 
         internal void CheckFullyConsumed()

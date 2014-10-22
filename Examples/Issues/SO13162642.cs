@@ -14,9 +14,10 @@ namespace Examples.Issues
         [Test]
         public void Execute()
         {
+            Assert.Fail("See it later, very slow");
             using (var f = File.Create("Data.protobuf"))
             {
-                Serializer.Serialize<IEnumerable<DTO>>(f, GenerateData(1000000));
+                Serializer.Serialize<IEnumerable<DTO>>(f, GenerateData(100000));
             }
 
             using (var f = File.OpenRead("Data.protobuf"))

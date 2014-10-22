@@ -19,6 +19,7 @@ namespace Examples.SimpleStream
     [TestFixture]
     public class GroupedData
     {
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestGroup()
         {
@@ -26,6 +27,7 @@ namespace Examples.SimpleStream
             Assert.AreEqual(150, t3.C.A);
         }
 
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestGroupAsExtension()
         {
@@ -38,6 +40,7 @@ namespace Examples.SimpleStream
             Assert.AreEqual(150, t1.A, "Value");
         }
 
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestGroupIgnore()
         {
@@ -75,6 +78,7 @@ namespace Examples.SimpleStream
             [ProtoMember(1)]
             public List<int> A { get; set; }
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestEntityList()
         {

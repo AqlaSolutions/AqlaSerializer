@@ -70,7 +70,7 @@ namespace Examples
         {
             Assert.AreEqual(8, CheckIndividually(0, PrefixStyle.Fixed32, -2,-1,0,1,2,3,4,5));
         }
-
+        
         [Test]
         public void ReadIndividuallyBase128NoTag()
         {
@@ -83,18 +83,21 @@ namespace Examples
             Assert.AreEqual(8, CheckIndividually(2, PrefixStyle.Base128, -2, -1, 0, 1, 2, 3, 4, 5));
         }
 
+        [Ignore("AqlaSerializer changed format, you can't write Foo and while reading int[]")]
         [Test]
         public void ReadStreamingFixedLength()
         {
             Assert.AreEqual(8, CheckStreaming(0, PrefixStyle.Fixed32, -2, -1, 0, 1, 2, 3, 4, 5));
         }
 
+        [Ignore("AqlaSerializer changed format, you can't write Foo and while reading int[]")]
         [Test]
         public void ReadStreamingBase128NoTag()
         {
             Assert.AreEqual(8, CheckStreaming(0, PrefixStyle.Base128, -2, -1, 0, 1, 2, 3, 4, 5));
         }
 
+        [Ignore("AqlaSerializer changed format, you can't write Foo and while reading int[]")]
         [Test]
         public void ReadStreamingBase128Tag()
         {

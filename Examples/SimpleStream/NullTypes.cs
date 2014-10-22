@@ -14,6 +14,7 @@ namespace Examples.SimpleStream
             [DataMember(Order = 1)]
             public int? Foo { get; set; }
         }
+        
         [Test]
         public void TestNull()
         {
@@ -22,6 +23,7 @@ namespace Examples.SimpleStream
             Assert.IsNull(twn.Foo);
             Assert.IsTrue(Program.CheckBytes(twn, new byte[0]));
         }
+        
         [Test]
         public void TestNotNull()
         {

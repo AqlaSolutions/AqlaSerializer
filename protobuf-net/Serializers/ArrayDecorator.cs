@@ -2,6 +2,9 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+#if FEAT_COMPILER
+using ProtoBuf.Compiler;
+#endif
 using ProtoBuf.Meta;
 
 #if FEAT_IKVM
@@ -165,6 +168,7 @@ namespace ProtoBuf.Serializers
         }
         public override object Read(object value, ProtoReader source)
         {
+            int reservedTrap = ProtoReader.ReserveNoteObject(source);
             int field = source.FieldNumber;
             BasicList list = new BasicList();
             if (packedWireType != WireType.None && source.WireType == WireType.String)
@@ -185,7 +189,7 @@ namespace ProtoBuf.Serializers
             }
             int oldLen = AppendToCollection ? ((value == null ? 0 : ((Array)value).Length)) : 0;
             Array result = Array.CreateInstance(itemType, oldLen + list.Count);
-            ProtoReader.NoteObject(result, source);
+            ProtoReader.NoteReservedTrappedObject(reservedTrap, result, source);
             if (oldLen != 0) ((Array)value).CopyTo(result, 0);
             list.CopyTo(result, oldLen);
             return result;
@@ -205,12 +209,15 @@ namespace ProtoBuf.Serializers
             using (Compiler.Local oldArr = AppendToCollection ? ctx.GetLocalWithValue(expected, valueFrom) : null)
             using (Compiler.Local newArr = new Compiler.Local(ctx, expected))
             using (Compiler.Local list = new Compiler.Local(ctx, listType))
+            using (Compiler.Local reservedTrap = new Local(ctx, ctx.MapType(typeof(int)))) 
+            using (Compiler.Local refLocalToNoteObject = new Local(ctx, ctx.MapType(typeof(object))))
             {
+                ctx.EmitCallReserveNoteObject();
+                ctx.StoreValue(reservedTrap);
+
                 ctx.EmitCtor(listType);
-                ctx.CopyValue();
-                ctx.CastToObject(listType);
-                ctx.EmitCallNoteObject();
                 ctx.StoreValue(list);
+                
                 ListDecorator.EmitReadList(ctx, list, Tail, listType.GetMethod("Add"), packedWireType, false);
 
                 // leave this "using" here, as it can share the "FieldNumber" local with EmitReadList
@@ -237,6 +244,7 @@ namespace ProtoBuf.Serializers
                         ctx.LoadValue(0); // index in target
 
                         ctx.EmitCall(expected.GetMethod("CopyTo", copyToArrayInt32Args));
+
                         ctx.MarkLabel(nothingToCopy);
 
                         ctx.LoadValue(list);
@@ -265,11 +273,20 @@ namespace ProtoBuf.Serializers
                     }
                     ctx.EmitCall(copyTo);
                 }
+
+                ctx.LoadValue(newArr);
+                ctx.CastToObject(ctx.MapType(expected));
+                ctx.StoreValue(refLocalToNoteObject);
+                
+                ctx.LoadValue(reservedTrap);
+                ctx.LoadAddress(refLocalToNoteObject, refLocalToNoteObject.Type);
+                ctx.EmitCallNoteReservedTrappedObject();
+                
+                
                 ctx.LoadValue(newArr);
             }
-
-
         }
+        
 #endif
     }
 }

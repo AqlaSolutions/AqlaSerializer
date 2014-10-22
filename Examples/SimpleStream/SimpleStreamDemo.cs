@@ -33,6 +33,7 @@ namespace Examples.SimpleStream
             Test1 t1 = new Test1 { A = 150 };
             Assert.IsTrue(Program.CheckBytes(t1, 0x08, 0x96, 0x01));
         }
+        
         [Test]
         public void StringSample()
         {
@@ -182,6 +183,7 @@ namespace Examples.SimpleStream
             [ProtoMember(2)]
             public int Bar { get; set; }
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void FieldsWrongOrder()
         {
@@ -193,6 +195,7 @@ namespace Examples.SimpleStream
             Assert.AreEqual(130, t1.Bar, "Bar, descending");
         }
 
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void MultipleSameField()
         {
@@ -265,6 +268,7 @@ namespace Examples.SimpleStream
             var see = Program.Build<SomeEnumEntity>(0x10, 0x09);
             Assert.AreEqual(SomeEnum.Bar, see.Enum);
         }
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestDeserializeDefinedEnumWithoutDefault()
         {

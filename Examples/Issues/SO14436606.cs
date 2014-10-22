@@ -43,7 +43,7 @@ namespace Examples.Issues
         [ProtoContract]
         public class B_WithDefaultRef
         {
-            [ProtoMember(1)]
+            [ProtoMember(1, AsReference = true)] // yes, AsReferenceDefault is applied only when adding missing members
             public A_WithDefaultRef A { get; set; }
 
             [ProtoMember(2)]

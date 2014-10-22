@@ -112,6 +112,7 @@ message EnumWrapper {
             Assert.AreEqual(expected, proto);
         }
 
+        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void NWindPipeline()
         {

@@ -7,12 +7,17 @@ using System.Text;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
+#if FEAT_COMPILER
 using IKVM.Reflection.Emit;
+#endif
 #else
 using System.Reflection;
 #if FEAT_COMPILER
 using System.Reflection.Emit;
 #endif
+#endif
+#if FEAT_COMPILER
+using ProtoBuf.Compiler;
 #endif
 
 using ProtoBuf.Serializers;
@@ -618,6 +623,9 @@ namespace ProtoBuf.Meta
             return new MetaType(this, type, defaultFactory);
         }
 
+        /// <summary>
+        /// See <see cref="MetaType.AsReferenceDefault"/>
+        /// </summary>
         public bool AddNotAsReferenceDefault { get; set; }
 
         /// <summary>
@@ -772,15 +780,18 @@ namespace ProtoBuf.Meta
         /// <param name="key">Represents the type (including inheritance) to consider.</param>
         /// <param name="value">The existing instance to be serialized (cannot be null).</param>
         /// <param name="dest">The destination stream to write to.</param>
-        protected internal override void Serialize(int key, object value, ProtoWriter dest)
+        protected internal override void Serialize(int key, object value, ProtoWriter dest, bool isRoot)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
             //Helpers.DebugWriteLine("Serialize", value);
-            ((MetaType)types[key]).Serializer.Write(value, dest);
+            var metaType = ((MetaType) types[key]);
+            var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
+            ser.Write(value, dest);
 #endif
         }
+
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -790,13 +801,15 @@ namespace ProtoBuf.Meta
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
-        protected internal override object Deserialize(int key, object value, ProtoReader source)
+        protected internal override object Deserialize(int key, object value, ProtoReader source, bool isRoot)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
             //Helpers.DebugWriteLine("Deserialize", value);
-            IProtoSerializer ser = ((MetaType)types[key]).Serializer;
+            var metaType = ((MetaType)types[key]);
+            var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
+            
             if (value == null && Helpers.IsValueType(ser.ExpectedType))
             {
                 if (ser.RequiresOldValue) value = CreateInstance(ser, source);
@@ -1173,17 +1186,23 @@ namespace ProtoBuf.Meta
             Compiler.CompilerContext.ILVersion ilVersion;
             WriteSerializers(options, assemblyName, type, out index, out hasInheritance, out methodPairs, out ilVersion);
 
+            int basicIndex = index;
+            bool basicHasInheritance = hasInheritance;
+            SerializerPair[] basicMethodPairs = methodPairs;
+            var basicIlVersion = ilVersion;
+
+            WriteRootSerializers(options, assemblyName, type, out index, out hasInheritance, out methodPairs, basicMethodPairs, out ilVersion);
+
             ILGenerator il;
             int knownTypesCategory;
             FieldBuilder knownTypes;
             Type knownTypesLookupType;
-            WriteGetKeyImpl(type, hasInheritance, methodPairs, ilVersion, assemblyName, out il, out knownTypesCategory, out knownTypes, out knownTypesLookupType);
+            WriteGetKeyImpl(type, basicHasInheritance, basicMethodPairs, basicIlVersion, assemblyName, out il, out knownTypesCategory, out knownTypes, out knownTypesLookupType);
+            
+            Compiler.CompilerContext ctx = WriteSerializeDeserialize(assemblyName, type, basicMethodPairs, methodPairs, basicIlVersion, ref il);
 
-            Compiler.CompilerContext ctx = WriteSerializeDeserialize(assemblyName, type, methodPairs, ilVersion, ref il);
-
-            WriteConstructors(type, ref index, methodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
-
-
+            WriteConstructors(type, ref basicIndex, basicMethodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
+            
 
             Type finalType = type.CreateType();
             if(!Helpers.IsNullOrEmpty(path))
@@ -1301,7 +1320,7 @@ namespace ProtoBuf.Meta
             }
         }
 
-        private Compiler.CompilerContext WriteSerializeDeserialize(string assemblyName, TypeBuilder type, SerializerPair[] methodPairs, Compiler.CompilerContext.ILVersion ilVersion, ref ILGenerator il)
+        private Compiler.CompilerContext WriteSerializeDeserialize(string assemblyName, TypeBuilder type, SerializerPair[] methodPairs, SerializerPair[] rootMethodPairs, Compiler.CompilerContext.ILVersion ilVersion, ref ILGenerator il)
         {
             il = Override(type, "Serialize");
             Compiler.CompilerContext ctx = new Compiler.CompilerContext(il, false, true, methodPairs, this, ilVersion, assemblyName, MapType(typeof(object)));
@@ -1318,11 +1337,16 @@ namespace ProtoBuf.Meta
             {
                 SerializerPair pair = methodPairs[i];
                 ctx.MarkLabel(jumpTable[i]);
-                il.Emit(OpCodes.Ldarg_2);
-                ctx.CastFromObject(pair.Type.Type);
-                il.Emit(OpCodes.Ldarg_3);
-                il.EmitCall(OpCodes.Call, pair.Serialize, null);
-                ctx.Return();
+                var labelNoRoot = ctx.DefineLabel();
+
+                il.Emit(OpCodes.Ldarg_S, 4);
+                ctx.BranchIfFalse(labelNoRoot, true);
+
+                WriteSerializePair(il, ctx, rootMethodPairs[i]);
+
+                ctx.MarkLabel(labelNoRoot);
+
+                WriteSerializePair(il, ctx, pair);
             }
 
             il = Override(type, "Deserialize");
@@ -1340,24 +1364,48 @@ namespace ProtoBuf.Meta
             {
                 SerializerPair pair = methodPairs[i];
                 ctx.MarkLabel(jumpTable[i]);
-                Type keyType = pair.Type.Type;
-                if (keyType.IsValueType)
-                {
-                    il.Emit(OpCodes.Ldarg_2);
-                    il.Emit(OpCodes.Ldarg_3);
-                    il.EmitCall(OpCodes.Call, EmitBoxedSerializer(type, i, keyType, methodPairs, this, ilVersion, assemblyName), null);
-                    ctx.Return();
-                }
-                else
-                {
-                    il.Emit(OpCodes.Ldarg_2);
-                    ctx.CastFromObject(keyType);
-                    il.Emit(OpCodes.Ldarg_3);
-                    il.EmitCall(OpCodes.Call, pair.Deserialize, null);
-                    ctx.Return();
-                }
+                var labelNoRoot = ctx.DefineLabel();
+
+                il.Emit(OpCodes.Ldarg_S, 4);
+                ctx.BranchIfFalse(labelNoRoot, true);
+
+                WriteDeserializePair(assemblyName, type, rootMethodPairs, ilVersion, il, rootMethodPairs[i], i, ctx);
+
+                ctx.MarkLabel(labelNoRoot);
+
+                WriteDeserializePair(assemblyName, type, methodPairs, ilVersion, il, pair, i, ctx);
             }
             return ctx;
+        }
+
+        private void WriteDeserializePair(string assemblyName, TypeBuilder type, SerializerPair[] methodPairs, CompilerContext.ILVersion ilVersion, ILGenerator il, SerializerPair pair, int i,
+                                          CompilerContext ctx)
+        {
+            Type keyType = pair.Type.Type;
+            if (keyType.IsValueType)
+            {
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldarg_3);
+                il.EmitCall(OpCodes.Call, EmitBoxedSerializer(type, i, keyType, methodPairs, this, ilVersion, assemblyName), null);
+                ctx.Return();
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldarg_2);
+                ctx.CastFromObject(keyType);
+                il.Emit(OpCodes.Ldarg_3);
+                il.EmitCall(OpCodes.Call, pair.Deserialize, null);
+                ctx.Return();
+            }
+        }
+
+        private static void WriteSerializePair(ILGenerator il, CompilerContext ctx, SerializerPair pair)
+        {
+            il.Emit(OpCodes.Ldarg_2);
+            ctx.CastFromObject(pair.Type.Type);
+            il.Emit(OpCodes.Ldarg_3);
+            il.EmitCall(OpCodes.Call, pair.Serialize, null);
+            ctx.Return();
         }
 
         private const int KnownTypes_Array = 1, KnownTypes_Dictionary = 2, KnownTypes_Hashtable = 3, KnownTypes_ArrayCutoff = 20;
@@ -1561,6 +1609,66 @@ namespace ProtoBuf.Meta
                 ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
                 pair.Type.Serializer.EmitRead(ctx, ctx.InputValue);
                 if (!pair.Type.Serializer.ReturnsValue)
+                {
+                    ctx.LoadValue(ctx.InputValue);
+                }
+                ctx.Return();
+            }
+        }
+
+        private void WriteRootSerializers(CompilerOptions options, string assemblyName, TypeBuilder type, out int index, out bool hasInheritance, out SerializerPair[] methodPairs, SerializerPair[] baseMethodPairs, out Compiler.CompilerContext.ILVersion ilVersion)
+        {
+            Compiler.CompilerContext ctx;
+
+            index = 0;
+            hasInheritance = false;
+            methodPairs = new SerializerPair[types.Count];
+            foreach (MetaType metaType in types)
+            {
+                MethodBuilder writeMethod = type.DefineMethod("WriteRoot"
+#if DEBUG
+ + metaType.Type.Name
+#endif
+,
+                    MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard,
+                    MapType(typeof(void)), new Type[] { metaType.Type, MapType(typeof(ProtoWriter)) });
+
+                MethodBuilder readMethod = type.DefineMethod("ReadRoot"
+#if DEBUG
+ + metaType.Type.Name
+#endif
+,
+                    MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard,
+                    metaType.Type, new Type[] { metaType.Type, MapType(typeof(ProtoReader)) });
+
+                SerializerPair pair = new SerializerPair(
+                    GetKey(metaType.Type, true, false), GetKey(metaType.Type, true, true), metaType,
+                    writeMethod, readMethod, writeMethod.GetILGenerator(), readMethod.GetILGenerator());
+                methodPairs[index++] = pair;
+                if (pair.MetaKey != pair.BaseKey) hasInheritance = true;
+            }
+
+            if (hasInheritance)
+            {
+                Array.Sort(methodPairs);
+            }
+
+            ilVersion = Compiler.CompilerContext.ILVersion.Net2;
+            if (options.MetaDataVersion == 0x10000)
+            {
+                ilVersion = Compiler.CompilerContext.ILVersion.Net1; // old-school!
+            }
+            for (index = 0; index < methodPairs.Length; index++)
+            {
+                SerializerPair pair = methodPairs[index];
+                ctx = new Compiler.CompilerContext(pair.SerializeBody, true, true, baseMethodPairs, this, ilVersion, assemblyName, pair.Type.Type);
+                ctx.CheckAccessibility(pair.Deserialize.ReturnType);
+                pair.Type.RootSerializer.EmitWrite(ctx, ctx.InputValue);
+                ctx.Return();
+
+                ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, baseMethodPairs, this, ilVersion, assemblyName, pair.Type.Type);
+                pair.Type.RootSerializer.EmitRead(ctx, ctx.InputValue);
+                if (!pair.Type.RootSerializer.ReturnsValue)
                 {
                     ctx.LoadValue(ctx.InputValue);
                 }

@@ -124,7 +124,7 @@ namespace ProtoBuf.ServiceModel
                     {
                         using (ProtoWriter protoWriter = new ProtoWriter(ms, model, null))
                         {
-                            model.Serialize(key, graph, protoWriter);
+                            model.Serialize(key, graph, protoWriter, true);
                         }
                     }
                     byte[] buffer = ms.GetBuffer();
@@ -169,7 +169,7 @@ namespace ProtoBuf.ServiceModel
                 try
                 {
                     protoReader = ProtoReader.Create(Stream.Null, model, null, ProtoReader.TO_EOF);
-                    return model.Deserialize(key, null, protoReader);
+                    return model.Deserialize(key, null, protoReader, true);
                 }
                 finally
                 {
@@ -191,7 +191,7 @@ namespace ProtoBuf.ServiceModel
                     try
                     {
                         protoReader = ProtoReader.Create(ms, model, null, ProtoReader.TO_EOF);
-                        result = model.Deserialize(key, null, protoReader);
+                        result = model.Deserialize(key, null, protoReader, true);
                     }
                     finally
                     {

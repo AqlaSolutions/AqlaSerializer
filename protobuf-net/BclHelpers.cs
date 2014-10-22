@@ -1,6 +1,5 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
-using System.Reflection;
 namespace ProtoBuf
 {
     internal enum TimeSpanScale
@@ -372,15 +371,36 @@ namespace ProtoBuf
             /// </summary>
             LateSet = 8
         }
+
+        internal delegate object MaskedGetter();
+        internal delegate void MaskedSetter();
+
         /// <summary>
         /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
         public static object ReadNetObject(object value, ProtoReader source, int key, Type type, NetObjectOptions options)
         {
+            SubItemToken token;
+            bool isNewObject;
+            var r = ReadNetObjectMasked_Start(value, source, key, type, options, false, out token, out isNewObject);
+            ProtoReader.EndSubItem(token, source);
+            return r;
+        }
+
+        /// <summary>
+        /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
+        /// </summary>
+        public static object ReadNetObjectMasked_Start(object value, ProtoReader source, int key, Type type, NetObjectOptions options, bool root, out SubItemToken token, out bool isNewObject)
+        {
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            SubItemToken token = ProtoReader.StartSubItem(source);
+            isNewObject = false;
+
+            token = !root
+                ? ProtoReader.StartSubItem(source)
+                : new SubItemToken();
+
             int fieldNumber;
             int newObjectKey = -1, newTypeKey = -1, tmp;
             while ((fieldNumber = source.ReadFieldHeader()) > 0)
@@ -392,6 +412,7 @@ namespace ProtoBuf
                         value = source.NetCache.GetKeyedObject(tmp);
                         break;
                     case FieldNewObjectKey:
+                        isNewObject = true;
                         newObjectKey = source.ReadInt32();
                         break;
                     case FieldExistingTypeKey:
@@ -438,7 +459,12 @@ namespace ProtoBuf
                             if (newTypeKey >= 0) source.NetCache.SetKeyedObject(newTypeKey, type);
                         }
                         object oldValue = value;
-                        if (isString)
+                        if (root)
+                        {
+                            token = ProtoReader.StartSubItem(source);
+                            return null;
+                        }
+                        else if (isString)
                         {
                             value = source.ReadString();
                         }
@@ -468,21 +494,20 @@ namespace ProtoBuf
                         {  // have a new type, but not a new object
                             source.NetCache.SetKeyedObject(newTypeKey, type);
                         }
-                        break;
+                        if (newObjectKey >= 0 && (options & NetObjectOptions.AsReference) == 0)
+                        {
+                            throw new ProtoException("Object key in input stream, but reference-tracking was not expected");
+                        }
+                        return value;
                     default:
                         source.SkipField();
                         break;
                 }
             }
-            if(newObjectKey >= 0 && (options & NetObjectOptions.AsReference) == 0)
-            {
-                throw new ProtoException("Object key in input stream, but reference-tracking was not expected");
-            }
-            ProtoReader.EndSubItem(token, source);
-
             return value;
 #endif
         }
+
         /// <summary>
         /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
@@ -491,12 +516,33 @@ namespace ProtoBuf
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
+            bool write;
+            SubItemToken t = WriteNetObjectMasked_Start(value, dest, key, options, false, out write);
+            ProtoWriter.EndSubItem(t, dest);
+#endif
+        }
+        /// <summary>
+        /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
+        /// </summary>
+        public static SubItemToken WriteNetObjectMasked_Start(object value, ProtoWriter dest, int key, NetObjectOptions options, bool root, out bool writeObject)
+        {
+#if FEAT_IKVM
+            throw new NotSupportedException();
+#else
             if (dest == null) throw new ArgumentNullException("dest");
             bool dynamicType = (options & NetObjectOptions.DynamicType) != 0,
                  asReference = (options & NetObjectOptions.AsReference) != 0;
-            WireType wireType = dest.WireType;
-            SubItemToken token = ProtoWriter.StartSubItem(null, dest);
-            bool writeObject = true;
+            WireType wireType = root
+                ? WireType.String
+                : dest.WireType;
+
+            SubItemToken token = !root
+                ? ProtoWriter.StartSubItem(null, dest)
+                : new SubItemToken();
+
+            // even root object can be wrapped with collection
+            // so it's not true root
+            writeObject = true;
             if (asReference)
             {
                 bool existing;
@@ -532,15 +578,20 @@ namespace ProtoBuf
                     
                 }
                 ProtoWriter.WriteFieldHeader(FieldObject, wireType, dest);
-                if (value is string)
+                if (root)
+                {
+                    return ProtoWriter.StartSubItem(null, dest);
+                }
+                else if (value is string)
                 {
                     ProtoWriter.WriteString((string)value, dest);
                 }
-                else { 
+                else
+                {
                     ProtoWriter.WriteObject(value, key, dest);
                 }
             }
-            ProtoWriter.EndSubItem(token, dest);
+            return token;
 #endif
         }
     }

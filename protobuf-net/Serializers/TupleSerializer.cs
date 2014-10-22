@@ -1,6 +1,9 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 using System;
+#if FEAT_COMPILER
+using ProtoBuf.Compiler;
+#endif
 using ProtoBuf.Meta;
 
 #if FEAT_IKVM
@@ -111,8 +114,10 @@ namespace ProtoBuf.Serializers
         {
             object[] values = new object[members.Length];
             bool invokeCtor = false;
+            int reservedTrap = -1;
             if (value == null)
             {
+                reservedTrap = ProtoReader.ReserveNoteObject(source);
                 invokeCtor = true;
             }
             for (int i = 0; i < values.Length; i++)
@@ -131,7 +136,14 @@ namespace ProtoBuf.Serializers
                     source.SkipField();
                 }
             }
-            return invokeCtor ? ctor.Invoke(values) : value;
+            if (invokeCtor)
+            {
+                var r = ctor.Invoke(values);
+                // inside references won't work, but from outside will
+                ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
+                return r;
+            }
+            return value;
         }
         public void Write(object value, ProtoWriter dest)
         {
@@ -187,7 +199,11 @@ namespace ProtoBuf.Serializers
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local incoming)
         {
             using (Compiler.Local objValue = ctx.GetLocalWithValue(ExpectedType, incoming))
+            using (Compiler.Local reservedTrap = new Local(ctx, ctx.MapType(typeof(int))))
+            using (Compiler.Local refLocalToNoteObject = new Local(ctx, ctx.MapType(typeof(object))))
             {
+                ctx.EmitCallReserveNoteObject();
+                ctx.StoreValue(reservedTrap);
                 Compiler.Local[] locals = new Compiler.Local[members.Length];
                 try
                 {
@@ -336,9 +352,16 @@ namespace ProtoBuf.Serializers
                     {
                         ctx.LoadValue(locals[i]);
                     }
-
                     ctx.EmitCtor(ctor);
                     ctx.StoreValue(objValue);
+                    
+                    ctx.LoadValue(objValue);
+                    ctx.CastToObject(ctx.MapType(ctor.DeclaringType));
+                    ctx.StoreValue(refLocalToNoteObject);
+                        
+                    ctx.LoadValue(reservedTrap);
+                    ctx.LoadAddress(refLocalToNoteObject, refLocalToNoteObject.Type);
+                    ctx.EmitCallNoteReservedTrappedObject();
                 }
                 finally
                 {
