@@ -18,7 +18,7 @@ namespace ProtoBuf.unittest.Meta
             public static RuntimeTypeModel BuildMeta()
             {
                 var model = TypeModel.Create();
-                model.NotAsReferenceDefault = true;
+                model.AddNotAsReferenceDefault = true;
                 var t=model.Add(typeof(Customer), false);
                 t.Add(1, "Id");
                 t.AddField(2, "Name").AsReference = false;

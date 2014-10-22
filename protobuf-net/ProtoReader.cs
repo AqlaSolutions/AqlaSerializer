@@ -1319,6 +1319,8 @@ namespace ProtoBuf
         internal void TrapNextObject(int newObjectKey)
         {
             trapCount++;
+            if (trapCount > 1)
+                throw new ProtoException("Trap count > 1, will be mismatched with next NoteObject");
             netCache.SetKeyedObject(newObjectKey, null); // use null as a temp
         }
 

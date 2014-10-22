@@ -65,7 +65,7 @@ namespace Examples
             if (model == null) model = RuntimeTypeModel.Default;
             var rtm = model as RuntimeTypeModel;
             if (rtm != null)
-                rtm.NotAsReferenceDefault = true;
+                rtm.AddNotAsReferenceDefault = true;
 
             using (MemoryStream ms = new MemoryStream())
             {

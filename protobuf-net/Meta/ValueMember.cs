@@ -89,7 +89,7 @@ namespace ProtoBuf.Meta
             }
             this.defaultValue = defaultValue;
 
-            if (CheckCanBeAsReference(memberType))
+            if (CheckCanThisBeAsReference())
             {
                 MetaType type = model.FindWithoutAdd(memberType);
                 if (type != null)
@@ -104,9 +104,14 @@ namespace ProtoBuf.Meta
             }
         }
 
-        internal static bool CheckCanBeAsReference(Type type)
+        bool CheckCanThisBeAsReference()
         {
-            return !Helpers.IsValueType(type);// && Helpers.GetTypeCode(type) != ProtoTypeCode.String;
+            return CheckCanBeAsReference(memberType, this.serializer is TupleSerializer);
+        }
+
+        internal static bool CheckCanBeAsReference(Type type, bool autoTuple)
+        {
+            return !autoTuple && !Helpers.IsValueType(type);// && Helpers.GetTypeCode(type) != ProtoTypeCode.String;
         }
 
         /// <summary>
@@ -211,7 +216,12 @@ namespace ProtoBuf.Meta
         {
             get
             {
-                if (serializer == null) serializer = BuildSerializer();
+                if (serializer == null)
+                {
+                    serializer = BuildSerializer();
+                    if (AsReference && !CheckCanThisBeAsReference())
+                        AsReference = false;
+                }
                 return serializer;
             }
         }
@@ -276,7 +286,7 @@ namespace ProtoBuf.Meta
             get { return asReference; }
             set { 
                 ThrowIfFrozen();
-                if (!CheckCanBeAsReference(memberType)) value = false;
+                if (!CheckCanThisBeAsReference()) value = false;
                 asReference = value;
             }
         }
@@ -451,7 +461,7 @@ namespace ProtoBuf.Meta
                 if (tmp != null) type = tmp;
             }
 #endif
-            if (asReference && !CheckCanBeAsReference(type))
+            if (asReference && !CheckCanBeAsReference(type, false))
                 asReference = false;
 
             if (Helpers.IsEnum(type))

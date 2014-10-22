@@ -331,7 +331,7 @@ namespace ProtoBuf.Meta
             if (model == null) throw new ArgumentNullException("model");
             if (type == null) throw new ArgumentNullException("type");
 
-            if (!model.NotAsReferenceDefault && ValueMember.CheckCanBeAsReference(type))
+            if (!model.AddNotAsReferenceDefault && ValueMember.CheckCanBeAsReference(type, false))
                 AsReferenceDefault = true;
 
             IProtoSerializer coreSerializer = model.TryGetBasicTypeSerializer(type);
@@ -881,10 +881,13 @@ namespace ProtoBuf.Meta
                 {
                     case "ProtoBuf.ProtoContractAttribute":
                         {
-                            bool tmp = false;
-                            GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
-                            if (tmp) return AttributeFamily.ProtoBuf;
-                            family |= AttributeFamily.ProtoBuf;
+                            if (!model.AutoAddAqlaContractTypesOnly)
+                            {
+                                bool tmp = false;
+                                GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
+                                if (tmp) return AttributeFamily.ProtoBuf;
+                                family |= AttributeFamily.ProtoBuf;
+                            }
                         }
                         break;
                     case "AqlaSerializer.SerializableTypeAttribute":
@@ -899,13 +902,13 @@ namespace ProtoBuf.Meta
                         }
                         break;
                     case "System.Xml.Serialization.XmlTypeAttribute":
-                        if (!model.AutoAddProtoContractTypesOnly)
+                        if (!model.AutoAddProtoContractTypesOnly && !model.AutoAddAqlaContractTypesOnly)
                         {
                             family |= AttributeFamily.XmlSerializer;
                         }
                         break;
                     case "System.Runtime.Serialization.DataContractAttribute":
-                        if (!model.AutoAddProtoContractTypesOnly)
+                        if (!model.AutoAddProtoContractTypesOnly && !model.AutoAddAqlaContractTypesOnly)
                         {
                             family |= AttributeFamily.DataContractSerialier;
                         }
@@ -914,8 +917,16 @@ namespace ProtoBuf.Meta
             }
             if(family == AttributeFamily.None)
             { // check for obvious tuples
+
+                // AqlaSerializer: as-reference is 
+                // a default behavior for classes
+                // and if type attribute is not set
+                // such behavior should apply.
+                // This will not be called if 
+                // there are any attributes!
+                
                 MemberInfo[] mapping;
-                if(ResolveTupleConstructor(type, out mapping) != null)
+                if ((type.IsValueType || !model.DontAddClassTuples) && ResolveTupleConstructor(type, out mapping) != null)
                 {
                     family |= AttributeFamily.AutoTuple;
                 }

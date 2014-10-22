@@ -27,8 +27,8 @@ namespace ProtoBuf.Meta
     /// </summary>
     public sealed class RuntimeTypeModel : TypeModel
     {
-        private byte options;
-        private const byte
+        private short options;
+        private const short
            OPTIONS_InferTagFromNameDefault = 1,
            OPTIONS_IsDefaultModel = 2,
            OPTIONS_Frozen = 4,
@@ -38,15 +38,18 @@ namespace ProtoBuf.Meta
 #endif
  OPTIONS_UseImplicitZeroDefaults = 32,
            OPTIONS_AllowParseableTypes = 64,
-           OPTIONS_AutoAddProtoContractTypesOnly = 128;
-        private bool GetOption(byte option)
+           OPTIONS_AutoAddProtoContractTypesOnly = 128,
+           OPTIONS_AutoAddAqlaContractTypesOnly = 256,
+           OPTIONS_DontAddClassTuples = 512;
+
+        private bool GetOption(short option)
         {
             return (options & option) == option;
         }
-        private void SetOption(byte option, bool value)
+        private void SetOption(short option, bool value)
         {
             if (value) options |= option;
-            else options &= (byte)~option;
+            else options &= (short)~option;
         }
         /// <summary>
         /// Global default that
@@ -61,10 +64,30 @@ namespace ProtoBuf.Meta
             get { return GetOption(OPTIONS_InferTagFromNameDefault); }
             set { SetOption(OPTIONS_InferTagFromNameDefault, value); }
         }
+        
+        /// <summary>
+        /// But they will not be as reference
+        /// </summary>
+        public bool DontAddClassTuples
+        {
+            get { return GetOption(OPTIONS_DontAddClassTuples); }
+            set { SetOption(OPTIONS_DontAddClassTuples, value); }
+        }
 
         /// <summary>
         /// Global default that determines whether types are considered serializable
-        /// if they have [DataContract] / [XmlType]. With this enabled, <b>ONLY</b>
+        /// if they have [DataContract] / [XmlType] / [ProtoContract]. With this enabled, <b>ONLY</b>
+        /// types marked as [SerializableType] are added automatically.
+        /// </summary>
+        public bool AutoAddAqlaContractTypesOnly
+        {
+            get { return GetOption(OPTIONS_AutoAddAqlaContractTypesOnly); }
+            set { SetOption(OPTIONS_AutoAddAqlaContractTypesOnly, value); }
+        }
+
+        /// <summary>
+        /// Global default that determines whether types are considered serializable
+        /// if they have [DataContract] / [XmlType] / [SerializableType]. With this enabled, <b>ONLY</b>
         /// types marked as [ProtoContract] are added automatically.
         /// </summary>
         public bool AutoAddProtoContractTypesOnly
@@ -595,7 +618,7 @@ namespace ProtoBuf.Meta
             return new MetaType(this, type, defaultFactory);
         }
 
-        public bool NotAsReferenceDefault { get; set; }
+        public bool AddNotAsReferenceDefault { get; set; }
 
         /// <summary>
         /// Adds support for an additional type in this model, optionally
