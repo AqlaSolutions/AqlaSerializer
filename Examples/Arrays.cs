@@ -118,6 +118,30 @@ namespace Examples
         }
 
         [Test]
+        public void TestOverwriteVersusAppendComile()
+        {
+            var orig = new WithAndWithoutOverwrite { Append = new[] {7,8}, Overwrite = new[] { 9,10}};
+            var model = TypeModel.Create();
+            model.AutoCompile = false;
+            model.Add(typeof(WithAndWithoutOverwrite), true);
+            model.AutoAddMissingTypes = false;
+            model.Compile();
+
+            var clone = (WithAndWithoutOverwrite)model.DeepClone(orig);
+            Assert.IsTrue(clone.Overwrite.SequenceEqual(new[] { 9, 10 }), "Overwrite, Runtime");
+            Assert.IsTrue(clone.Append.SequenceEqual(new[] { 1, 2, 3, 7, 8 }), "Append, Runtime");
+
+            model.CompileInPlace();
+            clone = (WithAndWithoutOverwrite)model.DeepClone(orig);
+            Assert.IsTrue(clone.Overwrite.SequenceEqual(new[] { 9, 10 }), "Overwrite, CompileInPlace");
+            Assert.IsTrue(clone.Append.SequenceEqual(new[] { 1, 2, 3, 7, 8 }), "Append, CompileInPlace");
+
+            clone = (WithAndWithoutOverwrite)(model.Compile()).DeepClone(orig);
+            Assert.IsTrue(clone.Overwrite.SequenceEqual(new[] { 9, 10 }), "Overwrite, Compile");
+            Assert.IsTrue(clone.Append.SequenceEqual(new[] { 1, 2, 3, 7, 8 }), "Append, Compile");
+        }
+
+        [Test]
         public void TestSkipConstructor()
         {
             var orig = new WithSkipConstructor { Values = new[] { 4, 5 } };

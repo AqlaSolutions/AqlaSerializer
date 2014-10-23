@@ -102,6 +102,7 @@ namespace ProtoBuf.Meta
                     this.asReference = MetaType.GetAsReferenceDefault(model, memberType);
                 }
             }
+            AppendCollection = !Helpers.CanWrite(model, member);
         }
 
         bool CheckCanThisBeAsReference()
@@ -129,6 +130,11 @@ namespace ProtoBuf.Meta
 
             this.model = model;
             this.dataFormat = dataFormat;
+            // fake ValueMember could be created for lists
+            // it will use ListDecorator with returnList = false
+            // because it doesn't have writable member
+            // so consider it read only
+            this.AppendCollection = true; 
         }
         internal object GetRawEnumValue()
         {
@@ -349,19 +355,21 @@ namespace ProtoBuf.Meta
             {
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
                 WireType wireType;
-                Type finalType = itemType == null ? memberType : itemType;
+                Type finalType = itemType ?? memberType;
                 IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, !AppendCollection, true);
                 if (ser == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
                 }
 
+                bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetUnderlyingType(finalType) != null;
+
                 // apply tags
-                if (itemType != null && SupportNull)
+                if (itemType != null && supportNull)
                 {
                     if (IsPacked)
                     {
-                        throw new NotSupportedException("Packed encodings cannot support null values");
+                        supportNull= false;
                     }
                     ser = new TagDecorator(NullDecorator.Tag, wireType, IsStrict, ser);
                     ser = new NullDecorator(model, ser);
@@ -377,16 +385,17 @@ namespace ProtoBuf.Meta
 #if NO_GENERICS
                     Type underlyingItemType = itemType;
 #else
-                    Type underlyingItemType = SupportNull ? itemType : Helpers.GetUnderlyingType(itemType) ?? itemType;
+                    Type underlyingItemType = supportNull ? itemType : Helpers.GetUnderlyingType(itemType) ?? itemType;
 #endif
                     Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
                     if (memberType.IsArray)
                     {
-                        ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, !AppendCollection, SupportNull);
+                        ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, !AppendCollection, supportNull);
                     }
                     else
                     {
-                        ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType, member != null && PropertyDecorator.CanWrite(model, member), !AppendCollection, SupportNull);
+                        ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType, 
+                            member != null && Helpers.CanWrite(model, member), !AppendCollection, supportNull);
                     }
                 }
                 else if (defaultValue != null && !IsRequired && getSpecified == null)
@@ -633,9 +642,10 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Should lists have extended support for null values? Note this makes the serialization less efficient.
         /// </summary>
+        [Obsolete("In AqlaSerializer nulls support goes without saying")]
         public bool SupportNull
         {
-            get { return HasFlag(OPTIONS_SupportNull); }
+            get { return AsReference || HasFlag(OPTIONS_SupportNull); }
             set { SetFlag(OPTIONS_SupportNull, value, true); }
         }
 

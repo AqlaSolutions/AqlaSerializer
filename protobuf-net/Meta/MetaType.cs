@@ -1087,16 +1087,10 @@ namespace ProtoBuf.Meta
             string name = null;
             bool isPacked = false, ignore = false, done = false, isRequired = false, notAsReference = false, notAsReferenceHasValue = false, dynamicType = false, tagIsPinned = false, appendCollection = false;
 
-            bool readOnly = false;
-
-            var prop = member as PropertyInfo;
-            if (prop != null && !Helpers.CheckIfPropertyWritable(model, prop, true, true))
-            {
+            bool readOnly = !Helpers.CanWrite(model, member);
+            if (readOnly)
                 appendCollection = true;
-                readOnly = true;
-            }
             
-
             DataFormat dataFormat = DataFormat.Default;
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(model, member, true);

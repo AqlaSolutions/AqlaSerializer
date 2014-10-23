@@ -20,7 +20,8 @@ namespace Examples.Issues
         {
             var model = TypeModel.Create();
 #if DEBUG
-            model.ForwardsOnly = true;
+            //Aqla Serializer - what purpose to not buffer?
+            //model.ForwardsOnly = true;
 #endif
             var obj = new BasicData {C = new C {Field1 = "abc", Field2 = "def"}};
             var clone = (BasicData)model.DeepClone(obj);
@@ -41,7 +42,8 @@ namespace Examples.Issues
         {
             var model = TypeModel.Create();
 #if DEBUG
-            model.ForwardsOnly = true;
+            // Aqla Serializer - what purpose to not buffer?
+            //model.ForwardsOnly = true;
 #endif
             Console.WriteLine("Inventing data...");
             var watch = Stopwatch.StartNew();

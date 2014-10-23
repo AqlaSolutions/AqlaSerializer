@@ -41,12 +41,14 @@ namespace Examples.Issues
             model.Add(typeof(NullableSequences), true);
             return model;
         }
+        [Ignore("AqlaSerializer changed null handling")]
         [Test, ExpectedException(typeof(NullReferenceException))]
         public void ExecuteWithNullRuntime()
         {
             var model = GetModel();
             RunTestNull(model, "Runtime");
         }
+        [Ignore("AqlaSerializer changed null handling")]
         [Test, ExpectedException(typeof(NullReferenceException))]
         public void ExecuteWithNullCompileInPlace()
         {
@@ -54,6 +56,7 @@ namespace Examples.Issues
             model.CompileInPlace();
             RunTestNull(model, "CompileInPlace");
         }
+        [Ignore("AqlaSerializer changed null handling")]
         [Test, ExpectedException(typeof(NullReferenceException))]
         public void ExecuteWithNullCompile()
         {
