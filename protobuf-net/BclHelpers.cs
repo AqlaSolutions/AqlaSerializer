@@ -372,9 +372,6 @@ namespace ProtoBuf
             LateSet = 8
         }
 
-        internal delegate object MaskedGetter();
-        internal delegate void MaskedSetter();
-
         /// <summary>
         /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>

@@ -1,6 +1,9 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
+using System.Collections;
+#if !NO_GENERICS
 using System.Collections.Generic;
+#endif
 using System.IO;
 using System.Text;
 using ProtoBuf.Meta;
@@ -1324,7 +1327,7 @@ namespace ProtoBuf
             if (trappedKey == -1) return;
             if (reader.trapCount != 0) throw new InvalidOperationException("NoteReservedTrappedObject called while new not reserved trap present");
             var stack = reader._trapNoteReserved;
-            var trueKey = stack.Peek();
+            var trueKey = (int) stack.Peek();
             if (trappedKey != trueKey) throw new InvalidOperationException("NoteReservedTrappedObject called for " + trappedKey + " but waiting for " + trueKey);
             stack.Pop();
             reader.netCache.SetKeyedObject(trueKey, value);
@@ -1338,8 +1341,11 @@ namespace ProtoBuf
             return TypeModel.DeserializeType(model, ReadString());
         }
 
+#if NO_GENERICS
+        readonly Stack _trapNoteReserved = new Stack();
+#else
         readonly Stack<int> _trapNoteReserved = new Stack<int>();
-
+#endif
         int _trappedKey;
 
         public static int ReserveNoteObject(ProtoReader reader)
