@@ -874,11 +874,17 @@ namespace ProtoBuf.Meta
                 case ImplicitFields.AllFields:
                     if (isField) forced = true;
                     break;
+                case ImplicitFields.AllProperties:
+                    if (!isField) forced = true;
+                    break;
                 case ImplicitFields.PublicFieldsAndProperties:
                     if (isPublic) forced = true;
                     break;
                 case ImplicitFields.PublicProperties:
                     if (isPublic && !isField) forced = true;
+                    break;
+                case ImplicitFields.AllFieldsAndProperties:
+                    forced = true;
                     break;
             }
 

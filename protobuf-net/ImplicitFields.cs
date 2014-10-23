@@ -29,12 +29,22 @@ namespace ProtoBuf
         /// </summary>
         AllFields = 2,
         /// <summary>
+        /// Public and non-public properties are eligible for implicit serialization;
+        /// this acts as a state/implementation serializer. Ordering beings from ImplicitFirstTag.
+        /// </summary>
+        AllProperties = 3,
+        /// <summary>
+        /// Public and non-public properties are eligible for implicit serialization;
+        /// this acts as a state/implementation serializer. Ordering beings from ImplicitFirstTag.
+        /// </summary>
+        AllFieldsAndProperties = 4,
+        /// <summary>
         /// Public fields are eligible for implicit serialization
         /// </summary>
-        PublicFields = 3,
+        PublicFields = 5,
         /// <summary>
         /// Public properties are eligible for implicit serialization
         /// </summary>
-        PublicProperties = 4
+        PublicProperties = 6
     }
 }
