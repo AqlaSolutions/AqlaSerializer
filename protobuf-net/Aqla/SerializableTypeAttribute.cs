@@ -57,7 +57,7 @@ namespace AqlaSerializer
         /// Please review the important notes against the ImplicitFields enumeration.
         /// </summary>
         public ImplicitFields ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
-        private ImplicitFields implicitFields;
+        private ImplicitFields implicitFields = ImplicitFields.PublicProperties;
 
         /// <summary>
         /// Property is treated as public only if both get and set accessors are public
