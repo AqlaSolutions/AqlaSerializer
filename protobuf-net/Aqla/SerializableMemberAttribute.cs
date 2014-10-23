@@ -110,16 +110,16 @@ namespace AqlaSerializer
         }
 
         /// <summary>
-        /// Indicates whether this field should *repace* existing values (the default is false, meaning *append*).
+        /// Indicates whether this field should *append* to existing values (the default is true, meaning *replace*).
         /// This option only applies to list/array data.
         /// </summary>
-        public bool OverwriteList
+        public bool AppendCollection
         {
-            get { return (options & MemberSerializationOptions.OverwriteList) == MemberSerializationOptions.OverwriteList; }
+            get { return (options & MemberSerializationOptions.AppendCollection) == MemberSerializationOptions.AppendCollection; }
             set
             {
-                if (value) options |= MemberSerializationOptions.OverwriteList;
-                else options &= ~MemberSerializationOptions.OverwriteList;
+                if (value) options |= MemberSerializationOptions.AppendCollection;
+                else options &= ~MemberSerializationOptions.AppendCollection;
             }
         }
 
@@ -213,7 +213,7 @@ namespace AqlaSerializer
         /// Indicates whether this field should *repace* existing values (the default is false, meaning *append*).
         /// This option only applies to list/array data.
         /// </summary>
-        OverwriteList = 16,
+        AppendCollection = 16,
         /// <summary>
         /// Determines whether the types AsReferenceDefault value is used, or whether this member's AsReference should be used
         /// </summary>

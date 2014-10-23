@@ -8,6 +8,8 @@ using IKVM.Reflection;
 #else
 using System.Reflection;
 #endif
+using ProtoBuf.Meta;
+
 
 namespace ProtoBuf
 {
@@ -404,7 +406,7 @@ namespace ProtoBuf
             if (method == null && !nonPublic && allowInternal)
             { // could be "internal" or "protected internal"; look for a non-public, then back-check
                 method = property.GetGetMethod(true);
-                if (method == null && !(method.IsAssembly || method.IsFamilyOrAssembly))
+                if (method != null && !(method.IsAssembly || method.IsFamilyOrAssembly))
                 {
                     method = null;
                 }
@@ -423,8 +425,8 @@ namespace ProtoBuf
             MethodInfo method = property.GetSetMethod(nonPublic);
             if (method == null && !nonPublic && allowInternal)
             { // could be "internal" or "protected internal"; look for a non-public, then back-check
-                method = property.GetGetMethod(true);
-                if (method == null && !(method.IsAssembly || method.IsFamilyOrAssembly))
+                method = property.GetSetMethod(true);
+                if (method != null && !(method.IsAssembly || method.IsFamilyOrAssembly))
                 {
                     method = null;
                 }
@@ -573,8 +575,40 @@ namespace ProtoBuf
             return target.IsAssignableFrom(type);
 #endif
         }
+        
+        public static MethodInfo GetShadowSetter(TypeModel model, PropertyInfo property)
+        {
+#if WINRT            
+            MethodInfo method = Helpers.GetInstanceMethod(property.DeclaringType.GetTypeInfo(), "Set" + property.Name, new Type[] { property.PropertyType });
+#else
 
+#if FEAT_IKVM
+            Type reflectedType = property.DeclaringType;
+#else
+            Type reflectedType = property.ReflectedType;
+#endif
+            MethodInfo method = Helpers.GetInstanceMethod(reflectedType, "Set" + property.Name, new Type[] { property.PropertyType });
+#endif
+            if (method == null || !method.IsPublic || method.ReturnType != model.MapType(typeof(void))) return null;
+            return method;
+        }
+
+        public static bool CheckIfPropertyWritable(TypeModel model, PropertyInfo property, bool nonPublic, bool allowInternal)
+        {
+            return GetShadowSetter(model, property) != null  || (property.CanWrite && Helpers.GetSetMethod(property, nonPublic, allowInternal) != null);
+        }
+
+        public static bool CanWrite(TypeModel model, MemberInfo member)
+        {
+            if (member == null) throw new ArgumentNullException("member");
+
+            PropertyInfo prop = member as PropertyInfo;
+            if (prop != null) return CheckIfPropertyWritable(model, prop, true, true);
+
+            return member is FieldInfo; // fields are always writeable; anything else: JUST SAY NO!
+        }
     }
+
     /// <summary>
     /// Intended to be a direct map to regular TypeCode, but:
     /// - with missing types

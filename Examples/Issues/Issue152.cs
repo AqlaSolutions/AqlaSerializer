@@ -15,8 +15,8 @@ namespace Examples.Issues
             var a1 = new IntArray { Arr = new int[] { 5, 6, 7 }, List = new List<int> { 8, 9, 10 } };
             var model = TypeModel.Create();
             model.AutoCompile = false;
-            model.Add(typeof(IntArray), true)[1].OverwriteList = true;
-            model.Add(typeof(IntArray), true)[2].OverwriteList = true;
+            model.Add(typeof(IntArray), true)[1].AppendCollection = false;
+            model.Add(typeof(IntArray), true)[2].AppendCollection = false;
 
             var clone = (IntArray)model.DeepClone(a1);
             AssertSequence(clone.Arr, "Runtime:Arr", 5, 6, 7);
@@ -39,8 +39,8 @@ namespace Examples.Issues
             var a1 = new IntArray { Arr = new int[] { 5, 6, 7 }, List = new List<int> { 8, 9, 10 } };
             var model = TypeModel.Create();
             model.AutoCompile = false;
-            model.Add(typeof(IntArray), true)[1].OverwriteList = false;
-            model.Add(typeof(IntArray), true)[2].OverwriteList = false;
+            model.Add(typeof(IntArray), true)[1].AppendCollection = true;
+            model.Add(typeof(IntArray), true)[2].AppendCollection = true;
 
             var clone = (IntArray)model.DeepClone(a1);
             AssertSequence(clone.Arr, "Runtime:Arr", 1, 2, 5, 6, 7);

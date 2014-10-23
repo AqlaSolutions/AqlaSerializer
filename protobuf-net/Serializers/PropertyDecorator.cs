@@ -31,12 +31,13 @@ namespace ProtoBuf.Serializers
             this.forType = forType;
             this.property = property;
             SanityCheck(model, property, tail, out readOptionsWriteValue, true, true);
-            shadowSetter = GetShadowSetter(model, property);
+            shadowSetter = Helpers.GetShadowSetter(model, property);
         }
         private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal) {
             if(property == null) throw new ArgumentNullException("property");
             
-            writeValue = tail.ReturnsValue && (GetShadowSetter(model, property) != null || (property.CanWrite && Helpers.GetSetMethod(property, nonPublic, allowInternal) != null));
+            writeValue = tail.ReturnsValue && (Helpers.CheckIfPropertyWritable(model, property, nonPublic, allowInternal));
+
             if (!property.CanRead || Helpers.GetGetMethod(property, nonPublic, allowInternal) == null)
             {
                 throw new InvalidOperationException("Cannot serialize property without a get accessor");
@@ -47,22 +48,8 @@ namespace ProtoBuf.Serializers
                 throw new InvalidOperationException("Cannot apply changes to property " + property.DeclaringType.FullName + "." + property.Name);
             }
         }
-        static MethodInfo GetShadowSetter(TypeModel model, PropertyInfo property)
-        {
-#if WINRT            
-            MethodInfo method = Helpers.GetInstanceMethod(property.DeclaringType.GetTypeInfo(), "Set" + property.Name, new Type[] { property.PropertyType });
-#else
-            
-#if FEAT_IKVM
-            Type reflectedType = property.DeclaringType;
-#else
-            Type reflectedType = property.ReflectedType;
-#endif
-            MethodInfo method = Helpers.GetInstanceMethod(reflectedType, "Set" + property.Name, new Type[] { property.PropertyType });
-#endif
-            if (method == null || !method.IsPublic || method.ReturnType != model.MapType(typeof(void))) return null;
-            return method;
-        }
+
+
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
@@ -157,16 +144,6 @@ namespace ProtoBuf.Serializers
             }
         }
 #endif
-
-        internal static bool CanWrite(TypeModel model, MemberInfo member)
-        {
-            if (member == null) throw new ArgumentNullException("member");
-
-            PropertyInfo prop = member as PropertyInfo;
-            if (prop != null) return prop.CanWrite || GetShadowSetter(model, prop) != null;
-
-            return member is FieldInfo; // fields are always writeable; anything else: JUST SAY NO!
-        }
     }
 }
 #endif

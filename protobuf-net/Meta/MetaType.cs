@@ -1085,7 +1085,18 @@ namespace ProtoBuf.Meta
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
             string name = null;
-            bool isPacked = false, ignore = false, done = false, isRequired = false, notAsReference = false, notAsReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false;
+            bool isPacked = false, ignore = false, done = false, isRequired = false, notAsReference = false, notAsReferenceHasValue = false, dynamicType = false, tagIsPinned = false, appendCollection = false;
+
+            bool readOnly = false;
+
+            var prop = member as PropertyInfo;
+            if (prop != null && !Helpers.CheckIfPropertyWritable(model, prop, true, true))
+            {
+                appendCollection = true;
+                readOnly = true;
+            }
+            
+
             DataFormat dataFormat = DataFormat.Default;
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(model, member, true);
@@ -1145,7 +1156,10 @@ namespace ProtoBuf.Meta
                     GetFieldName(ref name, attrib, "Name");
                     GetFieldBoolean(ref isRequired, attrib, "IsRequired");
                     GetFieldBoolean(ref isPacked, attrib, "IsPacked");
+                    bool overwriteList = false;
                     GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
+                    appendCollection = !overwriteList;
+
                     GetDataFormat(ref dataFormat, attrib, "DataFormat");
 
                     bool asRefHasValue = false;
@@ -1186,7 +1200,7 @@ namespace ProtoBuf.Meta
                         GetFieldName(ref name, attrib, "Name");
                         GetFieldBoolean(ref isRequired, attrib, "IsRequired");
                         GetFieldBoolean(ref isPacked, attrib, "IsPacked");
-                        GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
+                        GetFieldBoolean(ref appendCollection, attrib, "AppendCollection");
                         GetDataFormat(ref dataFormat, attrib, "DataFormat");
 
 #if !FEAT_IKVM //
@@ -1213,11 +1227,11 @@ namespace ProtoBuf.Meta
                             GetFieldName(ref name, ppma, "Name");
                             GetFieldBoolean(ref isRequired, ppma, "IsRequired");
                             GetFieldBoolean(ref isPacked, ppma, "IsPacked");
-                            GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
                             GetDataFormat(ref dataFormat, ppma, "DataFormat");
 
                             if (ppma.AttributeType.FullName == "AqlaSerializer.NonSerializableMember")
                             {
+                                GetFieldBoolean(ref appendCollection, attrib, "AppendCollection");
 
 #if !FEAT_IKVM //
                                 // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
@@ -1230,6 +1244,10 @@ namespace ProtoBuf.Meta
                             }
                             else // proto
                             {
+                                bool overwriteList = false;
+                                GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
+                                appendCollection = !overwriteList;
+
                                 bool asRefHasValue = false;
 #if !FEAT_IKVM
                                 // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
@@ -1297,7 +1315,9 @@ namespace ProtoBuf.Meta
             result.DataFormat = dataFormat;
             result.DynamicType = dynamicType;
             result.IsPacked = isPacked;
-            result.OverwriteList = overwriteList;
+            if (readOnly && !appendCollection)
+                throw new ProtoException("The property " + member.Name + " of " + member.DeclaringType.Name + " is not writable but AppendCollection is true!");
+            result.AppendCollection = appendCollection;
             result.IsRequired = isRequired;
             result.Name = Helpers.IsNullOrEmpty(name) ? member.Name : name;
             result.Member = member;
@@ -1387,7 +1407,7 @@ namespace ProtoBuf.Meta
                 if (!Helpers.IsNullOrEmpty(normalizedAttribute.Name)) vm.SetName(normalizedAttribute.Name);
                 vm.IsPacked = normalizedAttribute.IsPacked;
                 vm.IsRequired = normalizedAttribute.IsRequired;
-                vm.OverwriteList = normalizedAttribute.OverwriteList;
+                vm.AppendCollection = normalizedAttribute.AppendCollection;
                 vm.AsReference = true;
                 if (normalizedAttribute.NotAsReferenceHasValue)
                     vm.AsReference = !normalizedAttribute.NotAsReference;

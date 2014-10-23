@@ -262,10 +262,10 @@ namespace ProtoBuf.Meta
         /// Indicates whether this field should *repace* existing values (the default is false, meaning *append*).
         /// This option only applies to list/array data.
         /// </summary>
-        public bool OverwriteList
+        public bool AppendCollection
         {
-            get { return HasFlag(OPTIONS_OverwriteList); }
-            set { SetFlag(OPTIONS_OverwriteList, value, true); }
+            get { return HasFlag(OPTIONS_AppendCollection); }
+            set { SetFlag(OPTIONS_AppendCollection, value, true); }
         }
 
         /// <summary>
@@ -350,7 +350,7 @@ namespace ProtoBuf.Meta
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
                 WireType wireType;
                 Type finalType = itemType == null ? memberType : itemType;
-                IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, OverwriteList, true);
+                IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, !AppendCollection, true);
                 if (ser == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
@@ -382,11 +382,11 @@ namespace ProtoBuf.Meta
                     Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
                     if (memberType.IsArray)
                     {
-                        ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, OverwriteList, SupportNull);
+                        ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, !AppendCollection, SupportNull);
                     }
                     else
                     {
-                        ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType, member != null && PropertyDecorator.CanWrite(model, member), OverwriteList, SupportNull);
+                        ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType, member != null && PropertyDecorator.CanWrite(model, member), !AppendCollection, SupportNull);
                     }
                 }
                 else if (defaultValue != null && !IsRequired && getSpecified == null)
@@ -613,7 +613,7 @@ namespace ProtoBuf.Meta
            OPTIONS_IsStrict = 1,
            OPTIONS_IsPacked = 2,
            OPTIONS_IsRequired = 4,
-           OPTIONS_OverwriteList = 8,
+           OPTIONS_AppendCollection = 8,
            OPTIONS_SupportNull = 16;
 
         private byte flags;
