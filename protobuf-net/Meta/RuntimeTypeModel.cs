@@ -2,6 +2,9 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+#if !NO_GENERICS
+using System.Collections.Generic;
+#endif
 using System.Text;
 
 #if FEAT_IKVM
@@ -24,9 +27,16 @@ using ProtoBuf.Serializers;
 using System.Threading;
 using System.IO;
 
-
 namespace ProtoBuf.Meta
 {
+#if !NO_GENERiCS
+    using TypeSet = Dictionary<Type, object>;
+    using TypeList = List<Type>;
+#else
+    using TypeSet = System.Collections.Hashtable;
+    using TypeList = System.Collections.ArrayList;
+#endif
+
     /// <summary>
     /// Provides protobuf serialization support for a number of types that can be defined at runtime
     /// </summary>
@@ -69,7 +79,7 @@ namespace ProtoBuf.Meta
             get { return GetOption(OPTIONS_InferTagFromNameDefault); }
             set { SetOption(OPTIONS_InferTagFromNameDefault, value); }
         }
-        
+
         /// <summary>
         /// But they will not be as reference
         /// </summary>
@@ -112,8 +122,9 @@ namespace ProtoBuf.Meta
         /// </summary>
         public bool UseImplicitZeroDefaults
         {
-            get {return GetOption(OPTIONS_UseImplicitZeroDefaults);}
-            set {
+            get { return GetOption(OPTIONS_UseImplicitZeroDefaults); }
+            set
+            {
                 if (!value && GetOption(OPTIONS_IsDefaultModel))
                 {
                     throw new InvalidOperationException("UseImplicitZeroDefaults cannot be disabled on the default model");
@@ -163,7 +174,7 @@ namespace ProtoBuf.Meta
             bool isInbuiltType = false;
             if (type == null)
             { // generate for the entire model
-                foreach(MetaType meta in types)
+                foreach (MetaType meta in types)
                 {
                     MetaType tmp = meta.GetSurrogateOrBaseOrSelf(false);
                     if (!requiredTypes.Contains(tmp))
@@ -287,7 +298,7 @@ namespace ProtoBuf.Meta
                 if (metaType.IsAutoTuple)
                 {
                     MemberInfo[] mapping;
-                    if(MetaType.ResolveTupleConstructor(metaType.Type, out mapping) != null)
+                    if (MetaType.ResolveTupleConstructor(metaType.Type, out mapping) != null)
                     {
                         for (int i = 0; i < mapping.Length; i++)
                         {
@@ -486,7 +497,7 @@ namespace ProtoBuf.Meta
 
             if (idx >= 0) return ((BasicType)basicTypes[idx]).Serializer;
 
-            lock(basicTypes)
+            lock (basicTypes)
             { // don't need a full model lock for this
 
                 // double-checked
@@ -499,7 +510,7 @@ namespace ProtoBuf.Meta
                     ? ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false)
                     : null;
 
-                if(ser != null) basicTypes.Add(new BasicType(type, ser));
+                if (ser != null) basicTypes.Add(new BasicType(type, ser));
                 return ser;
             }
 
@@ -627,6 +638,214 @@ namespace ProtoBuf.Meta
         /// See <see cref="MetaType.AsReferenceDefault"/>
         /// </summary>
         public bool AddNotAsReferenceDefault { get; set; }
+        //#define FORCE_COMPILE
+
+        public void AutoAddAllTypesWithDependencies(Assembly assembly)
+        {
+            Type[] list;
+#if FEAT_IKVM
+            list = assembly.GetTypes();
+#else
+            try
+            {
+                list = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                list = ex.Types;
+            }
+#endif
+            AutoAddAllTypesWithDependencies(list);
+        }
+
+        bool CheckTypeAutoSerializable(Type type)
+        {
+            AttributeMap[] typeAttribs = AttributeMap.Create(this, type, false);
+            MetaType.AttributeFamily family = MetaType.GetContractFamily(this, type, typeAttribs);
+            return family != MetaType.AttributeFamily.None;
+        }
+
+        public void AutoAddAllTypesWithDependencies(Type[] list)
+        {
+            var allTypes = new TypeSet();
+
+            // create list with unique types
+            {
+                foreach (Type type in list)
+                {
+                    var t = type;
+                    do
+                    {
+                        if (!allTypes.ContainsKey(t) && CheckTypeAutoSerializable(t))
+                            allTypes.Add(t, null);
+                        t = t.BaseType;
+                    }
+                    while (t != null && t != MapType(typeof(object)));
+                }
+            }
+
+#if !NO_GENERICS
+            // add generic bases
+            {
+                var copy = new Type[allTypes.Count];
+                allTypes.Keys.CopyTo(copy, 0);
+                foreach (Type source in copy)
+                    FindGenericBases(source, allTypes);
+            }
+
+            // replace generic type definitions with used types
+            var genericDefs = new TypeSet();
+            foreach (Type t in allTypes.Keys)
+            {
+                if (t.IsGenericType || t.IsGenericTypeDefinition)
+                {
+                    Type def = t.IsGenericTypeDefinition ? t : t.GetGenericTypeDefinition();
+                    if (def != null && !genericDefs.ContainsKey(def))
+                        genericDefs.Add(def, null);
+                }
+            }
+
+            // remove all generic definitions
+            foreach (Type removeType in genericDefs.Keys)
+                allTypes.Remove(removeType);
+
+            // add possible generic types from members
+            {
+                var typesCopy = new Type[allTypes.Count];
+                allTypes.Keys.CopyTo(typesCopy, 0);
+
+                foreach (Type type in typesCopy)
+                {
+                    CheckAddMembersFinalGenericTypes(type, genericDefs, allTypes);
+                }
+                foreach (Type type in genericDefs.Keys)
+                {
+                    CheckAddMembersFinalGenericTypes(type, genericDefs, allTypes);
+                }
+            }
+#endif
+            var sortedTypes = new TypeList();
+            {
+                // sort types to make the same keys every time
+                var typesArray = new Type[allTypes.Count];
+                allTypes.Keys.CopyTo(typesArray, 0);
+                Array.Sort(typesArray, new TypeNamesSortComparer());
+                foreach (var type in typesArray)
+                    sortedTypes.Add(type);
+            }
+
+
+            foreach (Type t in sortedTypes)
+            {
+                if (FindWithoutAdd(t) != null) continue;
+
+                AttributeMap[] typeAttribs = AttributeMap.Create(this, t, false);
+                MetaType.AttributeFamily family = MetaType.GetContractFamily(this, t, typeAttribs);
+                if (family == MetaType.AttributeFamily.None) continue;
+                
+                var tInfo = Add(t, true);
+
+                if (family != MetaType.AttributeFamily.Aqla) continue;
+
+                // add sub types!
+
+                int number = 1;
+
+                foreach (Type subtype in sortedTypes)
+                {
+                    if (subtype.BaseType != t) continue;
+
+#if !NO_GENERICS
+                    number = tInfo.GetNextFreeFieldNumber(number);
+                    if (subtype.BaseType != null && subtype.BaseType.IsGenericType)
+                        Add(subtype.BaseType, true).AddSubType(++number, subtype);
+                    else
+#endif
+                        tInfo.AddSubType(++number, subtype);
+                }
+            }
+        }
+
+
+        class TypeNamesSortComparer : IComparer
+        {
+            public int Compare(object x, object y)
+            {
+                return StringComparer.Ordinal.Compare(((Type)x).FullName, ((Type)y).FullName);
+            }
+        }
+
+#if !NO_GENERICS
+        static void FindGenericBases(Type type, TypeSet types)
+        {
+            if (type.BaseType != null && type.BaseType.IsGenericType)
+            {
+                if (!types.ContainsKey(type.BaseType))
+                    types.Add(type.BaseType, null);
+                FindGenericBases(type.BaseType, types);
+                FindGenericBases(type.BaseType.GetGenericTypeDefinition(), types);
+            }
+        }
+
+        static void CheckAddFinalGenericTypes(Type finalType, TypeSet genericTypeDefinitions, TypeSet typesList)
+        {
+            if (!typesList.ContainsKey(finalType) && finalType.IsGenericType && !finalType.IsGenericParameter
+                && !finalType.IsGenericTypeDefinition && genericTypeDefinitions.ContainsKey(finalType.GetGenericTypeDefinition()))
+            {
+                typesList.Add(finalType, null);
+            }
+        }
+
+        private static void CheckAddMembersFinalGenericTypes(Type type, TypeSet genericDefs, TypeSet types)
+        {
+            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                CheckAddFinalGenericTypes(field.FieldType, genericDefs, types);
+
+            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                CheckAddFinalGenericTypes(property.PropertyType, genericDefs, types);
+
+            foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                CheckAddFinalGenericTypes(method.ReturnType, genericDefs, types);
+                foreach (ParameterInfo parameterInfo in method.GetParameters())
+                {
+                    Type pType = parameterInfo.ParameterType;
+                    if (pType.IsByRef) pType = pType.GetElementType();
+                    CheckAddFinalGenericTypes(pType, genericDefs, types);
+                }
+            }
+        }
+#endif
+        // TODO
+        //static void CheckAddMemberTypes(Type Type, TypeSet MemberTypeDefinitions, TypeSet typesList)
+        //{
+        //    if (!typesList.ContainsKey(Type) && Type.IsMemberType && !Type.IsMemberParameter
+        //        && !Type.IsGenericTypeDefinition && MemberTypeDefinitions.ContainsKey(Type.GetMemberTypeDefinition()))
+        //    {
+        //        typesList.Add(Type, null);
+        //    }
+        //}
+
+        //private static void CheckAddMembersMemberTypes(Type type, TypeSet MemberDefs, TypeSet types)
+        //{
+        //    foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        //        CheckAddMemberTypes(field.FieldType, MemberDefs, types);
+
+        //    foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        //        CheckAddMemberTypes(property.PropertyType, MemberDefs, types);
+
+        //    foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        //    {
+        //        CheckAddMemberTypes(method.ReturnType, MemberDefs, types);
+        //        foreach (ParameterInfo parameterInfo in method.GetParameters())
+        //        {
+        //            Type pType = parameterInfo.ParameterType;
+        //            if (pType.IsByRef) pType = pType.GetElementType();
+        //            CheckAddMemberTypes(pType, MemberDefs, types);
+        //        }
+        //    }
+        //}
+
 
         /// <summary>
         /// Adds support for an additional type in this model, optionally
@@ -666,9 +885,10 @@ namespace ProtoBuf.Meta
             try
             {
                 newType = RecogniseCommonTypes(type);
-                if(newType != null)
+                if (newType != null)
                 {
-                    if(!applyDefaultBehaviour) {
+                    if (!applyDefaultBehaviour)
+                    {
                         throw new ArgumentException(
                             "Default behaviour must be observed for certain types with special handling; " + type.FullName,
                             "applyDefaultBehaviour");
@@ -676,7 +896,7 @@ namespace ProtoBuf.Meta
                     // we should assume that type is fully configured, though; no need to re-run:
                     applyDefaultBehaviour = false;
                 }
-                if(newType == null) newType = Create(type);
+                if (newType == null) newType = Create(type);
                 newType.Pending = true;
                 TakeLock(ref opaqueToken);
                 // double checked
@@ -713,7 +933,8 @@ namespace ProtoBuf.Meta
         public bool AutoAddMissingTypes
         {
             get { return GetOption(OPTIONS_AutoAddMissingTypes); }
-            set {
+            set
+            {
                 if (!value && GetOption(OPTIONS_IsDefaultModel))
                 {
                     throw new InvalidOperationException("The default model must allow missing types");
@@ -786,7 +1007,7 @@ namespace ProtoBuf.Meta
             throw new NotSupportedException();
 #else
             //Helpers.DebugWriteLine("Serialize", value);
-            var metaType = ((MetaType) types[key]);
+            var metaType = ((MetaType)types[key]);
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
             ser.Write(value, dest);
 #endif
@@ -809,7 +1030,7 @@ namespace ProtoBuf.Meta
             //Helpers.DebugWriteLine("Deserialize", value);
             var metaType = ((MetaType)types[key]);
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
-            
+
             if (value == null && Helpers.IsValueType(ser.ExpectedType))
             {
                 if (ser.RequiresOldValue) value = CreateInstance(ser, source);
@@ -956,7 +1177,8 @@ namespace ProtoBuf.Meta
 
             ParameterInfo[] parameters = baseMethod.GetParameters();
             Type[] paramTypes = new Type[parameters.Length];
-            for(int i = 0 ; i < paramTypes.Length ; i++) {
+            for (int i = 0; i < paramTypes.Length; i++)
+            {
                 paramTypes[i] = parameters[i].ParameterType;
             }
             MethodBuilder newMethod = type.DefineMethod(baseMethod.Name,
@@ -1134,7 +1356,7 @@ namespace ProtoBuf.Meta
 
 
             string assemblyName, moduleName;
-            if(path == null)
+            if (path == null)
             {
                 assemblyName = typeName;
                 moduleName = assemblyName + ".dll";
@@ -1198,14 +1420,14 @@ namespace ProtoBuf.Meta
             FieldBuilder knownTypes;
             Type knownTypesLookupType;
             WriteGetKeyImpl(type, basicHasInheritance, basicMethodPairs, basicIlVersion, assemblyName, out il, out knownTypesCategory, out knownTypes, out knownTypesLookupType);
-            
+
             Compiler.CompilerContext ctx = WriteSerializeDeserialize(assemblyName, type, basicMethodPairs, methodPairs, basicIlVersion, ref il);
 
             WriteConstructors(type, ref basicIndex, basicMethodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
-            
+
 
             Type finalType = type.CreateType();
-            if(!Helpers.IsNullOrEmpty(path))
+            if (!Helpers.IsNullOrEmpty(path))
             {
                 asm.Save(path);
                 Helpers.DebugWriteLine("Wrote dll:" + path);
@@ -1843,7 +2065,7 @@ namespace ProtoBuf.Meta
             const string message = "Timeout while inspecting metadata; this may indicate a deadlock. This can often be avoided by preparing necessary serializers during application initialization, rather than allowing multiple threads to perform the initial metadata inspection; please also see the LockContended event";
             opaqueToken = 0;
 #if PORTABLE
-            if(!Monitor.TryEnter(types)) throw new TimeoutException(message); // yes, we have to do this immediately - I'm not creating a "hot" loop, just because Sleep() doesn't exist...
+            if (!Monitor.TryEnter(types)) throw new TimeoutException(message); // yes, we have to do this immediately - I'm not creating a "hot" loop, just because Sleep() doesn't exist...
             opaqueToken = Interlocked.CompareExchange(ref contentionCounter, 0, 0); // just fetch current value (starts at 1)
 #elif CF2 || CF35
             int remaining = metadataTimeoutMilliseconds;
@@ -1911,7 +2133,7 @@ namespace ProtoBuf.Meta
             if (opaqueToken != 0)
             {
                 Monitor.Exit(types);
-                if(opaqueToken != GetContention()) // contention-count changes since we looked!
+                if (opaqueToken != GetContention()) // contention-count changes since we looked!
                 {
                     LockContentedEventHandler handler = LockContended;
                     if (handler != null)
@@ -1922,7 +2144,7 @@ namespace ProtoBuf.Meta
                         {
                             throw new ProtoException();
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             stackTrace = ex.StackTrace;
                         }
@@ -1941,8 +2163,8 @@ namespace ProtoBuf.Meta
         internal void ResolveListTypes(Type type, ref Type itemType, ref Type defaultType)
         {
             if (type == null) return;
-            if(Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return; // don't try this[type] for inbuilts
-            if(this[type].IgnoreListHandling) return;
+            if (Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return; // don't try this[type] for inbuilts
+            if (this[type].IgnoreListHandling) return;
 
             // handle arrays
             if (type.IsArray)

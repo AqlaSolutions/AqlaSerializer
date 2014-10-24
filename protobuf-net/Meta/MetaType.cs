@@ -131,6 +131,41 @@ namespace ProtoBuf.Meta
             subTypes.Add(subType);
             return this;
         }
+
+        public int GetNextFreeFieldNumber(int start = 1)
+        {
+            int number = start - 1;
+            bool found;
+            do
+            {
+                if (number++ == short.MaxValue) return -1;
+                found = false;
+                
+                foreach (ValueMember f in Fields)
+                {
+                    if (f.FieldNumber == number)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    if (subTypes != null)
+                        foreach (SubType t in subTypes)
+                        {
+                            if (t.FieldNumber == number)
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                }
+            } while (found);
+            return number;
+        }
+
 #if WINRT
         internal static readonly TypeInfo ienumerable = typeof(IEnumerable).GetTypeInfo();
 #else
