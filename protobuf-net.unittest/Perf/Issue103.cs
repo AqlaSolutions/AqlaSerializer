@@ -29,6 +29,10 @@ using ProtoBuf.Meta;
             model.Add(typeof(ContainedType), true);
             return model;
         }
+
+#if DEBUG
+        [Ignore("Why test performance in DEBUG?")]
+#endif
         [Test]
         public void TestPerf()
         {
