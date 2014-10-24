@@ -1,4 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+using AqlaSerializer;
 using NUnit.Framework;
 using ProtoBuf.Meta;
 using System;
@@ -20,7 +22,7 @@ namespace Examples.Issues
         public void ExecuteWithAutoAddProtoContractTypesOnlyShouldFail()
         {
             var model = TypeModel.Create();
-            model.AutoAddProtoContractTypesOnly = true;
+            ((DefaultAutoAddStrategy) model.AutoAddStrategy).AutoAddProtoContractTypesOnly = true;
             Assert.IsInstanceOfType(typeof(Foo), model.DeepClone(new Foo()));
         }
 

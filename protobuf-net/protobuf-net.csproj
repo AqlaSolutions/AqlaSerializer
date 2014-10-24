@@ -176,7 +176,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aqla\DefaultAutoAddStrategy.cs" />
     <Compile Include="Aqla\CallbackAttributes.cs" />
+    <Compile Include="Aqla\IAutoAddStrategy.cs" />
     <Compile Include="Aqla\SerializeDerivedTypeAttribute.cs" />
     <Compile Include="Aqla\SurrogateConverterAttribute.cs" />
     <Compile Include="Aqla\EnumSerializableValueAttribute.cs" />

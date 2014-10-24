@@ -20,9 +20,10 @@ using System.Reflection.Emit;
 #endif
 #endif
 #if FEAT_COMPILER
+using AqlaSerializer;
 using ProtoBuf.Compiler;
 #endif
-
+using AqlaSerializer;
 using ProtoBuf.Serializers;
 using System.Threading;
 using System.IO;
@@ -52,10 +53,7 @@ namespace ProtoBuf.Meta
  OPTIONS_AutoCompile = 16,
 #endif
  OPTIONS_UseImplicitZeroDefaults = 32,
-           OPTIONS_AllowParseableTypes = 64,
-           OPTIONS_AutoAddProtoContractTypesOnly = 128,
-           OPTIONS_AutoAddAqlaContractTypesOnly = 256,
-           OPTIONS_DontAddClassTuples = 512;
+           OPTIONS_AllowParseableTypes = 64;
 
         private bool GetOption(short option)
         {
@@ -78,37 +76,6 @@ namespace ProtoBuf.Meta
         {
             get { return GetOption(OPTIONS_InferTagFromNameDefault); }
             set { SetOption(OPTIONS_InferTagFromNameDefault, value); }
-        }
-
-        /// <summary>
-        /// But they will not be as reference
-        /// </summary>
-        public bool DontAddClassTuples
-        {
-            get { return GetOption(OPTIONS_DontAddClassTuples); }
-            set { SetOption(OPTIONS_DontAddClassTuples, value); }
-        }
-
-        /// <summary>
-        /// Global default that determines whether types are considered serializable
-        /// if they have [DataContract] / [XmlType] / [ProtoContract]. With this enabled, <b>ONLY</b>
-        /// types marked as [SerializableType] are added automatically.
-        /// </summary>
-        public bool AutoAddAqlaContractTypesOnly
-        {
-            get { return GetOption(OPTIONS_AutoAddAqlaContractTypesOnly); }
-            set { SetOption(OPTIONS_AutoAddAqlaContractTypesOnly, value); }
-        }
-
-        /// <summary>
-        /// Global default that determines whether types are considered serializable
-        /// if they have [DataContract] / [XmlType] / [SerializableType]. With this enabled, <b>ONLY</b>
-        /// types marked as [ProtoContract] are added automatically.
-        /// </summary>
-        public bool AutoAddProtoContractTypesOnly
-        {
-            get { return GetOption(OPTIONS_AutoAddProtoContractTypesOnly); }
-            set { SetOption(OPTIONS_AutoAddProtoContractTypesOnly, value); }
         }
 
         /// <summary>
@@ -143,6 +110,19 @@ namespace ProtoBuf.Meta
             set { SetOption(OPTIONS_AllowParseableTypes, value); }
         }
 
+        IAutoAddStrategy _autoAddStrategy;
+        public IAutoAddStrategy AutoAddStrategy
+        {
+            get { return _autoAddStrategy; }
+            set
+            {
+                if (this == Default)
+                    throw new InvalidOperationException("Not allowed on default " + this.GetType().Name + ", use TypeModel.Create()");
+                if (value == null)
+                    throw new ArgumentNullException("value");
+                _autoAddStrategy = value;
+            }
+        }
 
         private sealed class Singleton
         {
@@ -156,6 +136,9 @@ namespace ProtoBuf.Meta
         {
             get { return Singleton.Value; }
         }
+
+        public static DefaultAutoAddStrategy DefaultAutoAddStrategy { get { return (DefaultAutoAddStrategy) Default.AutoAddStrategy; } }
+
         /// <summary>
         /// Returns a sequence of the Type instances that can be
         /// processed by this model.
@@ -386,6 +369,7 @@ namespace ProtoBuf.Meta
 #if FEAT_COMPILER && !FX11 && !DEBUG
             AutoCompile = true;
 #endif
+            _autoAddStrategy = new DefaultAutoAddStrategy(this);
         }
 
 #if FEAT_IKVM
@@ -505,7 +489,7 @@ namespace ProtoBuf.Meta
                 if (idx >= 0) return ((BasicType)basicTypes[idx]).Serializer;
 
                 WireType defaultWireType;
-                MetaType.AttributeFamily family = MetaType.GetContractFamily(this, type, null);
+                MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
                 IProtoSerializer ser = family == MetaType.AttributeFamily.None
                     ? ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false)
                     : null;
@@ -560,7 +544,7 @@ namespace ProtoBuf.Meta
                     // try to recognise a few familiar patterns...
                     if ((metaType = RecogniseCommonTypes(type)) == null)
                     { // otherwise, check if it is a contract
-                        MetaType.AttributeFamily family = MetaType.GetContractFamily(this, type, null);
+                        MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
                         if (family == MetaType.AttributeFamily.AutoTuple)
                         {
                             shouldAdd = addEvenIfAutoDisabled = true; // always add basic tuples, such as KeyValuePair
@@ -592,7 +576,7 @@ namespace ProtoBuf.Meta
                     }
                     if (weAdded)
                     {
-                        metaType.ApplyDefaultBehaviour();
+                        _autoAddStrategy.ApplyDefaultBehaviour(metaType);
                         metaType.Pending = false;
                     }
                 }
@@ -660,9 +644,7 @@ namespace ProtoBuf.Meta
 
         bool CheckTypeAutoSerializable(Type type)
         {
-            AttributeMap[] typeAttribs = AttributeMap.Create(this, type, false);
-            MetaType.AttributeFamily family = MetaType.GetContractFamily(this, type, typeAttribs);
-            return family != MetaType.AttributeFamily.None;
+            return _autoAddStrategy.GetContractFamily(type) != MetaType.AttributeFamily.None;
         }
 
         public void AutoAddAllTypesWithDependencies(Type[] list)
@@ -732,8 +714,7 @@ namespace ProtoBuf.Meta
             {
                 if (FindWithoutAdd(t) != null) continue;
 
-                AttributeMap[] typeAttribs = AttributeMap.Create(this, t, false);
-                MetaType.AttributeFamily family = MetaType.GetContractFamily(this, t, typeAttribs);
+                MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(t);
                 if (family == MetaType.AttributeFamily.None) continue;
                 
                 var tInfo = Add(t, true);
@@ -924,7 +905,7 @@ namespace ProtoBuf.Meta
                 if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", "type");
                 ThrowIfFrozen();
                 types.Add(newType);
-                if (applyDefaultBehaviour) { newType.ApplyDefaultBehaviour(); }
+                if (applyDefaultBehaviour) { _autoAddStrategy.ApplyDefaultBehaviour(newType); }
                 newType.Pending = false;
             }
             finally

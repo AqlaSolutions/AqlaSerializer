@@ -35,10 +35,10 @@ namespace AqlaSerializer
         /// <summary>
         /// If specified, alternative contract markers (such as markers for XmlSerailizer or DataContractSerializer) are ignored.
         /// </summary>
-        public bool UseProtoMembersOnly
+        public bool UseAqlaMembersOnly
         {
-            get { return HasFlag(OPTIONS_UseProtoMembersOnly); }
-            set { SetFlag(OPTIONS_UseProtoMembersOnly, value); }
+            get { return HasFlag(OPTIONS_UseAqlaMembersOnly); }
+            set { throw new NotImplementedException(); SetFlag(OPTIONS_UseAqlaMembersOnly, value); }
         }
 
         /// <summary>
@@ -151,7 +151,7 @@ namespace AqlaSerializer
         private const byte
             OPTIONS_InferTagFromName = 1,
             OPTIONS_InferTagFromNameHasValue = 2,
-            OPTIONS_UseProtoMembersOnly = 4,
+            OPTIONS_UseAqlaMembersOnly = 4,
             OPTIONS_SkipConstructor = 8,
             OPTIONS_IgnoreListHandling = 16,
             OPTIONS_AsReferenceDefault = 32,

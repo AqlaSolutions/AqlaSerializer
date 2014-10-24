@@ -52,7 +52,7 @@ namespace AqlaSerializer
             : this(tag, false)
         { }
 
-        internal SerializableMemberAttribute(int tag, bool forced)
+        public SerializableMemberAttribute(int tag, bool forced)
         {
             if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
             this.tag = tag;

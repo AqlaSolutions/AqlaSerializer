@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace ProtoBuf.Meta
 {
-    internal abstract class AttributeMap
+    public abstract class AttributeMap
     {
 #if DEBUG
         [Obsolete("Please use AttributeType instead")]

@@ -99,7 +99,7 @@ namespace ProtoBuf.Meta
                 }
                 else
                 { // we need to scan the hard way; can't risk recursion by fully walking it
-                    this.asReference = MetaType.GetAsReferenceDefault(model, memberType);
+                    this.asReference =  model.AutoAddStrategy.GetAsReferenceDefault(memberType);
                 }
             }
             AppendCollection = !Helpers.CanWrite(model, member);
