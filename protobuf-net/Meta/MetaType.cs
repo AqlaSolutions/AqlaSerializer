@@ -1169,14 +1169,14 @@ namespace ProtoBuf.Meta
 
             if (isEnum)
             {
-                attrib = GetAttribute(attribs, "ProtoBuf.ProtoIgnoreAttribute");
+                attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoIgnoreAttribute");
                 if (attrib != null  && !model.AutoAddAqlaContractTypesOnly)
                 {
                     ignore = true;
                 }
                 else
                 {
-                    attrib = GetAttribute(attribs, "AqlaSerializer.NonSerializableMember");
+                    attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.NonSerializableMember");
                     if (attrib != null && !model.AutoAddProtoContractTypesOnly)
                     {
                         ignore = true;
@@ -1188,7 +1188,7 @@ namespace ProtoBuf.Meta
 #else
                         fieldNumber = Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
 #endif
-                        attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
+                        attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
                         if (attrib != null && !model.AutoAddAqlaContractTypesOnly)
                         {
                             GetFieldName(ref name, attrib, "Name");
@@ -1205,7 +1205,7 @@ namespace ProtoBuf.Meta
                             }
                         }
 
-                        attrib = GetAttribute(attribs, "AqlaSerializer.EnumSerializableValueAttribute");
+                        attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.EnumSerializableValueAttribute");
                         if (attrib != null && !model.AutoAddProtoContractTypesOnly)
                         {
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
@@ -1231,7 +1231,7 @@ namespace ProtoBuf.Meta
                 // always consider ProtoMember if not strict Aqla
                 if (!model.AutoAddAqlaContractTypesOnly)
                 {
-                    attrib = GetAttribute(attribs, "ProtoBuf.ProtoMemberAttribute");
+                    attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoMemberAttribute");
                     GetIgnore(ref ignore, attrib, attribs, "ProtoBuf.ProtoIgnoreAttribute");
 
                     if (!ignore && attrib != null)
@@ -1277,7 +1277,7 @@ namespace ProtoBuf.Meta
                 // always consider SerializableMember if not strict ProtoBuf
                 if (!done && !ignore && !model.AutoAddProtoContractTypesOnly)
                 {
-                    attrib = GetAttribute(attribs, "AqlaSerializer.SerializableMemberAttribute");
+                    attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.SerializableMemberAttribute");
                     GetIgnore(ref ignore, attrib, attribs, "AqlaSerializer.NonSerializableMember");
 
                     if (!ignore && attrib != null)
@@ -1368,7 +1368,7 @@ namespace ProtoBuf.Meta
 
             if (!ignore && !done && HasFamily(family, AttributeFamily.DataContractSerialier))
             {
-                attrib = GetAttribute(attribs, "System.Runtime.Serialization.DataMemberAttribute");
+                attrib = AttributeMap.GetAttribute(attribs, "System.Runtime.Serialization.DataMemberAttribute");
                 if (attrib != null)
                 {
                     GetFieldNumber(ref fieldNumber, attrib, "Order");
@@ -1380,8 +1380,11 @@ namespace ProtoBuf.Meta
             }
             if (!ignore && !done && HasFamily(family, AttributeFamily.XmlSerializer))
             {
-                attrib = GetAttribute(attribs, "System.Xml.Serialization.XmlElementAttribute");
-                if(attrib == null) attrib = GetAttribute(attribs, "System.Xml.Serialization.XmlArrayAttribute");
+                attrib = AttributeMap.GetAttribute(attribs, "System.Xml.Serialization.XmlElementAttribute");
+                if(attrib == null)
+                {
+                    attrib = AttributeMap.GetAttribute(attribs, "System.Xml.Serialization.XmlArrayAttribute");
+                }
                 GetIgnore(ref ignore, attrib, attribs, "System.Xml.Serialization.XmlIgnoreAttribute");
                 if (attrib != null && !ignore)
                 {
@@ -1392,7 +1395,7 @@ namespace ProtoBuf.Meta
             }
             if (!ignore && !done)
             {
-                if (GetAttribute(attribs, "System.NonSerializedAttribute") != null) ignore = true;
+                if (AttributeMap.GetAttribute(attribs, "System.NonSerializedAttribute") != null) ignore = true;
             }
             if (ignore || (fieldNumber < minAcceptFieldNumber && !forced)) return null;
             var result = new AqlaSerializer.SerializableMemberAttribute(fieldNumber, forced || inferByTagName);
@@ -1460,7 +1463,7 @@ namespace ProtoBuf.Meta
                     case ProtoTypeCode.Guid: defaultValue = Guid.Empty; break;
                 }
             }
-            if ((attrib = GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
+            if ((attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
             {
                 object tmp;
                 if(attrib.TryGet("Value", out tmp)) defaultValue = tmp;
@@ -1513,7 +1516,7 @@ namespace ProtoBuf.Meta
         private static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
         {
             if (ignore || attrib == null) return;
-            ignore = GetAttribute(attribs, fullName) != null;
+            ignore = AttributeMap.GetAttribute(attribs, fullName) != null;
             return;
         }
 
@@ -1547,15 +1550,6 @@ namespace ProtoBuf.Meta
             if (attrib.TryGet(memberName, out obj) && obj != null) name = (string)obj;
         }
 
-        private static AttributeMap GetAttribute(AttributeMap[] attribs, string fullName)
-        {
-            for (int i = 0; i < attribs.Length; i++)
-            {
-                AttributeMap attrib = attribs[i];
-                if (attrib != null && attrib.AttributeType.FullName == fullName) return attrib;
-            }
-            return null;
-        }
         /// <summary>
         /// Adds a member (by name) to the MetaType
         /// </summary>        

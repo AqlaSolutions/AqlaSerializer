@@ -49,6 +49,16 @@ namespace ProtoBuf.Meta
 #endif
         }
 
+        public static AttributeMap GetAttribute(AttributeMap[] attribs, string fullName)
+        {
+            for (int i = 0; i < attribs.Length; i++)
+            {
+                AttributeMap attrib = attribs[i];
+                if (attrib != null && attrib.AttributeType.FullName == fullName) return attrib;
+            }
+            return null;
+        }
+
         public static AttributeMap[] Create(TypeModel model, MemberInfo member, bool inherit)
         {
 #if FEAT_IKVM

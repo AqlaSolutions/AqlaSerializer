@@ -176,6 +176,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aqla\SurrogateConverterAttribute.cs" />
     <Compile Include="Aqla\EnumSerializableValueAttribute.cs" />
     <Compile Include="Aqla\NonSerializableMember.cs" />
     <Compile Include="Aqla\SerializableMemberAttribute.cs" />

@@ -76,7 +76,9 @@ namespace ProtoBuf.Serializers
                             break;
                         }
                     }
-                    if (m.IsDefined(convertAttributeType, true))
+
+                    if (AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "ProtoBuf.ProtoConverterAttribute") != null
+                        || AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "AqlaSerializer.SurrogateConverterAttribute") != null)
                     {
                         op = m;
                         return true;
