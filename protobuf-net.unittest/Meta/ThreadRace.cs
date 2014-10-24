@@ -210,7 +210,12 @@ namespace ProtoBuf.unittest.Meta
                 raw = ms.ToArray();
             }
 
-            for (int i = 0; i < 100; i++)
+#if DEBUG
+            const int LOOP = 30;
+#else
+            const int LOOP = 100;
+#endif
+            for (int i = 0; i < LOOP; i++)
             {
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
@@ -262,8 +267,12 @@ namespace ProtoBuf.unittest.Meta
                 model.Serialize(ms, orig);
                 raw = ms.ToArray();
             }
-
-            for (int i = 0; i < 100; i++)
+#if DEBUG
+            const int LOOP = 30;
+#else
+            const int LOOP = 100;
+#endif
+            for (int i = 0; i < LOOP; i++)
             {
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
@@ -329,7 +338,12 @@ namespace ProtoBuf.unittest.Meta
                     expected[i] = GetHex(ms.ToArray());
                 }
             }
-            for (int i = 0; i < 250; i++)
+#if DEBUG
+            const int LOOP = 25;
+#else
+            const int LOOP = 250;
+#endif
+            for (int i = 0; i < LOOP; i++)
             {
                 
                 ManualResetEvent allGo = new ManualResetEvent(false);

@@ -14,6 +14,9 @@ using ProtoBuf.ServiceModel;
 
 namespace Examples.Issues
 {
+#if DEBUG
+    [Ignore("Don't test in DEBUG, too slow")]
+#endif
     [TestFixture]
     public class SO10115538
     {

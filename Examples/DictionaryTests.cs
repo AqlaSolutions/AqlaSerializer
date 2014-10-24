@@ -296,7 +296,11 @@ namespace Examples.Dictionary
             Console.WriteLine("Encoding: " + watch.ElapsedMilliseconds);
             
         }
+#if DEBUG
+        const int LOOP = 50000;
+#else
         const int LOOP = 500000;
+#endif
         static int BulkTest<T>(TypeModel model, T obj, out int serialize, out int deserialize) where T: class
         {
             

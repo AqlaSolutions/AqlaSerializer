@@ -7,6 +7,9 @@ using System.Diagnostics;
 using System.Linq;
 namespace Examples
 {
+#if DEBUG
+    [Ignore("Too slow")]
+#endif
     [TestFixture]
     public class StupidlyComplexModel
     {

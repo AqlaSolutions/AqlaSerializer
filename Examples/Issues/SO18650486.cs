@@ -17,7 +17,11 @@ namespace Examples.Issues
         [Test]
         public void Execute()
         {
+#if DEBUG
+            const int OuterLoop = 5;
+#else
             const int OuterLoop = 500;
+#endif
             var model = TypeModel.Create();
             model.AutoCompile = false;
             // Execute(OuterLoop, model, "RT");

@@ -40,7 +40,12 @@ namespace Examples.Issues
         [Test]
         public void Execute()
         {
-            for(int test = 0 ; test < 1000 ; test++)
+#if DEBUG
+            const int LOOP = 100;
+#else
+            const int LOOP = 1000;
+#endif
+            for(int test = 0 ; test < LOOP ; test++)
             {
                 var model = RuntimeTypeModel.Create();
                 Thread[] threads = new Thread[20];

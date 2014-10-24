@@ -195,8 +195,11 @@ namespace Examples.Remoting
             var model = TypeModel.Create();
             model.AutoAddMissingTypes = false;
             model.Add(typeof(ProtoFragment), true);
-            
+#if DEBUG
+            const int LOOP = 1000;
+#else
             const int LOOP = 10000;
+#endif
             Roundtrip(() => new BinaryFormatter(), LOOP,
                 (ser, dest) => ser.Serialize(dest, frag1), (ser, src) => ser.Deserialize(src));
 

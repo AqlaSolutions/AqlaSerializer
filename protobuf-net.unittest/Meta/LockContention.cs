@@ -79,7 +79,12 @@ namespace ProtoBuf.unittest.Meta
                 Assert.That(raw.Length, Is.GreaterThan(0));
             }
 
-            const int threads = 10, loop = 500;
+            const int threads = 10;
+#if DEBUG    
+            const int loop = 200;
+#else
+            const int loop = 500;
+#endif
 
             for (int loopIndex = 0; loopIndex < loop; loopIndex++)
             {
