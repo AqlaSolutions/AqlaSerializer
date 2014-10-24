@@ -26,31 +26,9 @@ namespace AqlaSerializer
     using AttributeFamily = MetaType.AttributeFamily;
     public class DefaultAutoAddStrategy : IAutoAddStrategy
     {
-        readonly RuntimeTypeModel _model;
-        
-        /// <summary>
-        /// Global default that determines whether types are considered serializable
-        /// if they have [DataContract] / [XmlType] / [ProtoContract]. With this enabled, <b>ONLY</b>
-        /// types marked as [SerializableType] are added automatically.
-        /// </summary>
-        public bool AutoAddAqlaContractTypesOnly { get; set; }
+        public bool DisableAutoTuples { get; set; }
 
-        /// <summary>
-        /// Global default that determines whether types are considered serializable
-        /// if they have [DataContract] / [XmlType] / [SerializableType]. With this enabled, <b>ONLY</b>
-        /// types marked as [ProtoContract] are added automatically.
-        /// </summary>
-        public bool AutoAddProtoContractTypesOnly { get; set; }
-
-        public bool DisableAutoTuples { get;set; }
-
-        public DefaultAutoAddStrategy(RuntimeTypeModel model)
-        {
-            if (model == null) throw new ArgumentNullException("model");
-            _model = model;
-        }
-
-        public void ApplyDefaultBehaviour(MetaType metaType)
+        public virtual void ApplyDefaultBehaviour(MetaType metaType)
         {
             var type = metaType.Type;
             Type baseType = metaType.GetBaseType();
@@ -84,7 +62,7 @@ namespace AqlaSerializer
                 AttributeMap item = (AttributeMap)typeAttribs[i];
                 object tmp;
                 string fullAttributeTypeName = item.AttributeType.FullName;
-                if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" && !AutoAddAqlaContractTypesOnly)
+                if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" && CanUse(AttributeType.ProtoBuf))
                 {
                     int tag = 0;
                     if (item.TryGet("tag", out tmp)) tag = (int)tmp;
@@ -114,7 +92,7 @@ namespace AqlaSerializer
                     if (metaType.IsValidSubType(knownType)) metaType.AddSubType(tag, knownType, dataFormat);
                 }
 
-                if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializeDerivedTypeAttribute" && !AutoAddProtoContractTypesOnly)
+                if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializeDerivedTypeAttribute" && CanUse(AttributeType.Aqla))
                 {
                     int tag = 0;
                     if (item.TryGet("tag", out tmp)) tag = (int)tmp;
@@ -144,7 +122,7 @@ namespace AqlaSerializer
                     if (metaType.IsValidSubType(knownType)) metaType.AddSubType(tag, knownType, dataFormat);
                 }
 
-                if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute" && !AutoAddAqlaContractTypesOnly)
+                if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute" && CanUse(AttributeType.ProtoBuf))
                 {
                     if (item.TryGet("MemberName", out tmp) && tmp != null)
                     {
@@ -152,7 +130,7 @@ namespace AqlaSerializer
                         partialIgnores.Add((string)tmp);
                     }
                 }
-                else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && !AutoAddProtoContractTypesOnly)
+                else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && CanUse(AttributeType.Aqla))
                 {
                     if (item.TryGet("MemberName", out tmp) && tmp != null)
                     {
@@ -161,12 +139,12 @@ namespace AqlaSerializer
                     }
                 }
 
-                if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute" && !AutoAddAqlaContractTypesOnly)
+                if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute" && CanUse(AttributeType.ProtoBuf))
                 {
                     if (partialMembers == null) partialMembers = new BasicList();
                     partialMembers.Add(item);
                 }
-                else if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializablePartialMemberAttribute" && !AutoAddProtoContractTypesOnly)
+                else if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializablePartialMemberAttribute" && CanUse(AttributeType.Aqla))
                 {
                     if (partialMembers == null) partialMembers = new BasicList();
                     partialMembers.Add(item);
@@ -344,7 +322,7 @@ namespace AqlaSerializer
                     if (memberAttribs != null && memberAttribs.Length > 0)
                     {
                         const int max = 11;
-                        if (!AutoAddAqlaContractTypesOnly)
+                        if (CanUse(AttributeType.ProtoBuf))
                         {
                             CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoBeforeSerializationAttribute", ref callbacks, 0, max);
                             CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterSerializationAttribute", ref callbacks, 1, max);
@@ -357,7 +335,7 @@ namespace AqlaSerializer
                         CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializingAttribute", ref callbacks, 6, max);
                         CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializedAttribute", ref callbacks, 7, max);
 
-                        if (!AutoAddProtoContractTypesOnly)
+                        if (CanUse(AttributeType.Aqla))
                         {
                             CheckForCallback(method, memberAttribs, "AqlaSerializer.BeforeSerializationCallbackAttribute", ref callbacks, 8, max);
                             CheckForCallback(method, memberAttribs, "AqlaSerializer.AfterSerializationCallbackAttribute", ref callbacks, 9, max);
@@ -395,7 +373,7 @@ namespace AqlaSerializer
             }
         }
 
-        private void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, BasicList partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFields implicitMode, BasicList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
+        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFields implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
         {
             switch (implicitMode)
             {
@@ -450,7 +428,7 @@ namespace AqlaSerializer
             return GetContractFamily(type, attributes);
         }
 
-        private AttributeFamily GetContractFamily(Type type, AttributeMap[] attributes)
+        protected virtual AttributeFamily GetContractFamily(Type type, AttributeMap[] attributes)
         {
             AttributeFamily family = AttributeFamily.None;
 
@@ -460,7 +438,7 @@ namespace AqlaSerializer
                 {
                     case "ProtoBuf.ProtoContractAttribute":
                         {
-                            if (!AutoAddAqlaContractTypesOnly)
+                            if (CanUse(AttributeType.ProtoBuf))
                             {
                                 bool tmp = false;
                                 GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
@@ -471,23 +449,23 @@ namespace AqlaSerializer
                         break;
                     case "AqlaSerializer.SerializableTypeAttribute":
                         {
-                            if (!AutoAddProtoContractTypesOnly)
+                            if (CanUse(AttributeType.Aqla))
                             {
                                 bool tmp = false;
-                                GetFieldBoolean(ref tmp, attributes[i], "UseProtoMembersOnly");
+                                GetFieldBoolean(ref tmp, attributes[i], "UseAqlaMembersOnly");
                                 if (tmp) return AttributeFamily.Aqla;
                                 family |= AttributeFamily.Aqla;
                             }
                         }
                         break;
                     case "System.Xml.Serialization.XmlTypeAttribute":
-                        if (!AutoAddProtoContractTypesOnly && !AutoAddAqlaContractTypesOnly)
+                        if (CanUse(AttributeType.Xml))
                         {
                             family |= AttributeFamily.XmlSerializer;
                         }
                         break;
                     case "System.Runtime.Serialization.DataContractAttribute":
-                        if (!AutoAddProtoContractTypesOnly && !AutoAddAqlaContractTypesOnly)
+                        if (CanUse(AttributeType.DataContract))
                         {
                             family |= AttributeFamily.DataContractSerialier;
                         }
@@ -500,12 +478,13 @@ namespace AqlaSerializer
                 if (Helpers.IsEnum(type))
                 {
                     // it's not required to specify attributes on enum
-                    if (!AutoAddAqlaContractTypesOnly)
+
+                    if (CanUse(AttributeType.ProtoBuf) && !CanUse(AttributeType.Aqla))
                         family |= AttributeFamily.ProtoBuf;
-                    else if (!AutoAddProtoContractTypesOnly || family == AttributeFamily.None)
+                    else
                         family |= AttributeFamily.Aqla;
                 }
-                if (family == AttributeFamily.None && !DisableAutoTuples)
+                else if (!DisableAutoTuples)
                 {
                     // check for obvious tuples
 
@@ -526,7 +505,7 @@ namespace AqlaSerializer
             return family;
         }
 
-        private static void CheckForCallback(MethodInfo method, AttributeMap[] attributes, string callbackTypeName, ref MethodInfo[] callbacks, int index, int max)
+        protected static void CheckForCallback(MethodInfo method, AttributeMap[] attributes, string callbackTypeName, ref MethodInfo[] callbacks, int index, int max)
         {
             for (int i = 0; i < attributes.Length; i++)
             {
@@ -546,12 +525,12 @@ namespace AqlaSerializer
                 }
             }
         }
-        private static bool HasFamily(AttributeFamily value, AttributeFamily required)
+        protected static bool HasFamily(AttributeFamily value, AttributeFamily required)
         {
             return (value & required) == required;
         }
 
-        private AqlaSerializer.SerializableMemberAttribute NormalizeProtoMember(MemberInfo member, AttributeFamily family, bool forced, bool isEnum, BasicList partialMembers, int dataMemberOffset, bool inferByTagName)
+        protected virtual SerializableMemberAttribute NormalizeProtoMember(MemberInfo member, AttributeFamily family, bool forced, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferByTagName)
         {
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
@@ -570,14 +549,14 @@ namespace AqlaSerializer
             if (isEnum)
             {
                 attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoIgnoreAttribute");
-                if (attrib != null && !AutoAddAqlaContractTypesOnly)
+                if (attrib != null && CanUse(AttributeType.ProtoBuf))
                 {
                     ignore = true;
                 }
                 else
                 {
                     attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.NonSerializableMemberAttribute");
-                    if (attrib != null && !AutoAddProtoContractTypesOnly)
+                    if (attrib != null && CanUse(AttributeType.Aqla))
                     {
                         ignore = true;
                     }
@@ -589,7 +568,7 @@ namespace AqlaSerializer
                         fieldNumber = Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
 #endif
                         attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
-                        if (attrib != null && !AutoAddAqlaContractTypesOnly)
+                        if (attrib != null && CanUse(AttributeType.ProtoBuf))
                         {
                             GetFieldName(ref name, attrib, "Name");
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
@@ -606,7 +585,7 @@ namespace AqlaSerializer
                         }
 
                         attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.EnumSerializableValueAttribute");
-                        if (attrib != null && !AutoAddProtoContractTypesOnly)
+                        if (attrib != null && CanUse(AttributeType.Aqla))
                         {
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
                             if ((bool)Helpers.GetInstanceMethod(attrib.AttributeType
@@ -629,7 +608,7 @@ namespace AqlaSerializer
             if (!ignore && !done)
             {
                 // always consider ProtoMember if not strict Aqla
-                if (!AutoAddAqlaContractTypesOnly)
+                if (CanUse(AttributeType.ProtoBuf))
                 {
                     attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoMemberAttribute");
                     GetIgnore(ref ignore, attrib, attribs, "ProtoBuf.ProtoIgnoreAttribute");
@@ -675,7 +654,7 @@ namespace AqlaSerializer
                 }
 
                 // always consider SerializableMember if not strict ProtoBuf
-                if (!done && !ignore && !AutoAddProtoContractTypesOnly)
+                if (!done && !ignore && CanUse(AttributeType.Aqla))
                 {
                     attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.SerializableMemberAttribute");
                     GetIgnore(ref ignore, attrib, attribs, "AqlaSerializer.NonSerializableMemberAttribute");
@@ -814,7 +793,7 @@ namespace AqlaSerializer
             return result;
         }
 
-        private void ApplyDefaultBehaviour(MetaType metaType, bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute)
+        protected virtual void ApplyDefaultBehaviour(MetaType metaType, bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute)
         {
             MemberInfo member;
             if (normalizedAttribute == null || (member = normalizedAttribute.Member) == null) return; // nix
@@ -822,7 +801,7 @@ namespace AqlaSerializer
             AttributeMap[] attribs = AttributeMap.Create(_model, member, true);
             AttributeMap attrib;
 
-            bool defaultValueSpecified=false;
+            bool defaultValueSpecified = false;
 
             object defaultValue = null;
             if ((attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
@@ -838,31 +817,31 @@ namespace AqlaSerializer
             if (isEnum || normalizedAttribute.Tag > 0)
             {
                 if (defaultValueSpecified)
-                    metaType.Add(normalizedAttribute,member,defaultValue);
+                    metaType.Add(normalizedAttribute, member, defaultValue);
                 else
-                    metaType.Add(normalizedAttribute,member);
+                    metaType.Add(normalizedAttribute, member);
             }
         }
 
-        private static void GetDataFormat(ref DataFormat value, AttributeMap attrib, string memberName)
+        protected static void GetDataFormat(ref DataFormat value, AttributeMap attrib, string memberName)
         {
             if ((attrib == null) || (value != DataFormat.Default)) return;
             object obj;
             if (attrib.TryGet(memberName, out obj) && obj != null) value = (DataFormat)obj;
         }
 
-        private static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
+        protected static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
         {
             if (ignore || attrib == null) return;
             ignore = AttributeMap.GetAttribute(attribs, fullName) != null;
             return;
         }
 
-        private static void GetFieldBoolean(ref bool value, AttributeMap attrib, string memberName)
+        protected static void GetFieldBoolean(ref bool value, AttributeMap attrib, string memberName)
         {
             GetFieldBoolean(ref value, attrib, memberName, true);
         }
-        private static bool GetFieldBoolean(ref bool value, AttributeMap attrib, string memberName, bool publicOnly)
+        protected static bool GetFieldBoolean(ref bool value, AttributeMap attrib, string memberName, bool publicOnly)
         {
             if (attrib == null) return false;
             if (value) return true;
@@ -875,32 +854,32 @@ namespace AqlaSerializer
             return false;
         }
 
-        private static void GetFieldNumber(ref int value, AttributeMap attrib, string memberName)
+        protected static void GetFieldNumber(ref int value, AttributeMap attrib, string memberName)
         {
             if (attrib == null || value > 0) return;
             object obj;
             if (attrib.TryGet(memberName, out obj) && obj != null) value = (int)obj;
         }
-        private static void GetFieldName(ref string name, AttributeMap attrib, string memberName)
+        protected static void GetFieldName(ref string name, AttributeMap attrib, string memberName)
         {
             if (attrib == null || !Helpers.IsNullOrEmpty(name)) return;
             object obj;
             if (attrib.TryGet(memberName, out obj) && obj != null) name = (string)obj;
         }
 
-        public bool GetAsReferenceDefault(Type type)
+        public virtual bool GetAsReferenceDefault(Type type)
         {
             if (type == null) throw new ArgumentNullException("type");
             if (Helpers.IsEnum(type)) return false; // never as-ref
             AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
             for (int i = 0; i < typeAttribs.Length; i++)
             {
-                if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && !AutoAddProtoContractTypesOnly)
+                if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && CanUse(AttributeType.Aqla))
                 {
                     object tmp;
                     if (typeAttribs[i].TryGet("NotAsReferenceDefault", out tmp)) return !(bool)tmp;
                 }
-                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && !AutoAddAqlaContractTypesOnly)
+                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && CanUse(AttributeType.ProtoBuf))
                 {
                     object tmp;
                     if (typeAttribs[i].TryGet("AsReferenceDefault", out tmp)) return (bool)tmp;
@@ -908,6 +887,57 @@ namespace AqlaSerializer
             }
             return true;
         }
+
+
+        readonly RuntimeTypeModel _model;
+
+        static bool CanUse(AttributeType check, AttributeType required)
+        {
+            return (check & required) != 0;
+        }
+
+        bool CanUse(AttributeType required)
+        {
+            return (_acceptableAttributes & required) != 0;
+        }
+
+        private AttributeType _acceptableAttributes = AttributeType.All;
+
+        /// <summary>
+        /// Global default that determines whether types are considered serializable
+        /// if they have [DataContract] / [XmlType] / [ProtoContract] / [SerializableType].
+        /// </summary>
+        public AttributeType AcceptableAttributes
+        {
+            get { return _acceptableAttributes; }
+            set
+            {
+                if (!CanUse(_acceptableAttributes, AttributeType.Aqla) && !CanUse(_acceptableAttributes, AttributeType.ProtoBuf))
+                    throw new ArgumentException("Either Aqla or ProtoBuf or both attributes should be enabled");
+                _acceptableAttributes = value;
+            }
+        }
+
+        [Flags]
+        public enum AttributeType
+        {
+            None = 0,
+            Aqla = 1,
+            ProtoBuf = 2,
+            Xml = 4,
+            DataContract = 8,
+
+            All = Aqla | ProtoBuf | Xml | DataContract,
+            NoAqla = ProtoBuf | Xml | DataContract,
+            NoProtobuf = Aqla | Xml | DataContract,
+        }
+
+        public DefaultAutoAddStrategy(RuntimeTypeModel model)
+        {
+            if (model == null) throw new ArgumentNullException("model");
+            _model = model;
+        }
+
     }
 }
 #endif
