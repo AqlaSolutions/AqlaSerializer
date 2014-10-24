@@ -126,9 +126,23 @@ namespace ProtoBuf.Meta
             SubType subType = new SubType(fieldNumber, derivedMeta, dataFormat);
             ThrowIfFrozen();
 
-            derivedMeta.SetBaseType(this); // includes ThrowIfFrozen
-            if (subTypes == null) subTypes = new BasicList();
-            subTypes.Add(subType);
+            // don't add the same subtype twice!!!
+
+            int token = 0;
+            model.TakeLock(ref token);
+            try
+            {
+                if (derivedMeta.baseType == this)
+                    return this;
+
+                derivedMeta.SetBaseType(this); // includes ThrowIfFrozen
+                if (subTypes == null) subTypes = new BasicList();
+                subTypes.Add(subType);
+            }
+            finally
+            {
+                model.ReleaseLock(token);
+            }
             return this;
         }
 
@@ -606,7 +620,11 @@ namespace ProtoBuf.Meta
             if (baseType != null && model.FindWithoutAdd(baseType) == null
                 && GetContractFamily(model, baseType, null) != MetaType.AttributeFamily.None)
             {
-                model.FindOrAddAuto(baseType, true, false, false);
+                if (model.FindOrAddAuto(baseType, true, false, false)!=-1)
+                {
+                    MetaType meta = model[baseType];
+                    meta.AddSubType(meta.GetNextFreeFieldNumber(), type);
+                }
             }
 
             AttributeMap[] typeAttribs = AttributeMap.Create(model, type, false);
