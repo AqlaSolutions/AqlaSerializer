@@ -288,8 +288,9 @@ namespace Examples.ServiceModel
                     Assert.AreEqual(data.SubData[i].Number, dataRegular.SubData[i].Number, "Regular number");
                 }
                 Console.WriteLine(string.Format("Validated: {0}", data.SubData.Count));
-
+#if !DEBUG // why test it in DEBUG?
                 Assert.Less(watchProto.ElapsedMilliseconds, watchRegular.ElapsedMilliseconds, "Proto should be quicker");
+#endif
             }
         }
 

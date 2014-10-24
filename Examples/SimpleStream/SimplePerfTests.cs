@@ -51,8 +51,11 @@ namespace Examples.SimpleStream
                 Assert.AreEqual(obj.Blip, clone.Blip, "Blip");
             }
             
-
+#if DEBUG
+            const int LOOP = 50000;
+#else
             const int LOOP = 500000;
+#endif
             Stopwatch watch = Stopwatch.StartNew();
             for (int i = 0; i < LOOP; i++)
             {
