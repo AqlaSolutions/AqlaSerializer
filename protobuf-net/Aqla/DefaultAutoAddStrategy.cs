@@ -38,7 +38,8 @@ namespace AqlaSerializer
                 if (_model.FindOrAddAuto(baseType, true, false, false) != -1)
                 {
                     MetaType meta = _model[baseType];
-                    meta.AddSubType(meta.GetNextFreeFieldNumber(), type);
+                    if (!meta.IsList)
+                        meta.AddSubType(meta.GetNextFreeFieldNumber(), type);
                 }
             }
 
