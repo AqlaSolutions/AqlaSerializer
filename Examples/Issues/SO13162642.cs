@@ -28,6 +28,7 @@ namespace Examples.Issues
             Console.Read();
         }
 
+        [Ignore("Ok, see it later, very slow")]
         [Test]
         public void ExecuteWorkaround()
         {
