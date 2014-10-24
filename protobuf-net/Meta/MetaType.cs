@@ -1183,15 +1183,31 @@ namespace ProtoBuf.Meta
                     }
                     else
                     {
-                        attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
 #if WINRT || PORTABLE || CF || FX11
                     fieldNumber = Convert.ToInt32(((FieldInfo)member).GetValue(null));
 #else
                         fieldNumber = Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
 #endif
-                        if (attrib != null && HasFamily(family, AttributeFamily.ProtoBuf))
+                        attrib = GetAttribute(attribs, "ProtoBuf.ProtoEnumAttribute");
+                        if (attrib != null && !model.AutoAddAqlaContractTypesOnly)
                         {
                             GetFieldName(ref name, attrib, "Name");
+#if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
+                            if ((bool)Helpers.GetInstanceMethod(attrib.AttributeType
+#if WINRT
+                             .GetTypeInfo()
+#endif
+, "HasValue").Invoke(attrib.Target, null))
+#endif
+                            {
+                                object tmp;
+                                if (attrib.TryGet("Value", out tmp)) fieldNumber = (int)tmp;
+                            }
+                        }
+
+                        attrib = GetAttribute(attribs, "AqlaSerializer.EnumSerializableValueAttribute");
+                        if (attrib != null && !model.AutoAddProtoContractTypesOnly)
+                        {
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
                             if ((bool)Helpers.GetInstanceMethod(attrib.AttributeType
 #if WINRT
