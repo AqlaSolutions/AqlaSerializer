@@ -677,6 +677,36 @@ namespace ProtoBuf.Meta
                     if(IsValidSubType(knownType)) AddSubType(tag, knownType, dataFormat);
                 }
 
+                if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializeDerivedTypeAttribute" && !model.AutoAddProtoContractTypesOnly)
+                {
+                    int tag = 0;
+                    if (item.TryGet("tag", out tmp)) tag = (int)tmp;
+                    DataFormat dataFormat = DataFormat.Default;
+                    if(item.TryGet("DataFormat", out tmp))
+                    {
+                        dataFormat = (DataFormat)(int) tmp;
+                    }
+                    Type knownType = null;
+                    try
+                    {
+                        if (item.TryGet("knownTypeName", out tmp)) knownType = model.GetType((string)tmp, type
+#if WINRT
+                            .GetTypeInfo()
+#endif       
+                            .Assembly);
+                        else if (item.TryGet("knownType", out tmp)) knownType = (Type)tmp;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException("Unable to resolve sub-type of: " + type.FullName, ex);
+                    }
+                    if (knownType == null)
+                    {
+                        throw new InvalidOperationException("Unable to resolve sub-type of: " + type.FullName);
+                    }
+                    if(IsValidSubType(knownType)) AddSubType(tag, knownType, dataFormat);
+                }
+
                 if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute" && !model.AutoAddAqlaContractTypesOnly)
                 {
                     if (item.TryGet("MemberName", out tmp) && tmp != null)
