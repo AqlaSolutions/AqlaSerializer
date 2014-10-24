@@ -59,12 +59,14 @@ namespace AqlaSerializer
         public ImplicitFields ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
         private ImplicitFields implicitFields = ImplicitFields.PublicProperties;
 
+
+        private bool _explicitPropertiesContract = true;
+        
         /// <summary>
         /// Property is treated as public only if both get and set accessors are public
         /// </summary>
-        public bool ExplicitPropertiesContract { get; set; }
-
-
+        public bool ExplicitPropertiesContract { get { return _explicitPropertiesContract; } set { _explicitPropertiesContract = value; } }
+        
         /// <summary>
         /// Enables/disables automatic tag generation based on the existing name / order
         /// of the defined members. This option is not used for members marked
@@ -147,7 +149,7 @@ namespace AqlaSerializer
         }
 
         private byte flags = OPTIONS_AsReferenceDefault;
-
+        
         private const byte
             OPTIONS_InferTagFromName = 1,
             OPTIONS_InferTagFromNameHasValue = 2,
