@@ -685,7 +685,7 @@ namespace ProtoBuf.Meta
                         partialIgnores.Add((string)tmp);
                     }
                 }
-                else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMember" && !model.AutoAddProtoContractTypesOnly)
+                else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && !model.AutoAddProtoContractTypesOnly)
                 {
                     if (item.TryGet("MemberName", out tmp) && tmp != null)
                     {
@@ -1176,7 +1176,7 @@ namespace ProtoBuf.Meta
                 }
                 else
                 {
-                    attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.NonSerializableMember");
+                    attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.NonSerializableMemberAttribute");
                     if (attrib != null && !model.AutoAddProtoContractTypesOnly)
                     {
                         ignore = true;
@@ -1278,7 +1278,7 @@ namespace ProtoBuf.Meta
                 if (!done && !ignore && !model.AutoAddProtoContractTypesOnly)
                 {
                     attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.SerializableMemberAttribute");
-                    GetIgnore(ref ignore, attrib, attribs, "AqlaSerializer.NonSerializableMember");
+                    GetIgnore(ref ignore, attrib, attribs, "AqlaSerializer.NonSerializableMemberAttribute");
 
                     if (!ignore && attrib != null)
                     {
@@ -1315,7 +1315,7 @@ namespace ProtoBuf.Meta
                             GetFieldBoolean(ref isPacked, ppma, "IsPacked");
                             GetDataFormat(ref dataFormat, ppma, "DataFormat");
 
-                            if (ppma.AttributeType.FullName == "AqlaSerializer.NonSerializableMember")
+                            if (ppma.AttributeType.FullName == "AqlaSerializer.NonSerializableMemberAttribute")
                             {
                                 GetFieldBoolean(ref appendCollection, attrib, "AppendCollection");
 

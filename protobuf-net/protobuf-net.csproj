@@ -178,7 +178,7 @@
   <ItemGroup>
     <Compile Include="Aqla\SurrogateConverterAttribute.cs" />
     <Compile Include="Aqla\EnumSerializableValueAttribute.cs" />
-    <Compile Include="Aqla\NonSerializableMember.cs" />
+    <Compile Include="Aqla\NonSerializableMemberAttribute.cs" />
     <Compile Include="Aqla\SerializableMemberAttribute.cs" />
     <Compile Include="Aqla\SerializableTypeAttribute.cs" />
     <Compile Include="BclHelpers.cs" />

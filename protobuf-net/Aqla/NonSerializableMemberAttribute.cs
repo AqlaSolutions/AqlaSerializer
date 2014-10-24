@@ -10,7 +10,7 @@ namespace AqlaSerializer
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         AllowMultiple = false, Inherited = true)]
-    public class NonSerializableMember : Attribute { }
+    public class NonSerializableMemberAttribute : Attribute { }
 
     /// <summary>
     /// Indicates that a member should be excluded from serialization; this
@@ -21,13 +21,13 @@ namespace AqlaSerializer
     /// </summary>
     [AttributeUsage(AttributeTargets.Class,
             AllowMultiple = true, Inherited = false)]
-    public sealed class PartialNonSerializableMember : NonSerializableMember
+    public sealed class PartialNonSerializableMemberAttribute : NonSerializableMemberAttribute
     {
         /// <summary>
         /// Creates a new ProtoPartialIgnoreAttribute instance.
         /// </summary>
         /// <param name="memberName">Specifies the member to be ignored.</param>
-        public PartialNonSerializableMember(string memberName)
+        public PartialNonSerializableMemberAttribute(string memberName)
             : base()
         {
             if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException("memberName");
