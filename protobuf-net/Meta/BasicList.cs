@@ -22,8 +22,13 @@ namespace ProtoBuf.Meta
         {
             head.Clear();
         }
+
+        protected override void HandleIListClear()
+        {
+            Clear();
+        }
     }
-    internal class BasicList : IEnumerable
+    internal class BasicList : IEnumerable, IList
     {
         /* Requirements:
          *   - Fast access by index
@@ -47,6 +52,48 @@ namespace ProtoBuf.Meta
         {
             return (head = head.Append(value)).Length - 1;
         }
+
+        bool IList.Contains(object value)
+        {
+            return Contains(value);
+        }
+
+        protected virtual void HandleIListClear()
+        {
+            throw new NotSupportedException();
+        }
+
+        void IList.Clear()
+        {
+            HandleIListClear();
+        }
+
+        int IList.IndexOf(object value)
+        {
+            return IndexOf((x, ctx) => Object.Equals(x, value), null);
+        }
+
+        void IList.Insert(int index, object value)
+        {
+            throw new NotSupportedException();
+        }
+
+        void IList.Remove(object value)
+        {
+            throw new NotSupportedException();
+        }
+
+        void IList.RemoveAt(int index)
+        {
+            throw new NotSupportedException();
+        }
+
+        object IList.this[int index] { get { return this[index]; } set { throw new NotSupportedException(); } }
+
+        bool IList.IsReadOnly { get { return false; } }
+
+        bool IList.IsFixedSize { get { return false; } }
+
         public object this[int index] { get { return head[index]; } }
         //public object TryGet(int index)
         //{
@@ -54,6 +101,12 @@ namespace ProtoBuf.Meta
         //}
         public void Trim() { head = head.Trim(); }
         public int Count { get { return head.Length; } }
+
+        readonly object _syncRoot = new object();
+        object ICollection.SyncRoot { get { return _syncRoot; } }
+
+        bool ICollection.IsSynchronized { get { return false; } }
+
         IEnumerator IEnumerable.GetEnumerator() { return new NodeEnumerator(head); }
         public NodeEnumerator GetEnumerator() { return new NodeEnumerator(head); }
 
