@@ -842,19 +842,25 @@ namespace AqlaSerializer
                     defaultValueSpecified = true;
                 }
             }
+
+            var memberType = Helpers.GetMemberType(member);
+
             Type defaultType = null;
             if (metaType.Type.IsInterface)
-                defaultType = FindDefaultInterfaceImplementation(metaType.Type);
+                defaultType = FindDefaultInterfaceImplementation(memberType);
 
             if (isEnum || normalizedAttribute.Tag > 0)
             {
+                if (!DisableAutoAddingMemberTypes && GetContractFamily(memberType) != AttributeFamily.None)
+                    _model.FindOrAddAuto(memberType, true, false, false);
+
                 if (defaultValueSpecified)
                     metaType.Add(normalizedAttribute, member, defaultValue, defaultType);
                 else
                     metaType.Add(normalizedAttribute, member, defaultType);
             }
         }
-
+        
         protected static void GetDataFormat(ref DataFormat value, AttributeMap attrib, string memberName)
         {
             if ((attrib == null) || (value != DataFormat.Default)) return;
@@ -984,6 +990,8 @@ namespace AqlaSerializer
         public ImplicitFields ImplicitFallbackMode { get; set; }
 
         public bool DisableAutoRegisteringSubtypes { get; set; }
+
+        public bool DisableAutoAddingMemberTypes { get; set; }
 
         [Flags]
         public enum AttributeType

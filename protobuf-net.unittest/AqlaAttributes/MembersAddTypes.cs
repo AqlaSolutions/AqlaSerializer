@@ -21,17 +21,18 @@ namespace ProtoBuf.unittest.AqlaAttributes
             public int X { get; set; }
         }
 
-        [ExpectedException("System.InvalidOperationException", ExpectedMessage = "No serializer defined for type: ProtoBuf.unittest.AqlaAttributes.MembersAddTypes+ProtoMemberClass")]
-        [Test]
-        public void ShouldNotSerializeMemberContentForProto()
-        {
-            var m = TypeModel.Create();
-            m.Add(typeof(ProtoClassWithMember), true);
-            m.AutoAddMissingTypes = false;
-            var original = new ProtoClassWithMember() { ProtoMember = new ProtoMemberClass() { X = 12345 } };
-            var clone = (ProtoClassWithMember)m.DeepClone(original);
-            Assert.AreEqual(original.ProtoMember.X, clone.ProtoMember.X);
-        }
+        // enabled for everything now
+        //[ExpectedException("System.InvalidOperationException", ExpectedMessage = "No serializer defined for type: ProtoBuf.unittest.AqlaAttributes.MembersAddTypes+ProtoMemberClass")]
+        //[Test]
+        //public void ShouldNotSerializeMemberContentForProto()
+        //{
+        //    var m = TypeModel.Create();
+        //    m.Add(typeof(ProtoClassWithMember), true);
+        //    m.AutoAddMissingTypes = false;
+        //    var original = new ProtoClassWithMember() { ProtoMember = new ProtoMemberClass() { X = 12345 } };
+        //    var clone = (ProtoClassWithMember)m.DeepClone(original);
+        //    Assert.AreEqual(original.ProtoMember.X, clone.ProtoMember.X);
+        //}
 
         [SerializableType]
         public class AqlaClassWithMember
