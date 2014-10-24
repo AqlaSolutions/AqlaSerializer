@@ -673,14 +673,7 @@ namespace ProtoBuf.Meta
             {
                 foreach (Type type in list)
                 {
-                    var t = type;
-                    do
-                    {
-                        if (!allTypes.ContainsKey(t) && CheckTypeAutoSerializable(t))
-                            allTypes.Add(t, null);
-                        t = t.BaseType;
-                    }
-                    while (t != null && t != MapType(typeof(object)));
+                    AddTypeWithBases(type, allTypes, true);
                 }
             }
 
@@ -765,8 +758,7 @@ namespace ProtoBuf.Meta
                 }
             }
         }
-
-
+        
         class TypeNamesSortComparer : IComparer
         {
             public int Compare(object x, object y)
@@ -776,27 +768,31 @@ namespace ProtoBuf.Meta
         }
 
 #if !NO_GENERICS
-        static void FindGenericBases(Type type, TypeSet types)
+        void FindGenericBases(Type type, TypeSet typesList)
         {
             if (type.BaseType != null && type.BaseType.IsGenericType)
             {
-                if (!types.ContainsKey(type.BaseType))
-                    types.Add(type.BaseType, null);
-                FindGenericBases(type.BaseType, types);
-                FindGenericBases(type.BaseType.GetGenericTypeDefinition(), types);
+                if (!typesList.ContainsKey(type.BaseType))
+                {
+                    typesList.Add(type.BaseType, null);
+                    AddMembersTypes(type.BaseType, typesList, true);
+                }
+                FindGenericBases(type.BaseType, typesList);
+                FindGenericBases(type.BaseType.GetGenericTypeDefinition(), typesList);
             }
         }
 
-        static void CheckAddFinalGenericTypes(Type finalType, TypeSet genericTypeDefinitions, TypeSet typesList)
+        void CheckAddFinalGenericTypes(Type finalType, TypeSet genericTypeDefinitions, TypeSet typesList)
         {
             if (!typesList.ContainsKey(finalType) && finalType.IsGenericType && !finalType.IsGenericParameter
                 && !finalType.IsGenericTypeDefinition && genericTypeDefinitions.ContainsKey(finalType.GetGenericTypeDefinition()))
             {
                 typesList.Add(finalType, null);
+                AddMembersTypes(finalType, typesList, false);
             }
         }
 
-        private static void CheckAddMembersFinalGenericTypes(Type type, TypeSet genericDefs, TypeSet types)
+        private void CheckAddMembersFinalGenericTypes(Type type, TypeSet genericDefs, TypeSet types)
         {
             foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
                 CheckAddFinalGenericTypes(field.FieldType, genericDefs, types);
@@ -816,35 +812,60 @@ namespace ProtoBuf.Meta
             }
         }
 #endif
-        // TODO
-        //static void CheckAddMemberTypes(Type Type, TypeSet MemberTypeDefinitions, TypeSet typesList)
-        //{
-        //    if (!typesList.ContainsKey(Type) && Type.IsMemberType && !Type.IsMemberParameter
-        //        && !Type.IsGenericTypeDefinition && MemberTypeDefinitions.ContainsKey(Type.GetMemberTypeDefinition()))
-        //    {
-        //        typesList.Add(Type, null);
-        //    }
-        //}
 
-        //private static void CheckAddMembersMemberTypes(Type type, TypeSet MemberDefs, TypeSet types)
-        //{
-        //    foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-        //        CheckAddMemberTypes(field.FieldType, MemberDefs, types);
+        bool AddMemberType(Type type, TypeSet typesList, bool allowGenericDefs)
+        {
+            if (!typesList.ContainsKey(type)
+#if !NO_GENERICS
+                && !type.IsGenericParameter
+                && (allowGenericDefs || !type.IsGenericTypeDefinition)
+#endif
+                )
+            {
+                return AddTypeWithBases(type, typesList, allowGenericDefs) != 0;
+            }
+            return false;
+        }
 
-        //    foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-        //        CheckAddMemberTypes(property.PropertyType, MemberDefs, types);
+        int AddTypeWithBases(Type type, TypeSet allTypes, bool allowGenericDefs)
+        {
+            int added = 0;
+            var t = type;
+            do
+            {
+                if (!allTypes.ContainsKey(t) && CheckTypeAutoSerializable(t))
+                {
+                    allTypes.Add(t, null);
+                    while (AddMembersTypes(t, allTypes, allowGenericDefs) != 0) ;
+                    added++;
+                }
+                t = t.BaseType;
+            } while (t != null && t != MapType(typeof(object)));
+            return added;
+        }
 
-        //    foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-        //    {
-        //        CheckAddMemberTypes(method.ReturnType, MemberDefs, types);
-        //        foreach (ParameterInfo parameterInfo in method.GetParameters())
-        //        {
-        //            Type pType = parameterInfo.ParameterType;
-        //            if (pType.IsByRef) pType = pType.GetElementType();
-        //            CheckAddMemberTypes(pType, MemberDefs, types);
-        //        }
-        //    }
-        //}
+
+        int AddMembersTypes(Type type, TypeSet typesList, bool allowGenericDefs)
+        {
+            int added = 0;
+            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                if (AddMemberType(field.FieldType, typesList, allowGenericDefs)) added++;
+
+            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                if (AddMemberType(property.PropertyType, typesList, allowGenericDefs)) added++;
+
+            foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                if (AddMemberType(method.ReturnType, typesList, allowGenericDefs)) added++;
+                foreach (ParameterInfo parameterInfo in method.GetParameters())
+                {
+                    Type pType = parameterInfo.ParameterType;
+                    if (pType.IsByRef) pType = pType.GetElementType();
+                    if (AddMemberType(pType, typesList, allowGenericDefs)) added++;
+                }
+            }
+            return added;
+        }
 
 
         /// <summary>
