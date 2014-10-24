@@ -133,7 +133,7 @@ namespace ProtoBuf.Meta
             // fake ValueMember could be created for lists
             // it will use ListDecorator with returnList = false
             // because it doesn't have writable member
-            // so consider it read only
+            // so consider it read only for now
             this.AppendCollection = true; 
         }
         internal object GetRawEnumValue()
