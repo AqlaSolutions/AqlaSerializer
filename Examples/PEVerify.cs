@@ -11,7 +11,9 @@ namespace Examples
         {
             // note; PEVerify can be found %ProgramFiles%\Microsoft SDKs\Windows\v6.0A\bin
             const string exePath = "PEVerify.exe";
-            using (Process proc = Process.Start(exePath, path))
+            var startInfo = new ProcessStartInfo(exePath, path);
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            using (Process proc = Process.Start(startInfo))
             {
                 if (proc.WaitForExit(10000))
                 {
