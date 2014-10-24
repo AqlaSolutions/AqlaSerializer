@@ -40,12 +40,10 @@ namespace ProtoBuf.Meta
         /// </summary>
         public Type MemberType { get { return memberType; } }
 
-        Type _defaultTypeCache;
-
         /// <summary>
         /// For abstract types (IList etc), the type of concrete object to create (if required)
         /// </summary>
-        public Type DefaultType { get { return _defaultTypeCache ?? (_defaultTypeCache = defaultType ?? model.FindDefaultImplementation(memberType) ?? memberType); } }
+        public Type DefaultType { get { return defaultType; } }
         
         /// <summary>
         /// The type the defines the member

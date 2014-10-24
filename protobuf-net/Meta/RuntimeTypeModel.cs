@@ -2353,32 +2353,6 @@ namespace ProtoBuf.Meta
                 if (!CallbackSet.CheckCallbackParameters(this, factory)) throw new ArgumentException("Invalid factory signature in " + factory.DeclaringType.FullName + "." + factory.Name, "factory");
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public delegate Type ImplementationMappingResolveFunc(Type interfaceType);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event ImplementationMappingResolveFunc ImplementationMapping;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public Type FindDefaultImplementation(Type interfaceType)
-        {
-            var mapping = ImplementationMapping;
-            if (mapping != null)
-                foreach (ImplementationMappingResolveFunc d in mapping.GetInvocationList())
-                {
-                    Type r = d(interfaceType);
-                    if (r != null)
-                        return r;
-                }
-            return null;
-        }
     }
     /// <summary>
     /// Contains the stack-trace of the owning code when a lock-contention scenario is detected

@@ -966,17 +966,17 @@ namespace ProtoBuf.Meta
             }
         }
 
-        public void Add(SerializableMemberAttribute normalizedAttribute,MemberInfo member, object defaultValue)
+        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue, Type defaultType = null)
         {
-            Add(normalizedAttribute, member, true, defaultValue);
+            Add(normalizedAttribute, member, true, defaultValue, defaultType);
         }
 
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member)
+        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, Type defaultType = null)
         {
-            Add(normalizedAttribute, member, false, null);
+            Add(normalizedAttribute, member, false, null, defaultType);
         }
 
-        void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue)
+        void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue, Type defaultType = null)
         {
             Type effectiveType = Helpers.GetMemberType(member);
             
@@ -1008,10 +1008,11 @@ namespace ProtoBuf.Meta
             }
 
             Type itemType = null;
-            Type defaultType = null;
+            
+            Type t = null;
 
             // check for list types
-            ResolveListTypes(model, effectiveType, ref itemType, ref defaultType);
+            ResolveListTypes(model, effectiveType, ref itemType, ref t);
             // but take it back if it is explicitly excluded
             if (itemType != null)
             { // looks like a list, but double check for IgnoreListHandling
@@ -1019,9 +1020,17 @@ namespace ProtoBuf.Meta
                 if (idx >= 0 && model[effectiveType].IgnoreListHandling)
                 {
                     itemType = null;
-                    defaultType = null;
+                    t = null;
                 }
             }
+
+            if (t != null)
+            {
+                if (defaultType != t && defaultType != null)
+                    throw new ArgumentException("Specified defaultType " + defaultType.Name + " can't be used because found default list type " + t.Name);
+                defaultType = t;
+            }
+
             var vm = new ValueMember(model, this.Type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.DataFormat, defaultValue);
 #if WINRT
                 TypeInfo finalType = typeInfo;

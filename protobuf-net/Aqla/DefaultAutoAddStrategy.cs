@@ -26,8 +26,6 @@ namespace AqlaSerializer
     using AttributeFamily = MetaType.AttributeFamily;
     public class DefaultAutoAddStrategy : IAutoAddStrategy
     {
-        public bool DisableAutoTuples { get; set; }
-
         public virtual void ApplyDefaultBehaviour(MetaType metaType)
         {
             var type = metaType.Type;
@@ -814,13 +812,16 @@ namespace AqlaSerializer
                     defaultValueSpecified = true;
                 }
             }
+            Type defaultType = null;
+            if (metaType.Type.IsInterface)
+                defaultType = FindDefaultInterfaceImplementation(metaType.Type);
 
             if (isEnum || normalizedAttribute.Tag > 0)
             {
                 if (defaultValueSpecified)
-                    metaType.Add(normalizedAttribute, member, defaultValue);
+                    metaType.Add(normalizedAttribute, member, defaultValue, defaultType);
                 else
-                    metaType.Add(normalizedAttribute, member);
+                    metaType.Add(normalizedAttribute, member, defaultType);
             }
         }
 
@@ -889,6 +890,33 @@ namespace AqlaSerializer
             return true;
         }
 
+        public bool DisableAutoTuples { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public delegate Type ImplementationMappingResolveFunc(Type interfaceType);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event ImplementationMappingResolveFunc InterfaceImplementationMapping;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        protected virtual Type FindDefaultInterfaceImplementation(Type interfaceType)
+        {
+            var mapping = InterfaceImplementationMapping;
+            if (mapping != null)
+                foreach (ImplementationMappingResolveFunc d in mapping.GetInvocationList())
+                {
+                    Type r = d(interfaceType);
+                    if (r != null)
+                        return r;
+                }
+            return null;
+        }
 
         readonly RuntimeTypeModel _model;
 
@@ -918,7 +946,7 @@ namespace AqlaSerializer
                 _acceptableAttributes = value;
             }
         }
-
+        
         [Flags]
         public enum AttributeType
         {
