@@ -88,6 +88,8 @@ namespace ProtoBuf.Meta
         }
 
         private BasicList subTypes;
+        private BasicList subTypesSimple;
+
         public bool IsValidSubType(Type subType)
         {
 #if WINRT
@@ -121,29 +123,22 @@ namespace ProtoBuf.Meta
             {
                 throw new ArgumentException(derivedType.Name + " is not a valid sub-type of " + type.Name, "derivedType");
             }
+
+            if (subTypesSimple !=null && subTypesSimple.Contains(derivedType)) return this; // already exists
+            
+            if (subTypesSimple == null) subTypesSimple = new BasicList();
+            subTypesSimple.Add(derivedType);
+
             MetaType derivedMeta = model[derivedType];
             ThrowIfFrozen();
             derivedMeta.ThrowIfFrozen();
             SubType subType = new SubType(fieldNumber, derivedMeta, dataFormat);
             ThrowIfFrozen();
 
-            // don't add the same subtype twice!!!
-
-            int token = 0;
-            model.TakeLock(ref token);
-            try
-            {
-                if (derivedMeta.baseType == this)
-                    return this;
-
-                derivedMeta.SetBaseType(this); // includes ThrowIfFrozen
-                if (subTypes == null) subTypes = new BasicList();
-                subTypes.Add(subType);
-            }
-            finally
-            {
-                model.ReleaseLock(token);
-            }
+            derivedMeta.SetBaseType(this); // includes ThrowIfFrozen
+            if (subTypes == null) subTypes = new BasicList();
+            subTypes.Add(subType);
+            
             return this;
         }
 

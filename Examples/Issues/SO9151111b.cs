@@ -119,7 +119,8 @@ namespace Proto
                     }
                 }
             }
-
+            // yes, derrived types should be added too!
+            _modal.Add(typeof(SeniorDeveloper<bool>), true);
             this._modal.CompileInPlace();
         }
 

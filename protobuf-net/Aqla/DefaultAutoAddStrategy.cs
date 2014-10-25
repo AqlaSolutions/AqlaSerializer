@@ -30,15 +30,9 @@ namespace AqlaSerializer
         {
             var type = metaType.Type;
             Type baseType = metaType.GetBaseType();
-            if (baseType != null && _model.FindWithoutAdd(baseType) == null
-                && GetContractFamily(baseType) != AttributeFamily.None)
+            if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
             {
-                if (_model.FindOrAddAuto(baseType, true, false, false) != -1)
-                {
-                    MetaType meta = _model[baseType];
-                    if (!DisableAutoRegisteringSubtypes && !meta.IsList)
-                        meta.AddSubType(meta.GetNextFreeFieldNumber(), type);
-                }
+                FindOrAddType(baseType, true, false, false);
             }
 
             AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
@@ -396,14 +390,34 @@ namespace AqlaSerializer
             {
                 if (!isEnum && normalizedAttribute.Tag > 0)
                 {
+                    Type memberType = Helpers.GetMemberType(normalizedAttribute.Member);
                     if (!DisableAutoAddingMemberTypes
-                        && GetContractFamily(Helpers.GetMemberType(normalizedAttribute.Member)) != AttributeFamily.None)
+                        && GetContractFamily(memberType) != AttributeFamily.None)
                     {
-                        _model.FindOrAddAuto(Helpers.GetMemberType(normalizedAttribute.Member), true, false, false);
+                        FindOrAddType(memberType, true, false, false);
                     }
-
                 }
             }
+            
+            if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
+            {
+                if (FindMetaTypeWithoutAdd(baseType) != null)
+                {
+                    MetaType meta = _model[baseType];
+                    if (!DisableAutoRegisteringSubtypes && !meta.IsList)
+                        meta.AddSubType(meta.GetNextFreeFieldNumber(AutoRegisteringSubtypesFirstTag), type);
+                }
+            }
+        }
+
+        protected virtual MetaType FindMetaTypeWithoutAdd(Type baseType)
+        {
+            return _model.FindWithoutAdd(baseType);
+        }
+
+        protected virtual void FindOrAddType(Type type, bool demand, bool addWithContractOnly, bool addEvenIfAutoDisabled)
+        {
+            _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
         protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFields implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
@@ -965,6 +979,7 @@ namespace AqlaSerializer
         }
 
         readonly RuntimeTypeModel _model;
+        protected RuntimeTypeModel Model { get { return _model; } }
 
         static bool CanUse(AttributeType check, AttributeType required)
         {
@@ -998,8 +1013,26 @@ namespace AqlaSerializer
         /// Set to <see cref="ImplicitFields.AllFields"/> and use <see cref="DisableAutoTuples"/> to perform as BinaryFormatter
         /// </summary>
         public ImplicitFields ImplicitFallbackMode { get; set; }
-
+        
+        /// <summary>
+        /// By default all derived types add themselves to the corresponding base types
+        /// </summary>
         public bool DisableAutoRegisteringSubtypes { get; set; }
+
+        int _autoRegisteringSubtypesFirstTag = 200;
+        
+        /// <summary>
+        /// What tag to try from?
+        /// </summary>
+        public int AutoRegisteringSubtypesFirstTag
+        {
+            get { return _autoRegisteringSubtypesFirstTag; }
+            set
+            {
+                if (value < 0) throw new ArgumentOutOfRangeException("value", "Should be > 0");
+                _autoRegisteringSubtypesFirstTag = value;
+            }
+        }
 
         public bool DisableAutoAddingMemberTypes { get; set; }
 

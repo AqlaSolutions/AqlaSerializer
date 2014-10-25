@@ -624,7 +624,7 @@ namespace ProtoBuf.Meta
         public bool AddNotAsReferenceDefault { get; set; }
         //#define FORCE_COMPILE
 
-        public void AutoAddAllTypesWithDependencies(Assembly assembly)
+        public void Add(Assembly assembly, bool nonPublic, bool applyDefaultBehavior)
         {
             Type[] list;
 #if FEAT_IKVM
@@ -632,222 +632,52 @@ namespace ProtoBuf.Meta
 #else
             try
             {
-                list = assembly.GetTypes();
+                list = nonPublic ? assembly.GetTypes() : assembly.GetExportedTypes();
             }
             catch (ReflectionTypeLoadException ex)
             {
                 list = ex.Types;
             }
 #endif
-            AutoAddAllTypesWithDependencies(list);
+
+            Array.Sort(list, new TypeNamesSortComparer());
+
+
+            foreach (Type t in list)
+            {
+                if (!t.IsGenericTypeDefinition)
+                    Add(t, applyDefaultBehavior);
+            }
         }
 
-        bool CheckTypeAutoSerializable(Type type)
+        public void Add(Type[] list, bool applyDefaultBehavior)
         {
-            return _autoAddStrategy.GetContractFamily(type) != MetaType.AttributeFamily.None;
-        }
-
-        public void AutoAddAllTypesWithDependencies(Type[] list)
-        {
-            var allTypes = new TypeSet();
-
-            // create list with unique types
+            foreach (Type t in list)
             {
-                foreach (Type type in list)
-                {
-                    AddTypeWithBases(type, allTypes, true);
-                }
+                if (t.IsGenericTypeDefinition)
+                    throw new ArgumentException("Should not be GenericTypeDefinition");
             }
 
-#if !NO_GENERICS
-            // add generic bases
+            foreach (Type t in list)
             {
-                var copy = new Type[allTypes.Count];
-                allTypes.Keys.CopyTo(copy, 0);
-                foreach (Type source in copy)
-                    FindGenericBases(source, allTypes);
-            }
-
-            // replace generic type definitions with used types
-            var genericDefs = new TypeSet();
-            foreach (Type t in allTypes.Keys)
-            {
-                if (t.IsGenericType || t.IsGenericTypeDefinition)
-                {
-                    Type def = t.IsGenericTypeDefinition ? t : t.GetGenericTypeDefinition();
-                    if (def != null && !genericDefs.ContainsKey(def))
-                        genericDefs.Add(def, null);
-                }
-            }
-
-            // remove all generic definitions
-            foreach (Type removeType in genericDefs.Keys)
-                allTypes.Remove(removeType);
-
-            // add possible generic types from members
-            {
-                var typesCopy = new Type[allTypes.Count];
-                allTypes.Keys.CopyTo(typesCopy, 0);
-
-                foreach (Type type in typesCopy)
-                {
-                    CheckAddMembersFinalGenericTypes(type, genericDefs, allTypes);
-                }
-                foreach (Type type in genericDefs.Keys)
-                {
-                    CheckAddMembersFinalGenericTypes(type, genericDefs, allTypes);
-                }
-            }
-#endif
-            var sortedTypes = new TypeList();
-            {
-                // sort types to make the same keys every time
-                var typesArray = new Type[allTypes.Count];
-                allTypes.Keys.CopyTo(typesArray, 0);
-                Array.Sort(typesArray, new TypeNamesSortComparer());
-                foreach (var type in typesArray)
-                    sortedTypes.Add(type);
-            }
-
-
-            foreach (Type t in sortedTypes)
-            {
-                if (FindWithoutAdd(t) != null) continue;
-
-                MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(t);
-                if (family == MetaType.AttributeFamily.None) continue;
-                
-                var tInfo = Add(t, true);
-
-                if (family != MetaType.AttributeFamily.Aqla) continue;
-
-                // add sub types!
-
-                int number = 1;
-
-                foreach (Type subtype in sortedTypes)
-                {
-                    if (subtype.BaseType != t) continue;
-
-#if !NO_GENERICS
-                    number = tInfo.GetNextFreeFieldNumber(number);
-                    if (subtype.BaseType != null && subtype.BaseType.IsGenericType)
-                        Add(subtype.BaseType, true).AddSubType(++number, subtype);
-                    else
-#endif
-                        tInfo.AddSubType(++number, subtype);
-                }
+                Add(t, applyDefaultBehavior);
             }
         }
-        
+
         class TypeNamesSortComparer : IComparer
         {
             public int Compare(object x, object y)
             {
-                return StringComparer.Ordinal.Compare(((Type)x).FullName, ((Type)y).FullName);
+                var tX = ((Type)x);
+                var tY = ((Type)y);
+                return StringComparer.Ordinal.Compare(ExtractName(tX), ExtractName(tY));
+            }
+
+            private static string ExtractName(Type tX)
+            {
+                return tX.FullName + ", from " + tX.Assembly.GetName().Name + " (" + tX.Assembly.FullName + ")";
             }
         }
-
-#if !NO_GENERICS
-        void FindGenericBases(Type type, TypeSet typesList)
-        {
-            if (type.BaseType != null && type.BaseType.IsGenericType)
-            {
-                if (!typesList.ContainsKey(type.BaseType))
-                {
-                    typesList.Add(type.BaseType, null);
-                    AddMembersTypes(type.BaseType, typesList, true);
-                }
-                FindGenericBases(type.BaseType, typesList);
-                FindGenericBases(type.BaseType.GetGenericTypeDefinition(), typesList);
-            }
-        }
-
-        void CheckAddFinalGenericTypes(Type finalType, TypeSet genericTypeDefinitions, TypeSet typesList)
-        {
-            if (!typesList.ContainsKey(finalType) && finalType.IsGenericType && !finalType.IsGenericParameter
-                && !finalType.IsGenericTypeDefinition && genericTypeDefinitions.ContainsKey(finalType.GetGenericTypeDefinition()))
-            {
-                typesList.Add(finalType, null);
-                AddMembersTypes(finalType, typesList, false);
-            }
-        }
-
-        private void CheckAddMembersFinalGenericTypes(Type type, TypeSet genericDefs, TypeSet types)
-        {
-            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                CheckAddFinalGenericTypes(field.FieldType, genericDefs, types);
-
-            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                CheckAddFinalGenericTypes(property.PropertyType, genericDefs, types);
-
-            foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                CheckAddFinalGenericTypes(method.ReturnType, genericDefs, types);
-                foreach (ParameterInfo parameterInfo in method.GetParameters())
-                {
-                    Type pType = parameterInfo.ParameterType;
-                    if (pType.IsByRef) pType = pType.GetElementType();
-                    CheckAddFinalGenericTypes(pType, genericDefs, types);
-                }
-            }
-        }
-#endif
-
-        bool AddMemberType(Type type, TypeSet typesList, bool allowGenericDefs)
-        {
-            if (!typesList.ContainsKey(type)
-#if !NO_GENERICS
-                && !type.IsGenericParameter
-                && (allowGenericDefs || !type.IsGenericTypeDefinition)
-#endif
-                )
-            {
-                return AddTypeWithBases(type, typesList, allowGenericDefs) != 0;
-            }
-            return false;
-        }
-
-        int AddTypeWithBases(Type type, TypeSet allTypes, bool allowGenericDefs)
-        {
-            int added = 0;
-            var t = type;
-            do
-            {
-                if (!allTypes.ContainsKey(t) && CheckTypeAutoSerializable(t))
-                {
-                    allTypes.Add(t, null);
-                    while (AddMembersTypes(t, allTypes, allowGenericDefs) != 0) ;
-                    added++;
-                }
-                t = t.BaseType;
-            } while (t != null && t != MapType(typeof(object)));
-            return added;
-        }
-
-
-        int AddMembersTypes(Type type, TypeSet typesList, bool allowGenericDefs)
-        {
-            int added = 0;
-            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                if (AddMemberType(field.FieldType, typesList, allowGenericDefs)) added++;
-
-            foreach (PropertyInfo property in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-                if (AddMemberType(property.PropertyType, typesList, allowGenericDefs)) added++;
-
-            foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                if (AddMemberType(method.ReturnType, typesList, allowGenericDefs)) added++;
-                foreach (ParameterInfo parameterInfo in method.GetParameters())
-                {
-                    Type pType = parameterInfo.ParameterType;
-                    if (pType.IsByRef) pType = pType.GetElementType();
-                    if (AddMemberType(pType, typesList, allowGenericDefs)) added++;
-                }
-            }
-            return added;
-        }
-
 
         /// <summary>
         /// Adds support for an additional type in this model, optionally

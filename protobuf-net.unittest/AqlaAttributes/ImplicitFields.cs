@@ -71,21 +71,22 @@ namespace ProtoBuf.unittest.AqlaAttributes
         [Test]
         public void ShouldAutoAddAllBaseTypesCorrectly()
         {
-            _model.AutoAddAllTypesWithDependencies(Assembly.GetExecutingAssembly());
+            _model.Add(Assembly.GetExecutingAssembly(), true, true);
             CheckInherited();
         }
 
         [Test]
         public void ShouldAutoAddBaseTypesCorrectlyEvenIfNotSpecified()
         {
-            _model.AutoAddAllTypesWithDependencies(new Type[] { typeof(TestInherited) });
+            _model.Add(new Type[] { typeof(TestInherited) }, true);
             CheckInherited();
         }
 
         [Test]
         public void ShouldNotAutoAddDerrivedTypesIfNotSpecified()
         {
-            _model.AutoAddAllTypesWithDependencies(new Type[] { typeof(TestClass) });
+            _model.Add(new Type[] { typeof(TestClass) }, true);
+            _model.AutoAddMissingTypes = false;
             try
             {
                 CheckInherited();
@@ -97,7 +98,7 @@ namespace ProtoBuf.unittest.AqlaAttributes
         [Test]
         public void ShouldAutoAddDerrivedTypesIfSpecified()
         {
-            _model.AutoAddAllTypesWithDependencies(new Type[] { typeof(TestInherited), typeof(TestClass) });
+            _model.Add(new Type[] { typeof(TestInherited), typeof(TestClass) }, true);
             CheckInherited();
         }
 
