@@ -391,6 +391,19 @@ namespace AqlaSerializer
                 metaType.SetCallbacks(Coalesce(callbacks, 0, 4, 8), Coalesce(callbacks, 1, 5, 9),
                     Coalesce(callbacks, 2, 6, 10), Coalesce(callbacks, 3, 7, 11));
             }
+
+            foreach (var normalizedAttribute in arr)
+            {
+                if (!isEnum && normalizedAttribute.Tag > 0)
+                {
+                    if (!DisableAutoAddingMemberTypes
+                        && GetContractFamily(Helpers.GetMemberType(normalizedAttribute.Member)) != AttributeFamily.None)
+                    {
+                        _model.FindOrAddAuto(Helpers.GetMemberType(normalizedAttribute.Member), true, false, false);
+                    }
+
+                }
+            }
         }
 
         protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFields implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
@@ -851,9 +864,6 @@ namespace AqlaSerializer
 
             if (isEnum || normalizedAttribute.Tag > 0)
             {
-                if (!DisableAutoAddingMemberTypes && GetContractFamily(memberType) != AttributeFamily.None)
-                    _model.FindOrAddAuto(memberType, true, false, false);
-
                 if (defaultValueSpecified)
                     metaType.Add(normalizedAttribute, member, defaultValue, defaultType);
                 else
