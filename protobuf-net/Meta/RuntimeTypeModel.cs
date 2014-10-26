@@ -804,6 +804,10 @@ namespace ProtoBuf.Meta
             {
                 throw new ArgumentException("IEnumerable[<T>] data cannot be used as a meta-type unless an Add method can be resolved");
             }
+            if (type == MapType(typeof(object)))
+            {
+                throw new ArgumentException("Use DynamicType fields for System.Object instead");
+            }
             try
             {
                 newType = RecogniseCommonTypes(type);
