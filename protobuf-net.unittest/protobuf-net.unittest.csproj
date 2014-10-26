@@ -114,6 +114,7 @@
     <Compile Include="..\FX11\Program.cs">
       <Link>Program.cs</Link>
     </Compile>
+    <Compile Include="AqlaAttributes\DerivedDerivedOnField.cs" />
     <Compile Include="AqlaAttributes\ExportImportTypes.cs" />
     <Compile Include="AqlaAttributes\ImplicitFallback.cs" />
     <Compile Include="AqlaAttributes\ImplicitFields.cs" />
