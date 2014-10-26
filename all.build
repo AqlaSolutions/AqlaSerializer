@@ -28,11 +28,7 @@
     <PrecompileFiles Include="precompile\bin\Release\*.*"/>
     <ProtogenFiles Include="ProtoGen\bin\Release\*.*"/>
 
-    <CF20Files Include="protobuf-net-CF20\bin\Release\protobuf-net.*"/>
-    <CF35Files Include="protobuf-net-CF35\bin\Release\protobuf-net.*"/>
     <WinRTFiles Include="protobuf-net_WinRT\bin\Release\protobuf-net.*"/>
-    <CF20Files_CoreOnly Include="protobuf-net-CF20\bin\CoreOnly\protobuf-net.*"/>
-    <CF35Files_CoreOnly Include="protobuf-net-CF35\bin\CoreOnly\protobuf-net.*"/>    
     <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\protobuf-net.*"/>
   </ItemGroup>
   <Target Name="BuildKit">
@@ -46,12 +42,8 @@
     <Exec Command="&quot;%SystemRoot%\Microsoft.Net\Framework\v1.1.4322\csc.exe&quot; /debug- /optimize+ &quot;/out:$(ZipDirectory)\Full\net11\protobuf-net.dll&quot; /define:FX11 /define:NO_GENERICS /define:PLAT_BINARYFORMATTER /define:FEAT_COMPILER /target:library /unsafe /recurse:protobuf-net\*.cs"/>
     <Exec Command="&quot;%SystemRoot%\Microsoft.Net\Framework\v1.1.4322\csc.exe&quot; /debug- /optimize+ &quot;/out:$(ZipDirectory)\CoreOnly\net11\protobuf-net.dll&quot; /define:FX11 /define:NO_GENERICS /define:PLAT_BINARYFORMATTER /define:NO_RUNTIME /target:library /unsafe /recurse:protobuf-net\*.cs"/>
 
-    <MSBuild Projects="protobuf-net-CF20\protobuf-net-CF20.csproj" Properties="Configuration=Release"/>
-    <MSBuild Projects="protobuf-net-CF35\protobuf-net-CF35.csproj" Properties="Configuration=Release"/>
     <MSBuild Projects="protobuf-net_Phone8\protobuf-net_Phone8.csproj" Properties="Configuration=Release"/>
     
-    <MSBuild Projects="protobuf-net-CF20\protobuf-net-CF20.csproj" Properties="Configuration=CoreOnly"/>
-    <MSBuild Projects="protobuf-net-CF35\protobuf-net-CF35.csproj" Properties="Configuration=CoreOnly"/>
     <MSBuild Projects="protobuf-net_Phone8\protobuf-net_Phone8.csproj" Properties="Configuration=CoreOnly"/>
 
     <Copy SourceFiles="Licence.txt" DestinationFolder="$(ZipDirectory)"/>
@@ -89,15 +81,8 @@
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl4+net40+wp7+windows8"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable"/>
 
-    <Copy SourceFiles="@(CF20Files)" DestinationFolder="$(NugetDirectory)\net20-cf"/>
-    <Copy SourceFiles="@(CF20Files)" DestinationFolder="$(ZipDirectory)\Full\cf20"/>
-    <Copy SourceFiles="@(CF35Files)" DestinationFolder="$(NugetDirectory)\net35-cf"/>
-    <Copy SourceFiles="@(CF35Files)" DestinationFolder="$(NugetDirectory)\net40-cf"/>
-    <Copy SourceFiles="@(CF35Files)" DestinationFolder="$(ZipDirectory)\Full\cf35"/>
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(NugetDirectory)\netcore45"/>
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(ZipDirectory)\Full\netcore45"/>
-    <Copy SourceFiles="@(CF20Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\cf20"/>
-    <Copy SourceFiles="@(CF35Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\cf35"/>
     <Copy SourceFiles="@(WinRTFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\netcore45"/>
 
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>

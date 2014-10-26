@@ -64,15 +64,6 @@
     <MSBuild Projects="protogen\protogen.csproj" Properties="OutputPath=..\$(OutputDirectory)\NET30; Configuration=Release" Targets="Rebuild"/>
     <MSBuild Projects="protobuf-net.Extensions\protobuf-net.Extensions.csproj" Properties="OutputPath=..\$(OutputDirectory)\NET30; Configuration=Release" Targets="Rebuild"/>
 
-    <!-- build for compact framework -->
-    <RemoveDir Directories="protobuf-net-CF20\obj; protobuf-net-CF20\bin"/>
-    <RemoveDir Directories="protobuf-net-CF35\obj; protobuf-net-CF35\bin"/>
-    <RemoveDir Directories="protobuf-net.Extensions-CF35\obj; protobuf-net.Extensions-CF35\bin"/>
-
-    <MSBuild Projects="protobuf-net-CF20\protobuf-net-CF20.csproj" Properties="OutputPath=..\$(OutputDirectory)\CF20; Configuration=Release" Targets="Rebuild"/>
-    <MSBuild Projects="protobuf-net-CF35\protobuf-net-CF35.csproj" Properties="OutputPath=..\$(OutputDirectory)\CF35; Configuration=Release" Targets="Rebuild"/>
-    <MSBuild Projects="protobuf-net.Extensions-CF35\protobuf-net.Extensions-CF35.csproj" Properties="OutputPath=..\$(OutputDirectory)\CF35; Configuration=Release" Targets="Rebuild"/> 
-
     <!-- build for Silverlight -->
     <RemoveDir Directories="protobuf-net_Silverlight\obj; protobuf-net_Silverlight\bin"/>
     <MSBuild Projects="protobuf-net_Silverlight\protobuf-net_Silverlight.csproj" Properties="OutputPath=..\$(OutputDirectory)\SILVER20_tmp; Configuration=Release" Targets="Rebuild"/>
@@ -92,8 +83,6 @@
     <ItemGroup>
       <ZipN20 Include="$(OutputDirectory)\NET20\*.*" />
       <ZipN30 Include="$(OutputDirectory)\NET30\*.*" />
-      <ZipCF20 Include="$(OutputDirectory)\CF20\*.*" />
-      <ZipCF35 Include="$(OutputDirectory)\CF35\*.*" />
       <ZipS20 Include="$(OutputDirectory)\SILVER20\*.*" />
       <ZipMONO Include="$(OutputDirectory)\MONO\*.*" />
     </ItemGroup>
@@ -110,15 +99,7 @@
          Files="@(ZipN30)"
          ZipFileName="$(OutputDirectory)\Zips\NET30.zip" />
     <RemoveDir Directories="$(OutputDirectory)\NET20; $(OutputDirectory)\NET30"/>
-    
-    <Zip WorkingDirectory="$(OutputDirectory)\CF20"
-         Files="@(ZipCF20)"
-         ZipFileName="$(OutputDirectory)\Zips\CF20.zip" />
-    <Zip WorkingDirectory="$(OutputDirectory)\CF35"
-         Files="@(ZipCF35)"
-         ZipFileName="$(OutputDirectory)\Zips\CF35.zip" />
-    <RemoveDir Directories="$(OutputDirectory)\CF20; $(OutputDirectory)\CF35"/>
-    
+      
     <Zip WorkingDirectory="$(OutputDirectory)\SILVER20"
          Files="@(ZipS20)"
          ZipFileName="$(OutputDirectory)\Zips\SILVER20.zip" />
