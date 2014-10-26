@@ -98,6 +98,17 @@ namespace ProtoBuf.Meta
             return type.IsAssignableFrom(subType);
 #endif
         }
+
+        bool _isDefaultBehaviourApplied;
+
+        public void ApplyDefaultBehaviour()
+        {
+            // AddSubType is not thread safe too, so what?
+            if (_isDefaultBehaviourApplied) return;
+            _isDefaultBehaviourApplied = true;
+            model.AutoAddStrategy.ApplyDefaultBehaviour(this);
+        }
+
         /// <summary>
         /// Adds a known sub-type to the inheritance model
         /// </summary>

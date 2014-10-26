@@ -74,6 +74,7 @@ namespace ProtoBuf.Meta
                 case ProtoTypeCode.TimeSpan:
                 case ProtoTypeCode.Guid:
                 case ProtoTypeCode.Uri:
+                case ProtoTypeCode.Type:
                     return WireType.String;
             }
 
@@ -155,6 +156,12 @@ namespace ProtoBuf.Meta
                 case ProtoTypeCode.TimeSpan: BclHelpers.WriteTimeSpan((TimeSpan)value, writer); return true;
                 case ProtoTypeCode.Guid: BclHelpers.WriteGuid((Guid)value, writer); return true;
                 case ProtoTypeCode.Uri: ProtoWriter.WriteString(((Uri)value).AbsoluteUri, writer); return true;
+            }
+
+            if (typecode == ProtoTypeCode.Type && isRoot)
+            {
+                ProtoWriter.WriteType((Type)value, writer);
+                return true;
             }
 
             // by now, we should have covered all the simple cases; if we wrote a field-header, we have
@@ -1159,6 +1166,10 @@ namespace ProtoBuf.Meta
                     case ProtoTypeCode.TimeSpan: value = BclHelpers.ReadTimeSpan(reader); continue;
                     case ProtoTypeCode.Guid: value = BclHelpers.ReadGuid(reader); continue;
                     case ProtoTypeCode.Uri: value = new Uri(reader.ReadString()); continue;
+                }
+                if (typecode == ProtoTypeCode.Type && isRoot)
+                {
+                    value = reader.ReadType();
                 }
 
             }

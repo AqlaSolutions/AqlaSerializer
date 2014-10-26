@@ -5,6 +5,7 @@ using System.Collections;
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
+using System.Runtime.Serialization;
 using System.Text;
 
 #if FEAT_IKVM
@@ -140,10 +141,37 @@ namespace ProtoBuf.Meta
         public static DefaultAutoAddStrategy DefaultAutoAddStrategy { get { return (DefaultAutoAddStrategy) Default.AutoAddStrategy; } }
 
         /// <summary>
-        /// Returns a sequence of the Type instances that can be
+        /// Returns list of the MetaType instances that can be
         /// processed by this model.
         /// </summary>
-        public IEnumerable GetTypes() { return types; }
+        public MetaType[] MetaTypes
+        {
+            get
+            {
+                MetaType[] r = new MetaType[types.Count];
+                types.CopyTo(r, 0);
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Returns list of the Type instances that can be
+        /// processed by this model.
+        /// </summary>
+        public Type[] Types
+        {
+            get
+            {
+                Type[] r = new Type[types.Count];
+                int i = 0;
+                foreach (MetaType t in types)
+                {
+                    r[i] = t.Type;
+                    i++;
+                }
+                return r;
+            }
+        }
 
         /// <summary>
         /// Suggest a .proto definition for the given type
@@ -576,7 +604,7 @@ namespace ProtoBuf.Meta
                     }
                     if (weAdded)
                     {
-                        _autoAddStrategy.ApplyDefaultBehaviour(metaType);
+                        metaType.ApplyDefaultBehaviour();
                         metaType.Pending = false;
                     }
                 }
@@ -622,8 +650,7 @@ namespace ProtoBuf.Meta
         /// See <see cref="MetaType.AsReferenceDefault"/>
         /// </summary>
         public bool AddNotAsReferenceDefault { get; set; }
-        //#define FORCE_COMPILE
-
+        
         public void Add(Assembly assembly, bool nonPublic, bool applyDefaultBehavior)
         {
             Type[] list;
@@ -650,7 +677,33 @@ namespace ProtoBuf.Meta
             }
         }
 
+        public class AddTypesCantEnsureKeysOrderException:Exception
+        {
+            public AddTypesCantEnsureKeysOrderException(Type type)
+                : base("Type " + type.Name + " has wrong key, adding stopped at this type. " +
+                       "Are you trying to use InitializeWithExactTypes when the model already" +
+                       "contains types? See TypeModel.Create()")
+            {
+            }
+
+            protected AddTypesCantEnsureKeysOrderException(SerializationInfo info, StreamingContext context) : base(info, context)
+            {
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="applyDefaultBehavior"></param>
+        /// <param name="ensureKeysOrderStart"></param>
+        /// <exception cref="AddTypesCantEnsureKeysOrderException"></exception>
         public void Add(Type[] list, bool applyDefaultBehavior)
+        {
+            Add(list, applyDefaultBehavior, null);
+        }
+
+        void Add(Type[] list, bool applyDefaultBehavior, int? ensureKeysOrderStart)
         {
             foreach (Type t in list)
             {
@@ -658,12 +711,50 @@ namespace ProtoBuf.Meta
                     throw new ArgumentException("Should not be GenericTypeDefinition");
             }
 
+            bool ensureKeys = ensureKeysOrderStart != null;
+
+            int k = ensureKeysOrderStart ?? -1;
+
             foreach (Type t in list)
             {
-                Add(t, applyDefaultBehavior);
+                var added = Add(t, !ensureKeys && applyDefaultBehavior);
+                if (ensureKeys)
+                {
+                    if (added.GetKey(true, false) != k)
+                    {
+                        throw new AddTypesCantEnsureKeysOrderException(t);
+                    }
+                    k++;
+                }
+            }
+
+            // default behavior can add another types and break order
+            if (ensureKeys && applyDefaultBehavior)
+            {
+                foreach (Type t in list)
+                {
+                    FindWithoutAdd(t).ApplyDefaultBehaviour();
+                }
             }
         }
 
+        /// <summary>
+        /// Use this when you need to recreate RuntimeTypeModel with the same type keys on another side (if you don't use precompilation then your models should be initialized in this way)
+        /// </summary>
+        /// <remarks>
+        /// On 1st side (possible network server):
+        /// Serialize(stream, model.Types);
+        /// On 2nd side (possible network client):
+        /// model.InitializeWithExactTypes((Type[])Deserialize(...))
+        /// </remarks>
+        /// <param name="list"></param>
+        /// <param name="applyDefaultBehavior"></param>
+        /// <exception cref="AddTypesCantEnsureKeysOrderException"></exception>
+        public void InitializeWithExactTypes(Type[] list, bool applyDefaultBehavior)
+        {
+            Add(list, applyDefaultBehavior, 0);
+        }
+        
         class TypeNamesSortComparer : IComparer
         {
             public int Compare(object x, object y)
@@ -735,7 +826,7 @@ namespace ProtoBuf.Meta
                 if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", "type");
                 ThrowIfFrozen();
                 types.Add(newType);
-                if (applyDefaultBehaviour) { _autoAddStrategy.ApplyDefaultBehaviour(newType); }
+                if (applyDefaultBehaviour) { newType.ApplyDefaultBehaviour(); }
                 newType.Pending = false;
             }
             finally

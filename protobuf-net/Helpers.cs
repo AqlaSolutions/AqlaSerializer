@@ -318,6 +318,7 @@ namespace ProtoBuf
 
         public static ProtoTypeCode GetTypeCode(System.Type type)
         {
+            if (IsAssignableFrom(typeof(System.Type), type)) return ProtoTypeCode.Type;
 #if WINRT
             
             int idx = Array.IndexOf<Type>(knownTypes, type);
@@ -349,8 +350,7 @@ namespace ProtoBuf
             if (type == typeof(Guid)) return ProtoTypeCode.Guid;
             if (type == typeof(Uri)) return ProtoTypeCode.Uri;
             if (type == typeof(byte[])) return ProtoTypeCode.ByteArray;
-            if (type == typeof(System.Type)) return ProtoTypeCode.Type;
-
+            
             return ProtoTypeCode.Unknown;
 #endif
         }

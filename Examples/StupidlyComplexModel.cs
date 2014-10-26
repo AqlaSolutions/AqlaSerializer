@@ -56,7 +56,7 @@ namespace Examples
             model.Add(typeof(T), true);
             if (test != null) test(model, "Time");
             model.Compile(); // do discovery etc
-            int typeCount = model.GetTypes().Cast<MetaType>().Count();
+            int typeCount = model.Types.Length;
 
             var watch = Stopwatch.StartNew();
             for (int i = 0; i < count; i++)

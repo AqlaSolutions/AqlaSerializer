@@ -114,9 +114,11 @@
     <Compile Include="..\FX11\Program.cs">
       <Link>Program.cs</Link>
     </Compile>
+    <Compile Include="AqlaAttributes\ExportImportTypes.cs" />
     <Compile Include="AqlaAttributes\ImplicitFallback.cs" />
     <Compile Include="AqlaAttributes\ImplicitFields.cs" />
     <Compile Include="AqlaAttributes\MembersAddTypes.cs" />
+    <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Attribs\Basic.cs" />
     <Compile Include="Attribs\ComplexMultiTypes.cs" />
     <Compile Include="Attribs\PointStruct.cs" />

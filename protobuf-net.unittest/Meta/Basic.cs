@@ -32,7 +32,7 @@ namespace ProtoBuf.unittest.Meta
         {
             var meta = Customer.BuildMeta();
             Assert.IsNotNull(meta);
-            var types = meta.GetTypes().Cast<MetaType>();
+            var types = meta.MetaTypes;
             Assert.AreEqual(typeof(Customer), types.Single().Type);
         }
 

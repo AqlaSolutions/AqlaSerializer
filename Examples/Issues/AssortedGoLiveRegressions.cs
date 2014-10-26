@@ -66,7 +66,7 @@ namespace Examples.Issues
         {
             var orig = new Dictionary<string,string> { {"abc","def" }};
             var clone = Serializer.DeepClone(orig).Single();
-            MetaType[] types = RuntimeTypeModel.Default.GetTypes().Cast<MetaType>().ToArray();
+            MetaType[] types = RuntimeTypeModel.Default.MetaTypes;
             Assert.AreEqual(orig.Single().Key, clone.Key);
             Assert.AreEqual(orig.Single().Value, clone.Value);
         }
