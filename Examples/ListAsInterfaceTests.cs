@@ -70,7 +70,7 @@ namespace Examples
 
             Assert.IsNotNull(clone.Data, "clone.Data");
             Assert.AreEqual(original.Data.Count, clone.Data.Count, "clone.Data.Count");
-            Assert.IsTrue(Enumerable.SequenceEqual(original.Data, clone.Data), "SequenceEqual");
+            Assert.IsTrue(original.Data.SequenceEqual(clone.Data), "SequenceEqual");
 
         }
     }

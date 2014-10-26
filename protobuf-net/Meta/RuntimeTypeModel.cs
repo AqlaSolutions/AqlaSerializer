@@ -696,7 +696,6 @@ namespace ProtoBuf.Meta
         /// </summary>
         /// <param name="list"></param>
         /// <param name="applyDefaultBehavior"></param>
-        /// <param name="ensureKeysOrderStart"></param>
         /// <exception cref="AddTypesCantEnsureKeysOrderException"></exception>
         public void Add(Type[] list, bool applyDefaultBehavior)
         {
@@ -914,7 +913,7 @@ namespace ProtoBuf.Meta
             }
             catch (Exception ex)
             {
-                if (ex.Message.IndexOf(type.FullName) >= 0) throw;  // already enough info
+                if (ex.Message.IndexOf(type.FullName, System.StringComparison.Ordinal) >= 0) throw;  // already enough info
                 throw new ProtoException(ex.Message + " (" + type.FullName + ")", ex);
             }
         }

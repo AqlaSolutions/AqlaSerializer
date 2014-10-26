@@ -39,7 +39,7 @@ namespace Examples.Issues
                 roundTrippedOrders.SelectMany(o => o.Lines).Count(), "total count");
         }
 
-        static void DbMetrics(string caption, IEnumerable<Order> orders)
+        static void DbMetrics(string caption, IList<Order> orders)
         {
             int count = orders.Count();
             int lines = orders.SelectMany(ord => ord.Lines).Count();

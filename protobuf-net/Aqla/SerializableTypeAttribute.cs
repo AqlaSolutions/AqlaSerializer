@@ -26,7 +26,7 @@ namespace AqlaSerializer
             get { return implicitFirstTag; }
             set
             {
-                if (value < 1) throw new ArgumentOutOfRangeException("ImplicitFirstTag");
+                if (value < 1) throw new ArgumentOutOfRangeException("value");
                 implicitFirstTag = value;
             }
         }

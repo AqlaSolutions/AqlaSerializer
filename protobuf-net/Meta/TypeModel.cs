@@ -813,7 +813,7 @@ namespace ProtoBuf.Meta
             }
 
             string name = listType.Name;
-            bool isQueueStack = name != null && (name.IndexOf("Queue") >= 0 || name.IndexOf("Stack") >= 0);
+            bool isQueueStack = name != null && (name.IndexOf("Queue", System.StringComparison.Ordinal) >= 0 || name.IndexOf("Stack", System.StringComparison.Ordinal) >= 0);
 #if !NO_GENERICS
             if(!isQueueStack)
             {
@@ -1010,7 +1010,7 @@ namespace ProtoBuf.Meta
 #else
                 if (listType.IsInterface &&
 #endif
- (fullName = listType.FullName) != null && fullName.IndexOf("Dictionary") >= 0) // have to try to be frugal here...
+ (fullName = listType.FullName) != null && fullName.IndexOf("Dictionary", System.StringComparison.Ordinal) >= 0) // have to try to be frugal here...
                 {
 #if !NO_GENERICS
 #if WINRT

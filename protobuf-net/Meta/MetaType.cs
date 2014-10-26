@@ -1277,7 +1277,7 @@ namespace ProtoBuf.Meta
         internal bool IsAutoTuple
         {
             get { return HasFlag(OPTIONS_AutoTuple); }
-            set { SetFlag(OPTIONS_AutoTuple, true, true); }
+            set { SetFlag(OPTIONS_AutoTuple, value, true); }
         }
         internal void WriteSchema(System.Text.StringBuilder builder, int indent, ref bool requiresBclImport)
         {

@@ -12,7 +12,7 @@ namespace Examples.DesignIdeas
 {
     /// <summary>
     /// would like to be able to specify custom values for enums;
-    /// implementation note: some kind of map: Dictionary<TValue, long>?
+    /// implementation note: some kind of map: Dictionary&lt;TValue, long&gt;?
     /// note: how to handle -ves? (ArgumentOutOfRangeException?)
     /// note: how to handle flags? (NotSupportedException? at least for now?
     ///             could later use a bitmap sweep?)

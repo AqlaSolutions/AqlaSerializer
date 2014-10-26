@@ -266,7 +266,7 @@ namespace ProtoBuf.Precompile
                             string[] files = Directory.GetFiles(root, "mscorlib.dll", SearchOption.AllDirectories);
                             foreach (var file in files)
                             {
-                                string dir = Path.GetDirectoryName(file);
+                                string dir = Path.GetDirectoryName(file) ?? string.Empty;
                                 if (dir.StartsWith(root)) dir = dir.Substring(root.Length);
                                 Console.Error.WriteLine(dir);
                             }
@@ -388,7 +388,7 @@ namespace ProtoBuf.Precompile
             }
 
             // add everything we explicitly know about
-            toAdd.Sort((x, y) => string.Compare(x.FullName, y.FullName));            
+            toAdd.Sort((x, y) => System.String.CompareOrdinal(x.FullName, y.FullName));            
             foreach (var type in toAdd)
             {
                 Console.WriteLine("Adding " + type.FullName + "...");
@@ -402,7 +402,7 @@ namespace ProtoBuf.Precompile
             {
                 if(!toAdd.Contains(type.Type)) inferred.Add(type.Type);
             }
-            inferred.Sort((x, y) => string.Compare(x.FullName, y.FullName));
+            inferred.Sort((x, y) => System.String.CompareOrdinal(x.FullName, y.FullName));
             foreach (var type in inferred)
             {
                 Console.WriteLine("Adding " + type.FullName + "...");

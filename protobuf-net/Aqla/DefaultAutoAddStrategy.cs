@@ -795,7 +795,9 @@ namespace AqlaSerializer
                             }
 
                             GetFieldBoolean(ref dynamicType, ppma, "DynamicType");
-                            if (done = tagIsPinned = fieldNumber > 0) break; // note minAcceptFieldNumber only applies to non-proto
+#pragma warning disable 665
+                            if (done = tagIsPinned = (fieldNumber > 0)) break; // note minAcceptFieldNumber only applies to non-proto
+#pragma warning restore 665
                         }
                     }
                 }
