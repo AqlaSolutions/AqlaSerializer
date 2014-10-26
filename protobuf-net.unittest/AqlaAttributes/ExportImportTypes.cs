@@ -46,7 +46,7 @@ namespace ProtoBuf.unittest.Aqla
         }
 
         [SerializableType]
-        public class Another : TestClass
+        public class Another
         {
             public int PublicProperty { get; set; }
         }
