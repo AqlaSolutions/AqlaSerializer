@@ -23,7 +23,6 @@ using System.Reflection.Emit;
 #endif
 #endif
 #if FEAT_COMPILER
-using AqlaSerializer;
 using ProtoBuf.Compiler;
 #endif
 using AqlaSerializer;
