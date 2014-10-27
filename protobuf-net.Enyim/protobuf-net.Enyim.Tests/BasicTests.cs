@@ -10,6 +10,7 @@ using System.Runtime.Serialization;
 
 namespace protobuf_net.Enyim.Tests
 {
+    [Ignore("I don't have memcached")]
     [TestFixture]
     public class BasicTests
     {
