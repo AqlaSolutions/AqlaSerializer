@@ -1,3 +1,7 @@
+The current used build machine has everything installed on Windows 7.
+
+Also I have Visual Studio 2012 installed there.
+
 1. mono 2.6.7 to c:\Program Files (x86)\Mono-2.6\
 
 http://download.mono-project.com/archive/2.6.7/windows-installer/2/
@@ -43,7 +47,7 @@ edit .targets in installed, replace:
 
 with
 
-<MSBuildCommunityTasksLib>$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.dll)
+<MSBuildCommunityTasksLib>$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.dll
 
 10. Silverlight 4, 5 SDK
 http://www.microsoft.com/en-us/download/details.aspx?id=28359
