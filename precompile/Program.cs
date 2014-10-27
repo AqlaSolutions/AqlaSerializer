@@ -398,7 +398,7 @@ namespace ProtoBuf.Precompile
             // add everything else we can find
             model.Cascade();
             var inferred = new List<IKVM.Reflection.Type>();
-            foreach (MetaType type in model.GetTypes())
+            foreach (MetaType type in model.MetaTypes)
             {
                 if(!toAdd.Contains(type.Type)) inferred.Add(type.Type);
             }
