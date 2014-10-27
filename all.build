@@ -1,17 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="BuildKit"
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- See http://msbuildtasks.tigris.org -->
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
+
   <PropertyGroup>
+    <RevGeneratorOutputFile>revtemp.txt</RevGeneratorOutputFile>
     <NugetDirectory>Nuget\lib</NugetDirectory>
     <ZipDirectory>Package</ZipDirectory>
   </PropertyGroup>
   <ItemGroup>
     <ProjectToBuild Include="protobuf-net\protobuf-net.csproj"/>
     <ProjectToBuild Include="protobuf-net_Phone7\protobuf-net_Phone7.csproj"/>
+    <ProjectToBuild Include="protobuf-net_Phone8\protobuf-net_Phone8.csproj"/>
     <ProjectToBuild Include="protobuf-net_Silverlight\protobuf-net_Silverlight.csproj"/>
     <ProjectToBuild Include="protobuf-net_Portable\protobuf-net_Portable.csproj"/>
     <ProjectToBuild Include="protobuf-net_WinRT\protobuf-net_WinRT.csproj"/>
-    
+    <ProjectToBuild Include="protobuf-net_IKVM\protobuf-net_IKVM.csproj"/>
+    <ProjectToBuild Include="protobuf-net_MonoDroid\protobuf-net_MonoDroid.csproj"/>
+
     <iOSFiles Include="protobuf-net\bin\iOS\protobuf-net.*"/> 
     <UnityFiles Include="protobuf-net\bin\Unity\protobuf-net.*"/>
     <Net20Files Include="protobuf-net\bin\Net20\protobuf-net.*"/>
@@ -26,39 +34,74 @@
     <PortableFiles Include="protobuf-net_Portable\bin\Release\protobuf-net.*"/>
     <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\protobuf-net.*"/>
     <PrecompileFiles Include="precompile\bin\Release\*.*"/>
-    <ProtogenFiles Include="ProtoGen\bin\Release\*.*"/>
 
     <WinRTFiles Include="protobuf-net_WinRT\bin\Release\protobuf-net.*"/>
     <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\protobuf-net.*"/>
+
+    <MonoFiles Include="protobuf-net-mono\bin\Release\protobuf-net.*"/>
+    <MonoFiles Include="protobuf-net-mono\docs\protobuf-net.xml"/>
+
+    <IKVMFiles Include="protobuf-net_IKVM\bin\Release\*.*" Exclude="protobuf-net_IKVM\bin\Release\Licence.txt"/>
+
+    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\protobuf-net.*"/>
+
   </ItemGroup>
   <Target Name="BuildKit">
     
     <RemoveDir Directories="$(NugetDirectory)"/>
     <RemoveDir Directories="$(ZipDirectory)"/>
 
-    <MakeDir Directories="$(ZipDirectory)\Full\net11"/>
-    <MakeDir Directories="$(ZipDirectory)\CoreOnly\net11"/>
-    
-    <Exec Command="&quot;%SystemRoot%\Microsoft.Net\Framework\v1.1.4322\csc.exe&quot; /debug- /optimize+ &quot;/out:$(ZipDirectory)\Full\net11\protobuf-net.dll&quot; /define:FX11 /define:NO_GENERICS /define:PLAT_BINARYFORMATTER /define:FEAT_COMPILER /target:library /unsafe /recurse:protobuf-net\*.cs"/>
-    <Exec Command="&quot;%SystemRoot%\Microsoft.Net\Framework\v1.1.4322\csc.exe&quot; /debug- /optimize+ &quot;/out:$(ZipDirectory)\CoreOnly\net11\protobuf-net.dll&quot; /define:FX11 /define:NO_GENERICS /define:PLAT_BINARYFORMATTER /define:NO_RUNTIME /target:library /unsafe /recurse:protobuf-net\*.cs"/>
 
-    <MSBuild Projects="protobuf-net_Phone8\protobuf-net_Phone8.csproj" Properties="Configuration=Release"/>
-    
-    <MSBuild Projects="protobuf-net_Phone8\protobuf-net_Phone8.csproj" Properties="Configuration=CoreOnly"/>
+    <!-- update the assembly / file versions with the last local revision -->    
 
+    <MSBuild Projects="RevisionGenerator\RevisionGenerator.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
+
+    <Exec Command="RevisionGenerator\bin\Release\RevisionGenerator.exe 2014 10 > &quot;$(RevGeneratorOutputFile)&quot;" />
+    <ReadLinesFromFile File="$(RevGeneratorOutputFile)">
+       <Output TaskParameter="Lines" PropertyName="BuildRev"/>
+    </ReadLinesFromFile>
+    <Delete Files="$(RevGeneratorOutputFile)"/>
+
+    <FileUpdate Files="protobuf-net\Properties\AssemblyInfo.cs"
+            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+    <FileUpdate Files="protobuf-net\Properties\AssemblyInfo.cs"
+            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+    <FileUpdate Files="protobuf-net.Extensions\Properties\AssemblyInfo.cs"
+            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+    <FileUpdate Files="protobuf-net.Extensions\Properties\AssemblyInfo.cs"
+            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+
+    <FileUpdate Files="precompile\Properties\AssemblyInfo.cs"
+            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+    <FileUpdate Files="precompile\Properties\AssemblyInfo.cs"
+            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+    
+    <FileUpdate Files="Nuget\aqlaserializer.nuspec"
+            Regex='(&lt;version&gt;[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)(&lt;/version&gt;)'
+            ReplacementText='$1.$2.$(BuildRev)$5' />
+    
     <Copy SourceFiles="Licence.txt" DestinationFolder="$(ZipDirectory)"/>
     <Copy SourceFiles="What Files Do I Need.txt" DestinationFolder="$(ZipDirectory)"/>
 
-    <MSBuild Projects="@(ProjectToBuild)" Properties="Configuration=Release" BuildInParallel="true"/>
-    <MSBuild Projects="@(ProjectToBuild)" Properties="Configuration=CoreOnly" BuildInParallel="true"/>
+    <!-- build mono using nant -->
+    <RemoveDir Directories="protobuf-net-mono\bin; protobuf-net-mono\bin\docs"/>
+    <Exec Command="&quot;%ProgramFiles%\Mono-2.6\share\NAnt\bin\NAnt&quot; -buildfile:protobuf-net-mono\protobuf-net-mono.build -D:build.release=true" />
+    <Copy SourceFiles="@(MonoFiles)" DestinationFolder="$(ZipDirectory)\Full\mono267"/>
 
-    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Properties="Configuration=Net20"/>
-    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Properties="Configuration=iOS"/>
-    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Properties="Configuration=Unity"/>
-    <MSBuild Projects="protobuf-net_IKVM\protobuf-net_IKVM.csproj" Properties="Configuration=Release"/>
+    <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=Release" BuildInParallel="true"/>
+    <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=CoreOnly" BuildInParallel="true"/>
 
-    <MSBuild Projects="precompile\precompile.csproj" Properties="Configuration=Release"/>
-    <MSBuild Projects="ProtoGen\ProtoGen.csproj" Properties="Configuration=Release"/>
+    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
+    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
+    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
+
+    <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
@@ -82,8 +125,8 @@
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable"/>
 
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(NugetDirectory)\netcore45"/>
-    <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(ZipDirectory)\Full\netcore45"/>
-    <Copy SourceFiles="@(WinRTFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\netcore45"/>
+    <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(ZipDirectory)\Full\winrt"/>
+    <Copy SourceFiles="@(WinRTFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\winrt"/>
 
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
@@ -91,10 +134,44 @@
     <Copy SourceFiles="@(WP7Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp71"/>
     <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
-   
+
+    <Copy SourceFiles="@(IKVMFiles)" DestinationFolder="$(ZipDirectory)\Full\ikvm"/>
+    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/>
+
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
-    <Copy SourceFiles="@(ProtoGenFiles)" DestinationFolder="$(ZipDirectory)\ProtoGen"/>
   
-    <Exec Command="packages\NuGet.CommandLine.2.0.40000\tools\NuGet.exe pack $(NugetDirectory)\..\protobuf-net.nuspec"/>
+    <Exec Command="packages\NuGet.CommandLine.2.0.40000\tools\NuGet.exe pack $(NugetDirectory)\..\aqlaserializer.nuspec"/>
+    
+    <ItemGroup>
+      <ZipFiles Include="$(ZipDirectory)\**\*"/>
+    </ItemGroup>
+
+    <Zip WorkingDirectory="$(ZipDirectory)"
+         Files="@(ZipFiles)"
+         ZipFileName="$(ZipDirectory)\protobuf-net r$(BuildRev).zip" />
+
+    <!-- build the test project -->
+    <RemoveDir Directories="Examples\obj; Examples\bin"/>
+    <MSBuild Projects="Examples\Examples.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
+
+    <!-- execute the unit tests (do this last as it is slower; allows interruption
+    and simple visibility of test results -->
+    <NUnit Assemblies="Examples\bin\Release\Examples.exe"
+       ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
+
+    <!-- build the test project -->
+    <RemoveDir Directories="protobuf-net.unittest\obj; protobuf-net.unittest\bin"/>
+    <MSBuild Projects="protobuf-net.unittest\protobuf-net.unittest.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
+
+    <NUnit Assemblies="protobuf-net.unittest\bin\Release\protobuf-net.unittest.exe"
+       ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
+
+    <!-- build the test project -->
+    <RemoveDir Directories="precompile.tests\obj; precompile.tests\bin"/>
+    <MSBuild Projects="precompile.tests\precompile.tests.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
+
+    <NUnit Assemblies="precompile.tests\bin\release\precompile.tests.dll"
+       ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
+
   </Target>
 </Project>

@@ -1,1 +1,1 @@
-@packages\NuGet.CommandLine.2.0.40000\tools\NuGet.exe push protobuf-net.2.0.0.%1.nupkg
+@packages\NuGet.CommandLine.2.0.40000\tools\NuGet.exe push aqlaserializer.1.0.0.%1.nupkg

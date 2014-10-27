@@ -11,10 +11,10 @@ namespace Examples.Issues
     [TestFixture]
     public class SO13162642
     {
+        [Ignore("See it later, very slow")]
         [Test]
         public void Execute()
         {
-            Assert.Fail("See it later, very slow");
             using (var f = File.Create("Data.protobuf"))
             {
                 Serializer.Serialize<IEnumerable<DTO>>(f, GenerateData(100000));
