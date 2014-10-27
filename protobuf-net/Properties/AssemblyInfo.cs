@@ -36,17 +36,17 @@ using System.Runtime.CompilerServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.668")]
+[assembly: AssemblyVersion("1.0.0.52")]
 #if !CF
-[assembly: AssemblyFileVersion("2.0.0.668")]
+[assembly: AssemblyFileVersion("1.0.0.52")]
 #endif
 #if !FX11
 [assembly: InternalsVisibleTo("protobuf-net.unittest, PublicKey="
-    + "002400000480000094000000060200000024000052534131000400000100010009ed9caa457bfc"
-    + "205716c3d4e8b255a63ddf71c9e53b1b5f574ab6ffdba11e80ab4b50be9c46d43b75206280070d"
-    + "dba67bd4c830f93f0317504a76ba6a48243c36d2590695991164592767a7bbc4453b34694e31e2"
-    + "0815a096e4483605139a32a76ec2fef196507487329c12047bf6a68bca8ee9354155f4d01daf6e"
-    + "ec5ff6bc")]
+    + "0024000004800000940000000602000000240000525341310004000001000100f7065c1c81939a"
+    + "43bf1ae76067234b37524c90498a92d1fa9add4d8d43c75114e263cd8a10c79b85ee1543d50642"
+    + "d66e798bfff809a0e3948dac1b145fd9cdfb0b08c83b2e12a0a5bb33973a8b069a6863368a4843"
+    + "9e9734ae11e5a6ebbc3e2f4b64e9251830fb2b130a00be5a33c60e9bf90cc1b957555959652b81"
+    + "e1b468b6")]
 #endif
 
 [assembly: CLSCompliant(false)]
