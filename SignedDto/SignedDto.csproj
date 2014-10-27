@@ -43,11 +43,11 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>ProtoBuf.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>AqlaSerializerKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .NET Framework is automatically included -->
-    <None Include="ProtoBuf.snk" />
+    <None Include="AqlaSerializerKey.snk" />
     <None Include="..\protobuf-net\protobuf-net.licenseheader">
       <Link>protobuf-net.licenseheader</Link>
     </None>
