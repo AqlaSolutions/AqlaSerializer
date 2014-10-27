@@ -50,6 +50,9 @@
     <Compile Include="ProtoTranscoder.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\protobuf-net\protobuf-net.licenseheader">
+      <Link>protobuf-net.licenseheader</Link>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using System.IO;
 using System.Net;
 using ProtoBuf;
 

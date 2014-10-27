@@ -1,4 +1,5 @@
-﻿using Enyim.Caching.Memcached;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using Enyim.Caching.Memcached;
 using ProtoBuf.Meta;
 using System;
 using System.Collections.Generic;

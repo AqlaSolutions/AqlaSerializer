@@ -1,4 +1,5 @@
-﻿using Enyim.Caching;
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using NUnit.Framework;
