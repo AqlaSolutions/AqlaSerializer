@@ -8,6 +8,11 @@ using IKVM.Reflection;
 #else
 using System.Reflection;
 #endif
+
+#if WINRT
+using System.Linq;
+#endif
+
 using ProtoBuf.Meta;
 
 
@@ -23,6 +28,77 @@ namespace ProtoBuf
     internal sealed class Helpers
     {
         private Helpers() { }
+
+        public static bool IsInterface(Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsInterface;
+#else
+            return type.IsInterface;
+#endif
+        }
+
+        public static Assembly GetAssembly(Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().Assembly;
+#else
+            return type.Assembly;
+#endif
+        }
+
+        public static bool IsGenericTypeDefinition(Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsGenericTypeDefinition;
+#else
+            return type.IsGenericTypeDefinition;
+#endif
+        }
+
+        public static Type[] GetTypes(Assembly assembly)
+        {
+#if WINRT
+            return assembly.DefinedTypes.Select(x=>x.AsType()).ToArray();
+#else
+#if FEAT_IKVM
+            return assembly.GetTypes();
+#else
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types;
+            }
+#endif
+#endif
+        }
+
+        public static Type[] GetExportedTypes(Assembly assembly)
+        {
+#if FEAT_IKVM
+            return GetTypes(assembly);
+#else
+#if WINRT
+            return assembly.ExportedTypes.ToArray();
+#else
+#if FEAT_IKVM
+            return assembly.GetExportedTypes();
+#else
+            try
+            {
+                return assembly.GetExportedTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types;
+            }
+#endif
+#endif
+#endif
+        }
 
         public static System.Text.StringBuilder AppendLine(System.Text.StringBuilder builder)
         {
@@ -271,7 +347,12 @@ namespace ProtoBuf
 
 #endif
 
-        public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance, object[] index = null)
+        public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance)
+        {
+            return GetPropertyValue(prop, instance, null);
+        }
+
+        public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance, object[] index)
         {
 #if !UNITY && (PORTABLE || WINRT|| CF2||CF35)
             return prop.GetValue(instance, index);
@@ -382,6 +463,15 @@ namespace ProtoBuf
             return type.GetTypeInfo().IsValueType;
 #else
             return type.IsValueType;
+#endif
+        }
+
+        internal static bool IsPrimitive(Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsPrimitive;
+#else
+            return type.IsPrimitive;
 #endif
         }
 
@@ -575,7 +665,17 @@ namespace ProtoBuf
             return target.IsAssignableFrom(type);
 #endif
         }
-        
+
+#if FEAT_IKVM
+        internal static bool IsAssignableFrom(System.Type target, System.Type type)
+        {
+#if WINRT
+            return target.GetTypeInfo().IsAssignableFrom(type.GetTypeInfo());
+#else
+            return target.IsAssignableFrom(type);
+#endif
+        }
+#endif
         public static MethodInfo GetShadowSetter(TypeModel model, PropertyInfo property)
         {
 #if WINRT            

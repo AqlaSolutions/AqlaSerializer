@@ -5,7 +5,9 @@ using System.Collections;
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
+#if !PORTABLE
 using System.Runtime.Serialization;
+#endif
 using System.Text;
 
 #if FEAT_IKVM
@@ -653,26 +655,14 @@ namespace ProtoBuf.Meta
         
         public void Add(Assembly assembly, bool nonPublic, bool applyDefaultBehavior)
         {
-            Type[] list;
-#if FEAT_IKVM
-            list = assembly.GetTypes();
-#else
-            try
-            {
-                list = nonPublic ? assembly.GetTypes() : assembly.GetExportedTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                list = ex.Types;
-            }
-#endif
-
+            Type[] list = nonPublic ? Helpers.GetTypes(assembly) : Helpers.GetExportedTypes(assembly);
+            
             Array.Sort(list, new TypeNamesSortComparer());
 
 
             foreach (Type t in list)
             {
-                if (!t.IsGenericTypeDefinition)
+                if (!Helpers.IsGenericTypeDefinition(t))
                     Add(t, applyDefaultBehavior);
             }
         }
@@ -685,10 +675,11 @@ namespace ProtoBuf.Meta
                        "contains types? See TypeModel.Create()")
             {
             }
-
+#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
             protected AddTypesCantEnsureKeysOrderException(SerializationInfo info, StreamingContext context) : base(info, context)
             {
             }
+#endif
         }
 
         /// <summary>
@@ -706,7 +697,7 @@ namespace ProtoBuf.Meta
         {
             foreach (Type t in list)
             {
-                if (t.IsGenericTypeDefinition)
+                if (Helpers.IsGenericTypeDefinition(t))
                     throw new ArgumentException("Should not be GenericTypeDefinition");
             }
 
@@ -765,7 +756,7 @@ namespace ProtoBuf.Meta
 
             private static string ExtractName(Type tX)
             {
-                return tX.FullName + ", from " + tX.Assembly.GetName().Name + " (" + tX.Assembly.FullName + ")";
+                return tX.FullName + ", from " + Helpers.GetAssembly(tX).FullName;
             }
         }
 

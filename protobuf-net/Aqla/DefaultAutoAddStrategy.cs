@@ -76,11 +76,7 @@ namespace AqlaSerializer
                         Type knownType = null;
                         try
                         {
-                            if (item.TryGet("knownTypeName", out tmp)) knownType = _model.GetType((string)tmp, type
-#if WINRT
-                            .GetTypeInfo()
-#endif
-.Assembly);
+                            if (item.TryGet("knownTypeName", out tmp)) knownType = _model.GetType((string)tmp, Helpers.GetAssembly(type));
                             else if (item.TryGet("knownType", out tmp)) knownType = (Type)tmp;
                         }
                         catch (Exception ex)
@@ -106,11 +102,7 @@ namespace AqlaSerializer
                         Type knownType = null;
                         try
                         {
-                            if (item.TryGet("knownTypeName", out tmp)) knownType = _model.GetType((string)tmp, type
-#if WINRT
-                            .GetTypeInfo()
-#endif
-.Assembly);
+                            if (item.TryGet("knownTypeName", out tmp)) knownType = _model.GetType((string)tmp, Helpers.GetAssembly(type));
                             else if (item.TryGet("knownType", out tmp)) knownType = (Type)tmp;
                         }
                         catch (Exception ex)
@@ -875,7 +867,7 @@ namespace AqlaSerializer
             var memberType = Helpers.GetMemberType(member);
 
             Type defaultType = null;
-            if (metaType.Type.IsInterface)
+            if (Helpers.IsInterface(metaType.Type))
                 defaultType = FindDefaultInterfaceImplementation(memberType);
 
             if (isEnum || normalizedAttribute.Tag > 0)

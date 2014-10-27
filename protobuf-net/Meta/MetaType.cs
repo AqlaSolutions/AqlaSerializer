@@ -153,7 +153,12 @@ namespace ProtoBuf.Meta
             return this;
         }
 
-        public int GetNextFreeFieldNumber(int start = 1)
+        public int GetNextFreeFieldNumber()
+        {
+            return GetNextFreeFieldNumber(1);
+        }
+
+        public int GetNextFreeFieldNumber(int start)
         {
             int number = start - 1;
             bool found;
@@ -972,17 +977,32 @@ namespace ProtoBuf.Meta
             }
         }
 
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue, Type defaultType = null)
+        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue)
+        {
+            Add(normalizedAttribute, member, defaultValue, null);
+        }
+
+        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue, Type defaultType)
         {
             Add(normalizedAttribute, member, true, defaultValue, defaultType);
         }
 
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, Type defaultType = null)
+        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member)
+        {
+            Add(normalizedAttribute, member, null);
+        }
+
+        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, Type defaultType)
         {
             Add(normalizedAttribute, member, false, null, defaultType);
         }
 
-        void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue, Type defaultType = null)
+        private void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue)
+        {
+            Add(normalizedAttribute, member, defaultValueSpecified, defaultValue, null);
+        }
+
+        void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue, Type defaultType)
         {
             Type effectiveType = Helpers.GetMemberType(member);
             

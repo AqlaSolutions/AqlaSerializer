@@ -220,7 +220,7 @@ namespace ProtoBuf.Serializers
                             {
                                 value = ProtoReader.Merge(source, value, ((IProtoTypeSerializer)ser).CreateInstance(source));
                             }
-                            else if (!ExpectedType.IsValueType || (!ExpectedType.IsPrimitive && !ExpectedType.IsEnum))
+                            else if (!Helpers.IsValueType(ExpectedType)|| (!Helpers.IsPrimitive(ExpectedType) && !Helpers.IsEnum(ExpectedType)))
                                 ProtoReader.NoteRootObjectIfNotSet(value, source);
                         }
 

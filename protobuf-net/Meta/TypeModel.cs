@@ -1099,7 +1099,7 @@ namespace ProtoBuf.Meta
                 ThrowUnexpectedType(type);
             }
 
-            if (type.IsEnum)
+            if (Helpers.IsEnum(type))
             {
                 value = Deserialize(modelKey, value, reader, isRoot);
                 return true;

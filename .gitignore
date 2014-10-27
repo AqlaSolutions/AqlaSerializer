@@ -1,7 +1,12 @@
 *.suo
 *.cache
 TemporaryGeneratedFile_*.cs
-/*/obj
-/*/bin
+/**/obj
+/**/bin
 /Proto 2012.sln.DotSettings.user
 *.user
+/Package
+/Nuget/lib
+TestResult.xml
+aqlaserializer.*.nupkg
+protobuf-net-mono/docs
