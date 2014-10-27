@@ -12,9 +12,15 @@ Protobuf-net have problems with inheritance, reference tracking and can't pack d
 
 Other features later.
 
-<b>What platforms are guaranteed? </b>
+<b>What platforms and frameworks are supported? </b>
 
-MS .NET 3.5+, Mono, Unity3D
+MS .NET 2.0+, Mono 2 and higher, Unity3D 4+, Windows Phone 7, Windows Phone 8, WinRT, iOS, 
+
+Portable (Silverlight 4+, .NET for Windows Store apps, .NET 4+, WP7+, Xamarin.Android, Xamarin.iOS, XBox 360),
+
+ServiceModel integration.
+
+Be aware that support for Windows Mobile 6, CF 2, CF 3.5 and .NET 1.1 has been dropped.
 
 <b>Will it be compatible with Protobuf-net? </b>
 
