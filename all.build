@@ -45,6 +45,7 @@
 
     <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\protobuf-net.*"/>
 
+    <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
   </ItemGroup>
   <Target Name="BuildKit">
     
@@ -100,6 +101,8 @@
     <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
     <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
     <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
+    
+    <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\protobuf-net.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
     <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
@@ -137,6 +140,7 @@
 
     <Copy SourceFiles="@(IKVMFiles)" DestinationFolder="$(ZipDirectory)\Full\ikvm"/>
     <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/>
+    <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30-enyim"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
   
