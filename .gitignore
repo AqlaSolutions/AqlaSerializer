@@ -10,3 +10,4 @@ TemporaryGeneratedFile_*.cs
 TestResult.xml
 aqlaserializer.*.nupkg
 protobuf-net-mono/docs
+SilverlightExtended_Web/build
