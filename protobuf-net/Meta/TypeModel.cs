@@ -1306,6 +1306,15 @@ namespace ProtoBuf.Meta
             /// </summary>
             AfterDeserialize
         }
+#if !NO_GENERICS
+        /// <summary>
+        /// Create a deep clone of the supplied instance; any sub-items are also cloned.
+        /// </summary>
+        public T DeepClone<T>(T genericValue)
+        {
+            return (T)DeepClone(value: genericValue);
+        }
+#endif
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
