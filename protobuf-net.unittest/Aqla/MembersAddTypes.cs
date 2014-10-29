@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using ProtoBuf.Meta;
 
-namespace ProtoBuf.unittest.AqlaAttributes
+namespace ProtoBuf.unittest.Aqla
 {
     [TestFixture]
     public class MembersAddTypes
