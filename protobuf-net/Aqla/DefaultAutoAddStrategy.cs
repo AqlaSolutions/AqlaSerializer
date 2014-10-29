@@ -548,7 +548,7 @@ namespace AqlaSerializer
                         break;
                 }
             }
-            
+
             if (family == AttributeFamily.None)
             {
                 if (Helpers.IsEnum(type))
@@ -873,7 +873,7 @@ namespace AqlaSerializer
                     done = fieldNumber >= minAcceptFieldNumber;
                 }
             }
-            if (!ignore && !done)
+            if (!ignore && !done && CanUse(AttributeType.SystemNonSerialized))
             {
                 if (AttributeMap.GetAttribute(attribs, "System.NonSerializedAttribute") != null) ignore = true;
             }
@@ -1101,10 +1101,9 @@ namespace AqlaSerializer
             Xml = 4,
             DataContract = 8,
             SystemSerializable = 16,
+            SystemNonSerialized = 32,
 
-            Default = Aqla | ProtoBuf | Xml | DataContract,
-            NoAqla = ProtoBuf | Xml | DataContract | SystemSerializable,
-            NoProtobuf = Aqla | Xml | DataContract | SystemSerializable,
+            Default = Aqla | ProtoBuf | Xml | DataContract | SystemNonSerialized,
         }
 
         public DefaultAutoAddStrategy(RuntimeTypeModel model)
