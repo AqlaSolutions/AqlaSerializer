@@ -708,9 +708,16 @@ namespace ProtoBuf.Meta
 
             int k = ensureKeysOrderStart ?? -1;
 
+            BasicList addedList = new BasicList();
+
             foreach (Type t in list)
             {
-                var added = Add(t, !ensureKeys && applyDefaultBehavior);
+                MetaType added = FindWithoutAdd(t);
+                if (added == null)
+                {
+                    added = Add(t, !ensureKeys && applyDefaultBehavior);
+                    addedList.Add(t);
+                }
                 if (ensureKeys)
                 {
                     if (added.GetKey(true, false) != k)
@@ -724,7 +731,7 @@ namespace ProtoBuf.Meta
             // default behavior can add another types and break order
             if (ensureKeys && applyDefaultBehavior)
             {
-                foreach (Type t in list)
+                foreach (Type t in addedList)
                 {
                     FindWithoutAdd(t).ApplyDefaultBehaviour();
                 }
