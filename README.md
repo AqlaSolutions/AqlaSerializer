@@ -6,6 +6,8 @@ Basically this is a fork of well known <a href="https://github.com/mgravell/prot
 
 AqlaSerializer project goal is not to make a Protocol Buffers compatible implementation but instead support all common .NET features.
 
+It is a free open source project in which you can participiate.
+
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/wiki">wiki</a>.
 
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt">License.txt</a>.
