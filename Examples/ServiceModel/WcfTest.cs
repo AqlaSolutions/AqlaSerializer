@@ -31,19 +31,19 @@ namespace Examples.ServiceModel
     [ServiceContract]
     interface IMyService
     {
-        [OperationContract, ProtoBehavior]
+        [OperationContract, BinarySerializationBehavior]
         MyData UsingProtoItem(MyData data);
 
         [OperationContract]
         MyData RegularWcfItem(MyData data);
 
-        [OperationContract, ProtoBehavior]
+        [OperationContract, BinarySerializationBehavior]
         MyData[] UsingProtoList(List<MyData> data);
 
         [OperationContract]
         MyData[] RegularWcfList(List<MyData> data);
 
-        [OperationContract, ProtoBehavior]
+        [OperationContract, BinarySerializationBehavior]
         int ComplexMethod(List<MyData> a, MyData b, MyData c, List<MyData> d);
 
         [OperationContract]
@@ -51,7 +51,7 @@ namespace Examples.ServiceModel
 
         [OperationContract]
         string SimpleTypesRegular(int value);
-        [OperationContract, ProtoBehavior]
+        [OperationContract, BinarySerializationBehavior]
         string SimpleTypesProto(int value);
     }
     class MyService : IMyService
