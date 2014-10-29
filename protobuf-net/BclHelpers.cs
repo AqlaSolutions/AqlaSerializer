@@ -441,8 +441,9 @@ namespace ProtoBuf
                         break;
                     case FieldObject:
                         bool isString = type == typeof(string);
+                        bool isType = !isString && typeof(Type).IsAssignableFrom(type);
                         bool wasNull = value == null;
-                        bool lateSet = wasNull && (isString || ((options & NetObjectOptions.LateSet) != 0));
+                        bool lateSet = wasNull && (isString || isType || ((options & NetObjectOptions.LateSet) != 0));
                         
                         if (newObjectKey >= 0 && !lateSet)
                         {
@@ -465,6 +466,10 @@ namespace ProtoBuf
                         else if (isString)
                         {
                             value = source.ReadString();
+                        }
+                        else if (isType)
+                        {
+                            value = source.ReadType();
                         }
                         else
                         {
@@ -583,6 +588,10 @@ namespace ProtoBuf
                 else if (value is string)
                 {
                     ProtoWriter.WriteString((string)value, dest);
+                }
+                else if (value is Type)
+                {
+                    ProtoWriter.WriteType((Type)value, dest);
                 }
                 else
                 {

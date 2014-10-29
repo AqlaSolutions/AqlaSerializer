@@ -551,6 +551,10 @@ namespace ProtoBuf.Meta
                     return new BlobSerializer(model, overwriteList);
                 case ProtoTypeCode.Type:
                     defaultWireType = WireType.String;
+                    if (asReference)
+                    {
+                        return new NetObjectSerializer(model, model.MapType(typeof(Type)), 0, BclHelpers.NetObjectOptions.AsReference);
+                    }
                     return new SystemTypeSerializer(model);
             }
             IProtoSerializer parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;

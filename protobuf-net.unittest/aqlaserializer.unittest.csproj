@@ -120,6 +120,7 @@
     <Compile Include="AqlaAttributes\ImplicitFields.cs" />
     <Compile Include="Aqla\MembersAddTypes.cs" />
     <Compile Include="Aqla\AddTypes.cs" />
+    <Compile Include="Aqla\TypeReferenceSerialization.cs" />
     <Compile Include="Attribs\Basic.cs" />
     <Compile Include="Attribs\ComplexMultiTypes.cs" />
     <Compile Include="Attribs\PointStruct.cs" />
