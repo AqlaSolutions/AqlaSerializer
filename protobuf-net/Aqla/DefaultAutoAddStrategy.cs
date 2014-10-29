@@ -878,7 +878,8 @@ namespace AqlaSerializer
                 if (AttributeMap.GetAttribute(attribs, "System.NonSerializedAttribute") != null) ignore = true;
             }
             if (ignore || (fieldNumber < minAcceptFieldNumber && !forced)) return null;
-            var result = new AqlaSerializer.SerializableMemberAttribute(fieldNumber, forced || inferByTagName);
+            bool forceTag = forced || inferByTagName;
+            var result = CreateNormalizedAttrbute(fieldNumber, forceTag);
             result.NotAsReference = notAsReference;
             result.NotAsReferenceHasValue = notAsReferenceHasValue;
             result.DataFormat = dataFormat;
@@ -892,6 +893,11 @@ namespace AqlaSerializer
             result.Member = member;
             result.TagIsPinned = tagIsPinned;
             return result;
+        }
+
+        protected virtual SerializableMemberAttribute CreateNormalizedAttrbute(int fieldNumber, bool forceTag)
+        {
+            return new AqlaSerializer.SerializableMemberAttribute(fieldNumber, forceTag);
         }
 
         protected virtual void ApplyDefaultBehaviour(MetaType metaType, bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute, int? implicitFirstTag)
