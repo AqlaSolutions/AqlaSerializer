@@ -158,7 +158,7 @@ namespace ProtoBuf.Meta
         private static object ParseDefaultValue(Type type, object value)
         {
             {
-                Type tmp = Helpers.GetUnderlyingType(type);
+                Type tmp = Helpers.GetNullableUnderlyingType( type);
                 if (tmp != null) type = tmp;
             }
             if (value is string)
@@ -360,7 +360,7 @@ namespace ProtoBuf.Meta
                     throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
                 }
 
-                bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetUnderlyingType(finalType) != null;
+                bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType( finalType) != null;
 
                 // apply tags
                 if (itemType != null && supportNull)
@@ -383,7 +383,7 @@ namespace ProtoBuf.Meta
 #if NO_GENERICS
                     Type underlyingItemType = itemType;
 #else
-                    Type underlyingItemType = supportNull ? itemType : Helpers.GetUnderlyingType(itemType) ?? itemType;
+                    Type underlyingItemType = supportNull ? itemType : Helpers.GetNullableUnderlyingType( itemType) ?? itemType;
 #endif
                     Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
                     if (memberType.IsArray)
@@ -464,7 +464,7 @@ namespace ProtoBuf.Meta
         {
 #if !NO_GENERICS
             {
-                Type tmp = Helpers.GetUnderlyingType(type);
+                Type tmp = Helpers.GetNullableUnderlyingType( type);
                 if (tmp != null) type = tmp;
             }
 #endif

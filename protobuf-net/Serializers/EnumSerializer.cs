@@ -55,7 +55,7 @@ namespace ProtoBuf.Serializers
             }
         }
         private ProtoTypeCode GetTypeCode() {
-            Type type = Helpers.GetUnderlyingType(enumType);
+            Type type = Helpers.GetNullableUnderlyingType( enumType);
             if(type == null) type = enumType;
             return Helpers.GetTypeCode(type);
         }

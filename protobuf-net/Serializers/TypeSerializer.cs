@@ -84,7 +84,7 @@ namespace ProtoBuf.Serializers
             if (baseCtorCallbacks != null && baseCtorCallbacks.Length == 0) baseCtorCallbacks = null;
             this.baseCtorCallbacks = baseCtorCallbacks;
 #if !NO_GENERICS
-            if (Helpers.GetUnderlyingType(forType) != null)
+            if (Helpers.GetNullableUnderlyingType( forType) != null)
             {
                 throw new ArgumentException("Cannot create a TypeSerializer for nullable types", "forType");
             }

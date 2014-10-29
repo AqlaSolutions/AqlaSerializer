@@ -26,44 +26,66 @@ namespace AqlaSerializer
     using AttributeFamily = MetaType.AttributeFamily;
     public class DefaultAutoAddStrategy : IAutoAddStrategy
     {
+        public virtual bool CanAutoAddType(Type type)
+        {
+            if (type == null) throw new ArgumentNullException("type");
+            return type != _model.MapType(typeof(Enum))
+                && type != _model.MapType(typeof(object))
+                && type != _model.MapType(typeof(ValueType))
+                && GetContractFamily(type) != AttributeFamily.None;
+        }
+
         public virtual void ApplyDefaultBehaviour(MetaType metaType)
         {
             var type = metaType.Type;
             Type baseType = metaType.GetBaseType();
-            if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
+            if (baseType != null
+                && CanAutoAddType(baseType)
+                && MetaType.CanHaveSubType(baseType))
             {
                 FindOrAddType(baseType, true, false, false);
             }
 
-            AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
-            AttributeFamily family = GetContractFamily(type, typeAttribs);
-            if (family == AttributeFamily.AutoTuple)
+            try
             {
-                metaType.IsAutoTuple = true;
-            }
-            bool isEnum = !metaType.EnumPassthru && Helpers.IsEnum(type);
-            if (family == AttributeFamily.None && !isEnum) return; // and you'd like me to do what, exactly?
-            BasicList partialIgnores = null, partialMembers = null;
-            int dataMemberOffset = 0, implicitFirstTag = 1;
-            bool inferTagByName = _model.InferTagFromNameDefault;
-            ImplicitFields implicitMode = ImplicitFields.None;
-            bool implicitAqla = false;
-            bool explicitPropertiesContract = false;
-            string name = null;
+                AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
+                AttributeFamily family = GetContractFamily(type, typeAttribs);
+                if (family == AttributeFamily.AutoTuple)
+                {
+                    metaType.IsAutoTuple = true;
+                }
+                bool isEnum = !metaType.EnumPassthru && Helpers.IsEnum(type);
+                if (family == AttributeFamily.None && !isEnum) return; // and you'd like me to do what, exactly?
+                BasicList partialIgnores = null, partialMembers = null;
+                int dataMemberOffset = 0, implicitFirstTag = 1;
+                bool inferTagByName = _model.InferTagFromNameDefault;
+                ImplicitFields implicitMode = ImplicitFields.None;
+                bool implicitAqla = false;
+                bool explicitPropertiesContract = false;
+                string name = null;
 
-            if (family == AttributeFamily.ImplicitFallback)
-            {
-                implicitMode = ImplicitFallbackMode;
-                implicitAqla = true;
-                explicitPropertiesContract = true;
-            }
-            else
-            {
+                if (family == AttributeFamily.ImplicitFallback)
+                {
+                    implicitMode = ImplicitFallbackMode;
+                    implicitAqla = true;
+                    explicitPropertiesContract = true;
+                }
                 for (int i = 0; i < typeAttribs.Length; i++)
                 {
                     AttributeMap item = (AttributeMap)typeAttribs[i];
                     object tmp;
                     string fullAttributeTypeName = item.AttributeType.FullName;
+
+
+                    // we check CanUse everywhere but not family because GetContractFamily is based on CanUse
+                    // and CanUse is based on the settings
+                    // except is for SerializableAttribute which family is not returned if other families are present
+                    if (!isEnum && fullAttributeTypeName == "System.SerializableAttribute" && HasFamily(family, AttributeFamily.SystemSerializable))
+                    {
+                        implicitMode = ImplicitFields.AllFields;
+                        implicitAqla = true;
+                    }
+
                     if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" && CanUse(AttributeType.ProtoBuf))
                     {
                         int tag = 0;
@@ -242,29 +264,29 @@ namespace AqlaSerializer
                         if (name == null && item.TryGet("TypeName", out tmp)) name = (string)tmp;
                     }
                 }
-            }
-            if (!Helpers.IsNullOrEmpty(name)) metaType.Name = name;
-            if (implicitMode != ImplicitFields.None)
-            {
-                if (family == AttributeFamily.ImplicitFallback)
-                {
-                    family = AttributeFamily.None;
-                    if (CanUse(AttributeType.ProtoBuf))
-                        family |= AttributeFamily.ProtoBuf;
-                    if (CanUse(AttributeType.Aqla))
-                        family |= AttributeFamily.Aqla;
-                }
-                else
-                {
-                    if (implicitAqla)
-                        family &= AttributeFamily.Aqla;
-                    else
-                        family &= AttributeFamily.ProtoBuf; // with implicit fields, **only** proto attributes are important
-                }
-            }
-            MethodInfo[] callbacks = null;
 
-            BasicList members = new BasicList();
+                if (!Helpers.IsNullOrEmpty(name)) metaType.Name = name;
+                if (implicitMode != ImplicitFields.None)
+                {
+                    if (family == AttributeFamily.ImplicitFallback)
+                    {
+                        family = AttributeFamily.None;
+                        if (CanUse(AttributeType.ProtoBuf))
+                            family |= AttributeFamily.ProtoBuf;
+                        if (CanUse(AttributeType.Aqla))
+                            family |= AttributeFamily.Aqla;
+                    }
+                    else if (HasFamily(family, AttributeFamily.Aqla) || HasFamily(family, AttributeFamily.ProtoBuf))
+                    {
+                        if (implicitAqla)
+                            family &= AttributeFamily.Aqla;
+                        else
+                            family &= AttributeFamily.ProtoBuf; // with implicit fields, **only** proto attributes are important
+                    }
+                }
+                MethodInfo[] callbacks = null;
+
+                BasicList members = new BasicList();
 
 #if WINRT
             System.Collections.Generic.IEnumerable<MemberInfo> foundList;
@@ -283,121 +305,134 @@ namespace AqlaSerializer
                 foundList = list;
             }
 #else
-            MemberInfo[] foundList = type.GetMembers(isEnum ? BindingFlags.Public | BindingFlags.Static
-                : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                MemberInfo[] foundList = type.GetMembers(isEnum ? BindingFlags.Public | BindingFlags.Static
+                    : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 #endif
-            foreach (MemberInfo member in foundList)
-            {
-                if (member.DeclaringType != type) continue;
-                if (member.IsDefined(_model.MapType(typeof(ProtoIgnoreAttribute)), true)) continue;
-                if (partialIgnores != null && partialIgnores.Contains(member.Name)) continue;
-
-                bool forced = false, isPublic, isField;
-                Type effectiveType;
-
-
-                PropertyInfo property;
-                FieldInfo field;
-                MethodInfo method;
-                if ((property = member as PropertyInfo) != null)
+                foreach (MemberInfo member in foundList)
                 {
-                    if (isEnum) continue; // wasn't expecting any props!
+                    if (member.DeclaringType != type) continue;
+                    if (member.IsDefined(_model.MapType(typeof(ProtoIgnoreAttribute)), true)) continue;
+                    if (partialIgnores != null && partialIgnores.Contains(member.Name)) continue;
 
-                    effectiveType = property.PropertyType;
-                    isPublic = Helpers.GetGetMethod(property, false, false) != null;
-                    if (isPublic && explicitPropertiesContract)
-                        isPublic = Helpers.GetSetMethod(property, false, false) != null;
-                    isField = false;
-                    ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
-                }
-                else if ((field = member as FieldInfo) != null)
-                {
-                    effectiveType = field.FieldType;
-                    isPublic = field.IsPublic;
-                    isField = true;
-                    if (isEnum && !field.IsStatic)
-                    { // only care about static things on enums; WinRT has a __value instance field!
-                        continue;
-                    }
-                    ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
-                }
-                else if ((method = member as MethodInfo) != null)
-                {
-                    if (isEnum) continue;
-                    AttributeMap[] memberAttribs = AttributeMap.Create(_model, method, false);
-                    if (memberAttribs != null && memberAttribs.Length > 0)
+                    bool forced = false, isPublic, isField;
+                    Type effectiveType;
+
+
+                    PropertyInfo property;
+                    FieldInfo field;
+                    MethodInfo method;
+                    if ((property = member as PropertyInfo) != null)
                     {
-                        const int max = 11;
-                        if (CanUse(AttributeType.ProtoBuf))
-                        {
-                            CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoBeforeSerializationAttribute", ref callbacks, 0, max);
-                            CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterSerializationAttribute", ref callbacks, 1, max);
-                            CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoBeforeDeserializationAttribute", ref callbacks, 2, max);
-                            CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterDeserializationAttribute", ref callbacks, 3, max);
+                        if (isEnum) continue; // wasn't expecting any props!
+
+                        effectiveType = property.PropertyType;
+                        isPublic = Helpers.GetGetMethod(property, false, false) != null;
+                        if (isPublic && explicitPropertiesContract)
+                            isPublic = Helpers.GetSetMethod(property, false, false) != null;
+                        isField = false;
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
+                    }
+                    else if ((field = member as FieldInfo) != null)
+                    {
+                        effectiveType = field.FieldType;
+                        isPublic = field.IsPublic;
+                        isField = true;
+                        if (isEnum && !field.IsStatic)
+                        { // only care about static things on enums; WinRT has a __value instance field!
+                            continue;
                         }
-
-                        CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnSerializingAttribute", ref callbacks, 4, max);
-                        CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnSerializedAttribute", ref callbacks, 5, max);
-                        CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializingAttribute", ref callbacks, 6, max);
-                        CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializedAttribute", ref callbacks, 7, max);
-
-                        if (CanUse(AttributeType.Aqla))
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
+                    }
+                    else if ((method = member as MethodInfo) != null)
+                    {
+                        if (isEnum) continue;
+                        AttributeMap[] memberAttribs = AttributeMap.Create(_model, method, false);
+                        if (memberAttribs != null && memberAttribs.Length > 0)
                         {
-                            CheckForCallback(method, memberAttribs, "AqlaSerializer.BeforeSerializationCallbackAttribute", ref callbacks, 8, max);
-                            CheckForCallback(method, memberAttribs, "AqlaSerializer.AfterSerializationCallbackAttribute", ref callbacks, 9, max);
-                            CheckForCallback(method, memberAttribs, "AqlaSerializer.BeforeDeserializationCallbackAttribute", ref callbacks, 10, max);
-                            CheckForCallback(method, memberAttribs, "AqlaSerializer.AfterDeserializationCallbackAttribute", ref callbacks, 11, max);
+                            const int max = 11;
+                            if (CanUse(AttributeType.ProtoBuf))
+                            {
+                                CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoBeforeSerializationAttribute", ref callbacks, 0, max);
+                                CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterSerializationAttribute", ref callbacks, 1, max);
+                                CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoBeforeDeserializationAttribute", ref callbacks, 2, max);
+                                CheckForCallback(method, memberAttribs, "ProtoBuf.ProtoAfterDeserializationAttribute", ref callbacks, 3, max);
+                            }
+
+                            CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnSerializingAttribute", ref callbacks, 4, max);
+                            CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnSerializedAttribute", ref callbacks, 5, max);
+                            CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializingAttribute", ref callbacks, 6, max);
+                            CheckForCallback(method, memberAttribs, "System.Runtime.Serialization.OnDeserializedAttribute", ref callbacks, 7, max);
+
+                            if (CanUse(AttributeType.Aqla))
+                            {
+                                CheckForCallback(method, memberAttribs, "AqlaSerializer.BeforeSerializationCallbackAttribute", ref callbacks, 8, max);
+                                CheckForCallback(method, memberAttribs, "AqlaSerializer.AfterSerializationCallbackAttribute", ref callbacks, 9, max);
+                                CheckForCallback(method, memberAttribs, "AqlaSerializer.BeforeDeserializationCallbackAttribute", ref callbacks, 10, max);
+                                CheckForCallback(method, memberAttribs, "AqlaSerializer.AfterDeserializationCallbackAttribute", ref callbacks, 11, max);
+                            }
                         }
                     }
                 }
-            }
-            var arr = new AqlaSerializer.SerializableMemberAttribute[members.Count];
-            members.CopyTo(arr, 0);
+                var arr = new AqlaSerializer.SerializableMemberAttribute[members.Count];
+                members.CopyTo(arr, 0);
 
-            if (inferTagByName || implicitMode != ImplicitFields.None)
-            {
-                Array.Sort(arr);
-                int nextTag = implicitFirstTag;
+                if (inferTagByName || implicitMode != ImplicitFields.None)
+                {
+                    Array.Sort(arr);
+                    foreach (var normalizedAttribute in arr)
+                    {
+                        if (!normalizedAttribute.TagIsPinned) // if ProtoMember etc sets a tag, we'll trust it
+                        {
+                            normalizedAttribute.Rebase(-1);
+                        }
+                    }
+                }
+
                 foreach (var normalizedAttribute in arr)
                 {
-                    if (!normalizedAttribute.TagIsPinned) // if ProtoMember etc sets a tag, we'll trust it
-                    {
-                        normalizedAttribute.Rebase(nextTag++);
-                    }
+                    ApplyDefaultBehaviour(metaType, isEnum, normalizedAttribute,
+                        (inferTagByName || implicitMode != ImplicitFields.None) ? (int?)implicitFirstTag : null);
                 }
-            }
 
-            foreach (var normalizedAttribute in arr)
-            {
-                ApplyDefaultBehaviour(metaType, isEnum, normalizedAttribute);
-            }
-
-            if (callbacks != null)
-            {
-                metaType.SetCallbacks(Coalesce(callbacks, 0, 4, 8), Coalesce(callbacks, 1, 5, 9),
-                    Coalesce(callbacks, 2, 6, 10), Coalesce(callbacks, 3, 7, 11));
-            }
-
-            foreach (var normalizedAttribute in arr)
-            {
-                if (!isEnum && normalizedAttribute.Tag > 0)
+                if (callbacks != null)
                 {
-                    Type memberType = Helpers.GetMemberType(normalizedAttribute.Member);
-                    if (!DisableAutoAddingMemberTypes
-                        && GetContractFamily(memberType) != AttributeFamily.None)
-                    {
-                        FindOrAddType(memberType, true, false, false);
-                    }
+                    metaType.SetCallbacks(Coalesce(callbacks, 0, 4, 8), Coalesce(callbacks, 1, 5, 9),
+                        Coalesce(callbacks, 2, 6, 10), Coalesce(callbacks, 3, 7, 11));
                 }
+
+                if (!DisableAutoAddingMemberTypes)
+                    foreach (var normalizedAttribute in arr)
+                    {
+                        if (!isEnum && normalizedAttribute.Tag > 0)
+                        {
+                            Type memberType = Helpers.GetMemberType(normalizedAttribute.Member);
+                            memberType = Helpers.GetNullableUnderlyingType(memberType) ?? memberType;
+                            if (memberType.IsArray)
+                            {
+                                if (memberType.GetArrayRank() == 1)
+                                    memberType = memberType.GetElementType();
+                                else continue;
+                            }
+                            memberType = TypeModel.GetListItemType(_model, memberType) ?? memberType;
+                            if (memberType == null) continue;
+
+                            if (CanAutoAddType(memberType))
+                            {
+                                FindOrAddType(memberType, true, false, false);
+                            }
+                        }
+                    }
             }
-            
-            if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
+            finally
             {
-                if (FindMetaTypeWithoutAdd(baseType) != null)
+                if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
                 {
-                    MetaType meta = _model[baseType];
-                    if (!DisableAutoRegisteringSubtypes && !meta.IsList)
-                        meta.AddSubType(meta.GetNextFreeFieldNumber(AutoRegisteringSubtypesFirstTag), type);
+                    if (FindMetaTypeWithoutAdd(baseType) != null)
+                    {
+                        MetaType baseMeta = _model[baseType];
+                        if (!DisableAutoRegisteringSubtypes && !baseMeta.IsList && baseMeta.IsValidSubType(type) && CanAutoAddType(baseType))
+                            baseMeta.AddSubType(baseMeta.GetNextFreeFieldNumber(AutoRegisteringSubtypesFirstTag), type);
+                    }
                 }
             }
         }
@@ -469,8 +504,10 @@ namespace AqlaSerializer
 
         protected virtual AttributeFamily GetContractFamily(Type type, AttributeMap[] attributes)
         {
+            if (Helpers.GetNullableUnderlyingType(type) != null) return AttributeFamily.None;
+            if (!Helpers.IsEnum(type) && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
             AttributeFamily family = AttributeFamily.None;
-
+            bool isList = type.IsArray || TypeModel.GetListItemType(_model, type) != null;
             for (int i = 0; i < attributes.Length; i++)
             {
                 switch (attributes[i].AttributeType.FullName)
@@ -511,7 +548,7 @@ namespace AqlaSerializer
                         break;
                 }
             }
-
+            
             if (family == AttributeFamily.None)
             {
                 if (Helpers.IsEnum(type))
@@ -540,13 +577,25 @@ namespace AqlaSerializer
                         family |= AttributeFamily.AutoTuple;
                     }
                 }
-                if (family == AttributeFamily.None && ImplicitFallbackMode != ImplicitFields.None)
+                if (family == AttributeFamily.None && ImplicitFallbackMode != ImplicitFields.None && !isList)
                 {
                     if (Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown
                         && type != _model.MapType(typeof(object))
                         && type != _model.MapType(typeof(ValueType)))
                     {
                         family = AttributeFamily.ImplicitFallback;
+                    }
+                }
+                if (family == AttributeFamily.None && CanUse(AttributeType.SystemSerializable) && !isList)
+                {
+                    for (int i = 0; i < attributes.Length; i++)
+                    {
+                        switch (attributes[i].AttributeType.FullName)
+                        {
+                            case "System.SerializableAttribute":
+                                family |= AttributeFamily.SystemSerializable;
+                                break;
+                        }
                     }
                 }
             }
@@ -630,6 +679,7 @@ namespace AqlaSerializer
                                 object tmp;
                                 if (attrib.TryGet("Value", out tmp)) fieldNumber = (int)tmp;
                             }
+                            done = tagIsPinned = fieldNumber > 0;
                         }
 
                         attrib = AttributeMap.GetAttribute(attribs, "AqlaSerializer.EnumSerializableValueAttribute");
@@ -646,6 +696,7 @@ namespace AqlaSerializer
                                 object tmp;
                                 if (attrib.TryGet("Value", out tmp)) fieldNumber = (int)tmp;
                             }
+                            done = tagIsPinned = fieldNumber > 0;
                         }
                     }
 
@@ -843,7 +894,7 @@ namespace AqlaSerializer
             return result;
         }
 
-        protected virtual void ApplyDefaultBehaviour(MetaType metaType, bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute)
+        protected virtual void ApplyDefaultBehaviour(MetaType metaType, bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute, int? implicitFirstTag)
         {
             MemberInfo member;
             if (normalizedAttribute == null || (member = normalizedAttribute.Member) == null) return; // nix
@@ -870,6 +921,11 @@ namespace AqlaSerializer
             if (Helpers.IsInterface(metaType.Type))
                 defaultType = FindDefaultInterfaceImplementation(memberType);
 
+            if (implicitFirstTag.HasValue && !normalizedAttribute.TagIsPinned)
+            {
+                normalizedAttribute.Rebase(metaType.GetNextFreeFieldNumber(implicitFirstTag.Value));
+            }
+
             if (isEnum || normalizedAttribute.Tag > 0)
             {
                 if (defaultValueSpecified)
@@ -878,7 +934,7 @@ namespace AqlaSerializer
                     metaType.Add(normalizedAttribute, member, defaultType);
             }
         }
-        
+
         protected static void GetDataFormat(ref DataFormat value, AttributeMap attrib, string memberName)
         {
             if ((attrib == null) || (value != DataFormat.Default)) return;
@@ -985,7 +1041,7 @@ namespace AqlaSerializer
             return (_acceptableAttributes & required) != 0;
         }
 
-        private AttributeType _acceptableAttributes = AttributeType.All;
+        private AttributeType _acceptableAttributes = AttributeType.Default;
 
         /// <summary>
         /// Global default that determines whether types are considered serializable
@@ -1007,14 +1063,14 @@ namespace AqlaSerializer
         /// Set to <see cref="ImplicitFields.AllFields"/> and use <see cref="DisableAutoTuples"/> to perform as BinaryFormatter
         /// </summary>
         public ImplicitFields ImplicitFallbackMode { get; set; }
-        
+
         /// <summary>
         /// By default all derived types add themselves to the corresponding base types
         /// </summary>
         public bool DisableAutoRegisteringSubtypes { get; set; }
 
         int _autoRegisteringSubtypesFirstTag = 200;
-        
+
         /// <summary>
         /// What tag to try from?
         /// </summary>
@@ -1038,10 +1094,11 @@ namespace AqlaSerializer
             ProtoBuf = 2,
             Xml = 4,
             DataContract = 8,
+            SystemSerializable = 16,
 
-            All = Aqla | ProtoBuf | Xml | DataContract,
-            NoAqla = ProtoBuf | Xml | DataContract,
-            NoProtobuf = Aqla | Xml | DataContract,
+            Default = Aqla | ProtoBuf | Xml | DataContract,
+            NoAqla = ProtoBuf | Xml | DataContract | SystemSerializable,
+            NoProtobuf = Aqla | Xml | DataContract | SystemSerializable,
         }
 
         public DefaultAutoAddStrategy(RuntimeTypeModel model)

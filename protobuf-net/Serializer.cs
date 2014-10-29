@@ -37,6 +37,33 @@ namespace ProtoBuf
         private Serializer() { } // not a static class for C# 1.2 reasons
 #endif
 #if !NO_RUNTIME && !NO_GENERICS
+
+#if !FEAT_IKVM
+        /// <summary>
+        /// Adds all recognizable types from the current assembly
+        /// </summary>
+        public static void AddContracts(bool nonPublic)
+        {
+            AddContracts(Assembly.GetCallingAssembly(), nonPublic);
+        }
+#endif
+
+        /// <summary>
+        /// Adds all recognizable types from the assembly
+        /// </summary>
+        public static void AddContracts(Assembly assembly, bool nonPublic)
+        {
+            RuntimeTypeModel.Default.Add(assembly, true, nonPublic, true);
+        }
+
+        /// <summary>
+        /// Adds all recognizable types to be used for the serialization
+        /// </summary>
+        public static void AddContracts(Type[] types)
+        {
+            RuntimeTypeModel.Default.Add(types, true);
+        }
+
         /// <summary>
         /// Suggest a .proto definition for the given type
         /// </summary>

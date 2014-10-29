@@ -438,7 +438,7 @@ namespace ProtoBuf
 
         
 #if FEAT_IKVM
-        internal static IKVM.Reflection.Type GetUnderlyingType(IKVM.Reflection.Type type)
+        internal static IKVM.Reflection.Type GetNullableUnderlyingType(IKVM.Reflection.Type type)
         {
             if (type.IsValueType && type.IsGenericType && type.GetGenericTypeDefinition().FullName == "System.Nullable`1")
             {
@@ -448,7 +448,7 @@ namespace ProtoBuf
         }
 #endif
 
-        internal static System.Type GetUnderlyingType(System.Type type)
+        internal static System.Type GetNullableUnderlyingType(System.Type type)
         {
 #if NO_GENERICS
             return null; // never a Nullable<T>, so always returns null

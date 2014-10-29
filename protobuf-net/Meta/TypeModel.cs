@@ -620,7 +620,7 @@ namespace ProtoBuf.Meta
             }
             bool autoCreate = true;
 #if !NO_GENERICS
-            Type underlyingType = Helpers.GetUnderlyingType(type);
+            Type underlyingType = Helpers.GetNullableUnderlyingType(type);
             if (underlyingType != null)
             {
                 type = underlyingType;
@@ -1206,7 +1206,7 @@ namespace ProtoBuf.Meta
 #if !NO_GENERICS
             if (type.IsGenericParameter) return null;
             // Nullable<T>
-            Type tmp = Helpers.GetUnderlyingType(type);
+            Type tmp = Helpers.GetNullableUnderlyingType(type);
             if (tmp != null) return tmp;
 #endif
 
@@ -1483,7 +1483,7 @@ namespace ProtoBuf.Meta
         private bool CanSerialize(Type type, bool allowBasic, bool allowContract, bool allowLists)
         {
             if (type == null) throw new ArgumentNullException("type");
-            Type tmp = Helpers.GetUnderlyingType(type);
+            Type tmp = Helpers.GetNullableUnderlyingType(type);
             if (tmp != null) type = tmp;
 
             // is it a basic type?

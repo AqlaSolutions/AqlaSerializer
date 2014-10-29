@@ -294,7 +294,7 @@ namespace ProtoBuf.Serializers
                     ctx.CastToObject(itemType);
                 }
 #if !NO_GENERICS
-                else if(Helpers.GetUnderlyingType(addParamType) == itemType)
+                else if(Helpers.GetNullableUnderlyingType( addParamType) == itemType)
                 { // list is nullable
                     ConstructorInfo ctor = Helpers.GetConstructor(addParamType, new Type[] {itemType}, false);
                     ctx.EmitCtor(ctor); // the itemType on the stack is now a Nullable<ItemType>

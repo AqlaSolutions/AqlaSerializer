@@ -93,10 +93,29 @@ namespace ProtoBuf.Meta
         public bool IsValidSubType(Type subType)
         {
 #if WINRT
+            if (!CanHaveSubType(typeInfo)) return false;
+#else
+            if (!CanHaveSubType(type)) return false;
+#endif
+#if WINRT
             return typeInfo.IsAssignableFrom(subType.GetTypeInfo());
 #else
             return type.IsAssignableFrom(subType);
 #endif
+        }
+
+        public static bool CanHaveSubType(Type type)
+        {
+#if WINRT
+            if ((type.IsClass || type.IsInterface) && !type.IsSealed)
+            {
+#else
+            if ((type.IsClass || type.IsInterface) && !type.IsSealed)
+            {
+                return true;
+            }
+#endif
+            return false;
         }
 
         bool _isDefaultBehaviourApplied;
@@ -124,9 +143,9 @@ namespace ProtoBuf.Meta
             if (derivedType == null) throw new ArgumentNullException("derivedType");
             if (fieldNumber < 1) throw new ArgumentOutOfRangeException("fieldNumber");
 #if WINRT
-            if (!(typeInfo.IsClass || typeInfo.IsInterface) || typeInfo.IsSealed) {
+            if (!CanHaveSubType(typeInfo)) {
 #else
-            if (!(type.IsClass || type.IsInterface) || type.IsSealed) {
+            if (!CanHaveSubType(type)) {
 #endif
                 throw new InvalidOperationException("Sub-types can only be added to non-sealed classes");
             }
@@ -166,7 +185,7 @@ namespace ProtoBuf.Meta
             {
                 if (number++ == short.MaxValue) return -1;
                 found = false;
-                
+                // they are not sorted, so...
                 foreach (ValueMember f in Fields)
                 {
                     if (f.FieldNumber == number)
@@ -596,7 +615,7 @@ namespace ProtoBuf.Meta
         [Flags]
         public enum AttributeFamily
         {
-            None = 0, ProtoBuf = 1, DataContractSerialier = 2, XmlSerializer = 4, AutoTuple = 8, Aqla = 16, ImplicitFallback = 32
+            None = 0, ProtoBuf = 1, DataContractSerialier = 2, XmlSerializer = 4, AutoTuple = 8, Aqla = 16, ImplicitFallback = 32, SystemSerializable = 64
         }
         
         public Type GetBaseType()

@@ -198,7 +198,7 @@ namespace ProtoBuf.Meta
             }
             else
             {
-                Type tmp = Helpers.GetUnderlyingType(type);
+                Type tmp = Helpers.GetNullableUnderlyingType(type);
                 if (tmp != null) type = tmp;
 
                 WireType defaultWireType;
@@ -652,7 +652,10 @@ namespace ProtoBuf.Meta
         /// </summary>
         public bool AddNotAsReferenceDefault { get; set; }
         
-        public void Add(Assembly assembly, bool nonPublic, bool applyDefaultBehavior)
+        /// <summary>
+        /// Adds all types inside the specified assembly
+        /// </summary>
+        public void Add(Assembly assembly, bool recognizableOnly, bool nonPublic, bool applyDefaultBehavior)
         {
             Type[] list = nonPublic ? Helpers.GetTypes(assembly) : Helpers.GetExportedTypes(assembly);
             
@@ -661,7 +664,8 @@ namespace ProtoBuf.Meta
 
             foreach (Type t in list)
             {
-                if (!Helpers.IsGenericTypeDefinition(t))
+                if (!Helpers.IsGenericTypeDefinition(t)
+                    && (!recognizableOnly || _autoAddStrategy.GetContractFamily(t) != MetaType.AttributeFamily.None))
                     Add(t, applyDefaultBehavior);
             }
         }
@@ -2169,7 +2173,7 @@ namespace ProtoBuf.Meta
 
         internal string GetSchemaTypeName(Type effectiveType, DataFormat dataFormat, bool asReference, bool dynamicType, ref bool requiresBclImport)
         {
-            Type tmp = Helpers.GetUnderlyingType(effectiveType);
+            Type tmp = Helpers.GetNullableUnderlyingType(effectiveType);
             if (tmp != null) effectiveType = tmp;
 
             if (effectiveType == this.MapType(typeof(byte[]))) return "bytes";

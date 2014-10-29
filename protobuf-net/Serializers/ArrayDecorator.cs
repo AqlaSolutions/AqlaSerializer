@@ -35,7 +35,7 @@ namespace ProtoBuf.Serializers
 #if NO_GENERICS
             Type underlyingItemType = itemType;
 #else
-            Type underlyingItemType = supportNull ? itemType : (Helpers.GetUnderlyingType(itemType) ?? itemType);
+            Type underlyingItemType = supportNull ? itemType : (Helpers.GetNullableUnderlyingType(itemType) ?? itemType);
 #endif
 
             Helpers.DebugAssert(underlyingItemType == Tail.ExpectedType, "invalid tail");

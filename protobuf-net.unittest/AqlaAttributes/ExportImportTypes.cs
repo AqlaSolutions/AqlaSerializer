@@ -71,7 +71,7 @@ namespace ProtoBuf.unittest.Aqla
         [Test]
         public void ShouldWorkForAssembly()
         {
-            _model.Add(Assembly.GetExecutingAssembly(), true, true);
+            _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
             Check(true); // replace with false if does not pass! it's ok!
         }
 
@@ -104,7 +104,7 @@ namespace ProtoBuf.unittest.Aqla
         [Test]
         public void ShouldSerializeTypesList()
         {
-            _model.Add(Assembly.GetExecutingAssembly(), true, true);
+            _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
             Type[] types = _model.Types;
             Type[] cloned = (Type[])_model.DeepClone(types);
 

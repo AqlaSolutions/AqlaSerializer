@@ -609,7 +609,7 @@ namespace ProtoBuf.Compiler
             {
                 Type underlyingType = null;
 #if !FX11
-                underlyingType = Helpers.GetUnderlyingType(type);
+                underlyingType = Helpers.GetNullableUnderlyingType(type);
 #endif
                 if (underlyingType == null)
                 { // not a nullable T; can invoke directly
@@ -649,7 +649,7 @@ namespace ProtoBuf.Compiler
 #if !FX11
             Type underlyingType;
             
-            if (type.IsValueType && (underlyingType = Helpers.GetUnderlyingType(type)) != null)
+            if (type.IsValueType && (underlyingType = Helpers.GetNullableUnderlyingType(type)) != null)
             {
                 if(tail.RequiresOldValue)
                 {
