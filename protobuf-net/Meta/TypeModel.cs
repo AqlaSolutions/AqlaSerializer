@@ -560,6 +560,33 @@ namespace ProtoBuf.Meta
                 writer.Close();
             }
         }
+
+#if !NO_GENERICS && !IOS
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public T Deserialize<T>(Stream source)
+        {
+            return (T)Deserialize(source, null, typeof(T));
+        }
+
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public T Deserialize<T>(Stream source, T value)
+        {
+            return (T)Deserialize(source, value, typeof(T));
+        }
+#endif
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -1306,7 +1333,7 @@ namespace ProtoBuf.Meta
             /// </summary>
             AfterDeserialize
         }
-#if !NO_GENERICS
+#if !NO_GENERICS && !IOS
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
