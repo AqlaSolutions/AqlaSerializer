@@ -401,7 +401,7 @@ namespace ProtoBuf.Meta
                     // as does "IsRequired"
                     ser = new DefaultValueDecorator(model, defaultValue, ser);
                 }
-                if (memberType == model.MapType(typeof(Uri)))
+                if (!asReference && memberType == model.MapType(typeof(Uri)))
                 {
                     ser = new UriDecorator(model, ser);
                 }
@@ -545,9 +545,13 @@ namespace ProtoBuf.Meta
                     return new GuidSerializer(model);
                 case ProtoTypeCode.Uri:
                     defaultWireType = WireType.String;
+                    if (asReference)
+                    {
+                        return new NetObjectSerializer(model, model.MapType(typeof(Uri)), 0, BclHelpers.NetObjectOptions.AsReference);
+                    }
                     return new StringSerializer(model); // treat as string; wrapped in decorator later
                 case ProtoTypeCode.ByteArray:
-                    defaultWireType = WireType.String;
+                    defaultWireType = WireType.String; // TODO as reference for blobs!!!
                     return new BlobSerializer(model, overwriteList);
                 case ProtoTypeCode.Type:
                     defaultWireType = WireType.String;

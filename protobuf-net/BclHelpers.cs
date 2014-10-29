@@ -1,5 +1,4 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
-////
 using System;
 namespace ProtoBuf
 {
@@ -442,8 +441,9 @@ namespace ProtoBuf
                     case FieldObject:
                         bool isString = type == typeof(string);
                         bool isType = !isString && typeof(Type).IsAssignableFrom(type);
+                        bool isUri = type == typeof(Uri);
                         bool wasNull = value == null;
-                        bool lateSet = wasNull && (isString || isType || ((options & NetObjectOptions.LateSet) != 0));
+                        bool lateSet = wasNull && (isString || isType || isUri|| ((options & NetObjectOptions.LateSet) != 0));
                         
                         if (newObjectKey >= 0 && !lateSet)
                         {
@@ -470,6 +470,10 @@ namespace ProtoBuf
                         else if (isType)
                         {
                             value = source.ReadType();
+                        }
+                        else if (isUri)
+                        {
+                            value = new Uri(source.ReadString());
                         }
                         else
                         {
@@ -592,6 +596,10 @@ namespace ProtoBuf
                 else if (value is Type)
                 {
                     ProtoWriter.WriteType((Type)value, dest);
+                }
+                else if (value is Uri)
+                {
+                    ProtoWriter.WriteString(((Uri)value).AbsoluteUri, dest);
                 }
                 else
                 {
