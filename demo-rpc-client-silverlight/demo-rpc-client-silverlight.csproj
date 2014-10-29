@@ -118,8 +118,8 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
     <None Include="Properties\AppManifest.xml" />
     <None Include="Service References\Northwind\demo_rpc_client_silverlight.Northwind.Customer.datasource">
@@ -182,7 +182,7 @@
   <ItemGroup>
     <ProjectReference Include="..\protobuf-net_Silverlight\protobuf-net_Silverlight.csproj">
       <Project>{35032FC5-65E0-4FE4-8DBC-A31F0694EC14}</Project>
-      <Name>protobuf-net_Silverlight</Name>
+      <Name>aqlaserializer_Silverlight</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />

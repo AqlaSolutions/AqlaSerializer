@@ -36,7 +36,7 @@ namespace Examples.Issues
         [Test]
         public void Execute()
         {
-            var assembly = Assembly.LoadFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "protobuf-net.dll"));
+            var assembly = Assembly.LoadFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "aqlaserializer.dll"));
             var derived = new Derived()
             {
                 BaseFirstProperty = "BaseFirst",

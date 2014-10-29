@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("protobuf-net (3.5 extensions)")]
-[assembly: AssemblyDescription("Protocol Buffers for .NET - extension methods")]
+[assembly: AssemblyTitle("aqlaserializer (3.5 extensions)")]
+[assembly: AssemblyDescription("Fast and portable serializer for .NET - extension methods")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("protobuf-net")]
-[assembly: AssemblyCopyright("See http://code.google.com/p/protobuf-net/")]
+[assembly: AssemblyProduct("aqlaserializer")]
+[assembly: AssemblyCopyright("See https://github.com/AqlaSolutions/AqlaSerializer")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,8 +33,8 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.52")]
+[assembly: AssemblyVersion("1.0.0.56")]
 #if !CF
-[assembly: AssemblyFileVersion("1.0.0.52")]
+[assembly: AssemblyFileVersion("1.0.0.56")]
 #endif
 [assembly: CLSCompliant(true)]

@@ -31,9 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="protobuf-net, Version=1.0.0.262, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+    <Reference Include="aqlaserializer">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Program Files\protobuf-net\protobuf-net-VS9\protobuf-net.dll</HintPath>
+      <HintPath>..\..\..\..\Program Files\protobuf-net\protobuf-net-VS9\aqlaserializer.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

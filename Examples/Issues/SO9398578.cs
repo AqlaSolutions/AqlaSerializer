@@ -15,7 +15,7 @@ namespace Examples.Issues
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestRandomDataWithString()
         {
-            var input = File.ReadAllBytes("protobuf-net.dll");
+            var input = File.ReadAllBytes("aqlaserializer.dll");
             var stream = new MemoryStream(input);
             stream.Seek(0, SeekOrigin.Begin);
             Assert.Greater(3, 0); // I always double-check the param order
@@ -25,7 +25,7 @@ namespace Examples.Issues
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestRandomDataWithContractType()
         {
-            var input = File.ReadAllBytes("protobuf-net.dll");
+            var input = File.ReadAllBytes("aqlaserializer.dll");
             var stream = new MemoryStream(input);
             stream.Seek(0, SeekOrigin.Begin);
             Assert.Greater(3, 0); // I always double-check the param order
@@ -35,7 +35,7 @@ namespace Examples.Issues
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestRandomDataWithReader()
         {
-            var input = File.ReadAllBytes("protobuf-net.dll");
+            var input = File.ReadAllBytes("aqlaserializer.dll");
             var stream = new MemoryStream(input);
             stream.Seek(0, SeekOrigin.Begin);
             Assert.Greater(3, 0); // I always double-check the param order

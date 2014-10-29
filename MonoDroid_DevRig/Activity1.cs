@@ -19,7 +19,7 @@ namespace MonoDroid_DevRig
     public class Activity1 : Activity
     {
         public Activity1(IntPtr handle)
-            : base(handle)
+            : base(handle, JniHandleOwnership.DoNotTransfer)
         {
         }
         TypeModel serializer;
@@ -29,11 +29,11 @@ namespace MonoDroid_DevRig
             base.OnCreate(bundle);
 
             // Set our view from the "main" layout resource
-            SetContentView(Resource.layout.main);
+            SetContentView(Resource.Layout.main);
 
             // Get our button from the layout resource,
             // and attach an event to it
-            Button button = FindViewById<Button>(Resource.id.myButton);
+            Button button = FindViewById<Button>(Resource.Id.myButton);
             
             button.Click += delegate
             {

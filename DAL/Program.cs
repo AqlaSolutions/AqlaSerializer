@@ -82,7 +82,7 @@ namespace DAL
                 Console.WriteLine("proto length: {0:###,###,000}", ms.Length);
 
                 Database pbnet = Serializer.Deserialize<Database>(ms);
-                DbMetrics("protobuf-net", pbnet);
+                DbMetrics("aqlaserializer", pbnet);
 
                 //Database psharp = MessageReader.Read<Database>(ms.ToArray());
                 //DbMetrics("proto#", psharp);

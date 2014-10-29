@@ -11,39 +11,39 @@
     <ZipDirectory>Package</ZipDirectory>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectToBuild Include="protobuf-net\protobuf-net.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Phone7\protobuf-net_Phone7.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Phone8\protobuf-net_Phone8.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Silverlight\protobuf-net_Silverlight.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Portable\protobuf-net_Portable.csproj"/>
-    <ProjectToBuild Include="protobuf-net_WinRT\protobuf-net_WinRT.csproj"/>
-    <ProjectToBuild Include="protobuf-net_IKVM\protobuf-net_IKVM.csproj"/>
-    <ProjectToBuild Include="protobuf-net_MonoDroid\protobuf-net_MonoDroid.csproj"/>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj"/>
+    <ProjectToBuild Include="protobuf-net_Phone7\aqlaserializer_Phone7.csproj"/>
+    <ProjectToBuild Include="protobuf-net_Phone8\aqlaserializer_Phone8.csproj"/>
+    <ProjectToBuild Include="protobuf-net_Silverlight\aqlaserializer_Silverlight.csproj"/>
+    <ProjectToBuild Include="protobuf-net_Portable\aqlaserializer_Portable.csproj"/>
+    <ProjectToBuild Include="protobuf-net_WinRT\aqlaserializer_WinRT.csproj"/>
+    <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj"/>
+    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj"/>
 
-    <iOSFiles Include="protobuf-net\bin\iOS\protobuf-net.*"/> 
-    <UnityFiles Include="protobuf-net\bin\Unity\protobuf-net.*"/>
-    <Net20Files Include="protobuf-net\bin\Net20\protobuf-net.*"/>
-    <Net30Files Include="protobuf-net\bin\Release\protobuf-net.*"/>
-    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\protobuf-net.*"/>
-    <SLFiles Include="protobuf-net_Silverlight\bin\Release\protobuf-net.*"/>
-    <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\protobuf-net.*"/>
-    <WP7Files Include="protobuf-net_Phone7\bin\Release\protobuf-net.*"/>
-    <WP7Files_CoreOnly Include="protobuf-net_Phone7\bin\CoreOnly\protobuf-net.*"/>
-    <WP8Files Include="protobuf-net_Phone8\bin\Release\protobuf-net.*"/>
-    <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\protobuf-net.*"/>
-    <PortableFiles Include="protobuf-net_Portable\bin\Release\protobuf-net.*"/>
-    <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\protobuf-net.*"/>
+    <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
+    <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
+    <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
+    <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
+    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\aqlaserializer.*"/>
+    <SLFiles Include="protobuf-net_Silverlight\bin\Release\aqlaserializer.*"/>
+    <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\aqlaserializer.*"/>
+    <WP7Files Include="protobuf-net_Phone7\bin\Release\aqlaserializer.*"/>
+    <WP7Files_CoreOnly Include="protobuf-net_Phone7\bin\CoreOnly\aqlaserializer.*"/>
+    <WP8Files Include="protobuf-net_Phone8\bin\Release\aqlaserializer.*"/>
+    <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\aqlaserializer.*"/>
+    <PortableFiles Include="protobuf-net_Portable\bin\Release\aqlaserializer.*"/>
+    <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\aqlaserializer.*"/>
     <PrecompileFiles Include="precompile\bin\Release\*.*"/>
 
-    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\protobuf-net.*"/>
-    <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\protobuf-net.*"/>
+    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\aqlaserializer.*"/>
+    <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
 
-    <MonoFiles Include="protobuf-net-mono\bin\Release\protobuf-net.*"/>
-    <MonoFiles Include="protobuf-net-mono\docs\protobuf-net.xml"/>
+    <MonoFiles Include="protobuf-net-mono\bin\Release\aqlaserializer.*"/>
+    <MonoFiles Include="protobuf-net-mono\docs\aqlaserializer.xml"/>
 
     <IKVMFiles Include="protobuf-net_IKVM\bin\Release\*.*" Exclude="protobuf-net_IKVM\bin\Release\Licence.txt"/>
 
-    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\protobuf-net.*"/>
+    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
 
     <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
   </ItemGroup>
@@ -98,11 +98,11 @@
     <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=Release" BuildInParallel="true"/>
     <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=CoreOnly" BuildInParallel="true"/>
 
-    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
-    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
-    <MSBuild Projects="protobuf-net\protobuf-net.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
     
-    <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\protobuf-net.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
+    <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
     <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
@@ -152,7 +152,7 @@
 
     <Zip WorkingDirectory="$(ZipDirectory)"
          Files="@(ZipFiles)"
-         ZipFileName="$(ZipDirectory)\protobuf-net r$(BuildRev).zip" />
+         ZipFileName="$(ZipDirectory)\aqlaserializer r$(BuildRev).zip" />
 
     <!-- build the test project -->
     <RemoveDir Directories="Examples\obj; Examples\bin"/>
@@ -165,9 +165,9 @@
 
     <!-- build the test project -->
     <RemoveDir Directories="protobuf-net.unittest\obj; protobuf-net.unittest\bin"/>
-    <MSBuild Projects="protobuf-net.unittest\protobuf-net.unittest.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
+    <MSBuild Projects="protobuf-net.unittest\aqlaserializer.unittest.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
 
-    <NUnit Assemblies="protobuf-net.unittest\bin\Release\protobuf-net.unittest.exe"
+    <NUnit Assemblies="protobuf-net.unittest\bin\Release\aqlaserializer.unittest.exe"
        ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
 
     <!-- build the test project -->

@@ -71,16 +71,16 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
     <None Include="app.config" />
     <None Include="precompile.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net_IKVM\protobuf-net_IKVM.csproj">
+    <ProjectReference Include="..\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
       <Project>{7d09cd88-098b-499b-95d2-7394dfbc9b5d}</Project>
-      <Name>protobuf-net_IKVM</Name>
+      <Name>aqlaserializer_IKVM</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -34,9 +34,9 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .NET Framework is automatically included -->
-    <ProjectReference Include="..\protobuf-net_Portable\protobuf-net_Portable.csproj">
+    <ProjectReference Include="..\protobuf-net_Portable\aqlaserializer_Portable.csproj">
       <Project>{24AB5D8D-8161-4BA8-B643-BAB10402D766}</Project>
-      <Name>protobuf-net_Portable</Name>
+      <Name>aqlaserializer_Portable</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

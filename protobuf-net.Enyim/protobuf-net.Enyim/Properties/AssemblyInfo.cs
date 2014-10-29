@@ -6,12 +6,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("protobuf-net.Enyim")]
-[assembly: AssemblyDescription("Enyim / protobuf-net transcoder")]
+[assembly: AssemblyTitle("aqlaserializer.Enyim")]
+[assembly: AssemblyDescription("Enyim / aqlaserializer transcoder")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Marc Gravell")]
-[assembly: AssemblyProduct("protobuf-net")]
-[assembly: AssemblyCopyright("See http://code.google.com/p/protobuf-net/")]
+[assembly: AssemblyProduct("aqlaserializer")]
+[assembly: AssemblyCopyright("See https://github.com/AqlaSolutions/AqlaSerializer")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

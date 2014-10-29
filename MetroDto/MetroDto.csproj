@@ -99,20 +99,20 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
-    <ProjectReference Include="..\protobuf-net_WinRT\protobuf-net_WinRT.csproj">
+    <ProjectReference Include="..\protobuf-net_WinRT\aqlaserializer.csproj">
       <Project>{8507284e-1c31-413d-a390-166200fa38d2}</Project>
-      <Name>protobuf-net_WinRT</Name>
+      <Name>aqlaserializer_WinRT</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <ItemGroup>

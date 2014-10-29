@@ -114,7 +114,7 @@ namespace Metro_DevRig
                     ser.Serialize(buffer, dal);
                 }
                 watch.Stop();
-                perfStats.AppendLine().AppendLine().AppendLine("protobuf-net").AppendFormat("Serialize x {0}: {1:###,###}ms, {2:###,###} bytes", loop, watch.ElapsedMilliseconds, buffer.Length);
+                perfStats.AppendLine().AppendLine().AppendLine("aqlaserializer").AppendFormat("Serialize x {0}: {1:###,###}ms, {2:###,###} bytes", loop, watch.ElapsedMilliseconds, buffer.Length);
 
                 watch = Stopwatch.StartNew();
                 for (int i = 0; i < loop; i++)
@@ -132,7 +132,7 @@ namespace Metro_DevRig
                     Serializer.Serialize(buffer, dal);
                 }
                 watch.Stop();
-                perfStats.AppendLine().AppendLine().AppendLine("protobuf-net (runtime)").AppendFormat("Serialize x {0}: {1:###,###}ms, {2:###,###} bytes", loop, watch.ElapsedMilliseconds, buffer.Length);
+                perfStats.AppendLine().AppendLine().AppendLine("aqlaserializer (runtime)").AppendFormat("Serialize x {0}: {1:###,###}ms, {2:###,###} bytes", loop, watch.ElapsedMilliseconds, buffer.Length);
 
                 watch = Stopwatch.StartNew();
                 for (int i = 0; i < loop; i++)

@@ -62,7 +62,7 @@ namespace ExperimentalDataTableSerialization
             table.RemotingFormat = SerializationFormat.Binary;
             WriteWithTiming("BinaryFormatter (rf:binary)", stream => bf.Serialize(stream, table), stream => CheckTables(table, bf.Deserialize(stream)));
 
-            WriteWithTiming("protobuf-net v2", stream => ProtoWrite(table, stream), stream => CheckTables(table, ProtoRead(stream)));
+            WriteWithTiming("aqlaserializer", stream => ProtoWrite(table, stream), stream => CheckTables(table, ProtoRead(stream)));
         }
         static void CleanupObjectsBeforeTiming()
         {

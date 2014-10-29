@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project name="protobuf-net" default="all">
+<project name="aqlaserializer" default="all">
   <property name="nant.settings.currentframework" value="mono-3.5" />
   <property name="project.version" value="0.0.0.1"/>
   <property name="source.dir" value=".."/>
@@ -16,7 +16,7 @@
     <mkdir dir="${doc.dir}" failonerror="false"/>
   </target>
 
-  <target name="protobuf-net" depends="init">
+  <target name="aqlaserializer" depends="init">
     <csc target="library" keyfile="../AqlaSerializerKey.snk" output="${build.dir}/${target::get-current-target()}.dll" define="NET_2_0;NET_3_5;REMOTING;FEAT_SAFE" debug="${not build.release}" optimize="${build.release}" doc="${doc.dir}/${target::get-current-target()}.xml">
       <sources>
         <include name="${source.dir}/protobuf-net/**/*.cs"/>
@@ -53,7 +53,7 @@
 
   <target name="all">
     <call target="init"/>
-    <call target="protobuf-net"/>
+    <call target="aqlaserializer"/>
   </target>
 
   <target name="clean">

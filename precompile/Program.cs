@@ -14,7 +14,7 @@ namespace ProtoBuf.Precompile
         {
             try
             {
-                Console.WriteLine("protobuf-net pre-compiler");
+                Console.WriteLine("aqlaserializer pre-compiler");
                 PreCompileContext ctx;
                 if (!CommandLineAttribute.TryParse(args, out ctx))
                 {
@@ -319,9 +319,9 @@ namespace ProtoBuf.Precompile
             {
                 string nameOnly = args.Name.Split(',')[0];
 
-                if (nameOnly == "IKVM.Reflection" && args.RequestingAssembly != null && args.RequestingAssembly.FullName.StartsWith("protobuf-net"))
+                if (nameOnly == "IKVM.Reflection" && args.RequestingAssembly != null && args.RequestingAssembly.FullName.StartsWith("aqlaserializer"))
                 {
-                    throw new InvalidOperationException("This operation needs access to the protobuf-net.dll used by your library, **in addition to** the protobuf-net.dll that is included with the precompiler; the easiest way to do this is to ensure the referenced protobuf-net.dll is in the same folder as your library.");
+                    throw new InvalidOperationException("This operation needs access to the aqlaserializer.dll used by your library, **in addition to** the aqlaserializer.dll that is included with the precompiler; the easiest way to do this is to ensure the referenced aqlaserializer.dll is in the same folder as your library.");
                 }
                 var uni = model.Universe;
                 foreach (var tmp in uni.GetAssemblies())
@@ -343,9 +343,9 @@ namespace ProtoBuf.Precompile
                 allGood = false;
             }
             ResolveNewAssembly(model.Universe, "System.dll"); // not so worried about whether that one exists...
-            if (ResolveNewAssembly(model.Universe, "protobuf-net.dll") == null)
+            if (ResolveNewAssembly(model.Universe, "aqlaserializer.dll") == null)
             {
-                Console.Error.WriteLine("protobuf-net.dll not found!");
+                Console.Error.WriteLine("aqlaserializer.dll not found!");
                 allGood = false;
             }
             if (!allGood) return false;
@@ -467,9 +467,9 @@ The input assembly(ies) is(are) anaylsed for types decorated with
 [ProtoContract]. All such types are added to the model, as are any
 types that they require.
 
-Note: the compiler must be able to resolve a protobuf-net.dll
+Note: the compiler must be able to resolve a aqlaserializer.dll
 that is suitable for the target framework; this is done most simply
-by ensuring that the appropriate protobuf-net.dll is next to the
+by ensuring that the appropriate aqlaserializer.dll is next to the
 input assembly.
 
 Options:

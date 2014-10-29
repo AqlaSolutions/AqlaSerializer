@@ -37,7 +37,7 @@ namespace Examples.Issues
 
         static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {   // make sure we don't get confused with different versions of protobuf-net
-            if(args.Name.StartsWith("protobuf-net, Version="))
+            if (args.Name.StartsWith("aqlaserializer, Version="))
             {
                 return typeof (ProtoContractAttribute).Assembly;
             }

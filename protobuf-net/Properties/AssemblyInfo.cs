@@ -7,12 +7,11 @@ using System.Runtime.CompilerServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("protobuf-net")]
-[assembly: AssemblyDescription("Protocol Buffers for .NET")]
+[assembly: AssemblyTitle("aqlaserializer")]
+[assembly: AssemblyDescription("Fast and portable serializer for .NET")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Marc Gravell")]
-[assembly: AssemblyProduct("protobuf-net")]
-[assembly: AssemblyCopyright("See http://code.google.com/p/protobuf-net/")]
+[assembly: AssemblyProduct("aqlaserializer")]
+[assembly: AssemblyCopyright("See https://github.com/AqlaSolutions/AqlaSerializer")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -36,12 +35,12 @@ using System.Runtime.CompilerServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.52")]
+[assembly: AssemblyVersion("1.0.0.56")]
 #if !CF
-[assembly: AssemblyFileVersion("1.0.0.52")]
+[assembly: AssemblyFileVersion("1.0.0.56")]
 #endif
 #if !FX11
-[assembly: InternalsVisibleTo("protobuf-net.unittest, PublicKey="
+[assembly: InternalsVisibleTo("aqlaserializer.unittest, PublicKey="
     + "0024000004800000940000000602000000240000525341310004000001000100f7065c1c81939a"
     + "43bf1ae76067234b37524c90498a92d1fa9add4d8d43c75114e263cd8a10c79b85ee1543d50642"
     + "d66e798bfff809a0e3948dac1b145fd9cdfb0b08c83b2e12a0a5bb33973a8b069a6863368a4843"

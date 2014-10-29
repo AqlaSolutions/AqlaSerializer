@@ -344,7 +344,7 @@ namespace Examples.SimpleStream
                     Serializer.Deserialize<T>(ms);
                 }
                 deserializeWatch.Stop();
-                Console.WriteLine("||protobuf-net||{0:###,###,###}||{1:###,###,###}||{2:###,###,###}||",
+                Console.WriteLine("||aqlaserializer||{0:###,###,###}||{1:###,###,###}||{2:###,###,###}||",
                     ms.Length, serializeWatch.ElapsedMilliseconds, deserializeWatch.ElapsedMilliseconds);
 
                 pbnetBuffer = ms.ToArray();
@@ -553,7 +553,7 @@ namespace Examples.SimpleStream
                     if (originalJson != pbJson)
                     {
                         pass = false;
-                        Console.WriteLine("\t**** json comparison fails (protobuf-net)!");
+                        Console.WriteLine("\t**** json comparison fails (aqlaserializer)!");
                         Console.WriteLine("\tClone JSON: {0}", pbJson);
                     }
                     if (testProtoSharp && (originalJson != psJson))

@@ -13,7 +13,6 @@ namespace precompile.tests
     [TestFixture]
     public class BasicTests
     {
-        [Ignore("Not introduced with AqlaSerializer")]
         [Test]
         public void ExecutePhone8()
         {

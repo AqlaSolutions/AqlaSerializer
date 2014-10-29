@@ -60,7 +60,7 @@ namespace WcfClient
                 }
                 fooWatch.Stop();
                 copy = set;
-                key = "protobuf-net via " + config;
+                key = "aqlaserializer via " + config;
                 Stopwatch barWatch = Stopwatch.StartNew();
                 for (int i = 0; i < count; i++)
                 {
@@ -114,7 +114,7 @@ namespace WcfClient
                 var data = client.LoadBar();
                 watch.Stop();
                 nwindSource.DataSource = data;
-                Text = "Loaded protobuf-net via " + ConfigName + " (" + watch.ElapsedMilliseconds + "ms)";
+                Text = "Loaded aqlaserializer via " + ConfigName + " (" + watch.ElapsedMilliseconds + "ms)";
             }
         }
     }

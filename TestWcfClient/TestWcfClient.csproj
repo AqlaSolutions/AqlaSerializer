@@ -78,19 +78,25 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
     <None Include="app.config" />
-    <None Include="Service References\ServiceReference1\Service1.wsdl" />
-    <None Include="Service References\ServiceReference1\Service1.xsd" />
-    <None Include="Service References\ServiceReference1\Service11.xsd" />
-    <None Include="Service References\ServiceReference1\Service12.xsd" />
+    <None Include="Service References\ServiceReference1\Service11.wsdl" />
+    <None Include="Service References\ServiceReference1\Service13.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\ServiceReference1\Service131.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\ServiceReference1\Service132.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net\protobuf-net.csproj">
+    <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">
       <Project>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</Project>
-      <Name>protobuf-net</Name>
+      <Name>aqlaserializer</Name>
     </ProjectReference>
     <ProjectReference Include="..\TestWcfDto\TestWcfDto.csproj">
       <Project>{1A08F440-53DC-4C42-9CD1-C1507E5036A7}</Project>

@@ -46,8 +46,8 @@
     <AssemblyOriginatorKeyFile>..\AqlaSerializerKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -55,9 +55,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net_Portable\protobuf-net_Portable.csproj">
+    <ProjectReference Include="..\protobuf-net_Portable\aqlaserializer_Portable.csproj">
       <Project>{24ab5d8d-8161-4ba8-b643-bab10402d766}</Project>
-      <Name>protobuf-net_Portable</Name>
+      <Name>aqlaserializer_Portable</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

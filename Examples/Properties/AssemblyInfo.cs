@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("protobuf-net Examples")]
-[assembly: AssemblyDescription("Protocol Buffers for .NET (Examples)")]
+[assembly: AssemblyTitle("aqlaserializer Examples")]
+[assembly: AssemblyDescription("Fast and portable serializer for .NET (Examples)")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("protobuf-net")]
-[assembly: AssemblyCopyright("See http://code.google.com/p/protobuf-net/")]
+[assembly: AssemblyProduct("aqlaserializer")]
+[assembly: AssemblyCopyright("See https://github.com/AqlaSolutions/AqlaSerializer")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

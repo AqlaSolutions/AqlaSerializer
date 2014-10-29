@@ -68,9 +68,9 @@
       <Project>{816EC137-7AFD-42B3-84A1-447E33A6A8C8}</Project>
       <Name>Examples</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net\protobuf-net.csproj">
+    <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">
       <Project>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</Project>
-      <Name>protobuf-net</Name>
+      <Name>aqlaserializer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

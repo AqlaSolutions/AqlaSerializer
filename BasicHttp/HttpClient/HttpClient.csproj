@@ -48,9 +48,9 @@
     <Compile Include="ProtoWebClient.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\protobuf-net\protobuf-net.csproj">
+    <ProjectReference Include="..\..\protobuf-net\aqlaserializer.csproj">
       <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
-      <Name>protobuf-net</Name>
+      <Name>aqlaserializer</Name>
     </ProjectReference>
     <ProjectReference Include="..\MyDtoLayer\MyDtoLayer.csproj">
       <Project>{15B22BF8-30DD-4331-AD79-0A8F7859C582}</Project>
@@ -58,8 +58,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

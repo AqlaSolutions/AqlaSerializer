@@ -152,7 +152,7 @@ namespace FX11
                 compiled.Serialize(ms, prod);
                 byte[] buffer = ms.GetBuffer();
                 int len = (int)ms.Length;
-                Console.WriteLine("protobuf-net v2: {0} bytes", len);
+                Console.WriteLine("aqlaserializer: {0} bytes", len);
                 for (int i = 0; i < len; i++)
                 {
                     Console.Write(buffer[i].ToString("x2"));                    
@@ -166,7 +166,7 @@ namespace FX11
                 compiled.Serialize(reuseDump, prod);
             }
             watch.Stop();
-            Console.WriteLine("protobuf-net v2 serialize: {0} ms", watch.ElapsedMilliseconds);
+            Console.WriteLine("aqlaserializer serialize: {0} ms", watch.ElapsedMilliseconds);
             
             watch = Stopwatch.StartNew();
             for (int i = 0; i < loop; i++)
@@ -175,12 +175,12 @@ namespace FX11
                 compiled.Deserialize(reuseDump, null, type);
             }
             watch.Stop();
-            
-            Console.WriteLine("protobuf-net v2 deserialize: {0} ms", watch.ElapsedMilliseconds);
+
+            Console.WriteLine("aqlaserializer deserialize: {0} ms", watch.ElapsedMilliseconds);
             {
             reuseDump.Position = 0;
             Product p1 = (Product)compiled.Deserialize(reuseDump, null, type);
-            DumpObject("protobuf-net v2", props, p1);
+            DumpObject("aqlaserializer", props, p1);
             }
 
             

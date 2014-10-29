@@ -21,7 +21,7 @@ namespace MonoSerBuilder
 
         static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
-            if (args.Name.StartsWith("protobuf-net")) return typeof (ProtoBuf.Serializer).Assembly;
+            if (args.Name.StartsWith("aqlaserializer")) return typeof (ProtoBuf.Serializer).Assembly;
             return null;
         }
     }

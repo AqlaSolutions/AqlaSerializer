@@ -125,6 +125,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\precompile.tests\bin\Release\Phone8DtoSerializer.dll">
+      <Link>Phone8DtoSerializer.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\AlignmentGrid.png" />
     <Content Include="Assets\ApplicationIcon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -144,7 +148,6 @@
     <Content Include="Assets\Tiles\IconicTileSmall.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Phone8DtoSerializer.dll" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\AppResources.resx">
@@ -157,9 +160,9 @@
       <Project>{689D7F72-200E-40B0-8F0C-4BB029668367}</Project>
       <Name>Phone8Dto</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net_Phone8\protobuf-net_Phone8.csproj">
+    <ProjectReference Include="..\protobuf-net_Phone8\aqlaserializer_Phone8.csproj">
       <Project>{9FC67A0F-D5D7-4C23-83A2-E910B5BAFF6F}</Project>
-      <Name>protobuf-net_Phone8</Name>
+      <Name>aqlaserializer_Phone8</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -134,9 +134,9 @@
       <Project>{1959C64F-5B99-44F0-B358-CFCD0B83ECBD}</Project>
       <Name>PhoneDto</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net_Portable\protobuf-net_Portable.csproj">
+    <ProjectReference Include="..\protobuf-net_Portable\aqlaserializer_Portable.csproj">
       <Project>{24AB5D8D-8161-4BA8-B643-BAB10402D766}</Project>
-      <Name>protobuf-net_Portable</Name>
+      <Name>aqlaserializer_Portable</Name>
     </ProjectReference>
     <ProjectReference Include="..\SO11895998_Portable\SO11895998_Portable.csproj">
       <Project>{A2472946-41DE-4574-8266-F9EF7A455D19}</Project>

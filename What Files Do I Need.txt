@@ -41,7 +41,7 @@ Additional:
 
 Note that each framework contains 3 files:
 
-- protobuf-net.dll  the library itself
+- aqlaserializer.dll  the library itself
 - protobuf-net.xml  intellisense xml, used by thre IDE when developing
 - protobuf-net.pdb	debugging symbols, useful when debugging
 

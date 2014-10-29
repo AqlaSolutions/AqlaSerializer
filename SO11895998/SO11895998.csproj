@@ -45,9 +45,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net_Phone7\protobuf-net_Phone7.csproj">
+    <ProjectReference Include="..\protobuf-net_Phone7\aqlaserializer_Phone7.csproj">
       <Project>{9308A24C-0A5C-40AE-9767-EBBE54605CA2}</Project>
-      <Name>protobuf-net_Phone7</Name>
+      <Name>aqlaserializer_Phone7</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />

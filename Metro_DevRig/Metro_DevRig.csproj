@@ -105,14 +105,14 @@
       <Project>{ed830391-ffcf-4aa4-b472-a4449bd307b6}</Project>
       <Name>MetroDto</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net_WinRT\protobuf-net_WinRT.csproj">
+    <ProjectReference Include="..\protobuf-net_WinRT\aqlaserializer_WinRT.csproj">
       <Project>{8507284e-1c31-413d-a390-166200fa38d2}</Project>
-      <Name>protobuf-net_WinRT</Name>
+      <Name>aqlaserializer_WinRT</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -125,8 +125,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <ItemGroup>

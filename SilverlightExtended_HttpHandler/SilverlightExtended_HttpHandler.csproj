@@ -67,9 +67,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net\protobuf-net.csproj">
+    <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">
       <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
-      <Name>protobuf-net</Name>
+      <Name>aqlaserializer</Name>
     </ProjectReference>
     <ProjectReference Include="..\SilverlightExtended\SilverlightExtended.csproj">
       <Project>{05a18144-d234-46d7-a36c-cd45ba884746}</Project>

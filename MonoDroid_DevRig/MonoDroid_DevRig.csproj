@@ -44,8 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\protobuf-net\protobuf-net.licenseheader">
-      <Link>protobuf-net.licenseheader</Link>
+    <None Include="..\protobuf-net\aqlaserializer.licenseheader">
+      <Link>aqlaserializer.licenseheader</Link>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -75,9 +75,9 @@
       <Project>{2B054760-E46B-430B-885D-38E73DBAD3AC}</Project>
       <Name>MonoDto</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net_MonoDroid\protobuf-net_MonoDroid.csproj">
+    <ProjectReference Include="..\protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
       <Project>{1F3DAD34-F2EF-402B-9D50-F106B4457B33}</Project>
-      <Name>protobuf-net_MonoDroid</Name>
+      <Name>aqlaserializer_MonoDroid</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
