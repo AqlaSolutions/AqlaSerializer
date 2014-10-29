@@ -8,4 +8,4 @@ AqlaSerializer project goal is not to make a Protocol Buffers compatible impleme
 
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/wiki">wiki</a>.
 
-See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt">license</a>.
+See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt">License.txt</a>.
