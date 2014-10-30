@@ -25,6 +25,9 @@ using System.Reflection.Emit;
 #if FEAT_COMPILER
 using ProtoBuf.Compiler;
 #endif
+#if !FEAT_IKVM
+using ProtoBuf.Meta.Data;
+#endif
 using AqlaSerializer;
 using ProtoBuf.Serializers;
 using System.Threading;
@@ -149,8 +152,8 @@ namespace ProtoBuf.Meta
         {
             get
             {
-                MetaType[] r = new MetaType[types.Count];
-                types.CopyTo(r, 0);
+                MetaType[] r = new MetaType[types.Count - _serviceTypesCount];
+                types.CopyTo(r, _serviceTypesCount, 0, types.Count - _serviceTypesCount);
                 return r;
             }
         }
@@ -163,12 +166,10 @@ namespace ProtoBuf.Meta
         {
             get
             {
-                Type[] r = new Type[types.Count];
-                int i = 0;
-                foreach (MetaType t in types)
+                Type[] r = new Type[types.Count - _serviceTypesCount];
+                for (int i = 0, j = _serviceTypesCount; i < r.Length; i++, j++)
                 {
-                    r[i] = t.Type;
-                    i++;
+                    r[i] = ((MetaType)types[j]).Type;
                 }
                 return r;
             }
@@ -186,11 +187,13 @@ namespace ProtoBuf.Meta
             bool isInbuiltType = false;
             if (type == null)
             { // generate for the entire model
-                foreach (MetaType meta in types)
+                for (int i = _serviceTypesCount; i < types.Count; i++)
                 {
+                    MetaType meta = (MetaType) types[i];
                     MetaType tmp = meta.GetSurrogateOrBaseOrSelf(false);
                     if (!requiredTypes.Contains(tmp))
-                    { // ^^^ note that the type might have been added as a descendent
+                    {
+                        // ^^^ note that the type might have been added as a descendent
                         requiredTypes.Add(tmp);
                         CascadeDependents(requiredTypes, tmp);
                     }
@@ -222,7 +225,7 @@ namespace ProtoBuf.Meta
 
             if (!isInbuiltType)
             {
-                IEnumerable typesForNamespace = primaryType == null ? types : requiredTypes;
+                IEnumerable typesForNamespace = primaryType == null ? (IEnumerable)MetaTypes : requiredTypes;
                 foreach (MetaType meta in typesForNamespace)
                 {
                     if (meta.IsList) continue;
@@ -399,7 +402,13 @@ namespace ProtoBuf.Meta
             AutoCompile = true;
 #endif
             _autoAddStrategy = new DefaultAutoAddStrategy(this);
+#if !FEAT_IKVM
+            Add(MapType(typeof(ModelTypeRelationsData)), true);
+#endif
+            _serviceTypesCount = types.Count;
         }
+
+        readonly int _serviceTypesCount;
 
 #if FEAT_IKVM
         readonly IKVM.Reflection.Universe universe;
@@ -659,6 +668,8 @@ namespace ProtoBuf.Meta
         {
             Type[] list = nonPublic ? Helpers.GetTypes(assembly) : Helpers.GetExportedTypes(assembly);
             
+            // types order actually does not matter
+            // but subtypes does
             Array.Sort(list, new TypeNamesSortComparer());
 
 
@@ -670,91 +681,6 @@ namespace ProtoBuf.Meta
             }
         }
 
-        public class AddTypesCantEnsureKeysOrderException:Exception
-        {
-            public AddTypesCantEnsureKeysOrderException(Type type)
-                : base("Type " + type.Name + " has wrong key, adding stopped at this type. " +
-                       "Are you trying to use InitializeWithExactTypes when the model already" +
-                       "contains types? See TypeModel.Create()")
-            {
-            }
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
-            protected AddTypesCantEnsureKeysOrderException(SerializationInfo info, StreamingContext context) : base(info, context)
-            {
-            }
-#endif
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="list"></param>
-        /// <param name="applyDefaultBehavior"></param>
-        /// <exception cref="AddTypesCantEnsureKeysOrderException"></exception>
-        public void Add(Type[] list, bool applyDefaultBehavior)
-        {
-            Add(list, applyDefaultBehavior, null);
-        }
-
-        void Add(Type[] list, bool applyDefaultBehavior, int? ensureKeysOrderStart)
-        {
-            foreach (Type t in list)
-            {
-                if (Helpers.IsGenericTypeDefinition(t))
-                    throw new ArgumentException("Should not be GenericTypeDefinition");
-            }
-
-            bool ensureKeys = ensureKeysOrderStart != null;
-
-            int k = ensureKeysOrderStart ?? -1;
-
-            BasicList addedList = new BasicList();
-
-            foreach (Type t in list)
-            {
-                MetaType added = FindWithoutAdd(t);
-                if (added == null)
-                {
-                    added = Add(t, !ensureKeys && applyDefaultBehavior);
-                    addedList.Add(t);
-                }
-                if (ensureKeys)
-                {
-                    if (added.GetKey(true, false) != k)
-                    {
-                        throw new AddTypesCantEnsureKeysOrderException(t);
-                    }
-                    k++;
-                }
-            }
-
-            // default behavior can add another types and break order
-            if (ensureKeys && applyDefaultBehavior)
-            {
-                foreach (Type t in addedList)
-                {
-                    FindWithoutAdd(t).ApplyDefaultBehaviour();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Use this when you need to recreate RuntimeTypeModel with the same type keys on another side (if you don't use precompilation then your models should be initialized in this way)
-        /// </summary>
-        /// <remarks>
-        /// On 1st side (possible network server):
-        /// Serialize(stream, model.Types);
-        /// On 2nd side (possible network client):
-        /// model.InitializeWithExactTypes((Type[])Deserialize(...))
-        /// </remarks>
-        /// <param name="list"></param>
-        /// <param name="applyDefaultBehavior"></param>
-        /// <exception cref="AddTypesCantEnsureKeysOrderException"></exception>
-        public void InitializeWithExactTypes(Type[] list, bool applyDefaultBehavior)
-        {
-            Add(list, applyDefaultBehavior, 0);
-        }
-        
         class TypeNamesSortComparer : IComparer
         {
             public int Compare(object x, object y)
@@ -771,6 +697,133 @@ namespace ProtoBuf.Meta
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="applyDefaultBehaviorIfNew"></param>
+        public void Add(Type[] list, bool applyDefaultBehaviorIfNew)
+        {
+            foreach (Type t in list)
+            {
+                if (Helpers.IsGenericTypeDefinition(t))
+                    throw new ArgumentException("Should not be GenericTypeDefinition");
+            }
+
+            foreach (Type t in list)
+            {
+                Add(t, applyDefaultBehaviorIfNew);
+            }
+        }
+
+#if !FEAT_IKVM
+        /// <summary>
+        /// Use this when you need to recreate RuntimeTypeModel with the same subtype keys on another side (if you don't use precompilation then your models should be initialized in this way), see also <see cref="ExportTypeRelations"/>. Fields are not imported!
+        /// </summary>
+        /// <remarks>
+        /// On 1st side (possible network server):
+        /// Serialize(stream, model.ExportTypeRelations());
+        /// On 2nd side (possible network client):
+        /// model.ImportTypeRelations((ModelTypeRelationsData)Deserialize(...))
+        /// </remarks>
+        /// <param name="data"></param>
+        /// <param name="forceDefaultBehavior"></param>
+        public void ImportTypeRelations(ModelTypeRelationsData data, bool forceDefaultBehavior)
+        {
+            int lockToken = 0;
+            try
+            {
+                TakeLock(ref lockToken);
+                if (data.Types != null)
+                {
+                    foreach (var t in data.Types)
+                    {
+                        Add(t.Type, false);
+                    }
+                    
+                    foreach (var t in data.Types)
+                    {
+                        ImportTypeRelations(t);
+                    }
+                }
+
+                if (forceDefaultBehavior)
+                {
+                    foreach (var t in data.Types)
+                    {
+                        FindWithoutAdd(t.Type).ApplyDefaultBehaviour();
+                    }
+                }
+            }
+            finally
+            {
+                ReleaseLock(lockToken);
+            }
+        }
+
+        public MetaType ImportTypeRelations(TypeData data)
+        {
+            int lockToken = 0;
+            try
+            {
+                TakeLock(ref lockToken);
+                var t = Add(data.Type, false);
+                if (data.Subtypes != null)
+                    foreach (var subType in data.Subtypes)
+                    {
+                        Add(subType.Type, false);
+                        t.AddSubType(subType.FieldNumber, subType.Type, subType.DataFormat);
+                    }
+                return t;
+            }
+            finally
+            {
+                ReleaseLock(lockToken);
+            }
+        }
+
+        /// <summary>
+        /// Exports all types list with registered subtypes, can be used to recreate the same model but without fields mapping
+        /// </summary>
+        public ModelTypeRelationsData ExportTypeRelations()
+        {
+            int lockToken = 0;
+            try
+            {
+                TakeLock(ref lockToken);
+                var m = new ModelTypeRelationsData();
+                var metaTypes = MetaTypes;
+                m.Types = new TypeData[metaTypes.Length];
+                for (int i = 0; i < metaTypes.Length; i++)
+                {
+                    MetaType metaType = metaTypes[i];
+                    var data = new TypeData() { Type = metaType.Type };
+
+                    SubType[] metaSubTypes = metaType.GetSubtypes();
+                    data.Subtypes = new SubtypeData[metaSubTypes.Length];
+
+                    for (int j = 0; j < metaSubTypes.Length; j++)
+                    {
+                        var metaSubType = metaSubTypes[j];
+
+                        data.Subtypes[j] = new SubtypeData()
+                        {
+                            DataFormat = metaSubType.DataFormat,
+                            FieldNumber = metaSubType.FieldNumber,
+                            Type = metaSubType.DerivedType.Type
+                        };
+                    }
+                    m.Types[i] = data;
+                }
+                return m;
+            }
+            finally
+            {
+                ReleaseLock(lockToken);
+            }
+        }
+#endif
+
+        /// <summary>
         /// Adds support for an additional type in this model, optionally
         /// appplying inbuilt patterns. If the type is already known to the
         /// model, the existing type is returned **without** applying
@@ -784,11 +837,11 @@ namespace ProtoBuf.Meta
         /// ShouldSerialize*/*Specified
         /// </remarks>
         /// <param name="type">The type to be supported</param>
-        /// <param name="applyDefaultBehaviour">Whether to apply the inbuilt configuration patterns (via attributes etc), or
+        /// <param name="applyDefaultBehaviourIfNew">Whether to apply the inbuilt configuration patterns (via attributes etc), or
         /// just add the type with no additional configuration (the type must then be manually configured).</param>
         /// <returns>The MetaType representing this type, allowing
         /// further configuration.</returns>
-        public MetaType Add(Type type, bool applyDefaultBehaviour)
+        public MetaType Add(Type type, bool applyDefaultBehaviourIfNew)
         {
             if (type == null) throw new ArgumentNullException("type");
             MetaType newType = FindWithoutAdd(type);
@@ -810,14 +863,14 @@ namespace ProtoBuf.Meta
                 newType = RecogniseCommonTypes(type);
                 if (newType != null)
                 {
-                    if (!applyDefaultBehaviour)
+                    if (!applyDefaultBehaviourIfNew)
                     {
                         throw new ArgumentException(
                             "Default behaviour must be observed for certain types with special handling; " + type.FullName,
-                            "applyDefaultBehaviour");
+                            "applyDefaultBehaviourIfNew");
                     }
                     // we should assume that type is fully configured, though; no need to re-run:
-                    applyDefaultBehaviour = false;
+                    applyDefaultBehaviourIfNew = false;
                 }
                 if (newType == null) newType = Create(type);
                 newType.Pending = true;
@@ -826,7 +879,7 @@ namespace ProtoBuf.Meta
                 if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", "type");
                 ThrowIfFrozen();
                 types.Add(newType);
-                if (applyDefaultBehaviour) { newType.ApplyDefaultBehaviour(); }
+                if (applyDefaultBehaviourIfNew) { newType.ApplyDefaultBehaviour(); }
                 newType.Pending = false;
             }
             finally
@@ -2209,6 +2262,7 @@ namespace ProtoBuf.Meta
                     case ProtoTypeCode.Boolean: return "bool";
                     case ProtoTypeCode.Single: return "float";
                     case ProtoTypeCode.Double: return "double";
+                    case ProtoTypeCode.Type:
                     case ProtoTypeCode.String:
                         if (asReference) requiresBclImport = true;
                         return asReference ? "bcl.NetObjectProxy" : "string";

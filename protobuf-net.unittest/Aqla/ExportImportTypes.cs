@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
+using System.IO;
 using System.Reflection;
 using AqlaSerializer;
 using NUnit.Framework;
 using ProtoBuf.Meta;
 using System.Linq;
+using ProtoBuf.Meta.Data;
 
 namespace ProtoBuf.unittest.Aqla
 {
@@ -57,6 +59,7 @@ namespace ProtoBuf.unittest.Aqla
         public void Setup()
         {
             _model = TypeModel.Create();
+            _rnd = new Random(123124);
         }
 
 
@@ -64,6 +67,7 @@ namespace ProtoBuf.unittest.Aqla
         public void ShouldWorkForLocal()
         {
             _model.Add(new[] { typeof(TestClass), typeof(TestInherited), typeof(TestInherited2), typeof(Another) }, true);
+            Check(false);
             Check(true);
         }
 
@@ -72,26 +76,45 @@ namespace ProtoBuf.unittest.Aqla
         public void ShouldWorkForAssembly()
         {
             _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
-            Check(true); // replace with false if does not pass! it's ok!
+            Check(false);
+            Check(true);
         }
+        
+        Random _rnd = new Random();
 
-        private void Check(bool checkSubTypes)
+        private void Check(bool shuffle)
         {
             var otherModel = TypeModel.Create();
-            otherModel.InitializeWithExactTypes(_model.Types, true);
-
-            Assert.IsTrue(otherModel.Types.SequenceEqual(_model.Types));
-
-            // don't check this for assembly because types can be added without auto
-            if (!checkSubTypes) return;
-            MetaType[] modelMetaTypes = _model.MetaTypes;
-            MetaType[] otherMetaTypes = otherModel.MetaTypes;
-            for (int i = 0; i < otherMetaTypes.Length; i++)
+            using (var ms = new MemoryStream())
             {
-                SubType[] otherSubTypes = otherMetaTypes[i].GetSubtypes();
+                _model.Serialize(ms, _model.ExportTypeRelations());
+                ms.Position = 0;
+                var rel = _model.Deserialize<ModelTypeRelationsData>(ms);
+                if (shuffle) // types order should not matter (only subtypes)
+                {
+                    rel.Types = rel.Types.OrderBy(x => _rnd.Next(0, rel.Types.Length + 1)).ToArray();
+                }
+                otherModel.ImportTypeRelations(rel, true);
+            }
+            var newTypes = otherModel.Types.Except(_model.Types).ToArray();
+            var removedTypes = _model.Types.Except(otherModel.Types).ToArray();
+
+            Assert.AreEqual(0, newTypes.Length);
+            Assert.AreEqual(0, removedTypes.Length);
+            if (!shuffle)
+            {
+                var inequal = otherModel.Types.Where((t, i) => t != _model.Types[i]).ToArray();
+                Assert.AreEqual(0, inequal.Length);
+            }
+
+            MetaType[] modelMetaTypes = _model.MetaTypes;
+            for (int i = 0; i < modelMetaTypes.Length; i++)
+            {
+                Type type = modelMetaTypes[i].Type;
+                SubType[] otherSubTypes = otherModel.FindWithoutAdd(type).GetSubtypes();
                 SubType[] modelSubTypes = modelMetaTypes[i].GetSubtypes();
 
-                Assert.AreEqual(otherSubTypes.Length, modelSubTypes.Length, "Subtypes of " + otherMetaTypes[i].Type.FullName);
+                Assert.AreEqual(modelSubTypes.Length, otherSubTypes.Length, "Subtypes of " + type.FullName);
 
                 for (int j = 0; j < otherSubTypes.Length; j++)
                 {

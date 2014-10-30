@@ -59,6 +59,8 @@ namespace ProtoBuf.Meta
 
         private readonly DataFormat dataFormat;
 
+        internal DataFormat DataFormat { get { return dataFormat; } }
+
         private IProtoSerializer serializer;
         internal IProtoSerializer Serializer
         {

@@ -1,6 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using System.Collections;
+using System.Threading;
 
 namespace ProtoBuf.Meta
 {
@@ -47,6 +48,12 @@ namespace ProtoBuf.Meta
         {
             head.CopyTo(array, offset);
         }
+        
+        public void CopyTo(Array array, int sourceStart, int destinationStart, int length)
+        {
+            head.CopyTo(array, sourceStart, destinationStart, length);
+        }
+
         protected Node head = nil;
         public int Add(object value)
         {
@@ -226,10 +233,19 @@ namespace ProtoBuf.Meta
 
             internal void CopyTo(Array array, int offset)
             {
-                if (length > 0)
+                CopyTo(array, 0, offset, length);
+            }
+
+            internal void CopyTo(Array array, int sourceStart, int destinationStart, int length)
+            {
+                if (data == null)
                 {
-                    Array.Copy(data, 0, array, offset, length);
+                    if (sourceStart > 0 || length < 0)
+                        throw new ArgumentOutOfRangeException();
+                    return;
                 }
+                Thread.MemoryBarrier();
+                Array.Copy(data, sourceStart, array, destinationStart, length);
             }
 
             internal void Clear()

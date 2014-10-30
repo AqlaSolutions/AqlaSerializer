@@ -41,8 +41,6 @@
     <MonoFiles Include="protobuf-net-mono\bin\Release\aqlaserializer.*"/>
     <MonoFiles Include="protobuf-net-mono\docs\aqlaserializer.xml"/>
 
-    <IKVMFiles Include="protobuf-net_IKVM\bin\Release\*.*" Exclude="protobuf-net_IKVM\bin\Release\Licence.txt"/>
-
     <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
 
     <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
@@ -138,7 +136,6 @@
     <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
 
-    <Copy SourceFiles="@(IKVMFiles)" DestinationFolder="$(ZipDirectory)\Full\ikvm"/>
     <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/>
     <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30-enyim"/>
 

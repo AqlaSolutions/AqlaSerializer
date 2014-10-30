@@ -128,6 +128,8 @@ namespace ProtoBuf.Meta
             model.AutoAddStrategy.ApplyDefaultBehaviour(this);
         }
 
+        // TODO throw exception duplicate field number when adding (now when building serializers)
+
         /// <summary>
         /// Adds a known sub-type to the inheritance model
         /// </summary>
