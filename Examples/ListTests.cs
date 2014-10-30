@@ -35,16 +35,16 @@ namespace Examples
             List = null;
         }
         public EntityWithPackedInts() { List = new List<int>(); }
-        [ProtoMember(1, Options = MemberSerializationOptions.Packed)]
+        [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
         public List<int> List {get;private set;}
 
-        [ProtoMember(2, Options = MemberSerializationOptions.Packed)]
+        [ProtoMember(2, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
         public List<int> ListNoDefault { get; set; }
         
-        [ProtoMember(3, Options = MemberSerializationOptions.Packed)]
+        [ProtoMember(3, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
         public int[] ItemArray { get; set; }
 
-        [ProtoMember(4, Options = MemberSerializationOptions.Packed)]
+        [ProtoMember(4, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
         public CustomEnumerable Custom { get; set; }
     }
     [ProtoContract]
@@ -544,7 +544,7 @@ namespace Examples
         [ProtoContract]
         class ArrayOfString
         {
-            [ProtoMember(1, Options = MemberSerializationOptions.Packed)]
+            [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
             public string[] Items { get; set; }
         }
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
@@ -555,7 +555,7 @@ namespace Examples
         [ProtoContract]
         class ListOfDateTime
         {
-            [ProtoMember(1, Options = MemberSerializationOptions.Packed)]
+            [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
             public List<DateTime> Items { get; set; }
         }
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
@@ -567,7 +567,7 @@ namespace Examples
         [ProtoContract]
         class CustomOfSubMessage
         {
-            [ProtoMember(1, Options = MemberSerializationOptions.Packed)]
+            [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
             public CustomCollection Items { get; set; }
         }
         [ProtoContract]
