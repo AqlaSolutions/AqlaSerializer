@@ -8,7 +8,7 @@
     <ProjectGuid>{7D09CD88-098B-499B-95D2-7394DFBC9B5D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>protobuf_net_IKVM</RootNamespace>
+    <RootNamespace>AqlaSerializer</RootNamespace>
     <AssemblyName>aqlaserializer</AssemblyName>
     <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
