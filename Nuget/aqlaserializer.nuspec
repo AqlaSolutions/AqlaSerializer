@@ -3,16 +3,16 @@
   <metadata>
     <id>aqlaserializer</id>
     <version>1.0.0.58</version>
-    <authors>Marc Gravell, Vladyslav Taranov</authors>
+    <authors>Vladyslav Taranov</authors>
     <owners>Vladyslav Taranov</owners>
-    <summary>Provides simple access to fast and efficient "Protocol Buffers" serialization from .NET applications</summary>
-    <description>Protocol Buffers is the name of the binary serialization format used by Google for much of their data communications. It is designed to be: small in size - efficient data storage (far smaller than xml) cheap to process - both at the client and server platform independent - portable between different programming architectures extensible - to add new data to old messages. protobuf-net is a .NET implementation of this, allowing you to serialize your .NET objects efficiently and easily. It is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, Mono 2.x, Silverlight, etc.</description>
-    <projectUrl>http://code.google.com/p/protobuf-net/</projectUrl>
-    <licenseUrl>http://protobuf-net.googlecode.com/svn/trunk/Licence.txt</licenseUrl>
-    <tags>binary serialization protocol buffers protobuf deserialization aqlaserializer aqla</tags>
+    <summary>It is a fast and portable binary serializer designed to be easily used on your existing code with minimal changes on a wide range of .NET platforms (based on protobuf-net).</summary>
+    <description>With AqlaSerializer you can store objects as a small in size binary data (far smaller than xml). And it's more CPU effective than BinaryFormatter and other core .NET serializers (which could be unavailable on your target platform). Its format is designed to be: small in size - efficient data storage (far smaller than xml) cheap to process - both at the client and server platform independent - portable between different programming architectures extensible - to add new data to old messages. AqlaSerializer project goal is not to make a Protocol Buffers compatible implementation but instead support all common .NET features. It is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, Mono 2.x, Silverlight, etc. The code is heavily based on Marc Gravell's protobuf-net.</description>
+    <projectUrl>https://github.com/AqlaSolutions/AqlaSerializer</projectUrl>
+    <licenseUrl>https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt</licenseUrl>
+    <tags>binary serialization protocol buffers protobuf deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
-      * 1.0.0.0 - initial AqlaSerializer release
+      * 1.0.0.58 - initial AqlaSerializer release
     </releaseNotes>
   </metadata>
 </package>
