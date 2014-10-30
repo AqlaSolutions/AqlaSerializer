@@ -68,15 +68,6 @@ namespace ProtoBuf.Serializers
                 paramTypes = m.GetParameters();
                 if(paramTypes.Length == 1 && paramTypes[0].ParameterType == from)
                 {
-                    if (convertAttributeType == null)
-                    {
-                        convertAttributeType = model.MapType(typeof(ProtoConverterAttribute), false);
-                        if (convertAttributeType == null)
-                        { // attribute isn't defined in the source assembly: stop looking
-                            break;
-                        }
-                    }
-
                     if (AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "ProtoBuf.ProtoConverterAttribute") != null
                         || AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "AqlaSerializer.SurrogateConverterAttribute") != null)
                     {

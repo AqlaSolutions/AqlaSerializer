@@ -311,7 +311,9 @@ namespace AqlaSerializer
                 foreach (MemberInfo member in foundList)
                 {
                     if (member.DeclaringType != type) continue;
-                    if (member.IsDefined(_model.MapType(typeof(ProtoIgnoreAttribute)), true)) continue;
+                    var map = AttributeMap.Create(_model, member, true);
+                    if (CanUse(AttributeType.ProtoBuf) && AttributeMap.GetAttribute(map, "ProtoBuf.ProtoIgnoreAttribute") != null) continue;
+                    if (CanUse(AttributeType.Aqla) && AttributeMap.GetAttribute(map, "AqlaSerializer.NonSerializableMemberAttribute") != null) continue;
                     if (partialIgnores != null && partialIgnores.Contains(member.Name)) continue;
 
                     bool forced = false, isPublic, isField;
