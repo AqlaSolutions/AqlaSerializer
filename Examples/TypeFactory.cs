@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Diagnostics;
 using System.IO;
 
@@ -72,7 +72,7 @@ namespace Examples
         {
             return new CanHazFactory { MagicNumber = (int)ctx.Context };
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CanHazFactory
         {
             public static CanHazFactory MagicMaker()
@@ -82,10 +82,10 @@ namespace Examples
 
             public int MagicNumber { get; set; }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Foo { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Bar { get; set; }
         }
     }

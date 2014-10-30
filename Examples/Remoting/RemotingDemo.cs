@@ -6,8 +6,8 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using DAL;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Xml.Serialization;
@@ -89,12 +89,12 @@ namespace Examples.Remoting
         [DataMember]
         public float Bar { get; set; }
     }
-    [Serializable, ProtoContract, XmlType]
+    [Serializable, ProtoBuf.ProtoContract, XmlType]
     public sealed class ProtoFragment : ISerializable
     {
-        [ProtoMember(1, DataFormat=DataFormat.TwosComplement), XmlAttribute("foo")]
+        [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.TwosComplement), XmlAttribute("foo")]
         public int Foo { get; set; }
-        [ProtoMember(2), XmlAttribute("bar")]
+        [ProtoBuf.ProtoMember(2), XmlAttribute("bar")]
         public float Bar { get; set; }
 
         public ProtoFragment() { }

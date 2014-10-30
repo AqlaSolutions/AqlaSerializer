@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 
 namespace Examples.Issues
@@ -11,27 +11,27 @@ namespace Examples.Issues
     [TestFixture]
     public class SO7078615
     {
-        [ProtoContract] // treat the interface as a contract
+        [ProtoBuf.ProtoContract] // treat the interface as a contract
         // since protobuf-net *by default* doesn't know about type metadata, need to use some clue
-        [ProtoInclude(1, typeof(DogBarkedEvent))]
+        [ProtoBuf.ProtoInclude(1, typeof(DogBarkedEvent))]
         // other concrete messages here; note these can also be defined at runtime - nothing *needs*
         // to use attributes
         public interface IMessage { }
         public interface IEvent : IMessage { }
 
-        [ProtoContract] // removed (InferTagFromName = true) - since you are already qualifying your tags
+        [ProtoBuf.ProtoContract] // removed (InferTagFromName = true) - since you are already qualifying your tags
         public class DogBarkedEvent : IEvent
         {
-            [ProtoMember(1)] // .proto tags are 1-based; blame google ;p
+            [ProtoBuf.ProtoMember(1)] // .proto tags are 1-based; blame google ;p
             public string NameOfDog { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Times { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DontAskWrapper
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IMessage Message { get; set; }
         }
 

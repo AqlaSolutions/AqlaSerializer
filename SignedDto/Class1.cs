@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("SignedSerializer, PublicKey="
@@ -12,17 +12,17 @@ using System.Runtime.CompilerServices;
 
 namespace SignedDto
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     internal class MyType
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Foo { get; set; }
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         internal string field;
 
         internal bool ShouldSerializefield() { return true; }
 
-        [ProtoAfterSerialization]
+        [ProtoBuf.ProtoAfterSerialization]
         internal void OnAfterSerialized()
         {}
     }

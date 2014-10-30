@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Threading;
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     internal sealed class BufferPool
     {

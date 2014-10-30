@@ -5,9 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 #endif
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// This class acts as an internal wrapper allowing us to do a dynamic
@@ -33,7 +33,7 @@ namespace ProtoBuf
         /// this ensures that we don't get issues with subclasses declaring conflicting types -
         /// the caller must respect the fields defined for the type they pass in.
         /// </summary>
-        internal static IEnumerable<TValue> GetExtendedValues<TValue>(IExtensible instance, int tag, DataFormat format, bool singleton, bool allowDefinedTag)
+        internal static IEnumerable<TValue> GetExtendedValues<TValue>(IExtensible instance, int tag, BinaryDataFormat format, bool singleton, bool allowDefinedTag)
         {
             foreach (TValue value in GetExtendedValues(RuntimeTypeModel.Default, typeof(TValue), instance, tag, format, singleton, allowDefinedTag))
             {
@@ -46,7 +46,7 @@ namespace ProtoBuf
         /// this ensures that we don't get issues with subclasses declaring conflicting types -
         /// the caller must respect the fields defined for the type they pass in.
         /// </summary>
-        internal static IEnumerable GetExtendedValues(TypeModel model, Type type, IExtensible instance, int tag, DataFormat format, bool singleton, bool allowDefinedTag)
+        internal static IEnumerable GetExtendedValues(TypeModel model, Type type, IExtensible instance, int tag, BinaryDataFormat format, bool singleton, bool allowDefinedTag)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -106,7 +106,7 @@ namespace ProtoBuf
 #endif       
         }
 
-        internal static void AppendExtendValue(TypeModel model, IExtensible instance, int tag, DataFormat format, object value)
+        internal static void AppendExtendValue(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format, object value)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();

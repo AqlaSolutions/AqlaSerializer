@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
-namespace ProtoBuf.unittest.Serializers
+namespace AqlaSerializer.unittest.Serializers
 {
     [TestFixture]
     public class Writer

@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Threading;
-using ProtoBuf.unittest.Meta;
+using AqlaSerializer.unittest.Meta;
 
-namespace ProtoBuf.unittest.Attribs
+namespace AqlaSerializer.unittest.Attribs
 {
     [TestFixture]
     public class PointStructTests
@@ -22,7 +22,7 @@ namespace ProtoBuf.unittest.Attribs
             return model;
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public struct PointSurrogate {
             private static int toPoint, fromPoint;
             public static int ToPoint { get { return toPoint; } }
@@ -31,8 +31,8 @@ namespace ProtoBuf.unittest.Attribs
                 this.X = x;
                 this.Y = y;
             }
-            [ProtoMember(1)] public int X;
-            [ProtoMember(2)] public int Y;
+            [ProtoBuf.ProtoMember(1)] public int X;
+            [ProtoBuf.ProtoMember(2)] public int Y;
 
             public static explicit operator PointSurrogate (Point value) {
                 Interlocked.Increment(ref fromPoint);
@@ -44,11 +44,11 @@ namespace ProtoBuf.unittest.Attribs
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public struct Point
         {
-            [ProtoMember(1)] private readonly int x;
-            [ProtoMember(2)] private readonly int y;
+            [ProtoBuf.ProtoMember(1)] private readonly int x;
+            [ProtoBuf.ProtoMember(2)] private readonly int y;
             public int X { get { return x; } }
             public int Y { get { return y; } }
             public Point(int x, int y)
@@ -75,7 +75,7 @@ namespace ProtoBuf.unittest.Attribs
             model.CompileInPlace();
             ClonePoint(model, point, "CompileInPlace");
         }
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: ProtoBuf.unittest.Attribs.PointStructTests+Point.x")]
+        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x")]
         public void FullyCompileWithPrivateField_KnownToFail()
         {
             var model = BuildModel();
@@ -109,7 +109,7 @@ namespace ProtoBuf.unittest.Attribs
             PEVerify.Verify("PointWithSurrogate.dll");
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: ProtoBuf.unittest.Attribs.PointStructTests+Point.x")]
+        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x")]
         public void VerifyPointDirect()
         {
             var model = BuildModel();

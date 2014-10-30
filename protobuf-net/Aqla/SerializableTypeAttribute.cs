@@ -1,6 +1,6 @@
 ﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace AqlaSerializer
 {
@@ -56,8 +56,8 @@ namespace AqlaSerializer
         /// for members. This option should be used in advanced scenarios only.
         /// Please review the important notes against the ImplicitFields enumeration.
         /// </summary>
-        public ImplicitFields ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
-        private ImplicitFields implicitFields = ImplicitFields.PublicProperties;
+        public ImplicitFieldsMode ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
+        private ImplicitFieldsMode implicitFields = ImplicitFieldsMode.PublicProperties;
 
 
         private bool _explicitPropertiesContract = true;

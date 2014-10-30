@@ -1,9 +1,9 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.Serializers
+namespace AqlaSerializer.unittest.Serializers
 {
     [TestFixture]
     public class KeyValuePairTests
@@ -185,24 +185,24 @@ namespace ProtoBuf.unittest.Serializers
             Assert.AreEqual(123.45M, clone.Data["abc"], "Runtime");
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TypeWithPair
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public KeyValuePair<string, decimal> Pair { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TypeWithDictionary
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Dictionary<string, decimal> Data { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TypeWithIDictionary
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IDictionary<string, decimal> Data { get; set; }
         }
     }

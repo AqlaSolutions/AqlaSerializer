@@ -1,28 +1,28 @@
 ﻿using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.Aqla
+namespace AqlaSerializer.unittest.Aqla
 {
     [TestFixture]
     public class MembersAddTypes
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ProtoClassWithMember
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public ProtoMemberClass ProtoMember { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ProtoMemberClass
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set; }
         }
 
         // enabled for everything now
-        //[ExpectedException("System.InvalidOperationException", ExpectedMessage = "No serializer defined for type: ProtoBuf.unittest.AqlaAttributes.MembersAddTypes+ProtoMemberClass")]
+        //[ExpectedException("System.InvalidOperationException", ExpectedMessage = "No serializer defined for type: AqlaSerializer.unittest.AqlaAttributes.MembersAddTypes+ProtoMemberClass")]
         //[Test]
         //public void ShouldNotSerializeMemberContentForProto()
         //{

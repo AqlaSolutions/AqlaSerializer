@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.IO;
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Provides addition capability for supporting unexpected fields during

@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 
 namespace Examples.Issues
@@ -32,21 +32,21 @@ namespace Examples.Issues
         public enum B { X, Y, Z }
 
         // basic ProtoContract; with [Flags] is pass-thru, else not
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public enum C { X, Y, Z }
-        [ProtoContract, Flags]
+        [ProtoBuf.ProtoContract, Flags]
         public enum D { X, Y, Z }
 
         // ProtoContract with explicit pass-thru enabled; always pass-thru
-        [ProtoContract(EnumPassthru = true)]
+        [ProtoBuf.ProtoContract(EnumPassthru = true)]
         public enum E { X, Y, Z }
-        [ProtoContract(EnumPassthru = true), Flags]
+        [ProtoBuf.ProtoContract(EnumPassthru = true), Flags]
         public enum F { X, Y, Z }
 
         // ProtoContract with explicit pass-thru disabled; never pass-thru (even if [Flags])
-        [ProtoContract(EnumPassthru = false)]
+        [ProtoBuf.ProtoContract(EnumPassthru = false)]
         public enum G { X, Y, Z }
-        [ProtoContract(EnumPassthru = false), Flags]
+        [ProtoBuf.ProtoContract(EnumPassthru = false), Flags]
         public enum H { X, Y, Z }
     }
     

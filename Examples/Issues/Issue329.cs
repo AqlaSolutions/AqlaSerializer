@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,10 +28,10 @@ namespace Examples.Issues
             TF_FO = 1024,
             TF_ALL = 2147483647,
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1), DefaultValue(ETheoFlags.TF_P)]
+            [ProtoBuf.ProtoMember(1), DefaultValue(ETheoFlags.TF_P)]
             public ETheoFlags Flags { get; set; }
         }
         [Test]

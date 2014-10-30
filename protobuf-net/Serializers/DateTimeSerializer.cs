@@ -9,7 +9,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class DateTimeSerializer : IProtoSerializer
     {
@@ -23,7 +23,7 @@ namespace ProtoBuf.Serializers
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
         bool IProtoSerializer.ReturnsValue { get { return true; } }
 
-        public DateTimeSerializer(ProtoBuf.Meta.TypeModel model)
+        public DateTimeSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(DateTime));

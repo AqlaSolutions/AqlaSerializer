@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 
@@ -13,46 +13,46 @@ namespace Examples
     [TestFixture]
     public class ExtendedTimeTests
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DateTimeFixed
         {
-            [ProtoMember(1, DataFormat=DataFormat.FixedSize, IsRequired=true)]
+            [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.FixedSize, IsRequired=true)]
             public DateTime When {get;set;}
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DateTimeGroup
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public DateTime When { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DateTimeString
         {
-            [ProtoMember(1, DataFormat = DataFormat.Default)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
             public DateTime When { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TimeSpanFixed
         {
-            [ProtoMember(1, DataFormat = DataFormat.FixedSize, IsRequired = true)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.FixedSize, IsRequired = true)]
             public TimeSpan When { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TimeSpanGroup
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public TimeSpan When { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TimeSpanString
         {
-            [ProtoMember(1, DataFormat = DataFormat.Default)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
             public TimeSpan When { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Int64Fixed
         {
-            [ProtoMember(1, DataFormat = DataFormat.FixedSize)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.FixedSize)]
             public long Value { get; set; }
         }
 
@@ -127,7 +127,7 @@ namespace Examples
             Assert.AreEqual(ticks, i64Clone.Value, "Int64 roundtrip:" + ticks.ToString() + " (" + when.ToString() + ")");
 
             DateTimeFixed val = new DateTimeFixed { When = when},
-                clone = ProtoBuf.Serializer.DeepClone(val);
+                clone = AqlaSerializer.Serializer.DeepClone(val);
             Assert.AreEqual(val.When, clone.When, "DateTime roundtrip:" + when.ToString());
 
             i64 = Serializer.ChangeType<DateTimeFixed, Int64Fixed>(val);

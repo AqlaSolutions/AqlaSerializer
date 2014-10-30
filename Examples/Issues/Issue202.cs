@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples.Issues
@@ -10,10 +10,10 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue202
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class App
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Bp> list { get; set; }
 
             public App()
@@ -22,10 +22,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Afp
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Bp> list;
 
             public Afp()
@@ -34,10 +34,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Aff
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Bf> list;
 
             public Aff()
@@ -46,10 +46,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Apf
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Bf> list { get; set; }
 
             public Apf()
@@ -58,13 +58,13 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Bp
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string a { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public List<string> b { get; set; }
 
             public Bp()
@@ -73,12 +73,12 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Bf
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string a;
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public List<string> b;
 
             public Bf()

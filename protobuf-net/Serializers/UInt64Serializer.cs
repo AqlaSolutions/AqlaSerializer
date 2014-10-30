@@ -9,7 +9,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class UInt64Serializer : IProtoSerializer
     {
@@ -18,7 +18,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(ulong);
 #endif
-        public UInt64Serializer(ProtoBuf.Meta.TypeModel model)
+        public UInt64Serializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(ulong));

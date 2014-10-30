@@ -1,14 +1,14 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO6127380
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Node
         {
             public override string ToString()
@@ -20,10 +20,10 @@ namespace Examples.Issues
                 Children = new List<Node>();
             }
 
-            [ProtoMember(1, IsRequired = true)]
+            [ProtoBuf.ProtoMember(1, IsRequired = true)]
             public int Data { get; set; }
 
-            [ProtoMember(2, IsRequired = true, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, IsRequired = true, AsReference = true)]
             public List<Node> Children { get; set; }
 
             public void AddChild(Node child)

@@ -2,10 +2,10 @@
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using ProtoBuf.Meta;
-using ProtoBuf.unittest.Serializers;
+using AqlaSerializer.Meta;
+using AqlaSerializer.unittest.Serializers;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
 
     [TestFixture]

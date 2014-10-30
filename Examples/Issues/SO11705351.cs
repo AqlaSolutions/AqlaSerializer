@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 
 namespace Examples.Issues
@@ -14,44 +14,44 @@ namespace Examples.Issues
     [TestFixture] 
     public class SO11705351
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Whole
         {
             private readonly PartCollection parts;
 
             public Whole() { parts = new PartCollection { Whole = this }; }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public PartCollection Parts { get { return parts; } }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Part
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public Whole Whole { get; set; }
         }
 
-        [ProtoContract(IgnoreListHandling = true)]
+        [ProtoBuf.ProtoContract(IgnoreListHandling = true)]
         public class PartCollection : List<Part>
         {
             public Whole Whole { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Assemblage
         {
             private readonly PartCollection parts = new PartCollection();
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public PartCollection Parts { get { return parts; }}
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PartCollectionSurrogate
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public List<Part> Collection { get; set; }
 
-            [ProtoMember(2, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, AsReference = true)]
             public Whole Whole { get; set; }
 
             public static implicit operator PartCollectionSurrogate(PartCollection value)

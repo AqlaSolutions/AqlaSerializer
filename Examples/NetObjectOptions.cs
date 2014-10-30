@@ -4,27 +4,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
     [TestFixture]
     public class NetObjectOptions
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicReferenceTestOuter
         {
-            [ProtoMember(1, AsReference=true)]
+            [ProtoBuf.ProtoMember(1, AsReference=true)]
             public BasicReferenceTestInner Foo { get; set; }
-            [ProtoMember(2, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, AsReference = true)]
             public BasicReferenceTestInner Bar { get; set; }
 
             
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicReferenceTestInner {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public BasicReferenceTestInner Self { get; set; }
         }
 
@@ -98,10 +98,10 @@ namespace Examples
             Assert.AreSame(clone.Foo, clone.Foo.Self, "same after (full compile)");
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class StringDynamicType
         {
-	        [ProtoMember(1, DynamicType = true)]
+	        [ProtoBuf.ProtoMember(1, DynamicType = true)]
 	        public object Data { get; set; }
         }
 
@@ -140,32 +140,32 @@ namespace Examples
         {
             return new string('a', 5);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class StringRefType
         {
-            [ProtoMember(1, DynamicType=true, AsReference=true)]
+            [ProtoBuf.ProtoMember(1, DynamicType=true, AsReference=true)]
             public object Foo { get; set; }
 
-            [ProtoMember(2, DynamicType = true, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, DynamicType = true, AsReference = true)]
             public object Bar { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class StringInternedType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Foo { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Bar { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicDynamicTestOuter
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Foo { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicDynamicTestInner { }
 
         [Test]
@@ -204,22 +204,22 @@ namespace Examples
 
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         abstract class BaseType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Foo { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Derived : BaseType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Wrapper
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value { get; set; }
         }
 

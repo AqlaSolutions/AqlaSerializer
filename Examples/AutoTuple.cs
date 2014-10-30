@@ -3,8 +3,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -160,10 +160,10 @@ namespace Examples
             // note: Compile() won't work, as anon-types are internal
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class HasTuples
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public BasicTuple Value { get; set; }
         }
 

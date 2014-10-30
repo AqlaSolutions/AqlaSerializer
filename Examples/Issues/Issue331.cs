@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,24 +13,24 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue331
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Tree
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public TreeNode RootNode { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TreeNode : TreeNodeBase
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public IList<TreeNode> ChildNodes { get; set; }
         }
 
-        [ProtoContract, ProtoInclude(99, typeof(TreeNode))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(99, typeof(TreeNode))]
         public class TreeNodeBase
         {
-            [ProtoMember(101)]
+            [ProtoBuf.ProtoMember(101)]
             public int Id { get; set; }
         }
 

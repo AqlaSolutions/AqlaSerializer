@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Runtime.Serialization;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 
 namespace Examples
@@ -29,10 +29,10 @@ namespace Examples
             var shell = new DynamicShell { Value = graph };
             model.Serialize(destination, shell, Context);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DynamicShell
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value { get; set; }
         }
         public StreamingContext Context { get; set; }
@@ -54,10 +54,10 @@ namespace Examples
                 Assert.AreEqual(12345, clone.Bar);
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }
         }
     }

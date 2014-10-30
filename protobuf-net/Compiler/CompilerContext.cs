@@ -3,8 +3,8 @@
 //#define DEBUG_COMPILE
 using System;
 using System.Threading;
-using ProtoBuf.Meta;
-using ProtoBuf.Serializers;
+using AqlaSerializer.Meta;
+using AqlaSerializer.Serializers;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -16,7 +16,7 @@ using System.Reflection.Emit;
 #endif
 
 
-namespace ProtoBuf.Compiler
+namespace AqlaSerializer.Compiler
 {
     internal struct CodeLabel
     {

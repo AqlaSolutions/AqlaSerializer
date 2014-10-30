@@ -9,7 +9,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Represents the set of serialization callbacks to be used when serializing/deserializing a type.

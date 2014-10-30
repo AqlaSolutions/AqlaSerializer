@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System;
 using System.IO;
 #if !NO_GENERICS
@@ -13,7 +13,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Provides protocol-buffer serialization capability for concrete, attributed types. This
@@ -44,7 +44,14 @@ namespace ProtoBuf
         /// </summary>
         public static void AddContracts(bool nonPublic)
         {
-            AddContracts(Assembly.GetCallingAssembly(), nonPublic);
+#if !WINRT
+            Assembly assembly = Assembly.GetCallingAssembly();
+#else
+            Assembly assembly = (Assembly)typeof(Assembly).GetTypeInfo()
+                .GetDeclaredMethod("GetCallingAssembly")
+                .Invoke(null, new object[0]);
+#endif
+            AddContracts(assembly, nonPublic);
         }
 #endif
 

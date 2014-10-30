@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Diagnostics;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class Guids

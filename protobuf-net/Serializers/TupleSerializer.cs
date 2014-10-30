@@ -2,9 +2,9 @@
 #if !NO_RUNTIME
 using System;
 #if FEAT_COMPILER
-using ProtoBuf.Compiler;
+using AqlaSerializer.Compiler;
 #endif
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -13,7 +13,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class TupleSerializer : IProtoTypeSerializer
     {
@@ -45,7 +45,7 @@ namespace ProtoBuf.Serializers
                 {
                     asReference = model[tmp].AsReferenceDefault;
                 }
-                IProtoSerializer tail = ValueMember.TryGetCoreSerializer(model, DataFormat.Default, tmp, out wireType, asReference, false, false, true), serializer;
+                IProtoSerializer tail = ValueMember.TryGetCoreSerializer(model, BinaryDataFormat.Default, tmp, out wireType, asReference, false, false, true), serializer;
                 if (tail == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + tmp.FullName);

@@ -1,18 +1,18 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using Examples.Ppt;
 
 namespace Examples.SimpleStream
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class NoddyExtends : Extensible { }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Noddy
     {
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public int Foo { get; set; }
     }
 
@@ -65,17 +65,17 @@ namespace Examples.SimpleStream
             Test3 t3 = Program.Build<Test3>( 0x1B, 0x08, 0x96, 0x01, 0x24 );// [start group 3] [test1] [end group 4]
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Test3List
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public List<Test1> C { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Test1List
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<int> A { get; set; }
         }
         [Ignore("AqlaSerializer changed format")]

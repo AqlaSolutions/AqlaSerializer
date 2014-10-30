@@ -3,7 +3,7 @@
 //#if !NO_GENERICS
 //using System.Collections.Generic;
 
-//namespace ProtoBuf
+//namespace AqlaSerializer
 //{
 //    /// <summary>
 //    /// Mutable version of the common key/value pair struct; used during serialization. This type is intended for internal use only and should not

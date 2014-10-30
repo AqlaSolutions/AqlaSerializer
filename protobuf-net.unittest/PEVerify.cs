@@ -7,7 +7,7 @@ using System.IO;
 using NUnit.Framework;
 using System.Diagnostics;
 
-namespace ProtoBuf.unittest
+namespace AqlaSerializer.unittest
 {
     static class PEVerify
     {

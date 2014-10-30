@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -9,7 +9,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class ParseableSerializer : IProtoSerializer
     {

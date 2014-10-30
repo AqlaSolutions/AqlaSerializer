@@ -16,7 +16,7 @@ namespace BasicProtoDemo
     [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"BasicMessage")]
     [global::System.Runtime.Serialization.DataContract(Name=@"BasicMessage")]
     
-    public partial class BasicMessage : global::ProtoBuf.IExtensible
+    public partial class BasicMessage : global::AqlaSerializer.IExtensible
     {
       public BasicMessage() {}
       
@@ -38,15 +38,15 @@ namespace BasicProtoDemo
       get { return _name; }
       set { _name = value; }
     }
-      private global::ProtoBuf.IExtension extensionObject;
-      global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-        { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+      private global::AqlaSerializer.IExtension extensionObject;
+      global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+        { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
     }
   
     [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"BasicOperationResponse")]
     [global::System.Runtime.Serialization.DataContract(Name=@"BasicOperationResponse")]
     
-    public partial class BasicOperationResponse : global::ProtoBuf.IExtensible
+    public partial class BasicOperationResponse : global::AqlaSerializer.IExtensible
     {
       public BasicOperationResponse() {}
       
@@ -59,21 +59,21 @@ namespace BasicProtoDemo
       get { return _result; }
       set { _result = value; }
     }
-      private global::ProtoBuf.IExtension extensionObject;
-      global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-        { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+      private global::AqlaSerializer.IExtension extensionObject;
+      global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+        { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
     }
   
     [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"BasicOperationRequest")]
     [global::System.Runtime.Serialization.DataContract(Name=@"BasicOperationRequest")]
     
-    public partial class BasicOperationRequest : global::ProtoBuf.IExtensible
+    public partial class BasicOperationRequest : global::AqlaSerializer.IExtensible
     {
       public BasicOperationRequest() {}
       
-      private global::ProtoBuf.IExtension extensionObject;
-      global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-        { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+      private global::AqlaSerializer.IExtension extensionObject;
+      global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+        { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
     }
   
     [global::System.ServiceModel.ServiceContract(Name = @"BasicService")]
@@ -81,7 +81,7 @@ namespace BasicProtoDemo
     {
       
         [global::System.ServiceModel.OperationContract(Name = @"BasicOperation")]
-        [global::ProtoBuf.ServiceModel.ProtoBehavior]
+        [global::AqlaSerializer.ServiceModel.ProtoBehavior]
     BasicProtoDemo.BasicOperationResponse BasicOperation(BasicProtoDemo.BasicOperationRequest request);
     
         [global::System.ServiceModel.OperationContract(AsyncPattern = true, Name = @"BasicOperation")]

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -111,30 +111,30 @@ message cat {
                 );
         }
 
-        [ProtoContract(Name="animal"), ProtoInclude(4, typeof(Cat))]
+        [ProtoBuf.ProtoContract(Name="animal"), ProtoBuf.ProtoInclude(4, typeof(Cat))]
         public abstract class Animal
         {
-            [ProtoMember(1, Name="numberOfLegs"), DefaultValue(4)]
+            [ProtoBuf.ProtoMember(1, Name="numberOfLegs"), DefaultValue(4)]
             public int NumberOfLegs = 4;
         }
 
-        [ProtoContract(Name="cat")]
+        [ProtoBuf.ProtoContract(Name="cat")]
         public class Cat : Animal
         {
-            [ProtoMember(1, Name = "animalsHunted")]
+            [ProtoBuf.ProtoMember(1, Name = "animalsHunted")]
             public List<Animal> AnimalsHunted;
         }
-        [ProtoContract(Name = "vegetable")]
+        [ProtoBuf.ProtoContract(Name = "vegetable")]
         public class Vegetable
         {
-            [ProtoMember(1, Name = "size")]
+            [ProtoBuf.ProtoMember(1, Name = "size")]
             public int Size { get; set; }
         }
     }
 
     namespace CompletelyUnrelated
     {
-        [ProtoContract(Name = "mineral")]
+        [ProtoBuf.ProtoContract(Name = "mineral")]
         public class Mineral {}
     }    
 }

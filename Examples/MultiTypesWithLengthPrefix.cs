@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -51,17 +51,17 @@ namespace Examples
             return null;
         }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Person
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Name { get; set; }
         public override string ToString() { return "Person: " + Name; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Address
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Line1 { get; set; }
         public override string ToString() { return "Address: " + Line1; }
     }

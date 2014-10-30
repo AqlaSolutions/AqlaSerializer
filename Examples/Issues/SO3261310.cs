@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -14,7 +14,7 @@ namespace Examples.Issues
 
         public enum UrlStatus { A,B }
         public enum TrafficEntry { A }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SerializableException { }
     
         [Test]
@@ -81,20 +81,20 @@ namespace Examples.Issues
 
             }
         }
-        [ProtoContract]
-        [ProtoInclude(1, typeof(ProtoObject<string>))]
-        [ProtoInclude(2, typeof(ProtoObject<int>))]
-        [ProtoInclude(3, typeof(ProtoObject<List<string>>))]
-        [ProtoInclude(4, typeof(ProtoObject<Dictionary<string, string>>))]
-        [ProtoInclude(5, typeof(ProtoObject<List<TrafficEntry>>))]
-        [ProtoInclude(6, typeof(ProtoObject<Dictionary<string, int>>))]
-        [ProtoInclude(7, typeof(ProtoObject<bool>))]
-        [ProtoInclude(8, typeof(ProtoObject<double>))]
-        [ProtoInclude(9, typeof(ProtoObject<decimal>))]
-        [ProtoInclude(10, typeof(ProtoObject<float>))]
-        [ProtoInclude(11, typeof(ProtoObject<long>))]
-        [ProtoInclude(12, typeof(ProtoObject<SerializableException>))]
-        [ProtoInclude(13, typeof(ProtoObject<List<UrlStatus>>))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(ProtoObject<string>))]
+        [ProtoBuf.ProtoInclude(2, typeof(ProtoObject<int>))]
+        [ProtoBuf.ProtoInclude(3, typeof(ProtoObject<List<string>>))]
+        [ProtoBuf.ProtoInclude(4, typeof(ProtoObject<Dictionary<string, string>>))]
+        [ProtoBuf.ProtoInclude(5, typeof(ProtoObject<List<TrafficEntry>>))]
+        [ProtoBuf.ProtoInclude(6, typeof(ProtoObject<Dictionary<string, int>>))]
+        [ProtoBuf.ProtoInclude(7, typeof(ProtoObject<bool>))]
+        [ProtoBuf.ProtoInclude(8, typeof(ProtoObject<double>))]
+        [ProtoBuf.ProtoInclude(9, typeof(ProtoObject<decimal>))]
+        [ProtoBuf.ProtoInclude(10, typeof(ProtoObject<float>))]
+        [ProtoBuf.ProtoInclude(11, typeof(ProtoObject<long>))]
+        [ProtoBuf.ProtoInclude(12, typeof(ProtoObject<SerializableException>))]
+        [ProtoBuf.ProtoInclude(13, typeof(ProtoObject<List<UrlStatus>>))]
         [Serializable]
         public abstract class ProtoObject
         {
@@ -117,7 +117,7 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         [Serializable]
         public sealed class ProtoObject<T> : ProtoObject
         {
@@ -131,7 +131,7 @@ namespace Examples.Issues
                 Value = value;
             }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public new T Value { get; set; }
 
             protected override object ValueImpl

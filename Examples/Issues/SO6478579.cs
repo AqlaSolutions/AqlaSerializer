@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace test
 {
@@ -20,11 +20,11 @@ namespace test
                 this.y = y;
                 this.z = z;
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             int x;
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             int y;
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             int z;
         }
         [DataMember(Order = 1)]

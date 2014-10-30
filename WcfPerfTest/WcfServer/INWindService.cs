@@ -14,14 +14,14 @@ namespace WcfServer
         OrderSet LoadFoo();
 
         [OperationContract]
-        [ProtoBuf.ServiceModel.ProtoBehavior]
+        [AqlaSerializer.ServiceModel.ProtoBehavior]
         OrderSet LoadBar();
 
         [OperationContract]
         OrderSet RoundTripFoo(OrderSet set);
 
         [OperationContract]
-        [ProtoBuf.ServiceModel.ProtoBehavior]
+        [AqlaSerializer.ServiceModel.ProtoBehavior]
         OrderSet RoundTripBar(OrderSet set);
     }
 

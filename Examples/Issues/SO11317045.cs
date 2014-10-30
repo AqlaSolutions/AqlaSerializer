@@ -5,24 +5,24 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO11317045
     {
-        [ProtoContract]
-        [ProtoInclude(1, typeof(A), DataFormat = DataFormat.Group)]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(A), DataFormat = ProtoBuf.DataFormat.Group)]
         public class ABase
         {
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A : ABase
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public B B
             {
                 get;
@@ -30,10 +30,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public List<byte[]> Data
             {
                 get;
@@ -91,14 +91,14 @@ namespace Examples.Issues
 
 namespace Examples.Issues.NamedProtoInclude
 {
-    [ProtoContract]
-    [ProtoInclude(1, "Examples.Issues.NamedProtoInclude.Bar")]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(1, "Examples.Issues.NamedProtoInclude.Bar")]
     internal class Foo
     {
 
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     internal class Bar : Foo
     {
 

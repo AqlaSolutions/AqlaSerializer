@@ -8,9 +8,9 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Description;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
-using ProtoBuf.ServiceModel;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
+using AqlaSerializer.ServiceModel;
 
 namespace Examples.Issues
 {

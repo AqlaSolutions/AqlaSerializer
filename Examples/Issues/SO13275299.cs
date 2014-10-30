@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Collections.Generic;
 
 namespace Examples.Issues
@@ -9,16 +9,16 @@ namespace Examples.Issues
     [TestFixture]
     public class SO13275299
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<System.Drawing.Point> Points { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Bar
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<System.Windows.Point> Points { get; set; }
         }
         [Test]

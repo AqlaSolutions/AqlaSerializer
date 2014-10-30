@@ -5,17 +5,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO7654066
     {
-        [ProtoContract(IgnoreListHandling = true)]
+        [ProtoBuf.ProtoContract(IgnoreListHandling = true)]
         public class MyClass : IEnumerable<int>
         {
-            [ProtoMember(1, IsPacked = true)]
+            [ProtoBuf.ProtoMember(1, IsPacked = true)]
             public int[] data { get; set; }
 
             // Comment out this indexed property to prevent the crash

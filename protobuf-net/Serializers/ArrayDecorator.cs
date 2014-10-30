@@ -3,9 +3,9 @@
 using System;
 using System.Collections;
 #if FEAT_COMPILER
-using ProtoBuf.Compiler;
+using AqlaSerializer.Compiler;
 #endif
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -14,7 +14,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class ArrayDecorator : ProtoDecoratorBase
     {
@@ -58,11 +58,11 @@ namespace ProtoBuf.Serializers
         public override bool RequiresOldValue { get { return AppendToCollection; } }
         public override bool ReturnsValue { get { return true; } }
 #if FEAT_COMPILER
-        protected override void EmitWrite(ProtoBuf.Compiler.CompilerContext ctx, ProtoBuf.Compiler.Local valueFrom)
+        protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             // int i and T[] arr
             using (Compiler.Local arr = ctx.GetLocalWithValue(arrayType, valueFrom))
-            using (Compiler.Local i = new ProtoBuf.Compiler.Local(ctx, ctx.MapType(typeof(int))))
+            using (Compiler.Local i = new AqlaSerializer.Compiler.Local(ctx, ctx.MapType(typeof(int))))
             {
                 bool writePacked = (options & OPTIONS_WritePacked) != 0;
                 using (Compiler.Local token = writePacked ? new Compiler.Local(ctx, ctx.MapType(typeof(SubItemToken))) : null)
@@ -197,7 +197,7 @@ namespace ProtoBuf.Serializers
 #endif
 
 #if FEAT_COMPILER
-        protected override void EmitRead(ProtoBuf.Compiler.CompilerContext ctx, ProtoBuf.Compiler.Local valueFrom)
+        protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             Type listType;
 #if NO_GENERICS
@@ -221,7 +221,7 @@ namespace ProtoBuf.Serializers
                 ListDecorator.EmitReadList(ctx, list, Tail, listType.GetMethod("Add"), packedWireType, false);
 
                 // leave this "using" here, as it can share the "FieldNumber" local with EmitReadList
-                using(Compiler.Local oldLen = AppendToCollection ? new ProtoBuf.Compiler.Local(ctx, ctx.MapType(typeof(int))) : null) {
+                using(Compiler.Local oldLen = AppendToCollection ? new AqlaSerializer.Compiler.Local(ctx, ctx.MapType(typeof(int))) : null) {
                     Type[] copyToArrayInt32Args = new Type[] { ctx.MapType(typeof(Array)), ctx.MapType(typeof(int)) };
 
                     if (AppendToCollection)

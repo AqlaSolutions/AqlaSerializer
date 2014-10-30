@@ -6,7 +6,7 @@ using System;
 using Type = IKVM.Reflection.Type;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     interface IProtoSerializer
     {

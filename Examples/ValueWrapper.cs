@@ -5,11 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class FieldData
     {
         public FieldData() {}
@@ -23,7 +23,7 @@ namespace Examples
         private T Get<T>() {
             return Is<T>() ? (T) Value : default(T);
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         private int ValueInt32
         {
             get { return Get<int>(); }
@@ -31,7 +31,7 @@ namespace Examples
         }
         private bool ValueInt32Specified { get { return Is<int>(); } }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         private float ValueSingle
         {
             get { return Get<float>();}
@@ -39,7 +39,7 @@ namespace Examples
         }
         private bool ValueSingleSpecified { get { return Is<float>(); } }
 
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         private double ValueDouble
         {
             get { return Get<double>(); ; }
@@ -50,7 +50,7 @@ namespace Examples
         // etc for expected types
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class FieldDataViaNullable
     {
         public FieldDataViaNullable() { }
@@ -64,19 +64,19 @@ namespace Examples
         {
             return (Value != null && Value is T) ? (T?)Value : (T?)null;
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         private int? ValueInt32
         {
             get { return Get<int>(); }
             set { Value = value; }
         }
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         private float? ValueSingle
         {
             get { return Get<float>(); }
             set { Value = value; }
         }
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         private double? ValueDouble
         {
             get { return Get<double>(); ; }
@@ -85,22 +85,22 @@ namespace Examples
         // etc for expected types
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Int32Simple
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class SingleSimple
     {
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class DoubleSimple
     {
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public double Value { get; set; }
     }
 

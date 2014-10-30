@@ -3,42 +3,42 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue62
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class CacheItem
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Id { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int AnotherNumber { get; set; }
             private readonly Dictionary<string, CacheItemValue> data
                 = new Dictionary<string, CacheItemValue>();
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public Dictionary<string, CacheItemValue> Data { get { return data; } }
 
-            [ProtoMember(4)] // commented out while I investigate...
+            [ProtoBuf.ProtoMember(4)] // commented out while I investigate...
             public ListNode Nodes { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class ListNode // I'd probably expose this as a simple list, though
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public double Head { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public ListNode Tail { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class CacheItemValue
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Key { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public float Value { get; set; }
         }
         [Test]

@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.ComponentModel;
 using System.IO;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class Enums
@@ -22,16 +22,16 @@ namespace ProtoBuf.unittest.Meta
         public enum I64 : long { A, B, C }
         public enum U64 : ulong { A, B, C }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class AllTheEnums {
-            [ProtoMember(1)] public I8 I8 { get; set; }
-            [ProtoMember(2)] public U8 U8 { get; set; }
-            [ProtoMember(3), DefaultValue(I16.C)] public I16 I16 { get; set; }
-            [ProtoMember(4), DefaultValue("C")] public U16 U16 { get; set; }
-            [ProtoMember(5), DefaultValue(3)] public I32 I32 { get; set; }
-            [ProtoMember(6)] public U32 U32 { get; set; }
-            [ProtoMember(7)] public I64 I64 { get; set; }
-            [ProtoMember(8)] public U64 U64 { get; set; }
+            [ProtoBuf.ProtoMember(1)] public I8 I8 { get; set; }
+            [ProtoBuf.ProtoMember(2)] public U8 U8 { get; set; }
+            [ProtoBuf.ProtoMember(3), DefaultValue(I16.C)] public I16 I16 { get; set; }
+            [ProtoBuf.ProtoMember(4), DefaultValue("C")] public U16 U16 { get; set; }
+            [ProtoBuf.ProtoMember(5), DefaultValue(3)] public I32 I32 { get; set; }
+            [ProtoBuf.ProtoMember(6)] public U32 U32 { get; set; }
+            [ProtoBuf.ProtoMember(7)] public I64 I64 { get; set; }
+            [ProtoBuf.ProtoMember(8)] public U64 U64 { get; set; }
         }
         static RuntimeTypeModel BuildModel(bool withPassThru) {
             var model = TypeModel.Create();
@@ -129,29 +129,29 @@ namespace ProtoBuf.unittest.Meta
             Assert.AreEqual(original.U64, clone.U64, caption);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MappedValuesA
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public EnumA Value { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MappedValuesB
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public EnumB Value { get; set; }
         }
         public enum EnumA : short
         {
-            [ProtoEnum(Value = 7)] X = 0,
-            [ProtoEnum(Value = 8)] Y = 1,
-            [ProtoEnum(Value = 9)] Z = 2,
+            [ProtoBuf.ProtoEnum(Value = 7)] X = 0,
+            [ProtoBuf.ProtoEnum(Value = 8)] Y = 1,
+            [ProtoBuf.ProtoEnum(Value = 9)] Z = 2,
         }
         public enum EnumB : long
         {
-            [ProtoEnum(Value = 9)] X = 3,
-            [ProtoEnum(Value = 10)] Y = 4,
-            [ProtoEnum(Value = 11)] Z = 5,
+            [ProtoBuf.ProtoEnum(Value = 9)] X = 3,
+            [ProtoBuf.ProtoEnum(Value = 10)] Y = 4,
+            [ProtoBuf.ProtoEnum(Value = 11)] Z = 5,
         }
         RuntimeTypeModel CreateRemappingModel()
         {

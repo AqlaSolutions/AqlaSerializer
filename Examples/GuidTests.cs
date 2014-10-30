@@ -2,22 +2,22 @@
 using System;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Data.Linq.Mapping;
 using System.ComponentModel;
 using System.Diagnostics;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class GuidData
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public Guid Bar { get; set; }
     }
 
-    [ProtoContract(UseProtoMembersOnly = true)]
-    [ProtoPartialMember(25, "GUID")]
+    [ProtoBuf.ProtoContract(UseProtoMembersOnly = true)]
+    [ProtoBuf.ProtoPartialMember(25, "GUID")]
     public partial class User { }
 
     public partial class User
@@ -30,14 +30,14 @@ namespace Examples
             set;
         }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class UserWithCrazyDefault
     {
         public UserWithCrazyDefault()
         {
             GUID = new Guid("01020304050607080102030405060708");
         }
-        [ProtoMember(25), DefaultValue("01020304050607080102030405060708")]
+        [ProtoBuf.ProtoMember(25), DefaultValue("01020304050607080102030405060708")]
         public System.Guid GUID { get; set; }
     }
 
@@ -146,10 +146,10 @@ namespace Examples
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class GuidLayout
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Guid Value { get; set; }
         }
 

@@ -4,27 +4,27 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO6476958
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public string Id { get; set; }
 
             public override bool Equals(object obj) { return Id == ((A)obj).Id; }
             public override int GetHashCode() { return Id.GetHashCode(); }
             public override string ToString() { return Id; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Id { get; set; }
 
             public override bool Equals(object obj) { return Id == ((B)obj).Id; }
@@ -32,12 +32,12 @@ namespace Examples.Issues
             public override string ToString() { return Id; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicDuplicatedString
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public string A {get;set;}
-            [ProtoMember(2, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, AsReference = true)]
             public string B { get; set; }
 
         }

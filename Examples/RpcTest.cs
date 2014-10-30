@@ -95,7 +95,7 @@
 //    }
     
 
-//    public class SearchServiceClient : ProtoBuf.ServiceModel.RpcClient
+//    public class SearchServiceClient : AqlaSerializer.ServiceModel.RpcClient
 //    {
 //      public SearchServiceClient() : base(typeof(ISearchService)) { }
 

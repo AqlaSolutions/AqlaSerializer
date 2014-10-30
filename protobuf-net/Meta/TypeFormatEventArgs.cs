@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Event arguments needed to perform type-formatting functions; this could be resolving a Type to a string suitable for serialization, or could

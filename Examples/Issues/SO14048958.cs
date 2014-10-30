@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.IO;
 
@@ -23,10 +23,10 @@ namespace Examples.Issues
             All = 255,
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Status Status { get; set; }
         }
 

@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     interface ISerializerProxy
     {

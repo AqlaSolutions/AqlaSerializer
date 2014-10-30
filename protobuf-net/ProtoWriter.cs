@@ -3,7 +3,7 @@ using System;
 
 using System.IO;
 using System.Text;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 #if MF
 using OverflowException = System.ApplicationException;
 #endif
@@ -12,7 +12,7 @@ using OverflowException = System.ApplicationException;
 using Type = IKVM.Reflection.Type;
 #endif
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Represents an output stream for writing protobuf data.
@@ -46,7 +46,7 @@ namespace ProtoBuf
             {
                 writer.model.Serialize(key, value, writer, false);
             }
-            else if (writer.model != null && writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), DataFormat.Default, Serializer.ListItemTag, value, false, false))
+            else if (writer.model != null && writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), BinaryDataFormat.Default, Serializer.ListItemTag, value, false, false))
             {
                 // all ok
             }
@@ -111,7 +111,7 @@ namespace ProtoBuf
             SubItemToken token = StartSubItem(value, writer, true);
             if (key < 0)
             {
-                if (!writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), DataFormat.Default, Serializer.ListItemTag, value, false, isRoot))
+                if (!writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), BinaryDataFormat.Default, Serializer.ListItemTag, value, false, isRoot))
                 {
                     TypeModel.ThrowUnexpectedType(value.GetType());
                 }

@@ -4,8 +4,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -15,14 +15,14 @@ namespace Examples
         string Eof { get; set; }
     }
 
-    [ProtoContract]
-    class InterfaceBased : object, ProtoBuf.IExtensible, IExtTest, System.ComponentModel.INotifyPropertyChanged
+    [ProtoBuf.ProtoContract]
+    class InterfaceBased : object, AqlaSerializer.IExtensible, IExtTest, System.ComponentModel.INotifyPropertyChanged
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bof { get; set; }
 
         private string eof;
-        [ProtoMember(99, DataFormat = ProtoBuf.DataFormat.Default)]
+        [ProtoBuf.ProtoMember(99, DataFormat = ProtoBuf.DataFormat.Default)]
         public string Eof
         {
             get { return eof;}
@@ -46,37 +46,37 @@ namespace Examples
         }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class SmallerObject : Extensible, IExtTest
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bof { get; set; }
 
-        [ProtoMember(99)]
+        [ProtoBuf.ProtoMember(99)]
         public string Eof { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class BiggerObject
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bof { get; set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public int SomeInt32 { get; set; }
 
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public float SomeFloat { get; set; }
 
-        [ProtoMember(4)]
+        [ProtoBuf.ProtoMember(4)]
         public double SomeDouble { get; set; }
 
-        [ProtoMember(5)]
+        [ProtoBuf.ProtoMember(5)]
         public byte[] SomeBlob { get; set; }
 
-        [ProtoMember(6)]
+        [ProtoBuf.ProtoMember(6)]
         public string SomeString { get; set; }
 
-        [ProtoMember(99)]
+        [ProtoBuf.ProtoMember(99)]
         public string Eof { get; set; }
     }
 
@@ -113,9 +113,9 @@ namespace Examples
             var obj = new Naked();
             try
             {
-                Extensible.AppendValue(model, obj, 1, DataFormat.Default, "abc");
-                Extensible.AppendValue(model, obj, 2, DataFormat.Default, 456.7F);
-                Extensible.AppendValue(model, obj, 3, DataFormat.FixedSize, 123);
+                Extensible.AppendValue(model, obj, 1, BinaryDataFormat.Default, "abc");
+                Extensible.AppendValue(model, obj, 2, BinaryDataFormat.Default, 456.7F);
+                Extensible.AppendValue(model, obj, 3, BinaryDataFormat.FixedSize, 123);
 
                 CanHazData clone;
                 using (var ms = new MemoryStream())
@@ -137,16 +137,16 @@ namespace Examples
                 throw;
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Naked : Extensible
         {
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CanHazData
         {
-            [ProtoMember(1)] public string A {get;set;}
-            [ProtoMember(2)] public float B { get; set; }
-            [ProtoMember(3, DataFormat = DataFormat.FixedSize)] public int C { get; set; }
+            [ProtoBuf.ProtoMember(1)] public string A {get;set;}
+            [ProtoBuf.ProtoMember(2)] public float B { get; set; }
+            [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.FixedSize)] public int C { get; set; }
         }
 
 

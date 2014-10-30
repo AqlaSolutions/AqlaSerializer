@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using NHibernate.Proxy;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
 
-namespace ProtoBuf.unittest.ThirdParty
+namespace AqlaSerializer.unittest.ThirdParty
 {
     [TestFixture]
     public class NHibernateProxies

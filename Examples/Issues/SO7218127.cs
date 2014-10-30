@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -16,22 +16,22 @@ namespace Examples.Issues
             Assert.AreEqual(123, orig.Value.Foo);
             Assert.AreEqual("abc", ((SubType) clone.Value).Bar);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SomeWrapper
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public BaseType Value { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BaseType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Foo { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SubType : BaseType
         {
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Bar { get; set; }
         }
     }

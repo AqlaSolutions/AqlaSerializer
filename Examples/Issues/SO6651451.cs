@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -19,20 +19,20 @@ namespace Examples.Issues
             public List<SerializeDictionaryItem> MyList { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SerializeDictionaryItem
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string MyField { get; set; }
         }
 
-        [ProtoContract(SkipConstructor = true)]
+        [ProtoBuf.ProtoContract(SkipConstructor = true)]
         public class SerializeClassSurrogate
         {
-            [ProtoMember(1000, AsReference = true)]
+            [ProtoBuf.ProtoMember(1000, AsReference = true)]
             public Dictionary<string, SerializeDictionaryItem> MyDictionary { get; set; }
 
-            [ProtoMember(1001, AsReference = true)]
+            [ProtoBuf.ProtoMember(1001, AsReference = true)]
             public List<SerializeDictionaryItem> MyList { get; set; }
 
             public static implicit operator SerializeClass(SerializeClassSurrogate surrogate)

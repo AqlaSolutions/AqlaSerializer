@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework;
 using System.IO;
 
@@ -87,11 +87,11 @@ namespace Examples.Issue29
     {
     }
 
-    [ProtoContract]
-    [ProtoInclude(5, typeof(Alias))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(5, typeof(Alias))]
     public class AliasBase
     {
-        [ProtoMember(6)]
+        [ProtoBuf.ProtoMember(6)]
         public string AliasName { get; set; }
     }
 
@@ -99,16 +99,16 @@ namespace Examples.Issue29
     {
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class Person
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string FirstName { get; set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public string LastName { get; set; }
 
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public AliasCollection Aliases { get; set; }
 
         public Person()

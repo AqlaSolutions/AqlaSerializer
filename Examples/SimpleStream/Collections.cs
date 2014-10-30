@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.SimpleStream
 {
@@ -10,22 +10,22 @@ namespace Examples.SimpleStream
     public class Collections
     {
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class FooContainer
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Foo Foo { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Bar> Bars { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Bar
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Value { get; set; }
         }
 

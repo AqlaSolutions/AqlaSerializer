@@ -5,37 +5,37 @@ using System.IO;
 using NUnit.Framework.SyntaxHelpers;
 using System;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
 {
     
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class BaseClassArrayContainerClass
     {
-        [ProtoMember(1, DynamicType = true)]
+        [ProtoBuf.ProtoMember(1, DynamicType = true)]
         public Base[] BaseArray { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ObjectArrayContainerClass
     {
-        [ProtoMember(1, DynamicType = true)]
+        [ProtoBuf.ProtoMember(1, DynamicType = true)]
         public object[] ObjectArray { get; set; }
 
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Base
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string BaseClassText { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Derived : Base
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string DerivedClassText { get; set; }
     }
 

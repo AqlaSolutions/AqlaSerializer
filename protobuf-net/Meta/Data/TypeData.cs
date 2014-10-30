@@ -5,7 +5,7 @@ using AqlaSerializer;
 
 #if !NO_RUNTIME && !FEAT_IKVM
 
-namespace ProtoBuf.Meta.Data
+namespace AqlaSerializer.Meta.Data
 {
     [SerializableType]
     public class TypeData

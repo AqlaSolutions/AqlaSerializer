@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Runtime.Serialization;
 
 namespace Examples.Issues
@@ -35,14 +35,14 @@ namespace Examples.Issues
             Assert.AreEqual(456, clone.Value, caption);
         }
 
-        [ProtoContract]
-        [ProtoInclude(2, typeof(Bar<int>))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(2, typeof(Bar<int>))]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int BaseValue { get; set; }
         }
-        [ProtoContract(IgnoreListHandling = true)]
+        [ProtoBuf.ProtoContract(IgnoreListHandling = true)]
         [DataContract]
         public class Bar<T> : Foo, IEnumerable<T>
         {

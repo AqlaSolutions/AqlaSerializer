@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework;
 
 namespace Examples
@@ -12,21 +12,21 @@ namespace Examples
     public class TestAutoFields
     {
 
-        [ProtoContract]
-        [ProtoPartialMember(2, "IncludeIndirect")]
-        [ProtoPartialIgnore("IgnoreIndirect")]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoPartialMember(2, "IncludeIndirect")]
+        [ProtoBuf.ProtoPartialIgnore("IgnoreIndirect")]
         public class IgnorePOCO
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int IncludeDirect { get; set; }
 
             public int IncludeIndirect { get; set; }
 
-            [ProtoMember(3)]
-            [ProtoIgnore]
+            [ProtoBuf.ProtoMember(3)]
+            [ProtoBuf.ProtoIgnore]
             public int IgnoreDirect { get; set; }
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public int IgnoreIndirect { get; set; }
         }
 
@@ -47,8 +47,8 @@ namespace Examples
             Assert.AreEqual(foo.IncludeIndirect, bar.IncludeIndirect, "IncludeIndirect");
         }
 
-        [ProtoContract(ImplicitFields = ImplicitFields.AllFields, ImplicitFirstTag = 4)]
-        [ProtoPartialIgnore("g_ignoreIndirect")]
+        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllFields, ImplicitFirstTag = 4)]
+        [ProtoBuf.ProtoPartialIgnore("g_ignoreIndirect")]
         public class ImplicitFieldPOCO
         {
             public event EventHandler Foo;
@@ -67,7 +67,7 @@ namespace Examples
                 set { e_private = value;}
             }
 
-            [ProtoIgnore]
+            [ProtoBuf.ProtoIgnore]
             private int f_ignoreDirect;
             public int F_ignoreDirect
             {
@@ -84,7 +84,7 @@ namespace Examples
             [NonSerialized]
             public int H_nonSerialized;
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             private int x_explicitField;
 
             public int X_explicitField
@@ -93,9 +93,9 @@ namespace Examples
                 set { x_explicitField = value; }
             }
 
-            [ProtoIgnore]
+            [ProtoBuf.ProtoIgnore]
             private int z_explicitProperty;
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Z_explicitProperty
             {
                 get { return z_explicitProperty; }
@@ -144,16 +144,16 @@ namespace Examples
 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ImplicitFieldPOCOEquiv
         {
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public int D { get; set;}
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public int E { get; set;}
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set;}
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Z { get; set;}
         }
 
@@ -187,33 +187,33 @@ namespace Examples
             Assert.AreEqual(106, equiv.ImplicitProperty, "ImplicitProperty: equiv");
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ImplicitPublicPOCOEquiv
         {
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public int ImplicitField { get; set; }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int ExplicitNonPublic { get; set; }
 
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public int ImplicitProperty { get; set; }
 
         }
 
-        [ProtoContract(ImplicitFields = ImplicitFields.PublicFieldsAndProperties, ImplicitFirstTag = 4)]
-        [ProtoPartialIgnore("IgnoreIndirect")]
+        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllPublic, ImplicitFirstTag = 4)]
+        [ProtoBuf.ProtoPartialIgnore("IgnoreIndirect")]
         public class ImplicitPublicPOCO
         {
             internal int ImplicitNonPublic { get; set;}
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             internal int ExplicitNonPublic { get; set; }
 
             public int ImplicitField;
 
             public int ImplicitProperty { get; set;}
 
-            [ProtoIgnore]
+            [ProtoBuf.ProtoIgnore]
             public int IgnoreDirect { get; set; }
 
             public int IgnoreIndirect { get; set; }

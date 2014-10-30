@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,10 +41,10 @@ message BinarySerializationSurrogate_MyException {
     /// (e.g. Exceptions).
     /// </summary>
     /// <typeparam name="T">The type of an object that implements ISerializeable.</typeparam>
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     internal class BinarySerializationSurrogate<T>
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         private byte[] objectData = null;
 
         public static implicit operator T(BinarySerializationSurrogate<T> surrogate)

@@ -11,7 +11,7 @@ namespace person.proto
 
     [System.Xml.Serialization.XmlType(TypeName = @"Person")]
 
-    public partial class Person : ProtoBuf.IExtensible
+    public partial class Person : AqlaSerializer.IExtensible
     , System.ComponentModel.INotifyPropertyChanged
     {
         public Person() { }
@@ -79,7 +79,7 @@ namespace person.proto
 
         [System.Xml.Serialization.XmlType(TypeName = @"PhoneNumber")]
 
-        public partial class PhoneNumber : ProtoBuf.IExtensible
+        public partial class PhoneNumber : AqlaSerializer.IExtensible
         , System.ComponentModel.INotifyPropertyChanged
         {
             public PhoneNumber() { }
@@ -114,9 +114,9 @@ namespace person.proto
             protected virtual void OnPropertyChanged(string propertyName)
             { if (PropertyChanged != null) PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName)); }
 
-            private ProtoBuf.IExtension extensionObject;
-            ProtoBuf.IExtension ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-            { return ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+            private AqlaSerializer.IExtension extensionObject;
+            AqlaSerializer.IExtension AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+            { return AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
         }
 
         public enum PhoneType
@@ -130,9 +130,9 @@ namespace person.proto
         protected virtual void OnPropertyChanged(string propertyName)
         { if (PropertyChanged != null) PropertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName)); }
 
-        private ProtoBuf.IExtension extensionObject;
-        ProtoBuf.IExtension ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-        { return ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+        private AqlaSerializer.IExtension extensionObject;
+        AqlaSerializer.IExtension AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+        { return AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
     }
 
 }

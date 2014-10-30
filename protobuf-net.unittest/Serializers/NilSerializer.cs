@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ProtoBuf.Compiler;
+using AqlaSerializer.Compiler;
 using NUnit.Framework;
-using ProtoBuf.unittest.Serializers;
+using AqlaSerializer.unittest.Serializers;
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     [TestFixture]
     public class NilTests

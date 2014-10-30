@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 
 namespace Examples.Issues
@@ -12,28 +12,28 @@ namespace Examples.Issues
    {
 
 /*===============================================================================================*/
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class OmsMessage {
             public enum MessageType
             {
                 None = 0,
                 MSG_TYPE_CONFIRMATION = 1
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public MessageType message_type;
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string application_id;
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public string symbol;
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public string initial_qty;
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public string limit_price;
-            [ProtoMember(6)]
+            [ProtoBuf.ProtoMember(6)]
             public string last_fill_qty;
-            [ProtoMember(7)]
+            [ProtoBuf.ProtoMember(7)]
             public string last_fill_price;
-            [ProtoMember(8)]
+            [ProtoBuf.ProtoMember(8)]
             public string trader_id;
 
         }
@@ -57,21 +57,21 @@ namespace Examples.Issues
 
            MemoryStream textStream = new MemoryStream();
 
-           ProtoBuf.Serializer.SerializeWithLengthPrefix<OmsMessage>(textStream,
-                omsMessage, ProtoBuf.PrefixStyle.Fixed32);
+           AqlaSerializer.Serializer.SerializeWithLengthPrefix<OmsMessage>(textStream,
+                omsMessage, AqlaSerializer.PrefixStyle.Fixed32);
 
            textStream.Position = 0;
-           Assert.IsTrue(ProtoBuf.Serializer.TryReadLengthPrefix(textStream.GetBuffer(), 0, 5, ProtoBuf.PrefixStyle.Fixed32, out len32_1), "len32 - buffer");
-           Assert.IsTrue(ProtoBuf.Serializer.TryReadLengthPrefix(textStream, ProtoBuf.PrefixStyle.Fixed32, out len32_2), "len32 - stream");
+           Assert.IsTrue(AqlaSerializer.Serializer.TryReadLengthPrefix(textStream.GetBuffer(), 0, 5, AqlaSerializer.PrefixStyle.Fixed32, out len32_1), "len32 - buffer");
+           Assert.IsTrue(AqlaSerializer.Serializer.TryReadLengthPrefix(textStream, AqlaSerializer.PrefixStyle.Fixed32, out len32_2), "len32 - stream");
 
            textStream = new MemoryStream();
 
-           ProtoBuf.Serializer.SerializeWithLengthPrefix<OmsMessage>(textStream,
-omsMessage, ProtoBuf.PrefixStyle.Base128,0);
+           AqlaSerializer.Serializer.SerializeWithLengthPrefix<OmsMessage>(textStream,
+omsMessage, AqlaSerializer.PrefixStyle.Base128,0);
 
            textStream.Position = 0;
-           Assert.IsTrue(ProtoBuf.Serializer.TryReadLengthPrefix(textStream.GetBuffer(), 0, 5, ProtoBuf.PrefixStyle.Base128, out len128_1), "len128 - buffer");
-           Assert.IsTrue(ProtoBuf.Serializer.TryReadLengthPrefix(textStream, ProtoBuf.PrefixStyle.Base128, out len128_2), "len128 - stream");
+           Assert.IsTrue(AqlaSerializer.Serializer.TryReadLengthPrefix(textStream.GetBuffer(), 0, 5, AqlaSerializer.PrefixStyle.Base128, out len128_1), "len128 - buffer");
+           Assert.IsTrue(AqlaSerializer.Serializer.TryReadLengthPrefix(textStream, AqlaSerializer.PrefixStyle.Base128, out len128_2), "len128 - stream");
            
 
            Assert.AreEqual(len32_1, len32_2, "len32 - stream vs buffer");

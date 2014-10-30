@@ -13,10 +13,10 @@ using System.Reflection;
 using System.Linq;
 #endif
 
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Not all frameworks are created equal (fx1.1 vs fx2.0,

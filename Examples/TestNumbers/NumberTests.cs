@@ -4,75 +4,75 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.TestNumbers
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class NumRig
     {
-        [ProtoMember(1, DataFormat=DataFormat.Default)]
+        [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.Default)]
         public int Int32Default { get; set; }
-        [ProtoMember(2, DataFormat = DataFormat.ZigZag)]
+        [ProtoBuf.ProtoMember(2, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         public int Int32ZigZag { get; set; }
-        [ProtoMember(3, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public int Int32TwosComplement { get; set; }
-        [ProtoMember(4, DataFormat = DataFormat.FixedSize)]
+        [ProtoBuf.ProtoMember(4, DataFormat = ProtoBuf.DataFormat.FixedSize)]
         public int Int32FixedSize { get; set; }
 
-        [ProtoMember(5, DataFormat = DataFormat.Default)]
+        [ProtoBuf.ProtoMember(5, DataFormat = ProtoBuf.DataFormat.Default)]
         public uint UInt32Default { get; set; }
-        [ProtoMember(7, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(7, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public uint UInt32TwosComplement { get; set; }
-        [ProtoMember(8, DataFormat = DataFormat.FixedSize)]
+        [ProtoBuf.ProtoMember(8, DataFormat = ProtoBuf.DataFormat.FixedSize)]
         public uint UInt32FixedSize { get; set; }
 
-        [ProtoMember(9, DataFormat = DataFormat.Default)]
+        [ProtoBuf.ProtoMember(9, DataFormat = ProtoBuf.DataFormat.Default)]
         public long Int64Default { get; set; }
-        [ProtoMember(10, DataFormat = DataFormat.ZigZag)]
+        [ProtoBuf.ProtoMember(10, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         public long Int64ZigZag { get; set; }
-        [ProtoMember(11, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(11, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public long Int64TwosComplement { get; set; }
-        [ProtoMember(12, DataFormat = DataFormat.FixedSize)]
+        [ProtoBuf.ProtoMember(12, DataFormat = ProtoBuf.DataFormat.FixedSize)]
         public long Int64FixedSize { get; set; }
 
-        [ProtoMember(13, DataFormat = DataFormat.Default)]
+        [ProtoBuf.ProtoMember(13, DataFormat = ProtoBuf.DataFormat.Default)]
         public ulong UInt64Default { get; set; }
-        [ProtoMember(15, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(15, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public ulong UInt64TwosComplement { get; set; }
-        [ProtoMember(16, DataFormat = DataFormat.FixedSize)]
+        [ProtoBuf.ProtoMember(16, DataFormat = ProtoBuf.DataFormat.FixedSize)]
         public ulong UInt64FixedSize { get; set; }
         
-        [ProtoMember(17)]
+        [ProtoBuf.ProtoMember(17)]
         public string Foo { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ZigZagInt32
     {
-        [ProtoMember(1, DataFormat = DataFormat.ZigZag)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         [DefaultValue(123456)]
         public int Foo { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TwosComplementInt32
     {
-        [ProtoMember(1, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         [DefaultValue(123456)]
         public int Foo { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TwosComplementUInt32
     {
-        [ProtoMember(1, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public uint Foo { get; set; }
     }
     
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ZigZagInt64
     {
-        [ProtoMember(1, DataFormat = DataFormat.ZigZag)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         public long Foo { get; set; }
     }
 

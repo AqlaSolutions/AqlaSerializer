@@ -3,8 +3,8 @@
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -68,12 +68,12 @@ namespace Examples.Issues
             Assert.AreEqual("abc", clone.Y, caption);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class AnonEquiv
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Y { get; set; }
         }
     }

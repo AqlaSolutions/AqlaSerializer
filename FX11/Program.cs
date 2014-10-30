@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using NETCFClient;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using SampleDto;
 namespace FX11
 {

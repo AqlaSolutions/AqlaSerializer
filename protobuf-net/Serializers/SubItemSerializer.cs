@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_COMPILER
 #if FEAT_IKVM
@@ -12,7 +12,7 @@ using System.Reflection.Emit;
 #endif
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class SubItemSerializer : IProtoTypeSerializer
     {
@@ -92,7 +92,7 @@ namespace ProtoBuf.Serializers
             MethodBuilder method = ctx.GetDedicatedMethod(key, read);
             if (method == null) return false;
 
-            using (Compiler.Local token = new ProtoBuf.Compiler.Local(ctx, ctx.MapType(typeof(SubItemToken))))
+            using (Compiler.Local token = new AqlaSerializer.Compiler.Local(ctx, ctx.MapType(typeof(SubItemToken))))
             {
                 Type rwType = ctx.MapType(read ? typeof(ProtoReader) : typeof(ProtoWriter));
                 ctx.LoadValue(valueFrom);

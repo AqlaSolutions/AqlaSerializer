@@ -3,13 +3,13 @@ using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace protobuf_net.Enyim.Tests
+namespace AqlaSerializer_net.Enyim.Tests
 {
     [Ignore("I don't have memcached")]
     [TestFixture]
@@ -62,7 +62,7 @@ namespace protobuf_net.Enyim.Tests
         public void StoreWithProtoTranscoder()
         {
             var config = GetConfig();
-            var transcoder = new ProtoBuf.Caching.Enyim.NetTranscoder();
+            var transcoder = new AqlaSerializer.Caching.Enyim.NetTranscoder();
             config.Transcoder =  transcoder;
             SomeType obj = new SomeType { Id = 1, Name = "abc" }, clone;
             string cloneString;
@@ -97,7 +97,7 @@ namespace protobuf_net.Enyim.Tests
                 new MyClass { a = 5, b = 6}
             }, cloneList;
             var config = GetConfig();
-            var transcoder = new ProtoBuf.Caching.Enyim.NetTranscoder();
+            var transcoder = new AqlaSerializer.Caching.Enyim.NetTranscoder();
             config.Transcoder = transcoder;
 
             using (var client = new MemcachedClient(config))
@@ -131,11 +131,11 @@ public class SomeType
 }
 
 
-[ProtoContract]
+[ProtoBuf.ProtoContract]
 public class MyClass
 {
-    [ProtoMember(1)]
+    [ProtoBuf.ProtoMember(1)]
     public int a { get; set; }
-    [ProtoMember(2)]
+    [ProtoBuf.ProtoMember(2)]
     public int b { get; set; }
 }

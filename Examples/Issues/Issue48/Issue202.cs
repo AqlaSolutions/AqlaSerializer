@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues.Issue48
 {
@@ -55,16 +55,16 @@ namespace Examples.Issues.Issue48
             Assert.AreEqual("def", c.flags[1], test);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A //property version
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public List<string> flags { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B //field version
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public List<string> flags;
         }
 

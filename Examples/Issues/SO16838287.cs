@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 namespace Examples.Issues
 {
@@ -64,10 +64,10 @@ namespace Examples.Issues
             model.Add(typeof(Foo), true);
             return model;
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public ArraySegment<byte> Data { get; set; }
         }
     }

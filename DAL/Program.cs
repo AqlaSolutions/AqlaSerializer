@@ -4,8 +4,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization;
-using ProtoBuf;
-using Serializer = ProtoBuf.Serializer;
+using AqlaSerializer;
+using Serializer = AqlaSerializer.Serializer;
 namespace DAL
 {
     static class Program
@@ -16,7 +16,7 @@ namespace DAL
             Database db;
 
 
-            Console.WriteLine("Using groups: {0}", Database.SubObjectFormat== DataFormat.Group);
+            Console.WriteLine("Using groups: {0}", Database.SubObjectFormat== ProtoBuf.DataFormat.Group);
             // if have a Northwind handy...
             using(var ctx = new NorthwindDataContext())
             {

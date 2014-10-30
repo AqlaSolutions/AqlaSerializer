@@ -1,6 +1,6 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     internal enum TimeSpanScale
     {
@@ -440,7 +440,7 @@ namespace ProtoBuf
                         break;
                     case FieldObject:
                         bool isString = type == typeof(string);
-                        bool isType = !isString && typeof(Type).IsAssignableFrom(type);
+                        bool isType = !isString && Helpers.IsAssignableFrom(typeof(Type), type);
                         bool isUri = type == typeof(Uri);
                         bool wasNull = value == null;
                         bool lateSet = wasNull && (isString || isType || isUri|| ((options & NetObjectOptions.LateSet) != 0));

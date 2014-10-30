@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -10,7 +10,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class DoubleSerializer : IProtoSerializer
     {
@@ -19,7 +19,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(double);
 #endif
-        public DoubleSerializer(ProtoBuf.Meta.TypeModel model)
+        public DoubleSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(double));

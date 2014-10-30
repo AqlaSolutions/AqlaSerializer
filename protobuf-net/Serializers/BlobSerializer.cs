@@ -10,7 +10,7 @@ using Type = IKVM.Reflection.Type;
 #endif
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class BlobSerializer : IProtoSerializer
     {
@@ -21,7 +21,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(byte[]);
 #endif
-        public BlobSerializer(ProtoBuf.Meta.TypeModel model, bool overwriteList)
+        public BlobSerializer(AqlaSerializer.Meta.TypeModel model, bool overwriteList)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(byte[]));

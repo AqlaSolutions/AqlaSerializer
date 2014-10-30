@@ -2,9 +2,9 @@
 using System.Reflection;
 using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.AqlaAttributes
+namespace AqlaSerializer.unittest.AqlaAttributes
 {
     [TestFixture]
     public class ImplicitFields

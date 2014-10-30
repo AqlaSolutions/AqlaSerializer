@@ -3,10 +3,10 @@
 using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System;
 
-namespace ProtoBuf.ServiceModel
+namespace AqlaSerializer.ServiceModel
 {
     /// <summary>
     /// An xml object serializer that can embed protobuf data in a base-64 hunk (looking like a byte[])

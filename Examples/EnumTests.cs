@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.Serialization;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.DesignIdeas
 {
@@ -17,16 +17,16 @@ namespace Examples.DesignIdeas
     /// note: how to handle flags? (NotSupportedException? at least for now?
     ///             could later use a bitmap sweep?)
     /// </summary>
-    [ProtoContract(Name="blah")]
+    [ProtoBuf.ProtoContract(Name="blah")]
     enum SomeEnum
     {
-        [ProtoEnum(Name="FOO")]
+        [ProtoBuf.ProtoEnum(Name="FOO")]
         ChangeName = 3,
 
-        [ProtoEnum(Value = 19)]
+        [ProtoBuf.ProtoEnum(Value = 19)]
         ChangeValue = 5,
 
-        [ProtoEnum(Name="BAR", Value=92)]
+        [ProtoBuf.ProtoEnum(Name="BAR", Value=92)]
         ChangeBoth = 7,
         
         LeaveAlone = 22,
@@ -34,19 +34,19 @@ namespace Examples.DesignIdeas
 
         Default = 2
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class EnumFoo
     {
         public EnumFoo() { Bar = SomeEnum.Default; }
-        [ProtoMember(1), DefaultValue(SomeEnum.Default)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         public SomeEnum Bar { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class EnumNullableFoo
     {
         public EnumNullableFoo() { Bar = SomeEnum.Default; }
-        [ProtoMember(1), DefaultValue(SomeEnum.Default)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         public SomeEnum? Bar { get; set; }
     }
 
@@ -54,53 +54,53 @@ namespace Examples.DesignIdeas
     {
         A = -1, B = 0, C = 1
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class NegEnumType
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public NegEnum Value { get; set; }
     }
     public enum HasConflictingKeys
     {
-        [ProtoEnum(Value = 1)]
+        [ProtoBuf.ProtoEnum(Value = 1)]
         Foo = 0,
-        [ProtoEnum(Value = 2)]
+        [ProtoBuf.ProtoEnum(Value = 2)]
         Bar = 0
     }
     public enum HasConflictingValues
     {
-        [ProtoEnum(Value=2)]
+        [ProtoBuf.ProtoEnum(Value=2)]
         Foo = 0,
-        [ProtoEnum(Value = 2)]
+        [ProtoBuf.ProtoEnum(Value = 2)]
         Bar = 1
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TypeDuffKeys
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public HasConflictingKeys Value {get;set;}
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TypeDuffValues
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public HasConflictingValues Value {get;set;}
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class NonNullValues
     {
-        [ProtoMember(1), DefaultValue(SomeEnum.Default)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         SomeEnum Foo { get; set; }
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         bool Bar { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class NullValues
     {
-        [ProtoMember(1), DefaultValue(SomeEnum.Default)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         SomeEnum? Foo { get; set; }
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         bool? Bar { get; set; }
     }
 
@@ -203,7 +203,7 @@ enum blah {
             Assert.AreEqual(orig.Foo, clone.Foo);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TypeWithFlags
         {
             [Flags]
@@ -211,7 +211,7 @@ enum blah {
             {
                 None = 0, A = 1, B = 2, C = 4
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public FlagsEnum Foo { get; set; }
         }
 
@@ -276,10 +276,10 @@ enum blah {
             Assert.AreEqual(NastDuplicates.A, clone.Value);
             Assert.AreEqual(NastDuplicates.B, clone.Value);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class HasDuplicatedEnumProp
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public NastDuplicates Value { get; set; }
         }
         enum NastDuplicates
@@ -297,7 +297,7 @@ enum blah {
         }
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         enum EnumMarkedContract : ushort
         {
             None = 0, A, B, C, D

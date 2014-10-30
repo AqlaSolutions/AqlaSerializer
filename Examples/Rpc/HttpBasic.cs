@@ -5,18 +5,18 @@
 //using System.ServiceModel;
 //using DAL;
 //using NUnit.Framework;
-//using ProtoBuf;
-//using ProtoBuf.ServiceModel.Client;
-//using ProtoBuf.ServiceModel.Server;
+//using AqlaSerializer;
+//using AqlaSerializer.ServiceModel.Client;
+//using AqlaSerializer.ServiceModel.Server;
 
 //namespace Examples.Rpc
 //{
-//    [ProtoContract]
+//    [ProtoBuf.ProtoContract]
 //    class TestRequest {
-//        [ProtoMember(1)] public int RequestBody { get; set; }
+//        [ProtoBuf.ProtoMember(1)] public int RequestBody { get; set; }
 //    }
-//    [ProtoContract] class TestResponse {
-//        [ProtoMember(1)] public int ResponseBody { get; set; }
+//    [ProtoBuf.ProtoContract] class TestResponse {
+//        [ProtoBuf.ProtoMember(1)] public int ResponseBody { get; set; }
 //    }
 //    interface IBasicService
 //    {

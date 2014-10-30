@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.Serialization;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework;
 
 namespace Examples.Issues
@@ -72,10 +72,10 @@ namespace Examples.Issues
                 return 0; // not being used in a dictionary - to heck with it
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A : IMobileObject
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set; }
             public override bool Equals(object obj) { return ((A)obj).X == X; }
             public override int GetHashCode()
@@ -87,10 +87,10 @@ namespace Examples.Issues
                 return X.ToString();
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<IMobileObject> Objects { get; set; }
         }
 

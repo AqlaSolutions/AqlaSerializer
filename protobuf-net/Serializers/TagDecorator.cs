@@ -2,7 +2,7 @@
 #if !NO_RUNTIME
 using System;
 
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -12,7 +12,7 @@ using System.Reflection;
 #endif
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class TagDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
@@ -96,7 +96,7 @@ namespace ProtoBuf.Serializers
             ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeader"));
             Tail.EmitWrite(ctx, valueFrom);    
         }
-        protected override void EmitRead(ProtoBuf.Compiler.CompilerContext ctx, ProtoBuf.Compiler.Local valueFrom)
+        protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             if (strict || NeedsHint)
             {

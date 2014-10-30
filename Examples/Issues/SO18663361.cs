@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -67,8 +67,8 @@ namespace Examples.Issues
         }
 
         [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"MarketDataEntry")]
-        [ProtoInclude(1, typeof(CreditMarketDataEntry_Float))]
-        public partial class MarketDataEntry_Float : global::ProtoBuf.Extensible
+        [ProtoBuf.ProtoInclude(1, typeof(CreditMarketDataEntry_Float))]
+        public partial class MarketDataEntry_Float : global::AqlaSerializer.Extensible
         {
             // some other properties
 
@@ -81,8 +81,8 @@ namespace Examples.Issues
             }
         }
         [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"MarketDataEntry")]
-        [ProtoInclude(1, typeof(CreditMarketDataEntry_Double))]
-        public partial class MarketDataEntry_Double : global::ProtoBuf.Extensible
+        [ProtoBuf.ProtoInclude(1, typeof(CreditMarketDataEntry_Double))]
+        public partial class MarketDataEntry_Double : global::AqlaSerializer.Extensible
         {
             // some other properties
 
@@ -95,8 +95,8 @@ namespace Examples.Issues
             }
         }
         [global::System.Serializable, global::ProtoBuf.ProtoContract(Name = @"MarketDataEntry")]
-        [ProtoInclude(1, typeof(CreditMarketDataEntry_Decimal))]
-        public partial class MarketDataEntry_Decimal : global::ProtoBuf.Extensible
+        [ProtoBuf.ProtoInclude(1, typeof(CreditMarketDataEntry_Decimal))]
+        public partial class MarketDataEntry_Decimal : global::AqlaSerializer.Extensible
         {
             // some other properties
 
@@ -110,17 +110,17 @@ namespace Examples.Issues
         }
 
         [Serializable]
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public sealed class CreditMarketDataEntry_Double : MarketDataEntry_Double
         { }
 
         [Serializable]
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public sealed class CreditMarketDataEntry_Float : MarketDataEntry_Float
         { }
 
         [Serializable]
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public sealed class CreditMarketDataEntry_Decimal : MarketDataEntry_Decimal
         { }
     }

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -33,7 +33,7 @@ namespace Examples.Issues
             Assert.AreEqual("abc", clone[0]);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MyContractList : List<string> { }
 
         [Test]
@@ -66,14 +66,14 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ListWrapper
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<string> BasicList { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public MyList MyList { get; set; }
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public MyContractList MyContractList { get; set; }
         }
 

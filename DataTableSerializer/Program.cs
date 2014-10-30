@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace ExperimentalDataTableSerialization
 {

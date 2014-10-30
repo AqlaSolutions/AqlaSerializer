@@ -3,8 +3,8 @@
 using System;
 using System.Collections;
 using System.Text;
-using ProtoBuf.Meta;
-using ProtoBuf.Serializers;
+using AqlaSerializer.Meta;
+using AqlaSerializer.Serializers;
 
 
 #if FEAT_IKVM

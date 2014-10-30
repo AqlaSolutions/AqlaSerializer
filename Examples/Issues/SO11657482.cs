@@ -1,28 +1,28 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO11657482
     {
-        [ProtoContract]
-        [ProtoInclude(1, typeof(Derived))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(Derived))]
         public abstract class Base { }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Derived : Base
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int SomeProperty { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Aggregate
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public Base Base { get; set; }
         }
 

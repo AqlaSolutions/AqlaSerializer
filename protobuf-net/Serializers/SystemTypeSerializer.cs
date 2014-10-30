@@ -10,7 +10,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class SystemTypeSerializer : IProtoSerializer
     {
@@ -19,7 +19,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(System.Type);
 #endif
-        public SystemTypeSerializer(ProtoBuf.Meta.TypeModel model)
+        public SystemTypeSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(System.Type));

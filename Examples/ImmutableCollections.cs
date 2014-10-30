@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -465,34 +465,34 @@ namespace Examples
             ImmutableSortedDictionary<int,string> SortedDictionary { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ImmutableConcreteProperties : IImmutableCollectionWrapper
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public ImmutableList<int> List { get; set; }
 
-            //[ProtoMember(2)]
+            //[ProtoBuf.ProtoMember(2)]
             //public ImmutableArray<int> Array { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public ImmutableDictionary<int,string> Dictionary { get; set; }
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public ImmutableHashSet<int> HashSet { get; set; }
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public ImmutableSortedSet<int> SortedSet { get; set; }
-            [ProtoMember(6)]
+            [ProtoBuf.ProtoMember(6)]
             public ImmutableSortedDictionary<int, string> SortedDictionary { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ImmutableInterfaceProperties : IImmutableCollectionWrapper
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IImmutableList<int> List { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public IImmutableDictionary<int, string> Dictionary { get; set; }
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public IImmutableSet<int> HashSet { get; set; }
 
             ImmutableList<int> IImmutableCollectionWrapper.List
@@ -534,25 +534,25 @@ namespace Examples
 
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ImmutableConcreteFields : IImmutableCollectionWrapper
         {
 
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public ImmutableList<int> List;
 
-            //[ProtoMember(2)]
+            //[ProtoBuf.ProtoMember(2)]
             //public ImmutableArray<int> Array;
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public ImmutableDictionary<int, string> Dictionary;
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public ImmutableHashSet<int> HashSet;
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public ImmutableSortedSet<int> SortedSet;
-            [ProtoMember(6)]
+            [ProtoBuf.ProtoMember(6)]
             public ImmutableSortedDictionary<int, string> SortedDictionary;
 
             ImmutableList<int> IImmutableCollectionWrapper.List
@@ -592,18 +592,18 @@ namespace Examples
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ImmutableInterfaceFields : IImmutableCollectionWrapper
         {
 
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IImmutableList<int> List;
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public IImmutableDictionary<int, string> Dictionary;
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public IImmutableSet<int> HashSet;
 
 

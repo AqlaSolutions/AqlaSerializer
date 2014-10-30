@@ -3,7 +3,7 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-namespace ProtoBuf.ServiceModel.Client
+namespace AqlaSerializer.ServiceModel.Client
 {
     /// <summary>
     /// Provides extension methods for interacting with RPC via expressions, rather than

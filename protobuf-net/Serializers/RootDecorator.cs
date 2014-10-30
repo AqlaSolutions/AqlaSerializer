@@ -2,10 +2,10 @@
 #if !NO_RUNTIME
 using System;
 #if FEAT_COMPILER
-using ProtoBuf.Compiler;
+using AqlaSerializer.Compiler;
 #endif
 using System.Diagnostics;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -14,7 +14,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
 
     sealed class RootDecorator : IProtoTypeSerializer

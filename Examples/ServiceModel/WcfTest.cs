@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using NUnit.Framework;
-using ProtoBuf.ServiceModel;
+using AqlaSerializer.ServiceModel;
 
 namespace Examples.ServiceModel
 {

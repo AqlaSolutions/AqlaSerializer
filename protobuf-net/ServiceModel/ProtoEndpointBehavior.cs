@@ -2,7 +2,7 @@
 #if FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER
 using System.ServiceModel.Description;
 
-namespace ProtoBuf.ServiceModel
+namespace AqlaSerializer.ServiceModel
 {
     /// <summary>
     /// Behavior to swap out DatatContractSerilaizer with the XmlProtoSerializer for a given endpoint.
@@ -17,7 +17,7 @@ namespace ProtoBuf.ServiceModel
     ///  </behaviors>
     ///  <extensions>
     ///    <behaviorExtensions>
-    ///      <add name="ProtoBufSerialization" type="ProtoBuf.ServiceModel.ProtoBehaviorExtension, protobuf-net, Version=1.0.0.255, Culture=neutral, PublicKeyToken=257b51d87d2e4d67"/>
+    ///      <add name="ProtoBufSerialization" type="AqlaSerializer.ServiceModel.ProtoBehaviorExtension, protobuf-net, Version=1.0.0.255, Culture=neutral, PublicKeyToken=257b51d87d2e4d67"/>
     ///    </behaviorExtensions>
     ///  </extensions>
     /// 

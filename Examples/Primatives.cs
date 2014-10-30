@@ -6,8 +6,8 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -86,26 +86,26 @@ namespace Examples
             //Assert.AreEqual(6, len, "max len");
             Debug.WriteLine("AqlaSerializer changed format");
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DateTimeOnly
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public DateTime When { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TimeSpanOnly
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public TimeSpan HowLong { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TimeSpanDefaulted
         {
             public TimeSpanDefaulted() {
                 HowLong = new TimeSpan(0,1,0);
             }
-            [ProtoMember(1), DefaultValue("00:01:00")]
+            [ProtoBuf.ProtoMember(1), DefaultValue("00:01:00")]
             public TimeSpan HowLong { get; set; }
         }
 
@@ -275,33 +275,33 @@ namespace Examples
             Assert.AreEqual(p.Child.HowMuch, Serializer.DeepClone(p).Child.HowMuch);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PrimativeGrouped
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public DateTime When { get; set; }
 
-            [ProtoMember(2, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(2, DataFormat = ProtoBuf.DataFormat.Group)]
             public TimeSpan HowLong { get; set; }
 
-            [ProtoMember(3, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.Group)]
             public decimal HowMuch { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PrimativeGroupedWrapper
         {
             public PrimativeGroupedWrapper() { Child = new PrimativeGrouped(); }
 
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public PrimativeGrouped Child { get; private set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PrimativeNonGroupedWrapper
         {
             public PrimativeNonGroupedWrapper() { Child = new PrimativeGrouped(); }
 
-            [ProtoMember(1, DataFormat = DataFormat.Default)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
             public PrimativeGrouped Child { get; private set; }
         }
 
@@ -608,54 +608,54 @@ namespace Examples
         [DataMember(Order = 2)]
         [DefaultValue("01 Jan 2008")]
         public DateTime TestDateTime { get; set; }
-        [ProtoMember(3, DataFormat = DataFormat.Default)]
+        [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.Default)]
         [DefaultValue(29)]
         public decimal TestDecimalDefault { get; set; }
         
-        /*[ProtoMember(4, DataFormat = DataFormat.TwosComplement)]
+        /*[ProtoBuf.ProtoMember(4, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public decimal TestDecimalTwos { get; set; }
-        [ProtoMember(5, DataFormat = DataFormat.ZigZag)]
+        [ProtoBuf.ProtoMember(5, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         public decimal TestDecimalZigZag { get; set; }
          * */
-        [ProtoMember(6)]
+        [ProtoBuf.ProtoMember(6)]
         public string TestString { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class BytePrimatives
     {
-        [ProtoMember(1, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public byte ByteTwos { get; set; }
 
-        [ProtoMember(2, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(2, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public sbyte SByteTwos { get; set; }
 
-        [ProtoMember(3, DataFormat = DataFormat.ZigZag)]
+        [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         public sbyte SByteZigZag { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class CharData
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public char Foo { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class UriData
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public Uri Foo { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class UriDataWithDefault
     {
         public UriDataWithDefault()
         {
             Foo = new Uri("http://abc");
         }
-        [ProtoMember(1), DefaultValue("http://abc")]
+        [ProtoBuf.ProtoMember(1), DefaultValue("http://abc")]
         public Uri Foo { get; set; }
     }
 }

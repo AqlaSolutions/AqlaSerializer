@@ -5,41 +5,41 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO8093623
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A_generated
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Age;
 
-            [ProtoMember(10)]
+            [ProtoBuf.ProtoMember(10)]
             public B_generated b;
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B_generated
         {
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Balls;
         }
-        [ProtoContract, ProtoInclude(10, typeof(B))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(10, typeof(B))]
         public class A
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Age;
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B : A
         {
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Balls;
         }
 

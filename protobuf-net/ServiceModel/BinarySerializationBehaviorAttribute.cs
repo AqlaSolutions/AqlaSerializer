@@ -4,7 +4,7 @@ using System;
 using System.ServiceModel.Description;
 using System.ServiceModel.Dispatcher;
 
-namespace ProtoBuf.ServiceModel
+namespace AqlaSerializer.ServiceModel
 {
     /// <summary>
     /// Uses protocol buffer serialization on the specified operation; note that this

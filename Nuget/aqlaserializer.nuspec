@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>1.0.0.56</version>
+    <version>1.0.0.58</version>
     <authors>Marc Gravell, Vladyslav Taranov</authors>
     <owners>Vladyslav Taranov</owners>
     <summary>Provides simple access to fast and efficient "Protocol Buffers" serialization from .NET applications</summary>

@@ -8,7 +8,7 @@ using Type = IKVM.Reflection.Type;
 
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class ByteSerializer : IProtoSerializer
     {
@@ -19,7 +19,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(byte);
 #endif
-        public ByteSerializer(ProtoBuf.Meta.TypeModel model)
+        public ByteSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(byte));

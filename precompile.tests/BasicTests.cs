@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using Examples;
 using NUnit.Framework;
-using ProtoBuf.Precompile;
+using AqlaSerializer.Precompile;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,7 +42,7 @@ namespace precompile.tests
             Assert.IsTrue(CommandLineAttribute.TryParse(new[] { @"..\..\..\SignedDto\bin\release\SignedDto.dll"
                 , @"-o:..\..\..\SignedDto\bin\release\SignedSerializer.dll",
                 "-t:MySignedSerializer",
-                @"-keyfile:..\..\..\SignedDto\AqlaSerializerKey.snk"
+                @"-keyfile:..\..\..\AqlaSerializerKey.snk"
             }, out ctx), "TryParse");
             Assert.IsTrue(ctx.SanityCheck(), "SanityCheck");
             Assert.IsTrue(ctx.Execute(), "Execute");

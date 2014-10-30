@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -26,25 +26,25 @@ namespace Examples
         public int Foo { get; set; }
     }
     [DataContract]
-    [ProtoContract(DataMemberOffset = 2)]
+    [ProtoBuf.ProtoContract(DataMemberOffset = 2)]
     class DMO_Second
     {
         [DataMember(Order = 3)]
         public int Bar { get; set; }
     }
 
-    [DataContract, ProtoContract]
+    [DataContract, ProtoBuf.ProtoContract]
     class TypeWithProtosAndDataContract_UseAny
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Foo { get; set; }
         [DataMember(Order=2)]
         public int Bar { get; set; }
     }
-    [DataContract, ProtoContract(UseProtoMembersOnly=true)]
+    [DataContract, ProtoBuf.ProtoContract(UseProtoMembersOnly=true)]
     class TypeWithProtosAndDataContract_UseProtoOnly
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Foo { get; set; }
         [DataMember(Order = 2)]
         public int Bar { get; set; }

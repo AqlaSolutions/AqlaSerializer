@@ -13,7 +13,7 @@ using System.Reflection;
 
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class BooleanSerializer : IProtoSerializer
     {
@@ -22,7 +22,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(bool);
 #endif
-        public BooleanSerializer(ProtoBuf.Meta.TypeModel model)
+        public BooleanSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(bool));

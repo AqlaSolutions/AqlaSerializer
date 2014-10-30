@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Used to hold particulars relating to nested objects. This is opaque to the caller - simply

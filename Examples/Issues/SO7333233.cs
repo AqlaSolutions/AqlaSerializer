@@ -1,44 +1,44 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     using System.Collections.Generic;
     using System.IO;
-    using ProtoBuf;
+    using AqlaSerializer;
 
     [TestFixture]
     public class SO7333233
     {
-        [ProtoContract]
-        [ProtoInclude(2, typeof(Ant))]
-        [ProtoInclude(3, typeof(Cat))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(2, typeof(Ant))]
+        [ProtoBuf.ProtoInclude(3, typeof(Cat))]
         public interface IBeast
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             string Name { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Ant : IBeast
         {
             public string Name { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Cat : IBeast
         {
             public string Name { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public interface IRule<T> where T : IBeast
         {
             bool IsHappy(T beast);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class AntRule1 : IRule<IAnt>, IRule<Ant>
         {
             public bool IsHappy(IAnt beast)
@@ -51,7 +51,7 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class AntRule2 : IRule<IAnt>, IRule<Ant>
         {
             public bool IsHappy(IAnt beast)
@@ -73,7 +73,7 @@ namespace Examples.Issues
         }
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CatRule1 : IRule<ICat>, IRule<Cat>
         {
             public bool IsHappy(ICat beast)
@@ -86,7 +86,7 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CatRule2 : IRule<ICat>, IRule<Cat>
         {
             public bool IsHappy(ICat beast)
@@ -116,7 +116,7 @@ namespace Examples.Issues
 
             using (var fs = File.Create(@"antRules.bin"))
             {
-                ProtoBuf.Serializer.Serialize(fs, antRules);
+                AqlaSerializer.Serializer.Serialize(fs, antRules);
 
                 fs.Close();
             }
@@ -124,14 +124,14 @@ namespace Examples.Issues
             using (var fs = File.OpenRead(@"antRules.bin"))
             {
                 List<IRule<Ant>> list;
-                list = ProtoBuf.Serializer.Deserialize<List<IRule<Ant>>>(fs);
+                list = AqlaSerializer.Serializer.Deserialize<List<IRule<Ant>>>(fs);
 
                 fs.Close();
             }
 
             using (var fs = File.Create(@"catRules.bin"))
             {
-                ProtoBuf.Serializer.Serialize(fs, catRules);
+                AqlaSerializer.Serializer.Serialize(fs, catRules);
 
                 fs.Close();
             }
@@ -139,7 +139,7 @@ namespace Examples.Issues
             using (var fs = File.OpenRead(@"catRules.bin"))
             {
                 List<IRule<Cat>> list;
-                list = ProtoBuf.Serializer.Deserialize<List<IRule<Cat>>>(fs);
+                list = AqlaSerializer.Serializer.Deserialize<List<IRule<Cat>>>(fs);
 
                 fs.Close();
             }

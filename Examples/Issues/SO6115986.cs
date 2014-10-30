@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -54,26 +54,26 @@ namespace Examples.Issues
     [TestFixture]
     public class SO6115986_WithAttributes
     {
-        [ProtoContract, ProtoInclude(1, typeof(YObject))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(YObject))]
         public interface IYObject
         {
             string X { get; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             int Z { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class YObject : IYObject
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string X { get; set; }
 
             int z;
             int IYObject.Z { get { return z; } set { z = value; } }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class D
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IYObject Y { get; set; }
         }
         [Test]

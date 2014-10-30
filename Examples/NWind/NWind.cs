@@ -6,14 +6,14 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using ProtoSharp.Core;
-using Serializer = ProtoBuf.Serializer;
+using Serializer = AqlaSerializer.Serializer;
 using Examples;
 using System.Diagnostics;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-/*namespace ProtoBuf.Meta
+/*namespace AqlaSerializer.Meta
 {
     public class TypeModel {
         public static RuntimeTypeModel Create() { return null; }
@@ -31,12 +31,12 @@ using ProtoBuf.Meta;
 }*/
 namespace DAL
 {
-    [ProtoContract, DataContract, Serializable]
+    [ProtoBuf.ProtoContract, DataContract, Serializable]
     public class Database
     {
-        public const DataFormat SubObjectFormat = DataFormat.Default;
+        public const ProtoBuf.DataFormat SubObjectFormat = ProtoBuf.DataFormat.Default;
 
-        [ProtoMember(1, DataFormat=Database.SubObjectFormat), Tag(1), DataMember(Order=1)]
+        [ProtoBuf.ProtoMember(1, DataFormat=Database.SubObjectFormat), Tag(1), DataMember(Order=1)]
         public List<Order> Orders { get; private set; }
 
         public Database()

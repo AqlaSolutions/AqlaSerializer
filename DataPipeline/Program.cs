@@ -4,31 +4,31 @@ using System.Collections.ObjectModel;
 using System.IO;
 using MiscUtil.Linq;
 using MiscUtil.Linq.Extensions;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace DataPipeline
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class Foo
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Bar { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class FooWrapperInMemory
     {
         public FooWrapperInMemory() { Data = new List<Foo>(); }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<Foo> Data { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class FooWrapperProducer
     {
         public FooWrapperProducer() { Data = new FooProducer(); }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public FooProducer Data { get; private set; }
     }
 

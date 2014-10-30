@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.IO;
 
 namespace Examples.Issues
@@ -9,16 +9,16 @@ namespace Examples.Issues
     [TestFixture]
     public class SO16797650
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public abstract class MessageBase
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string ErrorMessage { get; set; }
 
             public abstract int Type { get; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Echo : MessageBase
         {
             public const int ID = 1;
@@ -28,12 +28,12 @@ namespace Examples.Issues
                 get { return ID; }
             }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Message { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo : MessageBase { public override int Type { get { return 42; } } }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Bar : MessageBase { public override int Type { get { return 43; } } }
         [Test]
         public void AddSubtypeAtRuntime()

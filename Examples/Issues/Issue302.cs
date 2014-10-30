@@ -1,8 +1,8 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -30,10 +30,10 @@ namespace Examples.Issues
             Assert.AreEqual(StateEnum.Deleted, clone.Value, "Compile");
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public StateEnum Value { get; set; }
         }
 

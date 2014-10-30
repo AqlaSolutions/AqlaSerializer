@@ -4,11 +4,11 @@ using System.IO;
 using System.Reflection;
 using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Linq;
-using ProtoBuf.Meta.Data;
+using AqlaSerializer.Meta.Data;
 
-namespace ProtoBuf.unittest.Aqla
+namespace AqlaSerializer.unittest.Aqla
 {
     [TestFixture]
     public class ExportImportTypes

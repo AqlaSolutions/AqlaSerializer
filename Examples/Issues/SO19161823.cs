@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.IO;
 
 namespace Examples.Issues
@@ -35,10 +35,10 @@ namespace Examples.Issues
         }
 
 
-        [ProtoContract]
+        [SerializableType]
         public class Container
         {
-            [ProtoMember(1)]
+            [SerializableMember(1)]
             public IDummy Data { get; set; }
         }
 
@@ -47,19 +47,19 @@ namespace Examples.Issues
             public int Positive { get; set; }
         }
 
-        [ProtoContract]
+        [SerializableType]
         class DummySurrogate
         {
-            [ProtoMember(1)]
+            [SerializableMember(1)]
             public int Negative { get; set; }
 
-            [ProtoConverter]
+            [SurrogateConverter]
             public static IDummy From(DummySurrogate value)
             {
                 return value == null ? null : new Dummy { Positive = -value.Negative };
             }
 
-            [ProtoConverter]
+            [SurrogateConverter]
             public static DummySurrogate To(IDummy value)
             {
                 return value == null ? null : new DummySurrogate { Negative = -value.Positive };

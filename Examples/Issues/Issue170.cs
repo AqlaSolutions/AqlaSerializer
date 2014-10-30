@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Linq;
 using System;
 namespace Examples.Issues

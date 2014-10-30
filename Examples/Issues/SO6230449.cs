@@ -3,8 +3,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Collections.Generic;
 
 namespace Examples.Issues
@@ -12,10 +12,10 @@ namespace Examples.Issues
     [TestFixture]
     public class SO6230449
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }
         }
 

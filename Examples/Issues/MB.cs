@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Xml.Serialization;
 using System.Reflection.Emit;
 using System.Reflection;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace TestMediaBrowser
 {
@@ -18,15 +18,15 @@ namespace TestMediaBrowser
 
     enum Fur { smooth, fluffy }
 
-    [ProtoContract]
-    [ProtoInclude(10, typeof(Animal))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(10, typeof(Animal))]
     class Thing
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Age;
     }
-    [ProtoContract]
-    [ProtoInclude(10, typeof(Dog))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(10, typeof(Dog))]
     class Animal : Thing
     {
 
@@ -37,14 +37,14 @@ namespace TestMediaBrowser
             Weight = r.Next();
         }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         private int legs;
         public int Legs { get { return legs; } }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public int Weight { get; private set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Dog : Animal
     {
 
@@ -53,11 +53,11 @@ namespace TestMediaBrowser
         Fur i;
 #pragma warning restore 169
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public Fur Fur { get; set; }
         public string DontSaveMe { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class MisterNullable
     {
 
@@ -68,11 +68,11 @@ namespace TestMediaBrowser
             this.age = age;
         }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         int? age;
         public int? Age { get { return age; } }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public double? Weight { get; set; }
 
         public static void WriteNullable(MisterNullable ms, BinaryWriter bw)
@@ -85,33 +85,33 @@ namespace TestMediaBrowser
             }
         }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Listy
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<Animal> animals;
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public List<MisterNullable> nullables { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class DateTimeClass
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public DateTime Date { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Nesty
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int i;
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Nestor
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public Nesty nesty;
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public Nesty Nesty2 { get; set; }
     }
 
@@ -243,7 +243,7 @@ namespace TestMediaBrowser
         }
 
          */
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         [Serializable]
         public class DummyPersistanceObject : IEquatable<DummyPersistanceObject>
         {
@@ -259,9 +259,9 @@ namespace TestMediaBrowser
             {
                 return Bar1.GetHashCode() + 17 * (Bar2 ?? "").GetHashCode();
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Bar1 { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Bar2 { get; set; }
         }
 

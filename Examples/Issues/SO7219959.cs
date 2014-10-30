@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -41,10 +41,10 @@ namespace Examples.Issues
         }
 
 
-        [ProtoContract()]
+        [ProtoBuf.ProtoContract()]
         public class Child
         {
-            [ProtoMember(1, AsReference = true)] internal Parent Parent;
+            [ProtoBuf.ProtoMember(1, AsReference = true)] internal Parent Parent;
 
             private Child()
             {
@@ -55,10 +55,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract(SkipConstructor = true)]
+        [ProtoBuf.ProtoContract(SkipConstructor = true)]
         public class Parent
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             protected List<Child> m_Children;
 
             /// <summary>
@@ -69,7 +69,7 @@ namespace Examples.Issues
                 Initialize();
             }
 
-            [ProtoBeforeDeserialization] // could also use OnDeserializing
+            [ProtoBuf.ProtoBeforeDeserialization] // could also use OnDeserializing
             private void Initialize()
             {
                 m_Children = new List<Child>();
@@ -82,10 +82,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract()]
+        [ProtoBuf.ProtoContract()]
         public class Family
         {
-            [ProtoMember(1)] protected List<Parent> m_Parents;
+            [ProtoBuf.ProtoMember(1)] protected List<Parent> m_Parents;
 
             public void Add(Parent parent)
             {

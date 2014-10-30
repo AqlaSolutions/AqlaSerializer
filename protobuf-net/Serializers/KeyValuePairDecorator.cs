@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     /*
     sealed class KeyValuePairDecorator : IProtoSerializer

@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples.Issues
@@ -8,12 +8,12 @@ namespace Examples.Issues
     [TestFixture, Ignore("not sure we want to support this")]
     public class Issue70 {
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Strange // test entity
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Foo { get; set; } // test prop
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Bar { get; set; } // test prop
         }
 

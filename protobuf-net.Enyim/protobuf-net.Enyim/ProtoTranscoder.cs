@@ -1,13 +1,13 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using Enyim.Caching.Memcached;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace ProtoBuf.Caching.Enyim
+namespace AqlaSerializer.Caching.Enyim
 {
     /// <summary>
     /// Acts as a transcoder compatible with the "enyim" client, swapping

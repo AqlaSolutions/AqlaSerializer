@@ -2,10 +2,10 @@
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Collections;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Simple base class for supporting unexpected fields allowing
@@ -80,7 +80,7 @@ namespace ProtoBuf
         /// <param name="value">The value to append.</param>
         public static void AppendValue<TValue>(IExtensible instance, int tag, TValue value)
         {
-            AppendValue<TValue>(instance, tag, DataFormat.Default, value);
+            AppendValue<TValue>(instance, tag, BinaryDataFormat.Default, value);
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace ProtoBuf
         /// <param name="instance">The extensible object to append the value to.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="value">The value to append.</param>
-        public static void AppendValue<TValue>(IExtensible instance, int tag, DataFormat format, TValue value)
+        public static void AppendValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format, TValue value)
         {
             ExtensibleUtil.AppendExtendValue(RuntimeTypeModel.Default, instance, tag, format, value);
         }
@@ -111,7 +111,7 @@ namespace ProtoBuf
         /// <returns>The effective value of the field, or the default value if not found.</returns>
         public static TValue GetValue<TValue>(IExtensible instance, int tag)
         {
-            return GetValue<TValue>(instance, tag, DataFormat.Default);
+            return GetValue<TValue>(instance, tag, BinaryDataFormat.Default);
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace ProtoBuf
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <returns>The effective value of the field, or the default value if not found.</returns>
-        public static TValue GetValue<TValue>(IExtensible instance, int tag, DataFormat format)
+        public static TValue GetValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format)
         {
             TValue value;
             TryGetValue<TValue>(instance, tag, format, out value);
@@ -143,7 +143,7 @@ namespace ProtoBuf
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(IExtensible instance, int tag, out TValue value)
         {
-            return TryGetValue<TValue>(instance, tag, DataFormat.Default, out value);
+            return TryGetValue<TValue>(instance, tag, BinaryDataFormat.Default, out value);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace ProtoBuf
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <returns>True if data for the field was present, false otherwise.</returns>
-        public static bool TryGetValue<TValue>(IExtensible instance, int tag, DataFormat format, out TValue value)
+        public static bool TryGetValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format, out TValue value)
         {
             return TryGetValue<TValue>(instance, tag, format, false, out value);
         }
@@ -174,7 +174,7 @@ namespace ProtoBuf
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <param name="allowDefinedTag">Allow tags that are present as part of the definition; for example, to query unknown enum values.</param>
         /// <returns>True if data for the field was present, false otherwise.</returns>
-        public static bool TryGetValue<TValue>(IExtensible instance, int tag, DataFormat format, bool allowDefinedTag, out TValue value)
+        public static bool TryGetValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format, bool allowDefinedTag, out TValue value)
         {
             value = default(TValue);
             bool set = false;
@@ -201,7 +201,7 @@ namespace ProtoBuf
         /// <returns>An enumerator that yields each occurrence of the field.</returns>
         public static IEnumerable<TValue> GetValues<TValue>(IExtensible instance, int tag)
         {
-            return ExtensibleUtil.GetExtendedValues<TValue>(instance, tag, DataFormat.Default, false, false);
+            return ExtensibleUtil.GetExtendedValues<TValue>(instance, tag, BinaryDataFormat.Default, false, false);
         }
 
         /// <summary>
@@ -215,7 +215,7 @@ namespace ProtoBuf
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <returns>An enumerator that yields each occurrence of the field.</returns>
-        public static IEnumerable<TValue> GetValues<TValue>(IExtensible instance, int tag, DataFormat format)
+        public static IEnumerable<TValue> GetValues<TValue>(IExtensible instance, int tag, BinaryDataFormat format)
         {
             return ExtensibleUtil.GetExtendedValues<TValue>(instance, tag, format, false, false);
         }
@@ -234,7 +234,7 @@ namespace ProtoBuf
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <param name="allowDefinedTag">Allow tags that are present as part of the definition; for example, to query unknown enum values.</param>
         /// <returns>True if data for the field was present, false otherwise.</returns>
-        public static bool TryGetValue(TypeModel model, System.Type type, IExtensible instance, int tag, DataFormat format, bool allowDefinedTag, out object value)
+        public static bool TryGetValue(TypeModel model, System.Type type, IExtensible instance, int tag, BinaryDataFormat format, bool allowDefinedTag, out object value)
         {
             value = null;
             bool set = false;
@@ -260,7 +260,7 @@ namespace ProtoBuf
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <returns>An enumerator that yields each occurrence of the field.</returns>
-        public static IEnumerable GetValues(TypeModel model, System.Type type, IExtensible instance, int tag, DataFormat format)
+        public static IEnumerable GetValues(TypeModel model, System.Type type, IExtensible instance, int tag, BinaryDataFormat format)
         {
             return ExtensibleUtil.GetExtendedValues(model, type, instance, tag, format, false, false);
         }
@@ -278,7 +278,7 @@ namespace ProtoBuf
         /// <param name="instance">The extensible object to append the value to.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="value">The value to append.</param>
-        public static void AppendValue(TypeModel model, IExtensible instance, int tag, DataFormat format, object value)
+        public static void AppendValue(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format, object value)
         {
             ExtensibleUtil.AppendExtendValue(model, instance, tag, format, value);
         }

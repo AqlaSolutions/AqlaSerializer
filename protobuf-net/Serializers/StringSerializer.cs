@@ -2,7 +2,7 @@
 #if !NO_RUNTIME
 using System;
 
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -11,7 +11,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class StringSerializer : IProtoSerializer
     {
@@ -20,7 +20,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(string);
 #endif
-        public StringSerializer(ProtoBuf.Meta.TypeModel model)
+        public StringSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(string));

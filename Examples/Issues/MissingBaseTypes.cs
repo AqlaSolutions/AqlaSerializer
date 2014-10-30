@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,48 +12,48 @@ namespace Examples.Issues
     [TestFixture]
     public class MissingBaseTypes
     {
-        [ProtoContract]
-        [ProtoInclude(15, typeof(D))]
-        [ProtoInclude(16, typeof(B))]
-        [ProtoInclude(17, typeof(C))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(15, typeof(D))]
+        [ProtoBuf.ProtoInclude(16, typeof(B))]
+        [ProtoBuf.ProtoInclude(17, typeof(C))]
 
         public class A
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int DataA { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
 
         public class B : A
         {
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class C : A
         {
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class D : A
         {
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public int DataD { get; set; }
 
 
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public List<C> DataB { get; set; }
         }
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TestCase
         {
-            [ProtoMember(10)]
+            [ProtoBuf.ProtoMember(10)]
             public D DataD;
 
-            [ProtoMember(11)]
+            [ProtoBuf.ProtoMember(11)]
             public List<A> DataA;
 
         }

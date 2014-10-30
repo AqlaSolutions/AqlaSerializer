@@ -2,12 +2,12 @@
 using System;
 
 #if FEAT_IKVM
-using ProtoBuf;
+using AqlaSerializer;
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
-using ProtoBuf;
+using AqlaSerializer;
 
 #endif
 
@@ -72,8 +72,8 @@ namespace AqlaSerializer
         /// <summary>
         /// Gets or sets the data-format to be used when encoding this value.
         /// </summary>
-        public DataFormat DataFormat { get { return dataFormat; } set { dataFormat = value; } }
-        private DataFormat dataFormat;
+        public BinaryDataFormat DataFormat { get { return dataFormat; } set { dataFormat = value; } }
+        private BinaryDataFormat dataFormat;
 
         /// <summary>
         /// Gets the unique tag used to identify this member within the type.
@@ -222,7 +222,7 @@ namespace AqlaSerializer
 
     /// <summary>
     /// Declares a member to be used in protocol-buffer serialization, using
-    /// the given Tag and MemberName. This allows ProtoMemberAttribute usage
+    /// the given Tag and MemberName. This allows ProtoBuf.ProtoMemberAttribute usage
     /// even for partial classes where the individual members are not
     /// under direct control.
     /// A DataFormat may be used to optimise the serialization

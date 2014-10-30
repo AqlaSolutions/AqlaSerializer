@@ -4,23 +4,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO6174298
     {
-        [ProtoContract]
-        [ProtoInclude(10, typeof(BinaryNode))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(10, typeof(BinaryNode))]
         public class Node
         {
             public virtual int Count() { return 1; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BinaryNode : Node
         {
             public override int Count()
@@ -31,9 +31,9 @@ namespace Examples.Issues
                 return count;
 
             }
-            [ProtoMember(1, IsRequired = true)]
+            [ProtoBuf.ProtoMember(1, IsRequired = true)]
             public Node Left { get; set; }
-            [ProtoMember(2, IsRequired = true)]
+            [ProtoBuf.ProtoMember(2, IsRequired = true)]
             public Node Right { get; set; }
         }
 

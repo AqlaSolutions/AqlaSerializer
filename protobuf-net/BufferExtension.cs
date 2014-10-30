@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Provides a simple buffer-based implementation of an <see cref="IExtension">extension</see> object.

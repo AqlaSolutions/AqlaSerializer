@@ -2,7 +2,7 @@
 
 using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System;
 using System.Runtime.Serialization;
 

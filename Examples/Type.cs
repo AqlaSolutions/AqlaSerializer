@@ -3,18 +3,18 @@ using System;
 using System.Data.SqlClient;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
     [TestFixture]
     public class TypeTests
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MyModel
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Type Type { get; set; }
         }
 

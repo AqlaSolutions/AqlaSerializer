@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace protobuf_net.Enyim.Tests
+namespace AqlaSerializer_net.Enyim.Tests
 {
     class Program
     {

@@ -1,19 +1,19 @@
 ﻿
-using ProtoBuf;
+using AqlaSerializer;
 namespace SO11895998
 {
-    [ProtoContract]
-    [ProtoInclude(2, typeof(Bar))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(2, typeof(Bar))]
     public abstract class Foo
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class Bar : Foo
     {
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public string Name { get; set; }
     }
 }

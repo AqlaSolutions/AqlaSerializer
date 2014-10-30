@@ -1,14 +1,14 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class RecursiveObject
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public RecursiveObject Yeuch { get; set; }
     }
     [TestFixture]

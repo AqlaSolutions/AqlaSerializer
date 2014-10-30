@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -38,31 +38,31 @@ namespace Examples
             Assert.AreEqual(typeof(Creditor), clone[2].GetType());
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Data
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Party> Parties { get { return parties; } }
 
             private readonly List<Party> parties = new List<Party>();
         }
 
-        [ProtoContract]
-        [ProtoInclude(1, typeof(Party))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(Party))]
         public class BaseClass
         {
         }
-        [ProtoContract]
-        [ProtoInclude(1, typeof(Creditor))]
-        [ProtoInclude(2, typeof(Debtor))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(Creditor))]
+        [ProtoBuf.ProtoInclude(2, typeof(Debtor))]
         public class Party : BaseClass
         {
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Creditor : Party
         {
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Debtor : Party
         {
         }

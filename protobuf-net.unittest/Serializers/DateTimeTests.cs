@@ -1,11 +1,11 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
-using ProtoBuf.unittest.Meta;
+using AqlaSerializer.unittest.Meta;
 
-namespace ProtoBuf.unittest.Serializers
+namespace AqlaSerializer.unittest.Serializers
 {
 
     [TestFixture]

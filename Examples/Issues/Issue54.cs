@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue54
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Test54
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Dictionary<float, List<int>> Lists { get; set; }
         }
 

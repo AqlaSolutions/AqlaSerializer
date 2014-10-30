@@ -2,7 +2,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using System;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -39,7 +39,7 @@ namespace Examples.Issues
         {   // make sure we don't get confused with different versions of protobuf-net
             if (args.Name.StartsWith("aqlaserializer, Version="))
             {
-                return typeof (ProtoContractAttribute).Assembly;
+                return typeof (ProtoBuf.ProtoContractAttribute).Assembly;
             }
             return null;
         }

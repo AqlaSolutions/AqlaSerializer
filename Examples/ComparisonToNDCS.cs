@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
 using NUnit.Framework.SyntaxHelpers;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {

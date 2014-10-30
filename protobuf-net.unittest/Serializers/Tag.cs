@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Serializers;
-namespace ProtoBuf.unittest.Serializers
+using AqlaSerializer.Serializers;
+namespace AqlaSerializer.unittest.Serializers
 {
     [TestFixture]
     public class Tag

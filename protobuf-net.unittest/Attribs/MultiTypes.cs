@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using System.IO;
-using ProtoBuf.unittest.Serializers;
+using AqlaSerializer.unittest.Serializers;
 
-namespace ProtoBuf.unittest
+namespace AqlaSerializer.unittest
 {
     [TestFixture]
     public class MultiTypeLookupTests
@@ -60,9 +60,9 @@ namespace ProtoBuf.unittest
         }
 
 
-        [ProtoContract]
-        [ProtoInclude(5, typeof(PropertyValue<int>))]
-        [ProtoInclude(6, typeof(PropertyValue<string>))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(5, typeof(PropertyValue<int>))]
+        [ProtoBuf.ProtoInclude(6, typeof(PropertyValue<string>))]
         /* etc known types */
         public abstract class PropertyValue
         {
@@ -71,15 +71,15 @@ namespace ProtoBuf.unittest
                 return new PropertyValue<T> { Name = name, Value = value };
             }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Name { get; set; }
 
             public abstract object UntypedValue { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public sealed class PropertyValue<T> : PropertyValue
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public T Value { get; set; }
 
             public override object UntypedValue

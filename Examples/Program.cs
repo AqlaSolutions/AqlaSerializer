@@ -5,8 +5,8 @@ using System.IO;
 using System.Text;
 using DAL;
 using Examples.SimpleStream;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {

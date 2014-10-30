@@ -3,8 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 
 namespace Examples.Issues
@@ -30,13 +30,13 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public abstract class ASurrogateBase
         {
             public abstract int X { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ASurrogate : ASurrogateBase
         {
             [ThreadStatic] // just in case...
@@ -63,14 +63,14 @@ namespace Examples.Issues
             {
                 HackyFlags |= 8;
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public override int X { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public A A { get; set; }
         }
         [Test]

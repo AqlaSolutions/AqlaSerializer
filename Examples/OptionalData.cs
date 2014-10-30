@@ -2,7 +2,7 @@
 
 using System.Diagnostics;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.ComponentModel;
 using System.IO;
 
@@ -84,42 +84,42 @@ namespace Examples
     {
         float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ImplicitDefaultZero : IOptionalData
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ExplicitDefaultZero : IOptionalData
     {
-        [ProtoMember(1), DefaultValue(0F)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(0F)]
         public float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class RequiredImplicitZero : IOptionalData
     {
-        [ProtoMember(1, IsRequired = true)]
+        [ProtoBuf.ProtoMember(1, IsRequired = true)]
         public float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class RequiredExplicitZero : IOptionalData
     {
-        [ProtoMember(1, IsRequired = true), DefaultValue(0F)]
+        [ProtoBuf.ProtoMember(1, IsRequired = true), DefaultValue(0F)]
         public float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ExplicitDefaultFive : IOptionalData
     {
         public ExplicitDefaultFive() { Value = 5F; }
-        [ProtoMember(1), DefaultValue(5F)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(5F)]
         public float Value { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ExplicitDefaultFivePrivateField : IOptionalData
     {
         public ExplicitDefaultFivePrivateField() { value = 5F; }
-        [ProtoMember(1), DefaultValue(5F)]
+        [ProtoBuf.ProtoMember(1), DefaultValue(5F)]
         private float value;
 
         float IOptionalData.Value
@@ -129,11 +129,11 @@ namespace Examples
         }
     }
     
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class RequiredExplicitFive : IOptionalData
     {
         public RequiredExplicitFive() {Value = 5F; }
-        [ProtoMember(1, IsRequired = true), DefaultValue(5F)]
+        [ProtoBuf.ProtoMember(1, IsRequired = true), DefaultValue(5F)]
         public float Value { get; set; }
     }
 }

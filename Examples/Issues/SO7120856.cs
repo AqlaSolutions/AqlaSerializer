@@ -3,7 +3,7 @@ using System;
 using System.Runtime.Serialization;
 using NUnit.Framework;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {

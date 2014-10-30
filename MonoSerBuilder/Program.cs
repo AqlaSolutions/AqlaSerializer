@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using System.Reflection;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace MonoSerBuilder
 {
@@ -21,7 +21,7 @@ namespace MonoSerBuilder
 
         static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
-            if (args.Name.StartsWith("aqlaserializer")) return typeof (ProtoBuf.Serializer).Assembly;
+            if (args.Name.StartsWith("aqlaserializer")) return typeof (AqlaSerializer.Serializer).Assembly;
             return null;
         }
     }

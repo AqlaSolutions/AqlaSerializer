@@ -6,7 +6,7 @@ using System.Collections.Generic;
 #endif
 using System.IO;
 using System.Text;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -17,7 +17,7 @@ using EndOfStreamException = System.ApplicationException;
 using OverflowException = System.ApplicationException;
 #endif
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// A stateful reader, used to read a protobuf stream. Typical usage would be (sequentially) to call
@@ -584,7 +584,7 @@ namespace ProtoBuf
             {
                 value = reader.model.Deserialize(key, value, reader, false);
             }
-            else if (type != null && reader.model.TryDeserializeAuxiliaryType(reader, DataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
+            else if (type != null && reader.model.TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
             {
                 // ok
             }
@@ -676,7 +676,7 @@ namespace ProtoBuf
                 wireType = WireType.None;
                 fieldNumber = 0;
             }
-            if (wireType == ProtoBuf.WireType.EndGroup)
+            if (wireType == AqlaSerializer.WireType.EndGroup)
             {
                 if (depth > 0) return 0; // spoof an end, but note we still set the field-number
                 throw new ProtoException("Unexpected end-group in source data; this usually means the source data is corrupt");
@@ -794,7 +794,7 @@ namespace ProtoBuf
                     depth--;
                     if (wireType == WireType.EndGroup && fieldNumber == originalFieldNumber)
                     { // we expect to exit in a similar state to how we entered
-                        wireType = ProtoBuf.WireType.None;
+                        wireType = AqlaSerializer.WireType.None;
                         return;
                     }
                     throw CreateWireTypeException();
@@ -1257,7 +1257,7 @@ namespace ProtoBuf
         /// additionally setting the wire-type for the next field if there is more data.
         /// This is used when decoding packed data.
         /// </summary>
-        public static bool HasSubValue(ProtoBuf.WireType wireType, ProtoReader source)
+        public static bool HasSubValue(AqlaSerializer.WireType wireType, ProtoReader source)
         {
             if (source == null) throw new ArgumentNullException("source");
             // check for virtual end of stream

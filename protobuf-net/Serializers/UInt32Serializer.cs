@@ -10,7 +10,7 @@ using System.Reflection;
 #endif
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class UInt32Serializer : IProtoSerializer
     {
@@ -19,7 +19,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(uint);
 #endif
-        public UInt32Serializer(ProtoBuf.Meta.TypeModel model)
+        public UInt32Serializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(uint));

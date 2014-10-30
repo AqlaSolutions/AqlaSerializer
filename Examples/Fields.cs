@@ -6,7 +6,7 @@ using System.Text;
 using NUnit.Framework;
 using System.Runtime.Serialization;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -67,10 +67,10 @@ namespace Examples
         }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class ProtoWithFields
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         private int foo;
         public int Foo
         {
@@ -78,7 +78,7 @@ namespace Examples
             set { foo = value; }
         }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         private string bar;
         public string Bar
         {

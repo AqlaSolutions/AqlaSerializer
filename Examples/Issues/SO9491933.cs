@@ -3,30 +3,30 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO9491933
     {
-        [ProtoContract]
-        [ProtoInclude(6, typeof(B))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(6, typeof(B))]
         public class A
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Property1 { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int? Property2 { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public int Property3 { get; set; }
 
-            [ProtoMember(4, DynamicType = true)]
+            [ProtoBuf.ProtoMember(4, DynamicType = true)]
             public object Property4 { get; set; }
 
-            [ProtoMember(5, DynamicType = true)]
+            [ProtoBuf.ProtoMember(5, DynamicType = true)]
             public object Property5 { get; set; }
 
             public override int GetHashCode()
@@ -49,7 +49,7 @@ namespace Examples.Issues
 
         public class B : A
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Property6 { get; set; }
 
             public override bool Equals(object obj)

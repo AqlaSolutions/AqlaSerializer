@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 
 namespace Examples.Issues
@@ -29,10 +29,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MyArgs
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value;
         }
     }

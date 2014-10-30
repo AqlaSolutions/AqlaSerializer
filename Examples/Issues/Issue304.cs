@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.ComponentModel;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -22,10 +22,10 @@ message Foo {
 
         );
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [DefaultValue(true), ProtoMember(1)]
+            [DefaultValue(true), ProtoBuf.ProtoMember(1)]
             public bool Bar { get; set; }
         }
     }

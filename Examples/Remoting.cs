@@ -6,17 +6,17 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
-    [ProtoContract, Serializable]
+    [ProtoBuf.ProtoContract, Serializable]
     class RemotingEntity : ISerializable
     {
         public RemotingEntity()
         {}
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
 
         public bool WasSerialized { get; private set; }
@@ -34,13 +34,13 @@ namespace Examples
         }
     }
 
-    [ProtoContract, Serializable]
+    [ProtoBuf.ProtoContract, Serializable]
     class BrokenSerEntity : ISerializable
     {
         public BrokenSerEntity()
         { }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
@@ -52,13 +52,13 @@ namespace Examples
             Serializer.Merge<BrokenSerEntity>(info, this);
         }
     }
-    [ProtoContract, Serializable]
+    [ProtoBuf.ProtoContract, Serializable]
     class BrokenDeserEntity : ISerializable
     {
         public BrokenDeserEntity()
         { }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
 
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)

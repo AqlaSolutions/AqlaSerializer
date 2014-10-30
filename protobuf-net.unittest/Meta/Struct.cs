@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Serializers;
-using ProtoBuf.unittest.Serializers;
-using ProtoBuf.Compiler;
+using AqlaSerializer.Serializers;
+using AqlaSerializer.unittest.Serializers;
+using AqlaSerializer.Compiler;
 using System.IO;
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     public struct CustomerStruct
     {
@@ -22,7 +22,7 @@ namespace ProtoBuf.unittest.Meta
         [Test]
         public void RunStructDesrializerForEmptyStream()
         {
-            var model = ProtoBuf.Meta.TypeModel.Create();
+            var model = AqlaSerializer.Meta.TypeModel.Create();
             var head = new TypeSerializer(model, typeof(CustomerStruct),
                 new int[] { 1, 2 },
                 new IProtoSerializer[] {
@@ -46,7 +46,7 @@ namespace ProtoBuf.unittest.Meta
         [Test]
         public void GenerateTypeSerializer()
         {
-            var model = ProtoBuf.Meta.TypeModel.Create();
+            var model = AqlaSerializer.Meta.TypeModel.Create();
             var head = new TypeSerializer(model, typeof(CustomerStruct),
                 new int[] { 1, 2 },
                 new IProtoSerializer[] {

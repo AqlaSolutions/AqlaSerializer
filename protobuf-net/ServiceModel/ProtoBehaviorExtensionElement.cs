@@ -3,7 +3,7 @@
 using System;
 using System.ServiceModel.Configuration;
 
-namespace ProtoBuf.ServiceModel
+namespace AqlaSerializer.ServiceModel
 {
     /// <summary>
     /// Configuration element to swap out DatatContractSerilaizer with the XmlProtoSerializer for a given endpoint.

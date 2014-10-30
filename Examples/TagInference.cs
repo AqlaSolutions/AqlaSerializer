@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.Serialization;
 using NUnit.Framework;
 
 namespace Examples
 {
-    [ProtoContract(InferTagFromName=true)]
+    [ProtoBuf.ProtoContract(InferTagFromName=true)]
     [DataContract]
     class TagData
     {
@@ -26,7 +26,7 @@ namespace Examples
         public int Charlie { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     [DataContract]
     class TagDataWithoutInfer
     {
@@ -43,19 +43,19 @@ namespace Examples
         public int Charlie { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TagDataExpected
     {
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public int Bravo { get; set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public int Delta { get; set; }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Zulu { get; set; }
 
-        [ProtoMember(4)]
+        [ProtoBuf.ProtoMember(4)]
         public int Charlie { get; set; }
     }
 
@@ -112,7 +112,7 @@ namespace Examples
             Assert.AreEqual("abc", clone.Y);
         }
 
-        [ProtoContract(ImplicitFields = ImplicitFields.PublicFieldsAndProperties)]
+        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllPublic)]
         public class WithImplicitFields
         {
             public int X { get; set; }

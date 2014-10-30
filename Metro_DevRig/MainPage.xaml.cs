@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml.Serialization;
-using ProtoBuf;
+using AqlaSerializer;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -164,11 +164,11 @@ namespace Metro_DevRig
         }
     }
 }
-[ProtoContract]
+[ProtoBuf.ProtoContract]
 public class MyDto
 {
-    [ProtoMember(1)]
+    [ProtoBuf.ProtoMember(1)]
     public string Foo { get; set; }
-    [ProtoMember(2)]
+    [ProtoBuf.ProtoMember(2)]
     public int Bar { get; set; }
 }

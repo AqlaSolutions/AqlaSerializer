@@ -10,7 +10,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Provides protobuf serialization support for a number of types
@@ -41,7 +41,7 @@ namespace ProtoBuf.Meta
             return type;
 #endif
         }
-        private WireType GetWireType(ProtoTypeCode code, DataFormat format, ref Type type, out int modelKey)
+        private WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format, ref Type type, out int modelKey)
         {
             modelKey = -1;
             if (Helpers.IsEnum(type))
@@ -53,7 +53,7 @@ namespace ProtoBuf.Meta
             {
                 case ProtoTypeCode.Int64:
                 case ProtoTypeCode.UInt64:
-                    return format == DataFormat.FixedSize ? WireType.Fixed64 : WireType.Variant;
+                    return format == BinaryDataFormat.FixedSize ? WireType.Fixed64 : WireType.Variant;
                 case ProtoTypeCode.Int16:
                 case ProtoTypeCode.Int32:
                 case ProtoTypeCode.UInt16:
@@ -62,7 +62,7 @@ namespace ProtoBuf.Meta
                 case ProtoTypeCode.SByte:
                 case ProtoTypeCode.Byte:
                 case ProtoTypeCode.Char:
-                    return format == DataFormat.FixedSize ? WireType.Fixed32 : WireType.Variant;
+                    return format == BinaryDataFormat.FixedSize ? WireType.Fixed32 : WireType.Variant;
                 case ProtoTypeCode.Double:
                     return WireType.Fixed64;
                 case ProtoTypeCode.Single:
@@ -95,7 +95,7 @@ namespace ProtoBuf.Meta
         ///  - IEnumerable sequences of any type handled by TrySerializeAuxiliaryType
         ///  
         /// </summary>
-        internal bool TrySerializeAuxiliaryType(ProtoWriter writer, Type type, DataFormat format, int tag, object value, bool isInsideList, bool isRoot)
+        internal bool TrySerializeAuxiliaryType(ProtoWriter writer, Type type, BinaryDataFormat format, int tag, object value, bool isInsideList, bool isRoot)
         {
             if (type == null) { type = value.GetType(); }
 
@@ -193,7 +193,7 @@ namespace ProtoBuf.Meta
             {
                 Serialize(key, value, writer, isRoot);
             }
-            else if (!TrySerializeAuxiliaryType(writer, type, DataFormat.Default, Serializer.ListItemTag, value, false, isRoot))
+            else if (!TrySerializeAuxiliaryType(writer, type, BinaryDataFormat.Default, Serializer.ListItemTag, value, false, isRoot))
             {
                 ThrowUnexpectedType(type);
             }
@@ -362,7 +362,7 @@ namespace ProtoBuf.Meta
                 }
                 else
                 {
-                    if (!(TryDeserializeAuxiliaryType(reader, DataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, true) || len == 0))
+                    if (!(TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, true) || len == 0))
                     {
                         TypeModel.ThrowUnexpectedType(type); // throws
                     }
@@ -735,7 +735,7 @@ namespace ProtoBuf.Meta
                 return Deserialize(key, value, reader, isRoot);
             }
             // this returns true to say we actively found something, but a value is assigned either way (or throws)
-            TryDeserializeAuxiliaryType(reader, DataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, noAutoCreate, false, isRoot);
+            TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, noAutoCreate, false, isRoot);
             return value;
         }
 #endif
@@ -948,7 +948,7 @@ namespace ProtoBuf.Meta
         }
 
 #if !FEAT_IKVM
-        private bool TryDeserializeList(TypeModel model, ProtoReader reader, DataFormat format, int tag, Type listType, Type itemType, bool isRoot, ref object value)
+        private bool TryDeserializeList(TypeModel model, ProtoReader reader, BinaryDataFormat format, int tag, Type listType, Type itemType, bool isRoot, ref object value)
         {
             bool isList;
             MethodInfo addMethod = TypeModel.ResolveListAdd(model, listType, itemType, out isList);
@@ -1093,7 +1093,7 @@ namespace ProtoBuf.Meta
         ///  - basic values; individual int / string / Guid / etc
         ///  - IList sets of any type handled by TryDeserializeAuxiliaryType
         /// </summary>
-        internal bool TryDeserializeAuxiliaryType(ProtoReader reader, DataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, bool isRoot)
+        internal bool TryDeserializeAuxiliaryType(ProtoReader reader, BinaryDataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, bool isRoot)
         {
             if (type == null) throw new ArgumentNullException("type");
             Type itemType = null;
@@ -1339,7 +1339,7 @@ namespace ProtoBuf.Meta
         /// </summary>
         public T DeepClone<T>(T genericValue)
         {
-            return (T)DeepClone(value: genericValue);
+            return (T)DeepClone(value: (object)genericValue);
         }
 #endif
         /// <summary>
@@ -1383,7 +1383,7 @@ namespace ProtoBuf.Meta
                 Helpers.BlockCopy(orig, 0, clone, 0, orig.Length);
                 return clone;
             }
-            else if (GetWireType(Helpers.GetTypeCode(type), DataFormat.Default, ref type, out modelKey) != WireType.None && modelKey < 0)
+            else if (GetWireType(Helpers.GetTypeCode(type), BinaryDataFormat.Default, ref type, out modelKey) != WireType.None && modelKey < 0)
             {   // immutable; just return the original value
                 return value;
             }
@@ -1391,7 +1391,7 @@ namespace ProtoBuf.Meta
             {
                 using (ProtoWriter writer = new ProtoWriter(ms, this, null))
                 {
-                    if (!TrySerializeAuxiliaryType(writer, type, DataFormat.Default, Serializer.ListItemTag, value, false, true)) ThrowUnexpectedType(type);
+                    if (!TrySerializeAuxiliaryType(writer, type, BinaryDataFormat.Default, Serializer.ListItemTag, value, false, true)) ThrowUnexpectedType(type);
                     writer.Close();
                 }
                 ms.Position = 0;
@@ -1400,7 +1400,7 @@ namespace ProtoBuf.Meta
                 {
                     reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
                     value = null; // start from scratch!
-                    TryDeserializeAuxiliaryType(reader, DataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, true);
+                    TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, true);
                     return value;
                 }
                 finally

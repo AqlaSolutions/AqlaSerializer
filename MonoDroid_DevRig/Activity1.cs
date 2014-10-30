@@ -10,7 +10,7 @@ using Android.Widget;
 using Android.OS;
 using MonoDto;
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Diagnostics;
 
 namespace MonoDroid_DevRig

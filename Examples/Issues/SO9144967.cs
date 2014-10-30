@@ -2,20 +2,20 @@
 using System.Linq;
 using System.Net;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO9144967
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class HasBlobs
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public byte[] Foo { get; set; }
-            [ProtoMember(2, OverwriteList = true)]
+            [ProtoBuf.ProtoMember(2, OverwriteList = true)]
             public byte[] Bar{ get; set; }
 
             public HasBlobs()

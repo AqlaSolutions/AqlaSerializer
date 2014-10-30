@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 using System.IO;
 using System.Text;
@@ -199,21 +199,21 @@ namespace Examples
 
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class IMLTestRoot
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public IMLRoot Root {get; set;}
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class IMLTestRoots
     {
         public IMLTestRoots() {Roots = new List<IMLRoot>();}
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<IMLRoot> Roots { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class IMLTest
     {
         public IMLTest()
@@ -221,30 +221,30 @@ namespace Examples
             Parents = new List<IMLParent>();
             Children = new List<IMLChild>();
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public IMLChild Child { get; set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public IMLParent Parent { get; set; }
 
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public List<IMLParent> Parents { get; private set; }
 
-        [ProtoMember(4)]
+        [ProtoBuf.ProtoMember(4)]
         public List<IMLChild> Children { get; private set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class IMLChild : IMLParent
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int ChildProperty { get; set; }
     }
 
-    [ProtoContract]
-    [ProtoInclude(2, typeof(IMLChild))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(2, typeof(IMLChild))]
     abstract class IMLParent : IMLRoot
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int ParentProperty { get; set;}
     }
 

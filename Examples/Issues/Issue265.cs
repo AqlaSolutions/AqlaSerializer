@@ -2,8 +2,8 @@
 using System;
 using System.Diagnostics;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -12,17 +12,17 @@ namespace Examples.Issues
     {
         public enum E
         {
-            [ProtoEnum(Value = 3)]
+            [ProtoBuf.ProtoEnum(Value = 3)]
             V0 = 0,
-            [ProtoEnum(Value = 4)]
+            [ProtoBuf.ProtoEnum(Value = 4)]
             V1 = 1,
-            [ProtoEnum(Value = 5)]
+            [ProtoBuf.ProtoEnum(Value = 5)]
             V2 = 2,
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public E[] Bar { get; set; }
         }
 

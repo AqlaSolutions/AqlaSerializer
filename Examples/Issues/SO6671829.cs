@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
 
 namespace Examples.Issues
@@ -43,21 +43,21 @@ namespace Examples.Issues
         class hierarchy
         {
 
-            [ProtoContract]
+            [ProtoBuf.ProtoContract]
             public class A
             {
-                [ProtoMember(1)]
+                [ProtoBuf.ProtoMember(1)]
                 public string prop1 { get; set; }
             }
 
-            [ProtoContract]
+            [ProtoBuf.ProtoContract]
             public class B : A
             {
                 public B()
                 {
                 }
 
-                [ProtoMember(1)]
+                [ProtoBuf.ProtoMember(1)]
                 public string prop2 { get; set; }
 
                 public override string ToString()
@@ -70,13 +70,13 @@ namespace Examples.Issues
 
         class flat
         {
-            [ProtoContract]
+            [ProtoBuf.ProtoContract]
             public class B
             {
-                [ProtoMember(1)]
+                [ProtoBuf.ProtoMember(1)]
                 public string prop1 { get; set; }
 
-                [ProtoMember(2)]
+                [ProtoBuf.ProtoMember(2)]
                 public string prop2 { get; set; }
 
                 public override string ToString()

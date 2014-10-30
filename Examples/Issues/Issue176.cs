@@ -8,7 +8,7 @@ using DAL;
 
 using NUnit.Framework;
 
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Data.Linq;
 using System.Collections;
 

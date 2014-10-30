@@ -53,11 +53,11 @@ namespace Nuxleus.Messaging {
             }
         }
         public Stream Serialize<T>(Stream stream, T obj) where T : class, new() {
-            ProtoBuf.Serializer.Serialize<T>(stream, obj);
+            AqlaSerializer.Serializer.Serialize<T>(stream, obj);
             return stream;
         }
         public T Deserialize<T>(Stream stream) where T : class, new() {
-            return ProtoBuf.Serializer.Deserialize<T>(stream);
+            return AqlaSerializer.Serializer.Deserialize<T>(stream);
         }
     }
 }

@@ -1,15 +1,15 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Net;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class WithIP
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public IPAddress Address { get; set; }
     }
 

@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -27,19 +27,19 @@ namespace Examples.Issues
              Assert.IsInstanceOfType(typeof(GPSReading), clone[0]);
              Assert.IsInstanceOfType(typeof(TemperatureReading), clone[1]);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public abstract class WebSyncedObject
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public DateTime SystemTime { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public bool TimeSynchronized { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public ulong RelativeTime { get; set; }
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public Guid BootID { get; set; }
 
             protected WebSyncedObject()
@@ -49,35 +49,35 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class GPSReading : WebSyncedObject
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public DateTime SatelliteTime { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public decimal Latitude { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public decimal Longitude { get; set; }
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public int NumSatellites { get; set; }
 
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public decimal SpeedKM { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TemperatureReading : WebSyncedObject
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public decimal Temperature { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int NodeID { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public string ProbeIdentifier { get; set; }
         }
     }

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -41,7 +41,7 @@ namespace Examples.Issues
         public string Serialize(object t)
         {
             var memoryStream = new MemoryStream();
-            ProtoBuf.Serializer.Serialize(memoryStream, t);
+            AqlaSerializer.Serializer.Serialize(memoryStream, t);
             return Convert.ToBase64String(memoryStream.ToArray());
         }
 
@@ -49,7 +49,7 @@ namespace Examples.Issues
         {
             var bytes = Convert.FromBase64String(value);
             var stream = new MemoryStream(bytes);
-            return ProtoBuf.Serializer.NonGeneric.Deserialize(targetType, stream);
+            return AqlaSerializer.Serializer.NonGeneric.Deserialize(targetType, stream);
         }
 
         [Test]

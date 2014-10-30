@@ -2,16 +2,16 @@
 using System.IO;
 using System.Threading;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.Serialization;
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class CallbackSimple : ICallbackTest
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bar { get; set;}
 
         [OnDeserialized]
@@ -27,8 +27,8 @@ namespace Examples
     }
 
     
-    [ProtoContract]
-    [ProtoInclude(1, typeof(TestInheritedImplementedAtRootDerived))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(1, typeof(TestInheritedImplementedAtRootDerived))]
     abstract class TestInheritedImplementedAtRoot : ICallbackTest
     {
         
@@ -47,7 +47,7 @@ namespace Examples
         public string History { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TestInheritedImplementedAtRootDerived : TestInheritedImplementedAtRoot
     {
         protected override string BarCore
@@ -55,12 +55,12 @@ namespace Examples
             get { return Bar; }
             set { Bar = value; }
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bar { get; set; }
     }
 
-    [ProtoContract]
-    [ProtoInclude(1, typeof (TestInheritedVirtualAtRootDerived))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(1, typeof (TestInheritedVirtualAtRootDerived))]
     internal abstract class TestInheritedVirtualAtRoot : ICallbackTest
     {
 
@@ -83,7 +83,7 @@ namespace Examples
         public string History { get; protected set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TestInheritedVirtualAtRootDerived : TestInheritedVirtualAtRoot
     {
         protected override string BarCore
@@ -91,7 +91,7 @@ namespace Examples
             get { return Bar; }
             set { Bar = value; }
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bar { get; set; }
 
         protected override void OnDeserialized() {History += ";OnDeserialized";}
@@ -100,31 +100,31 @@ namespace Examples
         protected override void OnSerializing() { History += ";OnSerializing"; }
     }
 
-    [ProtoContract]
-    [ProtoInclude(1, typeof(TestInheritedVirtualAtRootDerivedProtoAttribs))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(1, typeof(TestInheritedVirtualAtRootDerivedProtoAttribs))]
     internal abstract class TestInheritedVirtualAtRootProtoAttribs : ICallbackTest
     {
 
         protected abstract string BarCore { get; set; }
         string ICallbackTest.Bar { get { return BarCore; } set { BarCore = value; } }
 
-        [ProtoAfterDeserialization]
+        [ProtoBuf.ProtoAfterDeserialization]
         protected abstract void OnDeserialized();
 
-        [ProtoBeforeDeserialization]
+        [ProtoBuf.ProtoBeforeDeserialization]
         protected abstract void OnDeserializing();
 
-        [ProtoAfterSerialization]
+        [ProtoBuf.ProtoAfterSerialization]
         protected abstract void OnSerialized();
 
-        [ProtoBeforeSerialization]
+        [ProtoBuf.ProtoBeforeSerialization]
         protected abstract void OnSerializing();
 
         protected TestInheritedVirtualAtRootProtoAttribs() { History = "ctor"; }
         public string History { get; protected set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TestInheritedVirtualAtRootDerivedProtoAttribs : TestInheritedVirtualAtRootProtoAttribs
     {
         protected override string BarCore
@@ -132,7 +132,7 @@ namespace Examples
             get { return Bar; }
             set { Bar = value; }
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bar { get; set; }
 
         protected override void OnDeserialized() { History += ";OnDeserialized"; }
@@ -143,8 +143,8 @@ namespace Examples
 
 
 
-    [ProtoContract]
-    [ProtoInclude(1, typeof(TestInheritedImplementedAtChildDerived))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(1, typeof(TestInheritedImplementedAtChildDerived))]
     abstract class TestInheritedImplementedAtChild : ICallbackTest
     {
 
@@ -155,7 +155,7 @@ namespace Examples
         public string History { get; protected set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class TestInheritedImplementedAtChildDerived : TestInheritedImplementedAtChild
     {
         [OnDeserialized]
@@ -172,7 +172,7 @@ namespace Examples
             get { return Bar; }
             set { Bar = value; }
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Bar { get; set; }
     }
 
@@ -258,13 +258,13 @@ namespace Examples
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DuplicateCallbacks
         {
-            [ProtoBeforeSerialization]
+            [ProtoBuf.ProtoBeforeSerialization]
             void Foo() {}
 
-            [ProtoBeforeSerialization]
+            [ProtoBuf.ProtoBeforeSerialization]
             void Bar() { }
         }
 
@@ -364,19 +364,19 @@ namespace Examples
 #endif
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CallbackWrapper
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public CallbackWithNoContext A { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public CallbackWithProtoContext B { get; set; }
 #if REMOTING
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public CallbackWithRemotingContext C { get; set; }
 #endif
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CallbackWithNoContext
         {
             [OnDeserialized]
@@ -384,10 +384,10 @@ namespace Examples
             {}
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CallbackWithProtoContext
         {
-            [ProtoAfterDeserialization]
+            [ProtoBuf.ProtoAfterDeserialization]
             public void OnDeserialized(SerializationContext context)
             {
                 ReadState = context.Context;
@@ -402,7 +402,7 @@ namespace Examples
         }
 
 #if REMOTING
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CallbackWithRemotingContext
         {
             [OnDeserialized]
@@ -410,7 +410,7 @@ namespace Examples
             {
                 ReadState = context.Context;
             }
-            [ProtoAfterSerialization]
+            [ProtoBuf.ProtoAfterSerialization]
             public void OnSerialized(StreamingContext context)
             {
                 WriteState = context.Context;
@@ -420,7 +420,7 @@ namespace Examples
         }
 #endif
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public struct CallbackStructSimple : ICallbackTest
         {
             public static int BeforeSerializeCount
@@ -433,7 +433,7 @@ namespace Examples
             }
 
             private static int beforeSer, afterSer;
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Bar { get; set; }
 
             [OnDeserialized]
@@ -454,10 +454,10 @@ namespace Examples
             public string History { get; private set; }
         }
 
-        [ProtoContract] // this only exists for me to compare the IL to CallbackStructSimple
+        [ProtoBuf.ProtoContract] // this only exists for me to compare the IL to CallbackStructSimple
         public struct CallbackStructSimpleNoCallbacks
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Bar { get; set; }
         }
 

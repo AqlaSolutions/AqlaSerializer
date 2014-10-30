@@ -3,81 +3,81 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Linq;
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Node
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Key { get; set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public Node[] Nodes { get; set; }        
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Prim
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string[] Values { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ArrayArray
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string[][] Values { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ArrayList
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<string>[] Values { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ListArray
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<string[]> Values { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class ListList
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<List<string>> Values { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class MultiDim
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int[,] Values { get; set; }
     }
 
-    [ProtoContract(SkipConstructor=false)]
+    [ProtoBuf.ProtoContract(SkipConstructor=false)]
     public class WithAndWithoutOverwrite
     {
-        [ProtoMember(1, OverwriteList=false)]
+        [ProtoBuf.ProtoMember(1, OverwriteList=false)]
         public int[] Append = { 1, 2, 3 };
 
-        [ProtoMember(2, OverwriteList=true)]
+        [ProtoBuf.ProtoMember(2, OverwriteList=true)]
         public int[] Overwrite = { 4, 5, 6 };
     }
-    [ProtoContract(SkipConstructor=true)]
+    [ProtoBuf.ProtoContract(SkipConstructor=true)]
     public class WithSkipConstructor
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int[] Values = { 1, 2, 3 };
     }
 
     [TestFixture]
     public class ArrayTests
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Foo { }
         [Test]
         public void DeserializeNakedArray()
@@ -292,24 +292,24 @@ namespace Examples
                 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         internal class Tst
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int ValInt
             {
                 get;
                 set;
             }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public byte[] ArrayData
             {
                 get;
                 set;
             }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public string Str1
             {
                 get;

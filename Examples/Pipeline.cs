@@ -4,8 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -139,11 +139,11 @@ message EnumWrapper {
             Assert.AreEqual(value, db.OrderReader.ValueTotal);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DatabaseReader
         {
             public DatabaseReader() { OrderReader = new OrderReader(); }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public OrderReader OrderReader { get; private set; }
         }
 
@@ -193,27 +193,27 @@ message EnumWrapper {
         }
     }
 
-    [ProtoContract(Name = "EnumParentWrapper")]
+    [ProtoBuf.ProtoContract(Name = "EnumParentWrapper")]
     class EnumParentGroupWrapper
     {
         public EnumParentGroupWrapper() { Wrapper = new EnumWrapper(); }
-        [ProtoMember(1, DataFormat = DataFormat.Group)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
         public EnumWrapper Wrapper { get; private set; }
     }
 
-    [ProtoContract(Name = "EnumParentWrapper")]
+    [ProtoBuf.ProtoContract(Name = "EnumParentWrapper")]
     class EnumParentStandardWrapper
     {
         public EnumParentStandardWrapper() { Wrapper = new EnumWrapper(); }
-        [ProtoMember(1, DataFormat = DataFormat.Default)]
+        [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
         public EnumWrapper Wrapper { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class EnumWrapper
     {
         public EnumWrapper() { SubData = new EnumData(); }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public EnumData SubData { get; private set; }
     }
 

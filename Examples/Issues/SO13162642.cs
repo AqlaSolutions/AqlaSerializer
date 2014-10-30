@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +22,7 @@ namespace Examples.Issues
 
             using (var f = File.OpenRead("Data.protobuf"))
             {
-                var dtos = Serializer.DeserializeItems<DTO>(f, ProtoBuf.PrefixStyle.Base128, 1);
+                var dtos = Serializer.DeserializeItems<DTO>(f, AqlaSerializer.PrefixStyle.Base128, 1);
                 Console.WriteLine(dtos.Count());
             }
             Console.Read();
@@ -43,7 +43,7 @@ namespace Examples.Issues
 
             using (var f = File.OpenRead("Data.protobuf"))
             {
-                var dtos = Serializer.DeserializeItems<DTO>(f, ProtoBuf.PrefixStyle.Base128, 1);
+                var dtos = Serializer.DeserializeItems<DTO>(f, AqlaSerializer.PrefixStyle.Base128, 1);
                 Console.WriteLine(dtos.Count());
             }
             Console.Read();
@@ -64,10 +64,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DTO
         {
-            [ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public byte[] Data { get; set; }
         }
     }

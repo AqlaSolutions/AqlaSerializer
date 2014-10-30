@@ -1,8 +1,8 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -25,7 +25,7 @@ namespace Examples.Issues
 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public abstract class FooData
         {
             public static FooData<T> Create<T>(T value)
@@ -35,10 +35,10 @@ namespace Examples.Issues
             public abstract Type ItemType { get; }
             public abstract object ValueUntyped { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class FooData<T> : FooData
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public T Value { get; set; }
             
             public override Type ItemType
@@ -51,7 +51,7 @@ namespace Examples.Issues
                 set { Value = (T) value; }
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SomeOtherType {}
     }
 }

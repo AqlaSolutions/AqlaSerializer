@@ -1,9 +1,9 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 using System;
-using ProtoBuf.Serializers;
+using AqlaSerializer.Serializers;
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Represents an inherited type in a type hierarchy.
@@ -48,7 +48,7 @@ namespace ProtoBuf.Meta
         /// message) for the derived dype.</param>
         /// <param name="derivedType">The sub-type to be considered.</param>
         /// <param name="format">Specific encoding style to use; in particular, Grouped can be used to avoid buffering, but is not the default.</param>
-        public SubType(int fieldNumber, MetaType derivedType, DataFormat format)
+        public SubType(int fieldNumber, MetaType derivedType, BinaryDataFormat format)
         {
             if (derivedType == null) throw new ArgumentNullException("derivedType");
             if (fieldNumber <= 0) throw new ArgumentOutOfRangeException("fieldNumber");
@@ -57,9 +57,9 @@ namespace ProtoBuf.Meta
             this.dataFormat = format;
         }
 
-        private readonly DataFormat dataFormat;
+        private readonly BinaryDataFormat dataFormat;
 
-        internal DataFormat DataFormat { get { return dataFormat; } }
+        internal BinaryDataFormat DataFormat { get { return dataFormat; } }
 
         private IProtoSerializer serializer;
         internal IProtoSerializer Serializer
@@ -75,7 +75,7 @@ namespace ProtoBuf.Meta
         {
             // note the caller here is MetaType.BuildSerializer, which already has the sync-lock
             WireType wireType = WireType.String;
-            if(dataFormat == DataFormat.Group) wireType = WireType.StartGroup; // only one exception
+            if(dataFormat == BinaryDataFormat.Group) wireType = WireType.StartGroup; // only one exception
             
             IProtoSerializer ser = new SubItemSerializer(derivedType.Type, derivedType.GetKey(false, false), derivedType, false);
             return new TagDecorator(fieldNumber, wireType, false, ser);

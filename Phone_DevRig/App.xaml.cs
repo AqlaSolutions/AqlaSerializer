@@ -17,8 +17,8 @@ using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
 using System.IO;
 using System.Diagnostics;
-using ProtoBuf.Meta;
-using ProtoBuf;
+using AqlaSerializer.Meta;
+using AqlaSerializer;
 
 
 namespace Phone_DevRig
@@ -112,17 +112,17 @@ namespace Phone_DevRig
             }
             string s = small.Bar;
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class LargeType {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Foo {get;set;}
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Bar {get;set;}
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SmallType : Extensible {
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Bar {get;set;}
         }
         // Code to execute when the application is activated (brought to foreground)

@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -36,13 +36,13 @@ namespace Examples.Issues
         }
 
 
-        [ProtoContract, ProtoInclude(1, typeof(B))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(B))]
         public class A { }
-        [ProtoContract, ProtoInclude(1, typeof(C))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(C))]
         public class B : A { }
-        [ProtoContract, ProtoInclude(1, typeof(D))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(D))]
         public class C : B { }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class D : C { }
     }
 }

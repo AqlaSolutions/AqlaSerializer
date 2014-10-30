@@ -9,7 +9,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class UriDecorator : ProtoDecoratorBase
     {
@@ -18,7 +18,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(Uri);
 #endif
-        public UriDecorator(ProtoBuf.Meta.TypeModel model, IProtoSerializer tail)
+        public UriDecorator(AqlaSerializer.Meta.TypeModel model, IProtoSerializer tail)
             : base(tail)
         {
 #if FEAT_IKVM

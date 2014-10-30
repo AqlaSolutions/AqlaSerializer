@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -10,19 +10,19 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class SurrogateSerializer : IProtoTypeSerializer
     {
-        bool IProtoTypeSerializer.HasCallbacks(ProtoBuf.Meta.TypeModel.CallbackType callbackType) { return false; }
+        bool IProtoTypeSerializer.HasCallbacks(AqlaSerializer.Meta.TypeModel.CallbackType callbackType) { return false; }
 #if FEAT_COMPILER
-        void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, ProtoBuf.Meta.TypeModel.CallbackType callbackType) { }
+        void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, AqlaSerializer.Meta.TypeModel.CallbackType callbackType) { }
         void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx) { throw new NotSupportedException(); }
 #endif
         bool IProtoTypeSerializer.CanCreateInstance() { return false; }
 #if !FEAT_IKVM
         object IProtoTypeSerializer.CreateInstance(ProtoReader source) { throw new NotSupportedException(); }
-        void IProtoTypeSerializer.Callback(object value, ProtoBuf.Meta.TypeModel.CallbackType callbackType, SerializationContext context) { }
+        void IProtoTypeSerializer.Callback(object value, AqlaSerializer.Meta.TypeModel.CallbackType callbackType, SerializationContext context) { }
 #endif
 
         public bool ReturnsValue { get { return false; } }
@@ -68,7 +68,7 @@ namespace ProtoBuf.Serializers
                 paramTypes = m.GetParameters();
                 if(paramTypes.Length == 1 && paramTypes[0].ParameterType == from)
                 {
-                    if (AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "ProtoBuf.ProtoConverterAttribute") != null
+                    if (AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "AqlaSerializer.ProtoConverterAttribute") != null
                         || AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "AqlaSerializer.SurrogateConverterAttribute") != null)
                     {
                         op = m;

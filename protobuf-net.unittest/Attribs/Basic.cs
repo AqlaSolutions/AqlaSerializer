@@ -4,21 +4,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.Attribs
+namespace AqlaSerializer.unittest.Attribs
 {
     [TestFixture]
     public class Basic
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicContract
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Expected { get; set; }
 
-            [ProtoIgnore]
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoIgnore]
+            [ProtoBuf.ProtoMember(2)]
             public int Ignored { get; set; }
 
             public int NotExpected { get; set; }

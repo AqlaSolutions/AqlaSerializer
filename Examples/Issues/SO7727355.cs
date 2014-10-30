@@ -4,32 +4,32 @@ using System.Data;
 using System.IO;
 using System.Threading;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO7727355 // see http://stackoverflow.com/questions/7727355/no-parameterless-constructor-found
     {                      // and http://www.filejumbo.com/Download/899EB797CE084C7F
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public sealed class Web2PdfTest : WebEntityTest
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Prop1 { get; set; }
         }
 
-        [ProtoContract, ProtoInclude(20, typeof(Web2PdfTest))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(20, typeof(Web2PdfTest))]
         public abstract class WebEntityTest : EntityBaseTest
         {
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Prop2 { get; set; }
         }
 
-        [ProtoContract, ProtoInclude(10, typeof(WebEntityTest))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(10, typeof(WebEntityTest))]
         public abstract class EntityBaseTest
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public string Prop3 { get; set; }
         }
 

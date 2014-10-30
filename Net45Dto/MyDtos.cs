@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("SomeInventedAssembly")]
@@ -17,7 +17,7 @@ namespace DAL
 {
     static class Database
     {
-        public const DataFormat SubObjectFormat = DataFormat.Group;
+        public const ProtoBuf.DataFormat SubObjectFormat = ProtoBuf.DataFormat.Group;
 
         static Database()
         {
@@ -50,12 +50,12 @@ namespace DAL
     }
     enum AutoSync { OnInsert }
 
-    [ProtoContract, DataContract, Serializable]
+    [ProtoBuf.ProtoContract, DataContract, Serializable]
     internal class DatabaseCompat
     {
         public const bool MASTER_GROUP = false;
 
-        [ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
+        [ProtoBuf.ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
         [XmlArray]
         public List<OrderCompat> Orders { get; set; }
 
@@ -64,25 +64,25 @@ namespace DAL
             Orders = new List<OrderCompat>();
         }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public Fear.Confusion.Doubt.NestedInternalType NestedInternal { get; set; }
 
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public Fear.Confusion.Doubt.NestedPublicType NestedPublic { get; set; }
 
         protected internal class Fear {
             internal class Confusion {
                 public class Doubt {
-                    [ProtoContract]
+                    [ProtoBuf.ProtoContract]
                     internal class NestedInternalType
                     {
-                        [ProtoMember(1)]
+                        [ProtoBuf.ProtoMember(1)]
                         internal int Value { get; set; }
                     }
-                    [ProtoContract]
+                    [ProtoBuf.ProtoContract]
                     public class NestedPublicType
                     {
-                        [ProtoMember(1)]
+                        [ProtoBuf.ProtoMember(1)]
                         internal int Value { get; set; }
                     }
                 }
@@ -91,7 +91,7 @@ namespace DAL
         
     }
 
-    [ProtoContract, DataContract, Serializable]
+    [ProtoBuf.ProtoContract, DataContract, Serializable]
     internal class DatabaseCompatRem
 #if REMOTING
     : ISerializable
@@ -102,7 +102,7 @@ namespace DAL
     {
         public const bool MASTER_GROUP = false;
 
-        [ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
+        [ProtoBuf.ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
         [XmlArray]
         public List<OrderCompat> Orders { get; set; }
 
@@ -284,7 +284,7 @@ namespace DAL
         }
 
         [Column(Storage = "_OrderDate", DbType = "DateTime")]
-        [DataMember(Order = 4), Tag(4), ProtoMember(4, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 4), Tag(4), ProtoBuf.ProtoMember(4, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<System.DateTime> OrderDate
         {
             get
@@ -305,7 +305,7 @@ namespace DAL
         }
 
         [Column(Storage = "_RequiredDate", DbType = "DateTime")]
-        [DataMember(Order = 5), Tag(5), ProtoMember(5, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 5), Tag(5), ProtoBuf.ProtoMember(5, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<System.DateTime> RequiredDate
         {
             get
@@ -326,7 +326,7 @@ namespace DAL
         }
 
         [Column(Storage = "_ShippedDate", DbType = "DateTime")]
-        [DataMember(Order = 6), Tag(6), ProtoMember(6, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 6), Tag(6), ProtoBuf.ProtoMember(6, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<System.DateTime> ShippedDate
         {
             get
@@ -368,7 +368,7 @@ namespace DAL
         }
 
         [Column(Storage = "_Freight", DbType = "Money")]
-        [DataMember(Order = 8), Tag(8), ProtoMember(8, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 8), Tag(8), ProtoBuf.ProtoMember(8, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<decimal> Freight
         {
             get
@@ -515,7 +515,7 @@ namespace DAL
         }
 
         [Association(Name = "Order_Order_Detail", Storage = "_Lines", OtherKey = "OrderID")]
-        [DataMember(Order = 15, EmitDefaultValue = false), Tag(15), ProtoMember(15, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 15, EmitDefaultValue = false), Tag(15), ProtoBuf.ProtoMember(15, DataFormat = Database.SubObjectFormat)]
         [XmlArray]
         public List<OrderLineCompat> Lines
         {
@@ -642,7 +642,7 @@ namespace DAL
         }
 
         [Column(Storage = "_UnitPrice", DbType = "Money NOT NULL")]
-        [DataMember(Order = 3), Tag(3), ProtoMember(3, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 3), Tag(3), ProtoBuf.ProtoMember(3, DataFormat = Database.SubObjectFormat)]
         public decimal UnitPrice
         {
             get
@@ -729,25 +729,25 @@ namespace DAL
     }
 
     // to force over the array/hashtable divide
-    [ProtoContract] public class Dummy1 { }
-    [ProtoContract] public class Dummy2 { }
-    [ProtoContract] public class Dummy3 { }
-    [ProtoContract] public class Dummy4 { }
-    [ProtoContract] public class Dummy5 { }
-    [ProtoContract] public class Dummy6 { }
-    [ProtoContract] public class Dummy7 { }
-    [ProtoContract] public class Dummy8 { }
-    [ProtoContract] public class Dummy9 { }
-    [ProtoContract] public class Dummy10 { }
-    [ProtoContract] public class Dummy11 { }
-    [ProtoContract] public class Dummy12 { }
-    [ProtoContract] public class Dummy13 { }
-    [ProtoContract] public class Dummy14 { }
-    [ProtoContract] public class Dummy15 { }
-    [ProtoContract] public class Dummy16 { }
-    [ProtoContract] public class Dummy17 { }
-    [ProtoContract] public class Dummy18 { }
-    [ProtoContract] public class Dummy19 { }
-    [ProtoContract] public class Dummy20 { }
+    [ProtoBuf.ProtoContract] public class Dummy1 { }
+    [ProtoBuf.ProtoContract] public class Dummy2 { }
+    [ProtoBuf.ProtoContract] public class Dummy3 { }
+    [ProtoBuf.ProtoContract] public class Dummy4 { }
+    [ProtoBuf.ProtoContract] public class Dummy5 { }
+    [ProtoBuf.ProtoContract] public class Dummy6 { }
+    [ProtoBuf.ProtoContract] public class Dummy7 { }
+    [ProtoBuf.ProtoContract] public class Dummy8 { }
+    [ProtoBuf.ProtoContract] public class Dummy9 { }
+    [ProtoBuf.ProtoContract] public class Dummy10 { }
+    [ProtoBuf.ProtoContract] public class Dummy11 { }
+    [ProtoBuf.ProtoContract] public class Dummy12 { }
+    [ProtoBuf.ProtoContract] public class Dummy13 { }
+    [ProtoBuf.ProtoContract] public class Dummy14 { }
+    [ProtoBuf.ProtoContract] public class Dummy15 { }
+    [ProtoBuf.ProtoContract] public class Dummy16 { }
+    [ProtoBuf.ProtoContract] public class Dummy17 { }
+    [ProtoBuf.ProtoContract] public class Dummy18 { }
+    [ProtoBuf.ProtoContract] public class Dummy19 { }
+    [ProtoBuf.ProtoContract] public class Dummy20 { }
 
 }

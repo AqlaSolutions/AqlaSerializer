@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 
-namespace ProtoBuf.unittest
+namespace AqlaSerializer.unittest
 {
     [TestFixture]
     public class FX11

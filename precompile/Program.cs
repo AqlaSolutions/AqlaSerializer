@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.Precompile
+namespace AqlaSerializer.Precompile
 {
     class Program
     {
@@ -95,7 +95,7 @@ namespace ProtoBuf.Precompile
         /// The accessibility of the generated type
         /// </summary>
         [CommandLine("access")]
-        public ProtoBuf.Meta.RuntimeTypeModel.Accessibility Accessibility { get; set; }
+        public AqlaSerializer.Meta.RuntimeTypeModel.Accessibility Accessibility { get; set; }
 
         /// <summary>
         /// The path to the file to use to sign the assembly
@@ -118,7 +118,7 @@ namespace ProtoBuf.Precompile
         /// </summary>
         public PreCompileContext()
         {
-            Accessibility = ProtoBuf.Meta.RuntimeTypeModel.Accessibility.Public;
+            Accessibility = AqlaSerializer.Meta.RuntimeTypeModel.Accessibility.Public;
         }
 
         static string TryInferFramework(string path)
@@ -383,7 +383,7 @@ namespace ProtoBuf.Precompile
 
             if (toAdd.Count == 0)
             {
-                Console.Error.WriteLine("No [ProtoContract] types found; nothing to do!");
+                Console.Error.WriteLine("No [ProtoBuf.ProtoContract] types found; nothing to do!");
                 return false;
             }
 
@@ -464,7 +464,7 @@ namespace ProtoBuf.Precompile
 serialization even on light frameworks (CF, SL, SP7, Metro, etc).
 
 The input assembly(ies) is(are) anaylsed for types decorated with
-[ProtoContract]. All such types are added to the model, as are any
+[ProtoBuf.ProtoContract]. All such types are added to the model, as are any
 types that they require.
 
 Note: the compiler must be able to resolve a aqlaserializer.dll

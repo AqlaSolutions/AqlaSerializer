@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ namespace Examples.Issues
     public class SO13802844
     {
         enum AnimationCode {
-            [ProtoEnum(Name = "AnimationCode_None")]
+            [ProtoBuf.ProtoEnum(Name = "AnimationCode_None")]
             None = 0,
             Idle = 1
         }

@@ -7,8 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -30,10 +30,10 @@ namespace Examples.Issues
             Assert.AreNotSame(obj, clone);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class BasicData
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public C C { get; set; }
         }
 
@@ -113,33 +113,33 @@ namespace Examples.Issues
             return "s " + Interlocked.Increment(ref i);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public B[] Array1 { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Field1 { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Field2 { get; set; }
 
-            [ProtoMember(3, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.Group)]
             public C[] Array2 { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class C
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Field1 { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Field2 { get; set; }
         }
     }

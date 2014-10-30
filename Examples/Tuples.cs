@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -89,10 +89,10 @@ namespace Examples
                 Bar = bar;
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class WithQuasiMutableTuple
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public QuasiMutableTuple Value { get; set;} 
         }
     }

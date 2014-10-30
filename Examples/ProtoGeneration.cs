@@ -1,9 +1,9 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using Examples.SimpleStream;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.ComponentModel;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System;
@@ -233,8 +233,8 @@ message KeyValuePair_String_Cat {
 ", proto);
         }
 
-        [ProtoContract, ProtoInclude(1, typeof(Cat))] public class Animal {}
-        [ProtoContract] public class Cat : Animal {}
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Cat))] public class Animal {}
+        [ProtoBuf.ProtoContract] public class Cat : Animal {}
 
         [Ignore("Parameter name - localization")]
         [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = @"The type specified is not a contract-type
@@ -326,16 +326,16 @@ message UsesSurrogates {
         }
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class UsesSurrogates
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public MySurrogate A { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public MyNonSurrogate B { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MySurrogate
         {
             public static implicit operator MyNonSurrogate(MySurrogate value)
@@ -353,30 +353,30 @@ message UsesSurrogates {
     [TestFixture]
     public class InheritanceGeneration
     {
-        [ProtoContract]
-        [ProtoInclude(15, typeof(B))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(15, typeof(B))]
         public class A
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int DataA { get; set; }
         }
-        [ProtoContract]
-        [ProtoInclude(16, typeof(C))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(16, typeof(C))]
         public class B : A
         {
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int DataB { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class C : B
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public int DataC { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TestCase
         {
-            [ProtoMember(10)]
+            [ProtoBuf.ProtoMember(10)]
             public C Data;
         }
 
@@ -421,56 +421,56 @@ message TestCase {
     }
 }
 
-[ProtoContract]
+[ProtoBuf.ProtoContract]
 class MyClass
 {
-    [ProtoMember(1), DefaultValue("Test Test TEst")]
+    [ProtoBuf.ProtoMember(1), DefaultValue("Test Test TEst")]
     public string TestString { get; set; }
 }
 namespace ProtoGenerationTypes.BclImports
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class HasPrimitives
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public DateTime When { get; set; }
     }
 }
 namespace ProtoGenerationTypes.SelfGenericProto
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class EvilParent
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public EvilGeneric<EvilParent> X { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class EvilGeneric<T>
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int X { get; set; }
     }
 }
 
 namespace ProtoGenerationTypes.BrokenProto
 {
-	[ProtoContract]
+	[ProtoBuf.ProtoContract]
 	public class ExampleContract
 	{
-		[ProtoMember(1)]
+		[ProtoBuf.ProtoMember(1)]
 		public List<Info> ListOfInfo { get; set; }
 	}
 
-	[ProtoContract]
-	[ProtoInclude(2, typeof(Info<Type1>))]
-	[ProtoInclude(3, typeof(Info<Type2>))]
+	[ProtoBuf.ProtoContract]
+	[ProtoBuf.ProtoInclude(2, typeof(Info<Type1>))]
+	[ProtoBuf.ProtoInclude(3, typeof(Info<Type2>))]
 	public abstract class Info
 	{
-		[ProtoMember(1)]
+		[ProtoBuf.ProtoMember(1)]
 		public string Name { get; set; }
 	}
 
-	[ProtoContract]
+	[ProtoBuf.ProtoContract]
 	public class Info<T> : Info
 		where T : DetailsBase, new()
 	{
@@ -479,7 +479,7 @@ namespace ProtoGenerationTypes.BrokenProto
 			Details = new T();
 		}
 
-		[ProtoMember(2)]
+		[ProtoBuf.ProtoMember(2)]
 		public T Details { get; set; }
 	}
 
@@ -487,23 +487,23 @@ namespace ProtoGenerationTypes.BrokenProto
 	{
 	}
 
-	[ProtoContract]
+	[ProtoBuf.ProtoContract]
 	public class Type1 : DetailsBase
 	{
-		[ProtoMember(1)]
+		[ProtoBuf.ProtoMember(1)]
 		public string Value1 { get; set; }
 
-		[ProtoMember(2)]
+		[ProtoBuf.ProtoMember(2)]
 		public string Value2 { get; set; }
 	}
 
-	[ProtoContract]
+	[ProtoBuf.ProtoContract]
 	public class Type2 : DetailsBase
 	{
-		[ProtoMember(1)]
+		[ProtoBuf.ProtoMember(1)]
 		public string Value3 { get; set; }
 
-		[ProtoMember(2)]
+		[ProtoBuf.ProtoMember(2)]
 		public string Value4 { get; set; }
 	}
 }

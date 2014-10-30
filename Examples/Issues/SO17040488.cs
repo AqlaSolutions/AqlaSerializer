@@ -1,32 +1,32 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO17040488
     {
-        [ProtoContract(UseProtoMembersOnly = true)]
+        [ProtoBuf.ProtoContract(UseProtoMembersOnly = true)]
         public class ProtoObjectDTO
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Order { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public int A { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Bar
         {
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public string B { get; set; }
         }
 

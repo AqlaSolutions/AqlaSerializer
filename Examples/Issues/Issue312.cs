@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,23 +12,23 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue312
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class RootClass
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Prop1 { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Prop2 { get; set; }
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public IEnumerableClass Prop3 { get; set; }
         }
 
-        [ProtoContract(IgnoreListHandling = true)]
+        [ProtoBuf.ProtoContract(IgnoreListHandling = true)]
         public class IEnumerableClass : IEnumerable<char>
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Prop1 { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Prop2 { get; set; }
 
             public IEnumerator<char> GetEnumerator()

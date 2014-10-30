@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework.SyntaxHelpers;
 using System.IO;
 
@@ -26,10 +26,10 @@ namespace Examples.Issues
             Assert.That(serialized, Is.Not.Null);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TestProto
         {
-            [ProtoMember(1, DynamicType = true)]
+            [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value { get; internal set; }
         }
     }

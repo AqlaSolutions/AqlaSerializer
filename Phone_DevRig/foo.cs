@@ -13,7 +13,7 @@
 namespace foo
 {
   [global::ProtoBuf.ProtoContract(Name=@"Foo")]
-  public partial class Foo : global::ProtoBuf.IExtensible
+  public partial class Foo : global::AqlaSerializer.IExtensible
   {
     public Foo() {}
     
@@ -26,9 +26,9 @@ namespace foo
       get { return _bar; }
       set { _bar = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
 }

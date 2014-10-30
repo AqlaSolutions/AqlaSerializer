@@ -6,18 +6,18 @@
 //using System.Linq;
 //using System.Text;
 //using NUnit.Framework;
-//using ProtoBuf;
-//using ProtoBuf.Meta;
+//using AqlaSerializer;
+//using AqlaSerializer.Meta;
 
 //namespace Examples.Issues
 //{
 //    [TestFixture]
 //    public class SO3101816
 //    {
-//        [ProtoContract]
+//        [ProtoBuf.ProtoContract]
 //        public class A
 //        {
-//            [ProtoMember(1)]
+//            [ProtoBuf.ProtoMember(1)]
 //            public IB B { get; set; }
 //        }
 
@@ -25,10 +25,10 @@
 //        {
 //        }
 
-//        [ProtoContract]
+//        [ProtoBuf.ProtoContract]
 //        public class B : IB
 //        {
-//            [ProtoMember(1)]
+//            [ProtoBuf.ProtoMember(1)]
 //            public int SomeProperty { get; set; }
 //        }
 

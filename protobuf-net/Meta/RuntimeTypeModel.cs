@@ -23,17 +23,17 @@ using System.Reflection.Emit;
 #endif
 #endif
 #if FEAT_COMPILER
-using ProtoBuf.Compiler;
+using AqlaSerializer.Compiler;
 #endif
 #if !FEAT_IKVM
-using ProtoBuf.Meta.Data;
+using AqlaSerializer.Meta.Data;
 #endif
 using AqlaSerializer;
-using ProtoBuf.Serializers;
+using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
 #if !NO_GENERiCS
     using TypeSet = Dictionary<Type, object>;
@@ -72,7 +72,7 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Global default that
         /// enables/disables automatic tag generation based on the existing name / order
-        /// of the defined members. See <seealso cref="ProtoContractAttribute.InferTagFromName"/>
+        /// of the defined members. See <seealso cref="ProtoBuf.ProtoContractAttribute.InferTagFromName"/>
         /// for usage and <b>important warning</b> / explanation.
         /// You must set the global default before attempting to serialize/deserialize any
         /// impacted type.
@@ -135,7 +135,7 @@ namespace ProtoBuf.Meta
             internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true);
         }
         /// <summary>
-        /// The default model, used to support ProtoBuf.Serializer
+        /// The default model, used to support AqlaSerializer.Serializer
         /// </summary>
         public static RuntimeTypeModel Default
         {
@@ -205,7 +205,7 @@ namespace ProtoBuf.Meta
                 if (tmp != null) type = tmp;
 
                 WireType defaultWireType;
-                isInbuiltType = (ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false) != null);
+                isInbuiltType = (ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false) != null);
                 if (!isInbuiltType)
                 {
                     //Agenerate just relative to the supplied type
@@ -266,7 +266,7 @@ namespace ProtoBuf.Meta
             if (isInbuiltType)
             {
                 Helpers.AppendLine(bodyBuilder).Append("message ").Append(type.Name).Append(" {");
-                MetaType.NewLine(bodyBuilder, 1).Append("optional ").Append(GetSchemaTypeName(type, DataFormat.Default, false, false, ref requiresBclImport))
+                MetaType.NewLine(bodyBuilder, 1).Append("optional ").Append(GetSchemaTypeName(type, BinaryDataFormat.Default, false, false, ref requiresBclImport))
                     .Append(" value = 1;");
                 Helpers.AppendLine(bodyBuilder).Append('}');
             }
@@ -293,7 +293,7 @@ namespace ProtoBuf.Meta
             {
                 Type itemType = TypeModel.GetListItemType(this, metaType.Type);
                 WireType defaultWireType;
-                IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, itemType, out defaultWireType, false, false, false, false);
+                IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, itemType, out defaultWireType, false, false, false, false);
                 if (coreSerializer == null)
                 {
                     int index = FindOrAddAuto(itemType, false, false, false);
@@ -322,7 +322,7 @@ namespace ProtoBuf.Meta
                             else if (mapping[i] is FieldInfo) type = ((FieldInfo)mapping[i]).FieldType;
 
                             WireType defaultWireType;
-                            IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false);
+                            IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false);
                             if (coreSerializer == null)
                             {
                                 int index = FindOrAddAuto(type, false, false, false);
@@ -349,7 +349,7 @@ namespace ProtoBuf.Meta
                         if (fieldMetaType != null)
                             type = fieldMetaType.GetSurrogateOrSelf().Type;
                         WireType defaultWireType;
-                        IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false);
+                        IProtoSerializer coreSerializer = ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false);
                         if (coreSerializer == null)
                         {
                             // is an interesting type
@@ -529,7 +529,7 @@ namespace ProtoBuf.Meta
                 WireType defaultWireType;
                 MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
                 IProtoSerializer ser = family == MetaType.AttributeFamily.None
-                    ? ValueMember.TryGetCoreSerializer(this, DataFormat.Default, type, out defaultWireType, false, false, false, false)
+                    ? ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false)
                     : null;
 
                 if (ser != null) basicTypes.Add(new BasicType(type, ser));
@@ -2231,7 +2231,7 @@ namespace ProtoBuf.Meta
         }
 #endif
 
-        internal string GetSchemaTypeName(Type effectiveType, DataFormat dataFormat, bool asReference, bool dynamicType, ref bool requiresBclImport)
+        internal string GetSchemaTypeName(Type effectiveType, BinaryDataFormat dataFormat, bool asReference, bool dynamicType, ref bool requiresBclImport)
         {
             Type tmp = Helpers.GetNullableUnderlyingType(effectiveType);
             if (tmp != null) effectiveType = tmp;
@@ -2272,7 +2272,7 @@ namespace ProtoBuf.Meta
                     case ProtoTypeCode.UInt32:
                         switch (dataFormat)
                         {
-                            case DataFormat.FixedSize: return "fixed32";
+                            case BinaryDataFormat.FixedSize: return "fixed32";
                             default: return "uint32";
                         }
                     case ProtoTypeCode.SByte:
@@ -2280,21 +2280,21 @@ namespace ProtoBuf.Meta
                     case ProtoTypeCode.Int32:
                         switch (dataFormat)
                         {
-                            case DataFormat.ZigZag: return "sint32";
-                            case DataFormat.FixedSize: return "sfixed32";
+                            case BinaryDataFormat.ZigZag: return "sint32";
+                            case BinaryDataFormat.FixedSize: return "sfixed32";
                             default: return "int32";
                         }
                     case ProtoTypeCode.UInt64:
                         switch (dataFormat)
                         {
-                            case DataFormat.FixedSize: return "fixed64";
+                            case BinaryDataFormat.FixedSize: return "fixed64";
                             default: return "uint64";
                         }
                     case ProtoTypeCode.Int64:
                         switch (dataFormat)
                         {
-                            case DataFormat.ZigZag: return "sint64";
-                            case DataFormat.FixedSize: return "sfixed64";
+                            case BinaryDataFormat.ZigZag: return "sint64";
+                            case BinaryDataFormat.FixedSize: return "sfixed64";
                             default: return "int64";
                         }
                     case ProtoTypeCode.DateTime: requiresBclImport = true; return "bcl.DateTime";

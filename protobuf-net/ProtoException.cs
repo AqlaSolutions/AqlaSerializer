@@ -4,7 +4,7 @@ using System;
 #if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
 using System.Runtime.Serialization;
 #endif
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Indicates an error during serialization/deserialization of a proto stream.

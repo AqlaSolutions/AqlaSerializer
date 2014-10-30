@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
 
@@ -16,12 +16,12 @@ namespace Examples
     [TestFixture]
     public class memcached
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ContractType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Name { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Id { get; set; }
         }
         [Serializable]

@@ -4,21 +4,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue218
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Test
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public byte[] BackgroundImageToUpload { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Title { get; set; }
         }
         [Test]

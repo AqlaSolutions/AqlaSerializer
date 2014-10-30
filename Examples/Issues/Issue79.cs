@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
@@ -13,10 +13,10 @@ namespace Examples.Issues
         {
             None = 0, A = 1, B = 2, C = 4, D = 8
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MyTypeWithFlags
         {
-            [ProtoMember(1, DataFormat = DataFormat.TwosComplement)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
             public MyFlagsEnum SomeValue { get; set; }
         }
 

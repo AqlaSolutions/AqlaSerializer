@@ -1,8 +1,8 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class Interfaces

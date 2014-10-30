@@ -1,8 +1,8 @@
 ﻿using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.Aqla
+namespace AqlaSerializer.unittest.Aqla
 {
     [TestFixture]
     public class DerivedDerivedOnField

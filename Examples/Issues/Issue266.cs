@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -60,10 +60,10 @@ namespace Examples.Issues
         {
             A = 2, B = 3
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Bar
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Foo? Foo { get; set; }
         }
     }

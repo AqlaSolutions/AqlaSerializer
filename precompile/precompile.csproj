@@ -32,7 +32,7 @@
     <AssemblyOriginatorKeyFile>..\AqlaSerializerKey.snk</AssemblyOriginatorKeyFile>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ProtoBuf.Precompile</RootNamespace>
+    <RootNamespace>AqlaSerializer.Precompile</RootNamespace>
     <AssemblyName>precompile</AssemblyName>
     <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -8,7 +8,7 @@ using System.Runtime.Serialization;
 using Examples.Issues;
 using NUnit.Framework;
 using Proto;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using Types;
 
 
@@ -202,15 +202,15 @@ namespace Proto
 
 namespace Types
 {
-    //[ProtoContract]
+    //[ProtoBuf.ProtoContract]
     [DataContract]
-    //[ProtoInclude(500, typeof(Developer))]
+    //[ProtoBuf.ProtoInclude(500, typeof(Developer))]
     public class Person
     {
-        //[ProtoMember(1)]
+        //[ProtoBuf.ProtoMember(1)]
         [DataMember]
         public int Id { get; set; }
-        //[ProtoMember(2)]
+        //[ProtoBuf.ProtoMember(2)]
         [DataMember]
         public string Name { get; set; }
 
@@ -227,11 +227,11 @@ namespace Types
     }
 
     [DataContract]
-    //[ProtoContract]
+    //[ProtoBuf.ProtoContract]
     public class Developer : Person
     {
         [DataMember]
-        //[ProtoMember(1)]
+        //[ProtoBuf.ProtoMember(1)]
         public bool Boaring { get; set; }
 
         public bool XBoaring { get; set; }
@@ -246,7 +246,7 @@ namespace Types
     public class SeniorDeveloper<T> : Developer
     {
         [DataMember]
-        //[ProtoMember(1)]
+        //[ProtoBuf.ProtoMember(1)]
         public T VeryBoaring { get; set; }
 
         public override string ToString()

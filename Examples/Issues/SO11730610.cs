@@ -1,27 +1,27 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO11730610
     {
-        [ProtoContract]
-        [ProtoInclude(101, typeof(BaseClassInfo))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(101, typeof(BaseClassInfo))]
         public interface IDataRow
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             int Evil { get; set; }
         }
 
 
-        [ProtoContract]
-        [ProtoInclude(101, typeof (SomeClassRow))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(101, typeof (SomeClassRow))]
         public class BaseClassInfo : IDataRow
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int SomeId { get; set; }
 
             // this is serialized by the IDataRow "base"
@@ -30,23 +30,23 @@ namespace Examples.Issues
 
         // This version of the class won't work because it defines the collection with the
         // strongly type name i.e. List<Some
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SomeResponse
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<SomeClassRow> Rows { get; set; }
 
             //...
         }
 
         // SomeClassRow is in turn an IDataRow.
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SomeClassRow : BaseClassInfo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Name { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Value { get; set; }
 
             //...  
@@ -81,10 +81,10 @@ namespace Examples.Issues
         }
 
         //// But, if the response is defined as follows then the WCF deserializes correcty and ALWAYS.
-        //[ProtoContract]
+        //[ProtoBuf.ProtoContract]
         //public class SomeResponse
         //{
-        //    [ProtoMember(1)]
+        //    [ProtoBuf.ProtoMember(1)]
         //    public List<IDataRow> Rows { get; set; }
 
         //    //...

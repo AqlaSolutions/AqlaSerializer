@@ -7,7 +7,7 @@ using Type = IKVM.Reflection.Type;
 #endif
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class GuidSerializer : IProtoSerializer
     {
@@ -16,7 +16,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(Guid);
 #endif
-        public GuidSerializer(ProtoBuf.Meta.TypeModel model)
+        public GuidSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(Guid));

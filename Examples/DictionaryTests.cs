@@ -2,34 +2,34 @@
 using System.Linq;
 using NUnit.Framework;
 using System.Collections.Generic;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
 using System.Diagnostics;
 using System.Text;
 
 namespace Examples.Dictionary
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class DataWithDictionary<T>
     {
         public DataWithDictionary()
         {
             Data = new Dictionary<int, T>();
         }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public IDictionary<int, T> Data { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class SimpleData : IEquatable<SimpleData>
     {
         private SimpleData() {}
         public SimpleData(int value) {
             Value = value;}
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
 
         public bool Equals(SimpleData other)
@@ -330,29 +330,29 @@ namespace Examples.Dictionary
         }
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PropsViaDictionaryDefault
         {
-            [ProtoMember(1, DataFormat = DataFormat.Default)] public List<KeyValuePair> Values { get; set;}
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)] public List<KeyValuePair> Values { get; set;}
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PropsViaDictionaryGrouped
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public List<KeyValuePair> Values { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class KeyValuePair
         {
-            [ProtoMember(1)] public string Key { get; set;}
-            [ProtoMember(2)] public int Value { get; set;}
+            [ProtoBuf.ProtoMember(1)] public string Key { get; set;}
+            [ProtoBuf.ProtoMember(2)] public int Value { get; set;}
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class PropsViaProperties
         {
-            [ProtoMember(1)] public int Field1 { get; set;}
-            [ProtoMember(2)] public int Field2 { get; set;}
-            [ProtoMember(3)] public int Field3 { get; set;}
+            [ProtoBuf.ProtoMember(1)] public int Field1 { get; set;}
+            [ProtoBuf.ProtoMember(2)] public int Field2 { get; set;}
+            [ProtoBuf.ProtoMember(3)] public int Field3 { get; set;}
         }
     }
 }

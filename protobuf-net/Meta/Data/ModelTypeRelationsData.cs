@@ -4,7 +4,7 @@
 
 using AqlaSerializer;
 
-namespace ProtoBuf.Meta.Data
+namespace AqlaSerializer.Meta.Data
 {
     [SerializableType]
     public class ModelTypeRelationsData

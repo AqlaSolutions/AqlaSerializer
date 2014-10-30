@@ -1,11 +1,11 @@
 ﻿using Microsoft.SqlServer.Server;
 using System.Data.SqlTypes;
 using System;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace SqlClr
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     [SqlUserDefinedTypeAttribute(Format.UserDefined, IsByteOrdered=true,
         IsFixedLength = false, MaxByteSize=1024)]
     public sealed class MyProtoUdt : INullable, IBinarySerialize
@@ -24,20 +24,20 @@ namespace SqlClr
         void IBinarySerialize.Write(System.IO.BinaryWriter w) {
             Serializer.Serialize<MyProtoUdt>(w.BaseStream, this);
         }
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public int ShoeSize { get; set; }
-        [ProtoMember(4)]
+        [ProtoBuf.ProtoMember(4)]
         public DateTime DateOfBirth { get; set; }
-        [ProtoMember(5)]
+        [ProtoBuf.ProtoMember(5)]
         public bool IsActive { get; set; }
-        [ProtoMember(6)]
+        [ProtoBuf.ProtoMember(6)]
         public decimal Balance { get; set; }
-        [ProtoMember(7)]
+        [ProtoBuf.ProtoMember(7)]
         public float Ratio { get; set; }
     }
 
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     [SqlUserDefinedTypeAttribute(Format.Native, IsByteOrdered = true)]
     public sealed class MyBasicUdt : INullable
     {

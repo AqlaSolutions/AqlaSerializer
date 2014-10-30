@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;

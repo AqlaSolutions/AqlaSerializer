@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Additional information about a serialization operation

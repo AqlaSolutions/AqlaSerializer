@@ -4,24 +4,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
-using ProtoBuf;
+using AqlaSerializer.Meta;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue191
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Test
         {
             // Deserializes as null
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Dictionary<long, string> dict = new Dictionary<long, string>();
 
 
             // Deserializes correctly
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public Dictionary<long, string> dict2 { get; set; }
             public Test()
             {

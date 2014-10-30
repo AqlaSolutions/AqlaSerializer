@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples.Issues
@@ -14,20 +14,20 @@ namespace Examples.Issues
     {
         public class NoRelationship {}
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ParentA { }
         public class ChildA : ParentA { }
 
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ParentB { }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ChildB : ParentB { }
 
 
-        [ProtoContract, ProtoInclude(1, typeof(ChildC))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(ChildC))]
         public class ParentC { }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ChildC : ParentC { }
 
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Type is not expected, and no contract can be inferred: Examples.Issues.SO6505590+NoRelationship")]

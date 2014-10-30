@@ -1,8 +1,8 @@
 ﻿using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.unittest.AqlaAttributes
+namespace AqlaSerializer.unittest.AqlaAttributes
 {
     [TestFixture]
     public class ImplicitFallback
@@ -46,7 +46,7 @@ namespace ProtoBuf.unittest.AqlaAttributes
         [Test]
         public void ShouldBeImplicitPublicPropertiesByDefault()
         {
-            _model.AutoAddStrategy = new DefaultAutoAddStrategy(_model) { ImplicitFallbackMode = ProtoBuf.ImplicitFields.PublicProperties };
+            _model.AutoAddStrategy = new DefaultAutoAddStrategy(_model) { ImplicitFallbackMode = ImplicitFieldsMode.PublicProperties };
             var t = _model.Add(typeof(TestClass), true);
             var fields = t.GetFields();
             Assert.AreEqual(2, fields.Length);
@@ -57,7 +57,7 @@ namespace ProtoBuf.unittest.AqlaAttributes
         [Test]
         public void ShouldAddMissingAsImplicitProperties()
         {
-            _model.AutoAddStrategy = new DefaultAutoAddStrategy(_model) { ImplicitFallbackMode = ProtoBuf.ImplicitFields.PublicProperties };
+            _model.AutoAddStrategy = new DefaultAutoAddStrategy(_model) { ImplicitFallbackMode = ImplicitFieldsMode.PublicProperties };
             _model.AutoAddMissingTypes = true;
             Check();
         }

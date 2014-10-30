@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using System.Threading;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class ThreadRace
@@ -16,25 +16,25 @@ namespace ProtoBuf.unittest.Meta
      ///an observed issue. We are only looking at implicit models here, as explicit models have much more controlled lives (caveat developer, etc)
      ///
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ModelWithNonTrivialProperties
         {
-            [ProtoMember(1)]public int A { get; set; }
-            [ProtoMember(2)]public string B { get; set; }
-            [ProtoMember(3)]public DateTime C { get; set; }
-            [ProtoMember(4)]public byte[] D { get; set; }
-            [ProtoMember(5)]public float? E { get; set; }
-            [ProtoMember(6)]public ModelWithNonTrivialProperties F { get; set; }
-            [ProtoMember(7)]public List<decimal> G { get; set; }
-            [ProtoMember(8)]public Dictionary<int, AnotherType> H { get; set; }
-            [ProtoMember(9)]public AnotherType I{ get; set; }
-            [ProtoMember(10)]public Dictionary<string,int> J { get; set; }
+            [ProtoBuf.ProtoMember(1)]public int A { get; set; }
+            [ProtoBuf.ProtoMember(2)]public string B { get; set; }
+            [ProtoBuf.ProtoMember(3)]public DateTime C { get; set; }
+            [ProtoBuf.ProtoMember(4)]public byte[] D { get; set; }
+            [ProtoBuf.ProtoMember(5)]public float? E { get; set; }
+            [ProtoBuf.ProtoMember(6)]public ModelWithNonTrivialProperties F { get; set; }
+            [ProtoBuf.ProtoMember(7)]public List<decimal> G { get; set; }
+            [ProtoBuf.ProtoMember(8)]public Dictionary<int, AnotherType> H { get; set; }
+            [ProtoBuf.ProtoMember(9)]public AnotherType I{ get; set; }
+            [ProtoBuf.ProtoMember(10)]public Dictionary<string,int> J { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class AnotherType
         {
-            [ProtoMember(1)]public int A { get; set; }
-            [ProtoMember(2)]public string B { get; set; }
+            [ProtoBuf.ProtoMember(1)]public int A { get; set; }
+            [ProtoBuf.ProtoMember(2)]public string B { get; set; }
         }
 
         [Test]
@@ -162,41 +162,41 @@ namespace ProtoBuf.unittest.Meta
             }
         }
 
-        [ProtoContract,ProtoInclude(1, typeof(B)), ProtoInclude(2, typeof(C))] public class A { }
-        [ProtoContract,ProtoInclude(1, typeof(D)), ProtoInclude(2, typeof(E))] public class B : A { }
-        [ProtoContract,ProtoInclude(1, typeof(F)), ProtoInclude(2, typeof(G))] public class C : A { }
-        [ProtoContract,ProtoInclude(1, typeof(H)), ProtoInclude(2, typeof(I))] public class D : B { }
-        [ProtoContract,ProtoInclude(1, typeof(J)), ProtoInclude(2, typeof(K))] public class E : B { }
-        [ProtoContract,ProtoInclude(1, typeof(L)), ProtoInclude(2, typeof(M))] public class F : C { }
-        [ProtoContract,ProtoInclude(1, typeof(N)), ProtoInclude(2, typeof(O))] public class G : C { }
-        [ProtoContract,ProtoInclude(1, typeof(P)), ProtoInclude(2, typeof(Q))] public class H : D { }
-        [ProtoContract,ProtoInclude(1, typeof(R)), ProtoInclude(2, typeof(S))] public class I : D { }
-        [ProtoContract,ProtoInclude(1, typeof(T)), ProtoInclude(2, typeof(U))] public class J : E { }
-        [ProtoContract,ProtoInclude(1, typeof(V)), ProtoInclude(2, typeof(W))] public class K : E { }
-        [ProtoContract,ProtoInclude(1, typeof(X)), ProtoInclude(2, typeof(Y))] public class L : F { }
-        [ProtoContract]public class M : F { }
-        [ProtoContract]public class N : G { }
-        [ProtoContract]public class O : G { }
-        [ProtoContract]public class P : H { }
-        [ProtoContract]public class Q : H { }
-        [ProtoContract]public class R : I { }
-        [ProtoContract]public class S : I { }
-        [ProtoContract]public class T : J { }
-        [ProtoContract]public class U : J { }
-        [ProtoContract]public class V : K { }
-        [ProtoContract]public class W : K { }
-        [ProtoContract]public class X : L { }
-        [ProtoContract, ProtoInclude(1, typeof(Y0))]public class Y : L { }
-        [ProtoContract, ProtoInclude(1, typeof(Y1))]public class Y0 : Y { }
-        [ProtoContract, ProtoInclude(1, typeof(Y2))]public class Y1 : Y0 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y3))]public class Y2 : Y1 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y4))]public class Y3 : Y2 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y5))]public class Y4 : Y3 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y6))]public class Y5 : Y4 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y7))]public class Y6 : Y5 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y8))]public class Y7 : Y6 { }
-        [ProtoContract, ProtoInclude(1, typeof(Y9))]public class Y8 : Y7 { }
-        [ProtoContract]public class Y9 : Y8 { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(B)), ProtoBuf.ProtoInclude(2, typeof(C))] public class A { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(D)), ProtoBuf.ProtoInclude(2, typeof(E))] public class B : A { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(F)), ProtoBuf.ProtoInclude(2, typeof(G))] public class C : A { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(H)), ProtoBuf.ProtoInclude(2, typeof(I))] public class D : B { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(J)), ProtoBuf.ProtoInclude(2, typeof(K))] public class E : B { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(L)), ProtoBuf.ProtoInclude(2, typeof(M))] public class F : C { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(N)), ProtoBuf.ProtoInclude(2, typeof(O))] public class G : C { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(P)), ProtoBuf.ProtoInclude(2, typeof(Q))] public class H : D { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(R)), ProtoBuf.ProtoInclude(2, typeof(S))] public class I : D { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(T)), ProtoBuf.ProtoInclude(2, typeof(U))] public class J : E { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(V)), ProtoBuf.ProtoInclude(2, typeof(W))] public class K : E { }
+        [ProtoBuf.ProtoContract,ProtoBuf.ProtoInclude(1, typeof(X)), ProtoBuf.ProtoInclude(2, typeof(Y))] public class L : F { }
+        [ProtoBuf.ProtoContract]public class M : F { }
+        [ProtoBuf.ProtoContract]public class N : G { }
+        [ProtoBuf.ProtoContract]public class O : G { }
+        [ProtoBuf.ProtoContract]public class P : H { }
+        [ProtoBuf.ProtoContract]public class Q : H { }
+        [ProtoBuf.ProtoContract]public class R : I { }
+        [ProtoBuf.ProtoContract]public class S : I { }
+        [ProtoBuf.ProtoContract]public class T : J { }
+        [ProtoBuf.ProtoContract]public class U : J { }
+        [ProtoBuf.ProtoContract]public class V : K { }
+        [ProtoBuf.ProtoContract]public class W : K { }
+        [ProtoBuf.ProtoContract]public class X : L { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y0))]public class Y : L { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y1))]public class Y0 : Y { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y2))]public class Y1 : Y0 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y3))]public class Y2 : Y1 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y4))]public class Y3 : Y2 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y5))]public class Y4 : Y3 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y6))]public class Y5 : Y4 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y7))]public class Y6 : Y5 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y8))]public class Y7 : Y6 { }
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Y9))]public class Y8 : Y7 { }
+        [ProtoBuf.ProtoContract]public class Y9 : Y8 { }
 
         [Test]
         public void TestDeserializeModelFromRoot()

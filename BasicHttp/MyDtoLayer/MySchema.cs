@@ -13,7 +13,7 @@
 namespace MyDtoLayer
 {
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Customer")]
-  public partial class Customer : global::ProtoBuf.IExtensible
+  public partial class Customer : global::AqlaSerializer.IExtensible
   {
     public Customer() {}
     
@@ -40,13 +40,13 @@ namespace MyDtoLayer
       get { return _address; }
       set { _address = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"Address")]
-  public partial class Address : global::ProtoBuf.IExtensible
+  public partial class Address : global::AqlaSerializer.IExtensible
   {
     public Address() {}
     
@@ -75,13 +75,13 @@ namespace MyDtoLayer
       get { return _zip; }
       set { _zip = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"GetCustomerRequest")]
-  public partial class GetCustomerRequest : global::ProtoBuf.IExtensible
+  public partial class GetCustomerRequest : global::AqlaSerializer.IExtensible
   {
     public GetCustomerRequest() {}
     
@@ -92,13 +92,13 @@ namespace MyDtoLayer
       get { return _id; }
       set { _id = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"GetCustomerResponse")]
-  public partial class GetCustomerResponse : global::ProtoBuf.IExtensible
+  public partial class GetCustomerResponse : global::AqlaSerializer.IExtensible
   {
     public GetCustomerResponse() {}
     
@@ -111,9 +111,9 @@ namespace MyDtoLayer
       get { return _cust; }
       set { _cust = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
 }

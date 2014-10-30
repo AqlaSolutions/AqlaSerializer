@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Threading;
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
 
     internal sealed class MutableList : BasicList
@@ -244,7 +244,9 @@ namespace ProtoBuf.Meta
                         throw new ArgumentOutOfRangeException();
                     return;
                 }
+#if !WINRT
                 Thread.MemoryBarrier();
+#endif
                 Array.Copy(data, sourceStart, array, destinationStart, length);
             }
 

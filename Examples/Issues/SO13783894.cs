@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -57,18 +57,18 @@ namespace Examples.Issues
                 Assert.AreEqual(10, clone2.Value);
             }
         }
-        //[ProtoContract]
+        //[ProtoBuf.ProtoContract]
         enum MyEnum
         {
-            //[ProtoEnum(Value = 1)]
+            //[ProtoBuf.ProtoEnum(Value = 1)]
             Default = 2,
-            //[ProtoEnum(Value = 10)]
+            //[ProtoBuf.ProtoEnum(Value = 10)]
             Foo = 3
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Test<T>
         {
-            [ProtoMember(1, IsRequired=true)]
+            [ProtoBuf.ProtoMember(1, IsRequired=true)]
             public T Value { get; set; }
         }
     }

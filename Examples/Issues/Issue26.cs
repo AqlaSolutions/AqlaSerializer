@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples.Issues
@@ -71,13 +71,13 @@ namespace Examples.Issues
         
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class Station
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Number { get; internal set; }
 
-        [ProtoMember(8)]
+        [ProtoBuf.ProtoMember(8)]
         public int Ticket { get; internal set; }
 
         public Station(int number, int ticket)
@@ -91,18 +91,18 @@ namespace Examples.Issues
 
     /// <remarks>Re the unusual structure here, note that this is related to the code-sample
     /// provided to investigate this issue.</remarks>
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class StationList
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         private readonly List<Station> _liststations = new List<Station>();
         public List<Station> Stations { get { return _liststations; } }
 
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class WithoutParameterlessCtor {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Foo {get; internal set;}
 
         public WithoutParameterlessCtor(int foo)

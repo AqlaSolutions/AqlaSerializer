@@ -9,8 +9,8 @@
 
 //namespace TestRig
 //{
-//    using ProtoBuf;
-//    using ProtoBuf.ServiceModel;
+//    using AqlaSerializer;
+//    using AqlaSerializer.ServiceModel;
 
 //    [DataContract]
 //    public class Test2

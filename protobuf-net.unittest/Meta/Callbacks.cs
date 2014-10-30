@@ -2,10 +2,10 @@
 using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class Callbacks

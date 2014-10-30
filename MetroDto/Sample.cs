@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 
 [global::ProtoBuf.ProtoContract(Name = @"StatusHistPair")]
-public partial class StatusHistPair : global::ProtoBuf.IExtensible
+public partial class StatusHistPair : global::AqlaSerializer.IExtensible
 {
     public StatusHistPair() { }
 
@@ -19,12 +19,12 @@ public partial class StatusHistPair : global::ProtoBuf.IExtensible
         get { return _values; }
     }
 
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing) { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing) { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
 }
 
 [global::ProtoBuf.ProtoContract(Name = @"DiffHistPair")]
-public partial class DiffHistPair : global::ProtoBuf.IExtensible
+public partial class DiffHistPair : global::AqlaSerializer.IExtensible
 {
     public DiffHistPair() { }
 
@@ -42,12 +42,12 @@ public partial class DiffHistPair : global::ProtoBuf.IExtensible
         get { return _values; }
     }
 
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing) { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing) { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
 }
 
 [global::ProtoBuf.ProtoContract(Name = @"SM2Stats")]
-public partial class SM2Stats : global::ProtoBuf.IExtensible
+public partial class SM2Stats : global::AqlaSerializer.IExtensible
 {
     public SM2Stats() { }
 
@@ -148,27 +148,27 @@ public partial class SM2Stats : global::ProtoBuf.IExtensible
         get { return _createdon; }
         set { _createdon = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing) { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing) { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
 }
 
 [global::ProtoBuf.ProtoContract(Name = @"MemStatus")]
 public enum MemStatus
 {
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Memorized", Value = 0)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Memorized", Value = 0)]
     Memorized = 0,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Lapsed", Value = 1)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Lapsed", Value = 1)]
     Lapsed = 1,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"InAcquisition", Value = 2)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"InAcquisition", Value = 2)]
     InAcquisition = 2,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"NotSeen", Value = 3)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"NotSeen", Value = 3)]
     NotSeen = 3,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"None", Value = 4)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"None", Value = 4)]
     None = 4
 }
 
@@ -176,21 +176,21 @@ public enum MemStatus
 public enum Grade
 {
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Zero", Value = 0)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Zero", Value = 0)]
     Zero = 0,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"One", Value = 1)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"One", Value = 1)]
     One = 1,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Two", Value = 2)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Two", Value = 2)]
     Two = 2,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Three", Value = 3)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Three", Value = 3)]
     Three = 3,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Four", Value = 4)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Four", Value = 4)]
     Four = 4,
 
-    [global::ProtoBuf.ProtoEnum(Name = @"Five", Value = 5)]
+    [global::AqlaSerializer.ProtoEnum(Name = @"Five", Value = 5)]
     Five = 5
 }

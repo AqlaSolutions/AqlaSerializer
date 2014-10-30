@@ -1,8 +1,8 @@
 ﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using System.ComponentModel;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -68,12 +68,12 @@ namespace AqlaSerializer
         /// Specifies whether the inherited sype's sub-message should be
         /// written with a length-prefix (default), or with group markers.
         /// </summary>
-        [DefaultValue(DataFormat.Default)]
-        public DataFormat DataFormat
+        [DefaultValue(BinaryDataFormat.Default)]
+        public BinaryDataFormat DataFormat
         {
             get { return dataFormat; }
             set { dataFormat = value; }
         }
-        private DataFormat dataFormat = DataFormat.Default;
+        private BinaryDataFormat dataFormat = BinaryDataFormat.Default;
     }
 }

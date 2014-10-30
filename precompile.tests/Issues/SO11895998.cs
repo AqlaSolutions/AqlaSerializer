@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Precompile;
+using AqlaSerializer;
+using AqlaSerializer.Precompile;
 using System;
 
 namespace precompile.tests.Issues

@@ -1,17 +1,17 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace demo_rpc_client_silverlight.Northwind
 {
-    [ProtoContract(DataMemberOffset = 1)]
+    [ProtoBuf.ProtoContract(DataMemberOffset = 1)]
     partial class Customer {}
 
-    [ProtoContract(DataMemberOffset = 1)]
+    [ProtoBuf.ProtoContract(DataMemberOffset = 1)]
     partial class Order {}
 
-    [ProtoContract(DataMemberOffset = 1)]
-    [ProtoPartialMember(1, "OrderID")]
-    [ProtoPartialMember(2, "ProductID")]
-    [ProtoPartialMember(3, "UnitPrice")]
+    [ProtoBuf.ProtoContract(DataMemberOffset = 1)]
+    [ProtoBuf.ProtoPartialMember(1, "OrderID")]
+    [ProtoBuf.ProtoPartialMember(2, "ProductID")]
+    [ProtoBuf.ProtoPartialMember(3, "UnitPrice")]
     partial class Order_Detail { }
 }

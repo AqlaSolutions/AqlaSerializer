@@ -4,18 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class TraceErrorData
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Foo { get; set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public string Bar { get; set; }
 
     }

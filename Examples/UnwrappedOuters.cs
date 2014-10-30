@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples

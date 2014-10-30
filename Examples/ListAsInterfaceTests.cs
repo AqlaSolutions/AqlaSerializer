@@ -4,21 +4,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class DataWithListUninitialized : IDataWithList
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public IList<string> Data { get; internal set; } // non-public just for fun
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class DataWithListInitialized : IDataWithList
     {
         private readonly IList<string> data = new List<string>();
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public IList<string> Data { get { return data; } }
     }
     interface IDataWithList

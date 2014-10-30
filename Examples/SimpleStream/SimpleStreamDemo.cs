@@ -7,7 +7,7 @@ using System.Runtime.Serialization.Formatters.Soap;
 using System.Text;
 using System.Xml.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.Serialization;
 using System.ComponentModel;
 using System.ServiceModel;
@@ -17,7 +17,7 @@ using System.ServiceModel;
 #endif
 #if NET_3_5
 using System.Runtime.Serialization.Json;
-using Serializer = ProtoBuf.Serializer;
+using Serializer = AqlaSerializer.Serializer;
 #endif
 
 namespace Examples.SimpleStream
@@ -168,19 +168,19 @@ namespace Examples.SimpleStream
             return true;
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Test5
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int[] Data { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class TwoFields
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Foo { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Bar { get; set; }
         }
         [Ignore("AqlaSerializer changed format")]
@@ -203,10 +203,10 @@ namespace Examples.SimpleStream
             Assert.AreEqual(130, t1.A);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class ItemWithBlob
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public byte[] Foo { get; set; }
         }
 
@@ -226,9 +226,9 @@ namespace Examples.SimpleStream
 
         public enum SomeEnum
         {
-            [ProtoEnum(Value = 3)]
+            [ProtoBuf.ProtoEnum(Value = 3)]
             Foo = 1,
-            [ProtoEnum(Value = 4)]
+            [ProtoBuf.ProtoEnum(Value = 4)]
             Bar = 2
         }
         [XmlType]
@@ -290,7 +290,7 @@ namespace Examples.SimpleStream
 
             // data should be available via extension API
             int val;
-            Assert.IsTrue(Extensible.TryGetValue<int>(see, 2, DataFormat.Default, true, out val));
+            Assert.IsTrue(Extensible.TryGetValue<int>(see, 2, BinaryDataFormat.Default, true, out val));
             Assert.AreEqual(9, val);
 
             // and check it re-serializes OK
@@ -593,14 +593,14 @@ namespace Examples.SimpleStream
       required Test1 c = 3;
     }
     */
-    [Serializable, ProtoContract]
+    [Serializable, ProtoBuf.ProtoContract]
     public sealed class Test1
     {
 #if NET_3_0
         [DataMember(Name = "a", Order = 1, IsRequired = true)]
         [ProtoSharp.Core.Tag(1)]
 #endif
-        [ProtoMember(1, Name = "a", IsRequired = true, DataFormat = DataFormat.TwosComplement)]
+        [ProtoBuf.ProtoMember(1, Name = "a", IsRequired = true, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public int A { get; set; }
     }
     [Serializable, DataContract]
@@ -636,7 +636,7 @@ namespace Examples.SimpleStream
     {
         [OperationContract]
 #if NET_3_0 && FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER
-        [ProtoBehavior]
+        [ProtoBuf.ProtoBehavior]
 #endif
         Test3 Bar(Test1 value);
     }

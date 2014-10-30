@@ -1,9 +1,9 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using System.Collections;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     internal sealed class NetObjectCache
     {

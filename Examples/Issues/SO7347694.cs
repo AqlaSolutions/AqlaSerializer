@@ -5,17 +5,17 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO7347694
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Thing
         {
-            [ProtoMember(1)] private readonly string _name;
+            [ProtoBuf.ProtoMember(1)] private readonly string _name;
 
             public string Name
             {
@@ -38,14 +38,14 @@ namespace Examples.Issues
 
             using (var fs = File.Create(@"things.bin"))
             {
-                ProtoBuf.Serializer.Serialize(fs, list);
+                AqlaSerializer.Serializer.Serialize(fs, list);
 
                 fs.Close();
             }
 
             using (var fs = File.OpenRead(@"things.bin"))
             {
-                list = ProtoBuf.Serializer.Deserialize<MyDto>(fs);
+                list = AqlaSerializer.Serializer.Deserialize<MyDto>(fs);
 
                 Assert.AreEqual(3, list.Things.Count);
                 Assert.AreNotSame(list.Things[0], list.Things[1]);
@@ -55,10 +55,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MyDto
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public List<Thing> Things { get; set; }
         }
 

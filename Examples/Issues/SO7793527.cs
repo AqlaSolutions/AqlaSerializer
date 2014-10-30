@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,22 +16,22 @@ namespace Examples.Issues
     [TestFixture]
     public class SO7793527
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IList<Bar> Bars { get; set; }
         }
 
-        [DataContract, ProtoContract]
+        [DataContract, ProtoBuf.ProtoContract]
         public class FooEnumerable
         {
-            [ProtoMember(1), DataMember(Order=1)]
+            [ProtoBuf.ProtoMember(1), DataMember(Order=1)]
             public IEnumerable<Bar> Bars { get; set; }
         }
 
 
-        [DataContract, ProtoContract]
+        [DataContract, ProtoBuf.ProtoContract]
         public class Bar
         {
 
@@ -110,31 +110,31 @@ namespace Examples.Issues
         }
 
         // see https://gist.github.com/gmcelhanon/5391894
-        [Serializable, ProtoContract]
+        [Serializable, ProtoBuf.ProtoContract]
         public class GoalPlanningModel1
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IEnumerable<ProposedGoal> ProposedGoals { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public IEnumerable<PublishedGoal> PublishedGoals { get; set; }
         }
 
         // In order to get protobuf-net to serialize it, I have to change the IEnumerabe<T> members to IList<T>.
 
-        [Serializable, ProtoContract]
+        [Serializable, ProtoBuf.ProtoContract]
         public class GoalPlanningModel2
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IList<ProposedGoal> ProposedGoals { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public IList<PublishedGoal> PublishedGoals { get; set; }
         }
-        [ProtoContract]
-        public class ProposedGoal { [ProtoMember(1)] public int X { get; set; } }
-        [ProtoContract]
-        public class PublishedGoal { [ProtoMember(1)] public int X { get; set; } }
+        [ProtoBuf.ProtoContract]
+        public class ProposedGoal { [ProtoBuf.ProtoMember(1)] public int X { get; set; } }
+        [ProtoBuf.ProtoContract]
+        public class PublishedGoal { [ProtoBuf.ProtoMember(1)] public int X { get; set; } }
 
         [Test]
         public void TestPlanningModelWithEnumerables()

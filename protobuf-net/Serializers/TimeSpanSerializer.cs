@@ -11,7 +11,7 @@ using System.Reflection;
 
 
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class TimeSpanSerializer : IProtoSerializer
     {
@@ -20,7 +20,7 @@ namespace ProtoBuf.Serializers
 #else
         static readonly Type expectedType = typeof(TimeSpan);
 #endif
-        public TimeSpanSerializer(ProtoBuf.Meta.TypeModel model)
+        public TimeSpanSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(TimeSpan));

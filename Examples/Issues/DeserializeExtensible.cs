@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -35,17 +35,17 @@ namespace Examples.Issues
             }
             Assert.IsNotNull(small, caption);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class LargeType {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Foo {get;set;}
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Bar {get;set;}
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SmallType : Extensible {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public string Blab {get;set;}
         }
     }    

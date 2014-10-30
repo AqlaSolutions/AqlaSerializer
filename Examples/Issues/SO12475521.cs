@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 
 namespace Examples.Issues
@@ -20,16 +20,16 @@ namespace Examples.Issues
             Assert.AreEqual(typeof(ProtoReader), clone.AnotherType);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class HazType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public Type Type { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public Type AnotherType { get; set; }
         }
 

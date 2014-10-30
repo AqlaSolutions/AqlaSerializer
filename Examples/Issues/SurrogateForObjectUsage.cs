@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -36,10 +36,10 @@ namespace Examples.Issues
             [System.Xml.Serialization.XmlAttributeAttribute()]
             public System.Single[] Values;
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ParamSurrogate
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public FloatData FloatData { get; set; }
             // TODO: other types here
 

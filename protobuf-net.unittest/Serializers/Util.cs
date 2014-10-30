@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using ProtoBuf.Serializers;
+using AqlaSerializer.Serializers;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf.Meta;
-using ProtoBuf.Compiler;
+using AqlaSerializer.Meta;
+using AqlaSerializer.Compiler;
 
-namespace ProtoBuf.unittest.Serializers
+namespace AqlaSerializer.unittest.Serializers
 {
     static class Util
     {

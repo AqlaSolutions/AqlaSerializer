@@ -3,18 +3,18 @@ using System.ComponentModel;
 using System.IO;
 using System.Xml.Serialization;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.Serialization;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class DetectMissing
     {
         private int? foo;
         
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Foo
         {
             get { return foo ?? 5; }
@@ -32,7 +32,7 @@ namespace Examples
 
         private string bar;
         
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public string Bar
         {
             get { return bar ?? "abc"; }

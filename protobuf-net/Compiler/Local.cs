@@ -8,7 +8,7 @@ using Type  = IKVM.Reflection.Type;
 using System.Reflection.Emit;
 #endif
 
-namespace ProtoBuf.Compiler
+namespace AqlaSerializer.Compiler
 {
     internal sealed class Local : IDisposable
     {

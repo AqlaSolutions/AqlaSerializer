@@ -5,8 +5,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.IO;
 
 namespace Examples.Issues
@@ -14,14 +14,14 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue199
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class DodgyDefault
         {
             public DodgyDefault()
             {
                 Value = true;
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public bool Value { get; set; }
         }
 

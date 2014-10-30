@@ -5,8 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -92,185 +92,185 @@ namespace Examples.Issues
             Three = 4
         }
 
-        [ProtoContract, ProtoInclude(51, typeof(ClassSix))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(51, typeof(ClassSix))]
         public class ClassOne
         {
             // properties
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int p_i1 { set; get; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public uint p_i2 { set; get; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public long p_l1 { set; get; }
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public ulong p_l2 { set; get; }
 
-            [ProtoMember(5)]
+            [ProtoBuf.ProtoMember(5)]
             public string p_s { set; get; }
 
-            [ProtoMember(6)]
+            [ProtoBuf.ProtoMember(6)]
             public float p_f { set; get; }
 
-            [ProtoMember(7)]
+            [ProtoBuf.ProtoMember(7)]
             public double p_d { set; get; }
 
-            [ProtoMember(8)]
+            [ProtoBuf.ProtoMember(8)]
             public bool p_bl { set; get; }
 
-            [ProtoMember(9)]
+            [ProtoBuf.ProtoMember(9)]
             public DateTime p_dt { set; get; }
 
-            [ProtoMember(10)]
+            [ProtoBuf.ProtoMember(10)]
             public decimal p_m { set; get; }
 
-            [ProtoMember(11)]
+            [ProtoBuf.ProtoMember(11)]
             public byte p_b1 { set; get; }
 
-            [ProtoMember(12)]
+            [ProtoBuf.ProtoMember(12)]
             public sbyte p_b2 { set; get; }
 
-            [ProtoMember(13)]
+            [ProtoBuf.ProtoMember(13)]
             public char p_c { set; get; }
 
-            [ProtoMember(14)]
+            [ProtoBuf.ProtoMember(14)]
             public short p_s1 { set; get; }
 
-            [ProtoMember(15)]
+            [ProtoBuf.ProtoMember(15)]
             public ushort p_s2 { set; get; }
 
-            [ProtoMember(16)]
+            [ProtoBuf.ProtoMember(16)]
             public TimeSpan p_ts { set; get; }
 
-            [ProtoMember(17)]
+            [ProtoBuf.ProtoMember(17)]
             public Guid p_id { set; get; }
 
-            [ProtoMember(18)]
+            [ProtoBuf.ProtoMember(18)]
             public Uri p_uri { set; get; }
 
-            [ProtoMember(19)]
+            [ProtoBuf.ProtoMember(19)]
             public byte[] p_ba { set; get; }
 
-            [ProtoMember(20)]
+            [ProtoBuf.ProtoMember(20)]
             public Type p_t { set; get; }
 
-            [ProtoMember(21)]
+            [ProtoBuf.ProtoMember(21)]
             public string[] p_sa { set; get; }
 
-            [ProtoMember(22)]
+            [ProtoBuf.ProtoMember(22)]
             public int[] p_ia { set; get; }
 
-            [ProtoMember(23)]
+            [ProtoBuf.ProtoMember(23)]
             public EnumOne p_e1 { set; get; }
 
-            [ProtoMember(24)]
+            [ProtoBuf.ProtoMember(24)]
             public EnumTwo p_e2 { set; get; }
 
-            [ProtoMember(25)]
+            [ProtoBuf.ProtoMember(25)]
             public List<ClassFive> p_list { set; get; }
 
             // fields
 
-            [ProtoMember(26)]
+            [ProtoBuf.ProtoMember(26)]
             public int f_i1 = 0;
 
-            [ProtoMember(27)]
+            [ProtoBuf.ProtoMember(27)]
             public uint f_i2 = 0;
 
-            [ProtoMember(28)]
+            [ProtoBuf.ProtoMember(28)]
             public long f_l1 = 0L;
 
-            [ProtoMember(29)]
+            [ProtoBuf.ProtoMember(29)]
             public ulong f_l2 = 0UL;
 
-            [ProtoMember(30)]
+            [ProtoBuf.ProtoMember(30)]
             public string f_s = string.Empty;
 
-            [ProtoMember(31)]
+            [ProtoBuf.ProtoMember(31)]
             public float f_f = 0f;
 
-            [ProtoMember(32)]
+            [ProtoBuf.ProtoMember(32)]
             public double f_d = 0d;
 
-            [ProtoMember(33)]
+            [ProtoBuf.ProtoMember(33)]
             public bool f_bl = false;
 
-            [ProtoMember(34)]
+            [ProtoBuf.ProtoMember(34)]
             public DateTime f_dt = DateTime.MinValue;
 
-            [ProtoMember(35)]
+            [ProtoBuf.ProtoMember(35)]
             public decimal f_m = 0m;
 
-            [ProtoMember(36)]
+            [ProtoBuf.ProtoMember(36)]
             public byte f_b1 = 0;
 
-            [ProtoMember(37)]
+            [ProtoBuf.ProtoMember(37)]
             public sbyte f_b2 = 0;
 
-            [ProtoMember(38)]
+            [ProtoBuf.ProtoMember(38)]
             public char f_c = (char)0;
 
-            [ProtoMember(39)]
+            [ProtoBuf.ProtoMember(39)]
             public short f_s1 = 0;
 
-            [ProtoMember(40)]
+            [ProtoBuf.ProtoMember(40)]
             public ushort f_s2 = 0;
 
-            [ProtoMember(41)]
+            [ProtoBuf.ProtoMember(41)]
             public TimeSpan f_ts = TimeSpan.Zero;
 
-            [ProtoMember(42)]
+            [ProtoBuf.ProtoMember(42)]
             public Guid f_id = Guid.Empty;
 
-            [ProtoMember(43)]
+            [ProtoBuf.ProtoMember(43)]
             public Uri f_uri = null;
 
-            [ProtoMember(44)]
+            [ProtoBuf.ProtoMember(44)]
             public byte[] f_ba = null;
 
-            [ProtoMember(45)]
+            [ProtoBuf.ProtoMember(45)]
             public Type f_t = null;
 
-            [ProtoMember(46)]
+            [ProtoBuf.ProtoMember(46)]
             public string[] f_sa = null;
 
-            [ProtoMember(47)]
+            [ProtoBuf.ProtoMember(47)]
             public int[] f_ia = null;
 
-            [ProtoMember(48)]
+            [ProtoBuf.ProtoMember(48)]
             public EnumOne f_e1 = 0;
 
-            [ProtoMember(49)]
+            [ProtoBuf.ProtoMember(49)]
             public EnumTwo f_e2 = 0;
 
-            [ProtoMember(50)]
+            [ProtoBuf.ProtoMember(50)]
             public List<ClassFive> f_list = null;
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ClassSix : ClassOne
         {
 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ClassTwo
         {
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public interface IClass
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             string ss
             {
                 set;
                 get;
             }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             ClassOne one
             {
                 set;
@@ -278,36 +278,36 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ClassThree : IClass
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string ss { set; get; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public ClassOne one { set; get; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public ClassSix two { set; get; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ClassFour
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string ss { set; get; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public ClassOne one { set; get; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class ClassFive
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int i { set; get; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string s { set; get; }
         }
         private static ClassThree Create()

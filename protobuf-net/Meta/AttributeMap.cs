@@ -8,7 +8,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     public abstract class AttributeMap
     {

@@ -4,21 +4,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
-using ProtoBuf.unittest.Meta;
+using AqlaSerializer.unittest.Meta;
 
-namespace ProtoBuf.unittest.Attribs
+namespace AqlaSerializer.unittest.Attribs
 {
     [TestFixture]
     public class ComplexMultiTypes
     {
         #region DTO
-        [ProtoContract]
-        [ProtoInclude(10000, typeof(EntityDTO))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(10000, typeof(EntityDTO))]
         public class ComponentContainerDTO
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public IList<ComponentDTO> Components { get; set; }
 
             public ComponentContainerDTO()
@@ -27,41 +27,41 @@ namespace ProtoBuf.unittest.Attribs
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class EntityDTO : ComponentContainerDTO
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Id { get; set; }
 
         }
 
-        [ProtoContract]
-        [ProtoInclude(10001, typeof(HealthDTO))]
-        [ProtoInclude(10002, typeof(PhysicalLocationDTO))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(10001, typeof(HealthDTO))]
+        [ProtoBuf.ProtoInclude(10002, typeof(PhysicalLocationDTO))]
         public class ComponentDTO //: MyDynamicObjectDTO
         {
             public EntityDTO Owner { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Id { get; set; }
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public string Name { get; set; }
 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class HealthDTO : ComponentDTO
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public decimal CurrentHealth { get; set; }
 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PhysicalLocationDTO : ComponentDTO
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public decimal X { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public decimal Y { get; set; }
         }
 

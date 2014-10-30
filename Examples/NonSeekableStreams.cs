@@ -6,8 +6,8 @@ using System.Text;
 using System.IO;
 using DAL;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {

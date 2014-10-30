@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Specifies the type of prefix that should be applied to messages.

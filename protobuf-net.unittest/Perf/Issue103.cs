@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 
-namespace ProtoBuf.unittest.Perf.Issue103Types
+namespace AqlaSerializer.unittest.Perf.Issue103Types
 {
     partial class ContainedType
     {
@@ -11,12 +11,12 @@ namespace ProtoBuf.unittest.Perf.Issue103Types
         }
     }
 }
-namespace ProtoBuf.unittest.Perf
+namespace AqlaSerializer.unittest.Perf
 {
     using Issue103Types;
     using NUnit.Framework;
     using System.Diagnostics;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
     using System.IO;
     [TestFixture]
     public class Issue103

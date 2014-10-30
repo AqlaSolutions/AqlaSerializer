@@ -8,7 +8,7 @@ namespace test
     using System.IO;
     using System.Xml.Serialization;
     using NUnit.Framework;
-    using ProtoBuf;
+    using AqlaSerializer;
 
     [XmlType]
     public class SimpleObject : IEquatable<SimpleObject>
@@ -73,7 +73,7 @@ namespace test
             SimpleObject fromXml = (SimpleObject)xmlSerializer.Deserialize(ms);
             Assert.That(original.Equals(fromXml));
 
-            // rewind the stream and deserialize using Protobuf
+            // rewind the stream and deserialize using AqlaSerializer
             ms.Seek(0L, SeekOrigin.Begin);
             SimpleObject fromProtobuf = Serializer.Deserialize<SimpleObject>(ms);
 

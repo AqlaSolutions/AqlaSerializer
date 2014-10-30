@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using System.Collections;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Diagnostics;
 using System.IO;
 using System;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class PocoListTests
@@ -557,14 +557,14 @@ namespace ProtoBuf.unittest.Meta
             model.Add(typeof (PackedData), true);
             return model;
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PackedData
         {
-            [ProtoMember(1, IsPacked = true)]
+            [ProtoBuf.ProtoMember(1, IsPacked = true)]
             public List<int> ListInt32 { get; set; }
-            [ProtoMember(2, IsPacked = true)]
+            [ProtoBuf.ProtoMember(2, IsPacked = true)]
             public List<float> ListSingle { get; set; }
-            [ProtoMember(3, IsPacked = true)]
+            [ProtoBuf.ProtoMember(3, IsPacked = true)]
             public List<double> ListDouble{ get; set; }
         }
     }
@@ -709,14 +709,14 @@ namespace ProtoBuf.unittest.Meta
             model.Add(typeof(PackedData), true);
             return model;
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class PackedData
         {
-            [ProtoMember(1, IsPacked = true)]
+            [ProtoBuf.ProtoMember(1, IsPacked = true)]
             public int[] ArrayInt32 { get; set; }
-            [ProtoMember(2, IsPacked = true)]
+            [ProtoBuf.ProtoMember(2, IsPacked = true)]
             public float[] ArraySingle { get; set; }
-            [ProtoMember(3, IsPacked = true)]
+            [ProtoBuf.ProtoMember(3, IsPacked = true)]
             public double[] ArrayDouble { get; set; }
         }
     }

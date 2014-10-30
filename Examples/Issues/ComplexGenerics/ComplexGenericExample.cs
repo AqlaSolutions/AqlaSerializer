@@ -5,7 +5,7 @@ namespace Examples.Issues.ComplexGenerics
  * may as well keep it as a test...
  * */
 
-    using ProtoBuf;
+    using AqlaSerializer;
     using System.Data;
     using NUnit.Framework;
     using System;
@@ -63,11 +63,11 @@ namespace Examples.Issues.ComplexGenerics
         new T Result { get; set; }
     }
 
-    [ProtoInclude(21, typeof(W))]
-    [ProtoInclude(22, typeof(X))]
-    [ProtoInclude(23, typeof(Y))]
-    [ProtoInclude(25, typeof(SpecialQuery))]
-    [ProtoContract]
+    [ProtoBuf.ProtoInclude(21, typeof(W))]
+    [ProtoBuf.ProtoInclude(22, typeof(X))]
+    [ProtoBuf.ProtoInclude(23, typeof(Y))]
+    [ProtoBuf.ProtoInclude(25, typeof(SpecialQuery))]
+    [ProtoBuf.ProtoContract]
     abstract class Query : IQuery
     {
         public string Result
@@ -88,14 +88,14 @@ namespace Examples.Issues.ComplexGenerics
                 .ConvertFromInvariantString(value);
         }
     }
-    [ProtoContract]
-    [ProtoInclude(21, typeof(Z))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(21, typeof(Z))]
     abstract class SpecialQuery : Query, IQuery<DataSet>
     {
         
         public new DataSet Result { get; set; }
 
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         protected override string ResultString
         {
             get {
@@ -117,10 +117,10 @@ namespace Examples.Issues.ComplexGenerics
         }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class W : Query, IQuery<bool>
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public new bool Result { get; set; }
 
         protected override string ResultString
@@ -129,10 +129,10 @@ namespace Examples.Issues.ComplexGenerics
             set { Result = ParseQueryString<bool>(value); }
         }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class X : Query, IQuery<string>
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public new string Result { get; set; }
 
         protected override string ResultString
@@ -141,10 +141,10 @@ namespace Examples.Issues.ComplexGenerics
             set { Result = value; }
         }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Y : Query, IQuery<int>
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public new int Result { get; set; }
 
         protected override string ResultString
@@ -153,7 +153,7 @@ namespace Examples.Issues.ComplexGenerics
             set { Result = ParseQueryString<int>(value); }
         }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Z : SpecialQuery
     {
     }

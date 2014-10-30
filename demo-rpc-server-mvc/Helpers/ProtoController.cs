@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Web.Mvc;
-using ProtoBuf.ServiceModel.Server;
+using AqlaSerializer.ServiceModel.Server;
 using System.Web;
 
-namespace Protobuf.Web.Mvc
+namespace AqlaSerializer.Web.Mvc
 {
     public abstract class ProtoController : ServerBase, IController
     {

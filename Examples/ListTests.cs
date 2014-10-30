@@ -2,21 +2,21 @@
 using NUnit.Framework;
 using Examples.Ppt;
 using System.Collections.Generic;
-using ProtoBuf;
 using System.Linq;
 using NUnit.Framework.SyntaxHelpers;
 using System;
 using System.IO;
 using System.Collections;
 using System.Net;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
+using Serializer = AqlaSerializer.Serializer;
 
 namespace Examples
 {
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Entity
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string Foo { get; set; }
     }
 
@@ -27,7 +27,7 @@ namespace Examples
         IEnumerator IEnumerable.GetEnumerator() { return items.GetEnumerator(); }
         public void Add(int value) { items.Add(value); }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class EntityWithPackedInts
     {
         public void ClearList()
@@ -35,32 +35,32 @@ namespace Examples
             List = null;
         }
         public EntityWithPackedInts() { List = new List<int>(); }
-        [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+        [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
         public List<int> List {get;private set;}
 
-        [ProtoMember(2, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+        [ProtoBuf.ProtoMember(2, Options = ProtoBuf.MemberSerializationOptions.Packed)]
         public List<int> ListNoDefault { get; set; }
-        
-        [ProtoMember(3, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+
+        [ProtoBuf.ProtoMember(3, Options = ProtoBuf.MemberSerializationOptions.Packed)]
         public int[] ItemArray { get; set; }
 
-        [ProtoMember(4, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+        [ProtoBuf.ProtoMember(4, Options = ProtoBuf.MemberSerializationOptions.Packed)]
         public CustomEnumerable Custom { get; set; }
     }
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class EntityWithUnpackedInts
     {
         public EntityWithUnpackedInts() { Items = new List<int>(); }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<int> Items { get; private set; }
 
-        [ProtoMember(2)]
+        [ProtoBuf.ProtoMember(2)]
         public List<int> ItemsNoDefault { get; set; }
 
-        [ProtoMember(3)]
+        [ProtoBuf.ProtoMember(3)]
         public int[] ItemArray { get; set; }
 
-        [ProtoMember(4)]
+        [ProtoBuf.ProtoMember(4)]
         public CustomEnumerable Custom { get; set; }
     }
 
@@ -407,16 +407,16 @@ namespace Examples
             Assert.AreEqual("hello world", clone.Stuff["ghi"].Value);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class DictionaryTestEntity
         {
             public DictionaryTestEntity() {
                 Stuff = new CustomBox();
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Foo { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public CustomBox Stuff { get; private set; }
         }
 
@@ -426,10 +426,10 @@ namespace Examples
             
         } 
 
-        [ProtoContract]
-        [ProtoInclude(1, typeof(CompositeType<int>))]
-        [ProtoInclude(2, typeof(CompositeType<DateTime>))]
-        [ProtoInclude(3, typeof(CompositeType<string>))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(CompositeType<int>))]
+        [ProtoBuf.ProtoInclude(2, typeof(CompositeType<DateTime>))]
+        [ProtoBuf.ProtoInclude(3, typeof(CompositeType<string>))]
         abstract class CompositeType
         {
             public static CompositeType<T> Create<T>(T value)
@@ -444,10 +444,10 @@ namespace Examples
                 set { ValueImpl = value; } 
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class CompositeType<T> : CompositeType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public new T Value { get; set; }
 
             protected override object ValueImpl
@@ -541,10 +541,10 @@ namespace Examples
         {
             Serializer.DeepClone(new ArrayOfString());
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class ArrayOfString
         {
-            [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+            [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public string[] Items { get; set; }
         }
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
@@ -552,10 +552,10 @@ namespace Examples
         {
             Serializer.DeepClone(new ListOfDateTime());
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class ListOfDateTime
         {
-            [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+            [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public List<DateTime> Items { get; set; }
         }
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
@@ -564,13 +564,13 @@ namespace Examples
             Serializer.DeepClone(new CustomOfSubMessage());
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class CustomOfSubMessage
         {
-            [ProtoMember(1, Options = ProtoMemberAttribute.MemberSerializationOptions.Packed)]
+            [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public CustomCollection Items { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class CustomItem { }
         class CustomCollection : IEnumerable<CustomItem>
         {
@@ -624,16 +624,16 @@ namespace Examples
             Assert.AreEqual("abc", clone.Items.First.Value.Value);
             Assert.AreEqual("def", clone.Items.Last.Value.Value);
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class BasicItem
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Value { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class WithLinkedList
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public LinkedList<BasicItem> Items { get; private set; }
 
             public WithLinkedList()

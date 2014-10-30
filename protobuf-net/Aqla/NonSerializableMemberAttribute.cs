@@ -1,6 +1,6 @@
 ﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace AqlaSerializer
 {

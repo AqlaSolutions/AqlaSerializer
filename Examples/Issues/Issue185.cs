@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
 
 namespace Examples.Issues
@@ -18,14 +18,14 @@ namespace Examples.Issues
         public int N { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class OS
     {
         public static implicit operator O(OS o)
         { return o == null ? null : new O(o.N); }
         public static implicit operator OS(O o)
         { return o == null ? null : new OS { N = o.N }; }
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int N { get; set; }
     }
 
@@ -39,10 +39,10 @@ namespace Examples.Issues
         public I Unknown { get; private set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class CS
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public I Unknown { get; set; }
     }
     [TestFixture]

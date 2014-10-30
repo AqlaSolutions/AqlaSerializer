@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -49,12 +49,12 @@ namespace Examples.Issues
         //    Assert.AreEqual(4, data.Stack.Pop(), caption);
         //    Assert.AreEqual(3, data.Stack.Pop(), caption);
         //}
-        //[ProtoContract]
+        //[ProtoBuf.ProtoContract]
         //public class NonConcurrent
         //{
-        //    [ProtoMember(1)]
+        //    [ProtoBuf.ProtoMember(1)]
         //    public Queue<int> Queue { get; set; }
-        //    [ProtoMember(2)]
+        //    [ProtoBuf.ProtoMember(2)]
         //    public Stack<int> Stack { get; set; }
 
         //    public NonConcurrent()
@@ -125,19 +125,19 @@ namespace Examples.Issues
             //Assert.IsFalse(data.Queue.TryDequeue(out val), caption + ":Stack - try 1");
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CanHazConcurrent
         {
-            //[ProtoMember(1)]
+            //[ProtoBuf.ProtoMember(1)]
             public ConcurrentQueue<int> Queue { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public ConcurrentBag<string> Bag { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public ConcurrentDictionary<int, string> Dictionary { get; set; }
 
-            //[ProtoMember(4)]
+            //[ProtoBuf.ProtoMember(4)]
             public ConcurrentStack<int> Stack { get; set; }
 
             public CanHazConcurrent()

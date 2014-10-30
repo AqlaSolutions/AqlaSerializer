@@ -2,7 +2,7 @@
 using System;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
-using ProtoBuf.ServiceModel;
+using AqlaSerializer.ServiceModel;
 
 namespace Examples.Issues
 {
@@ -13,7 +13,7 @@ namespace Examples.Issues
         public void Execute()
         {
             string aqn = typeof (ProtoBehaviorExtension).AssemblyQualifiedName;
-            Assert.IsTrue(Regex.IsMatch(aqn, @"ProtoBuf\.ServiceModel\.ProtoBehaviorExtension, aqlaserializer, Version=[0-9.]+, Culture=neutral, PublicKeyToken=7fa5d10c26ef1210"));
+            Assert.IsTrue(Regex.IsMatch(aqn, @"AqlaSerializer\.ServiceModel\.ProtoBehaviorExtension, aqlaserializer, Version=[0-9.]+, Culture=neutral, PublicKeyToken=7fa5d10c26ef1210"));
             Console.WriteLine("WCF AQN: " + aqn);
         }
     }

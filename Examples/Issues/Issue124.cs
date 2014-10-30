@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Windows.Media;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -14,10 +14,10 @@ namespace Examples.Issues
     public class Issue124
     {
         // note this is a simplified example that 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public struct MyColor
         {
-            [ProtoMember(1, DataFormat=DataFormat.FixedSize)]
+            [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.FixedSize)]
             public uint ARGB { get; set; }
 
             public static explicit operator MyColor  (Color color)
@@ -29,10 +29,10 @@ namespace Examples.Issues
                 return new Color { A = (byte)(color.ARGB >> 24), R = (byte)(color.ARGB >> 16), G = (byte)(color.ARGB >> 8), B = (byte)color.ARGB };
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TypeWithColor
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Color Color { get; set; }
         }
 

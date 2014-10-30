@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Text;
 using AqlaSerializer;
-using ProtoBuf.Serializers;
+using AqlaSerializer.Serializers;
 
 
 #if FEAT_IKVM
@@ -21,7 +21,7 @@ using System.Reflection.Emit;
 #endif
 
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Represents a type at runtime for use with protobuf, allowing the field mappings (etc) to be defined
@@ -103,8 +103,16 @@ namespace ProtoBuf.Meta
             return type.IsAssignableFrom(subType);
 #endif
         }
-
+#if WINRT       
         public static bool CanHaveSubType(Type type)
+        {
+            return CanHaveSubType(type.GetTypeInfo());
+        }
+
+        public static bool CanHaveSubType(TypeInfo type)
+#else
+        public static bool CanHaveSubType(Type type)
+#endif
         {
 #if WINRT
             if ((type.IsClass || type.IsInterface) && !type.IsSealed)
@@ -113,8 +121,9 @@ namespace ProtoBuf.Meta
             if ((type.IsClass || type.IsInterface) && !type.IsSealed)
             {
                 return true;
-            }
 #endif
+
+            }
             return false;
         }
 
@@ -135,12 +144,12 @@ namespace ProtoBuf.Meta
         /// </summary>
         public MetaType AddSubType(int fieldNumber, Type derivedType)
         {
-            return AddSubType(fieldNumber, derivedType, DataFormat.Default);
+            return AddSubType(fieldNumber, derivedType, BinaryDataFormat.Default);
         }
         /// <summary>
         /// Adds a known sub-type to the inheritance model
         /// </summary>
-        public MetaType AddSubType(int fieldNumber, Type derivedType, DataFormat dataFormat)
+        public MetaType AddSubType(int fieldNumber, Type derivedType, BinaryDataFormat dataFormat)
         {
             if (derivedType == null) throw new ArgumentNullException("derivedType");
             if (fieldNumber < 1) throw new ArgumentOutOfRangeException("fieldNumber");
@@ -527,7 +536,7 @@ namespace ProtoBuf.Meta
         {
             if (Helpers.IsEnum(type))
             {
-                return new TagDecorator(ProtoBuf.Serializer.ListItemTag, WireType.Variant, false, new EnumSerializer(type, GetEnumMap()));
+                return new TagDecorator(AqlaSerializer.Serializer.ListItemTag, WireType.Variant, false, new EnumSerializer(type, GetEnumMap()));
             }
             Type itemType = IgnoreListHandling ? null : TypeModel.GetListItemType(model, type);
             if (itemType != null)
@@ -542,8 +551,8 @@ namespace ProtoBuf.Meta
                 }
                 Type defaultType = null;
                 ResolveListTypes(model, type, ref itemType, ref defaultType);
-                ValueMember fakeMember = new ValueMember(model, ProtoBuf.Serializer.ListItemTag, type, itemType, defaultType, DataFormat.Default);
-                return new TypeSerializer(model, type, new int[] { ProtoBuf.Serializer.ListItemTag }, new IProtoSerializer[] { fakeMember.Serializer }, null, true, true, null, constructType, factory);
+                ValueMember fakeMember = new ValueMember(model, AqlaSerializer.Serializer.ListItemTag, type, itemType, defaultType, BinaryDataFormat.Default);
+                return new TypeSerializer(model, type, new int[] { AqlaSerializer.Serializer.ListItemTag }, new IProtoSerializer[] { fakeMember.Serializer }, null, true, true, null, constructType, factory);
             }
             if (surrogate != null)
             {
@@ -914,7 +923,7 @@ namespace ProtoBuf.Meta
             }
 #endif
             ResolveListTypes(model, miType, ref itemType, ref defaultType);
-            ValueMember newField = new ValueMember(model, type, fieldNumber, mi, miType, itemType, defaultType, DataFormat.Default, defaultValue);
+            ValueMember newField = new ValueMember(model, type, fieldNumber, mi, miType, itemType, defaultType, BinaryDataFormat.Default, defaultValue);
             Add(newField);
             return newField;
         }
@@ -1331,7 +1340,7 @@ namespace ProtoBuf.Meta
 
             if (IsList)
             {
-                string itemTypeName = model.GetSchemaTypeName(TypeModel.GetListItemType(model, type), DataFormat.Default, false, false, ref requiresBclImport);
+                string itemTypeName = model.GetSchemaTypeName(TypeModel.GetListItemType(model, type), BinaryDataFormat.Default, false, false, ref requiresBclImport);
                 NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(" {");
                 NewLine(builder, indent + 1).Append("repeated ").Append(itemTypeName).Append(" items = 1;");
                 NewLine(builder, indent).Append('}');
@@ -1355,7 +1364,7 @@ namespace ProtoBuf.Meta
                         {
                             throw new NotSupportedException("Unknown member type: " + mapping[i].GetType().Name);
                         }
-                        NewLine(builder, indent + 1).Append("optional ").Append(model.GetSchemaTypeName(effectiveType, DataFormat.Default, false, false, ref requiresBclImport).Replace('.','_'))
+                        NewLine(builder, indent + 1).Append("optional ").Append(model.GetSchemaTypeName(effectiveType, BinaryDataFormat.Default, false, false, ref requiresBclImport).Replace('.','_'))
                             .Append(' ').Append(mapping[i].Name).Append(" = ").Append(i + 1).Append(';');
                     }
                     NewLine(builder, indent).Append('}');
@@ -1414,7 +1423,7 @@ namespace ProtoBuf.Meta
                 {
                     string ordinality = member.ItemType != null ? "repeated" : member.IsRequired ? "required" : "optional";
                     NewLine(builder, indent + 1).Append(ordinality).Append(' ');
-                    if (member.DataFormat == DataFormat.Group) builder.Append("group ");
+                    if (member.DataFormat == BinaryDataFormat.Group) builder.Append("group ");
                     string schemaTypeName = member.GetSchemaTypeName(true, ref requiresBclImport);
                     builder.Append(schemaTypeName).Append(" ")
                          .Append(member.Name).Append(" = ").Append(member.FieldNumber);

@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -9,14 +9,14 @@ namespace Examples
     public class Inheritance
     {
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A { }
 
         public class B : A { }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class C
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public A A { get; set; }
         }
         [Test]
@@ -50,15 +50,15 @@ namespace Examples
         }
     }
     
-    [ProtoContract]
-    [ProtoInclude(2, typeof(Bar))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(2, typeof(Bar))]
     class Foo
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Bar : Foo
     {
 

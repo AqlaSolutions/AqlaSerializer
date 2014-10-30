@@ -2,7 +2,7 @@
 using System;
 using NUnit.Framework;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     [TestFixture]
     public class PartialClasses
@@ -56,16 +56,16 @@ namespace ProtoBuf
     }
 
 
-    [ProtoPartialMember(1, "Number")]
-    [ProtoPartialMember(2, "Name")]
-    [ProtoPartialMember(3, "When")]
-    [ProtoContract]
-    [ProtoInclude(4, typeof(SubClassData))]
+    [ProtoBuf.ProtoPartialMember(1, "Number")]
+    [ProtoBuf.ProtoPartialMember(2, "Name")]
+    [ProtoBuf.ProtoPartialMember(3, "When")]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(4, typeof(SubClassData))]
     public partial class PartialData
     {
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class SubClassData : PartialData
     {
     }

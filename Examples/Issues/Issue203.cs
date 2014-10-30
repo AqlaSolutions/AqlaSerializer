@@ -4,17 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue203
     {
-        [ProtoContract(SkipConstructor = true)]
+        [ProtoBuf.ProtoContract(SkipConstructor = true)]
         public class SerializeClass
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             private SomeCollection _someList = null;
             public SomeCollection SomeList
             {
@@ -32,7 +32,7 @@ namespace Examples.Issues
         public class SomeCollection : List<SomeCollectionItem>
         { }
 
-        [ProtoContract(SkipConstructor = true)]
+        [ProtoBuf.ProtoContract(SkipConstructor = true)]
         public class SomeCollectionItem
         {
             public SomeCollectionItem()
@@ -45,7 +45,7 @@ namespace Examples.Issues
                 SomeField = init;
             }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string SomeField;
         }
 

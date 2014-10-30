@@ -3,9 +3,9 @@
 using System;
 using System.Collections;
 using System.Text;
-using ProtoBuf;
-using ProtoBuf.Meta;
-using ProtoBuf.Serializers;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
+using AqlaSerializer.Serializers;
 
 
 #if FEAT_IKVM
@@ -59,7 +59,7 @@ namespace AqlaSerializer
                 BasicList partialIgnores = null, partialMembers = null;
                 int dataMemberOffset = 0, implicitFirstTag = 1;
                 bool inferTagByName = _model.InferTagFromNameDefault;
-                ImplicitFields implicitMode = ImplicitFields.None;
+                ImplicitFieldsMode implicitMode = ImplicitFieldsMode.None;
                 bool implicitAqla = false;
                 bool explicitPropertiesContract = false;
                 string name = null;
@@ -82,7 +82,7 @@ namespace AqlaSerializer
                     // except is for SerializableAttribute which family is not returned if other families are present
                     if (!isEnum && fullAttributeTypeName == "System.SerializableAttribute" && HasFamily(family, AttributeFamily.SystemSerializable))
                     {
-                        implicitMode = ImplicitFields.AllFields;
+                        implicitMode = ImplicitFieldsMode.AllFields;
                         implicitAqla = true;
                     }
 
@@ -90,10 +90,10 @@ namespace AqlaSerializer
                     {
                         int tag = 0;
                         if (item.TryGet("tag", out tmp)) tag = (int)tmp;
-                        DataFormat dataFormat = DataFormat.Default;
+                        BinaryDataFormat dataFormat = BinaryDataFormat.Default;
                         if (item.TryGet("DataFormat", out tmp))
                         {
-                            dataFormat = (DataFormat)(int)tmp;
+                            dataFormat = (BinaryDataFormat)(int)tmp;
                         }
                         Type knownType = null;
                         try
@@ -116,10 +116,10 @@ namespace AqlaSerializer
                     {
                         int tag = 0;
                         if (item.TryGet("tag", out tmp)) tag = (int)tmp;
-                        DataFormat dataFormat = DataFormat.Default;
+                        BinaryDataFormat dataFormat = BinaryDataFormat.Default;
                         if (item.TryGet("DataFormat", out tmp))
                         {
-                            dataFormat = (DataFormat)(int)tmp;
+                            dataFormat = (BinaryDataFormat)(int)tmp;
                         }
                         Type knownType = null;
                         try
@@ -197,7 +197,7 @@ namespace AqlaSerializer
 
                             if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
                             {
-                                implicitMode = (ImplicitFields)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
+                                implicitMode = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
                             }
                             if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
                             {
@@ -241,8 +241,8 @@ namespace AqlaSerializer
 
                             if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
                             {
-                                implicitMode = (ImplicitFields)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
-                                if (implicitMode != ImplicitFields.None) implicitAqla = true;
+                                implicitMode = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
+                                if (implicitMode != ImplicitFieldsMode.None) implicitAqla = true;
                             }
                             if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
                             {
@@ -266,7 +266,7 @@ namespace AqlaSerializer
                 }
 
                 if (!Helpers.IsNullOrEmpty(name)) metaType.Name = name;
-                if (implicitMode != ImplicitFields.None)
+                if (implicitMode != ImplicitFieldsMode.None)
                 {
                     if (family == AttributeFamily.ImplicitFallback)
                     {
@@ -378,7 +378,7 @@ namespace AqlaSerializer
                 var arr = new AqlaSerializer.SerializableMemberAttribute[members.Count];
                 members.CopyTo(arr, 0);
 
-                if (inferTagByName || implicitMode != ImplicitFields.None)
+                if (inferTagByName || implicitMode != ImplicitFieldsMode.None)
                 {
                     Array.Sort(arr);
                     foreach (var normalizedAttribute in arr)
@@ -393,7 +393,7 @@ namespace AqlaSerializer
                 foreach (var normalizedAttribute in arr)
                 {
                     ApplyDefaultBehaviour(metaType, isEnum, normalizedAttribute,
-                        (inferTagByName || implicitMode != ImplicitFields.None) ? (int?)implicitFirstTag : null);
+                        (inferTagByName || implicitMode != ImplicitFieldsMode.None) ? (int?)implicitFirstTag : null);
                 }
 
                 if (callbacks != null)
@@ -449,26 +449,26 @@ namespace AqlaSerializer
             _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
-        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFields implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
+        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFieldsMode implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
         {
             switch (implicitMode)
             {
-                case ImplicitFields.PublicFields:
+                case ImplicitFieldsMode.PublicFields:
                     if (isField & isPublic) forced = true;
                     break;
-                case ImplicitFields.AllFields:
+                case ImplicitFieldsMode.AllFields:
                     if (isField) forced = true;
                     break;
-                case ImplicitFields.AllProperties:
+                case ImplicitFieldsMode.AllProperties:
                     if (!isField) forced = true;
                     break;
-                case ImplicitFields.PublicFieldsAndProperties:
+                case ImplicitFieldsMode.PublicFieldsAndProperties:
                     if (isPublic) forced = true;
                     break;
-                case ImplicitFields.PublicProperties:
+                case ImplicitFieldsMode.PublicProperties:
                     if (isPublic && !isField) forced = true;
                     break;
-                case ImplicitFields.AllFieldsAndProperties:
+                case ImplicitFieldsMode.AllFieldsAndProperties:
                     forced = true;
                     break;
             }
@@ -579,7 +579,7 @@ namespace AqlaSerializer
                         family |= AttributeFamily.AutoTuple;
                     }
                 }
-                if (family == AttributeFamily.None && ImplicitFallbackMode != ImplicitFields.None && !isList)
+                if (family == AttributeFamily.None && ImplicitFallbackMode != ImplicitFieldsMode.None && !isList)
                 {
                     if (Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown
                         && type != _model.MapType(typeof(object))
@@ -640,7 +640,7 @@ namespace AqlaSerializer
             if (readOnly)
                 appendCollection = true;
 
-            DataFormat dataFormat = DataFormat.Default;
+            BinaryDataFormat dataFormat = BinaryDataFormat.Default;
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(_model, member, true);
             AttributeMap attrib = null;
@@ -943,11 +943,11 @@ namespace AqlaSerializer
             }
         }
 
-        protected static void GetDataFormat(ref DataFormat value, AttributeMap attrib, string memberName)
+        protected static void GetDataFormat(ref BinaryDataFormat value, AttributeMap attrib, string memberName)
         {
-            if ((attrib == null) || (value != DataFormat.Default)) return;
+            if ((attrib == null) || (value != BinaryDataFormat.Default)) return;
             object obj;
-            if (attrib.TryGet(memberName, out obj) && obj != null) value = (DataFormat)obj;
+            if (attrib.TryGet(memberName, out obj) && obj != null) value = (BinaryDataFormat)obj;
         }
 
         protected static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
@@ -1068,9 +1068,9 @@ namespace AqlaSerializer
 
         /// <summary>
         /// When no attributes found and this is not an AutoTuple then the specified mode will be used. 
-        /// Set to <see cref="ImplicitFields.AllFields"/> and use <see cref="DisableAutoTuples"/> to perform as BinaryFormatter
+        /// Set to <see cref="ImplicitFieldsMode.AllFields"/> and use <see cref="DisableAutoTuples"/> to perform as BinaryFormatter
         /// </summary>
-        public ImplicitFields ImplicitFallbackMode { get; set; }
+        public ImplicitFieldsMode ImplicitFallbackMode { get; set; }
 
         /// <summary>
         /// By default all derived types add themselves to the corresponding base types

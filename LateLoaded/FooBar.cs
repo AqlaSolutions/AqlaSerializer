@@ -1,20 +1,20 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 
-using ProtoBuf;
+using AqlaSerializer;
 namespace LateLoaded
 {
-    [ProtoContract]
-    [ProtoInclude(2, typeof(Bar))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(2, typeof(Bar))]
     public class Foo
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string BaseProp { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class Bar : Foo
     {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public string ChildProp { get; set; }
     }
 }

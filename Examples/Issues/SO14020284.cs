@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,32 +43,32 @@ namespace Examples.Issues
                 Assert.Fail(caption + ":" + ex.Message);
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class EncapsulatedOuter
         {
-            [ProtoMember(10)]
+            [ProtoBuf.ProtoMember(10)]
             public EncapsulatedInner Inner { get; set; }
 
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class EncapsulatedInner
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Y { get; set; }
         }
-        [ProtoContract]
-        [ProtoInclude(10, typeof(InheritedChild))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(10, typeof(InheritedChild))]
         public class InheritedBase
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int X { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class InheritedChild : InheritedBase
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Y { get; set; }
         }
     }

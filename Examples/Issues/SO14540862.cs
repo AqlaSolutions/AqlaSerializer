@@ -2,7 +2,7 @@
 
 using System.Diagnostics;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,20 +16,20 @@ namespace Examples.Issues
     [TestFixture]
     public class SO14540862
     {
-        [ProtoContract]
-        [ProtoInclude(10, typeof(Derived))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(10, typeof(Derived))]
         class Base
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string BaseFirstProperty { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string BaseSecProperty { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Derived : Base
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string DerivedFirstProperty { get; set; }
         }
 
@@ -44,7 +44,7 @@ namespace Examples.Issues
                 DerivedFirstProperty = "DerivedFirst"
             };
 
-            var reflectionSerializer = assembly.GetType("ProtoBuf.Serializer");
+            var reflectionSerializer = assembly.GetType("AqlaSerializer.Serializer");
             var getTypeSerializer = typeof(Serializer);
 
             var reflectionMethods = reflectionSerializer.GetMethods(BindingFlags.Static | BindingFlags.Public);

@@ -5,8 +5,8 @@ using System.Data.Linq;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -150,22 +150,22 @@ namespace Examples.Issues
             Assert.AreEqual(3, children[1].Value.Items.Single().Value);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class SomeNewType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<MyDto> Items { get { return items; } }
             private readonly List<MyDto> items = new List<MyDto>();
         }
 
-        [Serializable, ProtoContract]
+        [Serializable, ProtoBuf.ProtoContract]
         public class Node<T>
         {
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             private readonly List<Node<T>> children = new List<Node<T>>();
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             private readonly string key;
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             private T value;
 
             public string Key { get { return key; } }
@@ -453,7 +453,7 @@ namespace Examples.Issues
                 return children;
             }
 
-            [Serializable, ProtoContract]
+            [Serializable, ProtoBuf.ProtoContract]
             public class RootNode : Node<T>
             {
                 public RootNode() { }
@@ -465,10 +465,10 @@ namespace Examples.Issues
             }
 
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class MyDto
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Value { get; set; }
         }
     }

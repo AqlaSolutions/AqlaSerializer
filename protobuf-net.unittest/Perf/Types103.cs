@@ -10,10 +10,10 @@
 //------------------------------------------------------------------------------
 
 // Generated from: Types103.proto
-namespace ProtoBuf.unittest.Perf.Issue103Types
+namespace AqlaSerializer.unittest.Perf.Issue103Types
 {
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"TypeA")]
-  public partial class TypeA : global::ProtoBuf.IExtensible
+  public partial class TypeA : global::AqlaSerializer.IExtensible
   {
     public TypeA() {}
     
@@ -45,13 +45,13 @@ namespace ProtoBuf.unittest.Perf.Issue103Types
       get { return _param4; }
     }
   
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"ContainedType")]
-  public partial class ContainedType : global::ProtoBuf.IExtensible
+  public partial class ContainedType : global::AqlaSerializer.IExtensible
   {
     public ContainedType() {}
     
@@ -89,26 +89,26 @@ namespace ProtoBuf.unittest.Perf.Issue103Types
       get { return _param4; }
       set { _param4 = value; }
     }
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
   [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"TypeB")]
-  public partial class TypeB : global::ProtoBuf.IExtensible
+  public partial class TypeB : global::AqlaSerializer.IExtensible
   {
     public TypeB() {}
     
-    private readonly global::System.Collections.Generic.List<ProtoBuf.unittest.Perf.Issue103Types.ContainedType> _containedType = new global::System.Collections.Generic.List<ProtoBuf.unittest.Perf.Issue103Types.ContainedType>();
+    private readonly global::System.Collections.Generic.List<AqlaSerializer.unittest.Perf.Issue103Types.ContainedType> _containedType = new global::System.Collections.Generic.List<AqlaSerializer.unittest.Perf.Issue103Types.ContainedType>();
     [global::ProtoBuf.ProtoMember(1, Name=@"containedType", DataFormat = global::ProtoBuf.DataFormat.Default)]
-    public global::System.Collections.Generic.List<ProtoBuf.unittest.Perf.Issue103Types.ContainedType> containedType
+    public global::System.Collections.Generic.List<AqlaSerializer.unittest.Perf.Issue103Types.ContainedType> containedType
     {
       get { return _containedType; }
     }
   
-    private global::ProtoBuf.IExtension extensionObject;
-    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
-      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+    private global::AqlaSerializer.IExtension extensionObject;
+    global::AqlaSerializer.IExtension global::AqlaSerializer.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::AqlaSerializer.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
 }

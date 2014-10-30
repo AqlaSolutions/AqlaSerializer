@@ -2,27 +2,27 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System.Linq;
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue243
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class NullableSequences
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<int?> Int32List { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public List<string> StringList { get; set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public int?[] Int32Array { get; set; }
 
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public string[] StringArray { get; set; }
         }
         [Test]

@@ -2,7 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -11,7 +11,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     class ListDecorator : ProtoDecoratorBase
     {
@@ -117,7 +117,7 @@ namespace ProtoBuf.Serializers
         }
 
 #if FEAT_COMPILER
-        protected override void EmitRead(ProtoBuf.Compiler.CompilerContext ctx, ProtoBuf.Compiler.Local valueFrom)
+        protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             /* This looks more complex than it is. Look at the non-compiled Read to
              * see what it is trying to do, but note that it needs to cope with a
@@ -184,7 +184,7 @@ namespace ProtoBuf.Serializers
             }
         }
 
-        internal static void EmitReadList(ProtoBuf.Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, WireType packedWireType, bool castListForAdd)
+        internal static void EmitReadList(AqlaSerializer.Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, WireType packedWireType, bool castListForAdd)
         {
             using (Compiler.Local fieldNumber = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
             {
@@ -401,7 +401,7 @@ namespace ProtoBuf.Serializers
             return getEnumerator;
         }
 #if FEAT_COMPILER
-        protected override void EmitWrite(ProtoBuf.Compiler.CompilerContext ctx, ProtoBuf.Compiler.Local valueFrom)
+        protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             using (Compiler.Local list = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             {

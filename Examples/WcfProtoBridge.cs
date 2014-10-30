@@ -5,13 +5,13 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 //#if (FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER) || (SILVERLIGHT && !PHONE7)
 namespace Examples
 {
-    using ProtoBuf.ServiceModel;
+    using AqlaSerializer.ServiceModel;
     [TestFixture]
     public class WcfProtoBridge
     {
@@ -68,10 +68,10 @@ namespace Examples
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }
         }
     }

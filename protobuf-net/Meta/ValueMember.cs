@@ -2,7 +2,7 @@
 #if !NO_RUNTIME
 using System;
 
-using ProtoBuf.Serializers;
+using AqlaSerializer.Serializers;
 using System.Globalization;
 
 #if FEAT_IKVM
@@ -12,7 +12,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Meta
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Represents a member (property/field) that is mapped to a protobuf field
@@ -67,7 +67,7 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat, object defaultValue) 
+        public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat, object defaultValue) 
             : this(model, fieldNumber, memberType, itemType, defaultType, dataFormat)
         {
             if (member == null) throw new ArgumentNullException("member");
@@ -116,7 +116,7 @@ namespace ProtoBuf.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        internal ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, DataFormat dataFormat) 
+        internal ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat) 
         {
 
             if (memberType == null) throw new ArgumentNullException("memberType");
@@ -230,12 +230,12 @@ namespace ProtoBuf.Meta
             }
         }
 
-        private DataFormat dataFormat;
+        private BinaryDataFormat dataFormat;
         /// <summary>
         /// Specifies the rules used to process the field; this is used to determine the most appropriate
         /// wite-type, but also to describe subtypes <i>within</i> that wire-type (such as SignedVariant)
         /// </summary>
-        public DataFormat DataFormat
+        public BinaryDataFormat DataFormat
         {
             get { return dataFormat; }
             set { ThrowIfFrozen(); this.dataFormat = value; }
@@ -437,29 +437,29 @@ namespace ProtoBuf.Meta
             }
         }
 
-        private static WireType GetIntWireType(DataFormat format, int width)
+        private static WireType GetIntWireType(BinaryDataFormat format, int width)
         {
             switch (format)
             {
-                case DataFormat.ZigZag: return WireType.SignedVariant;
-                case DataFormat.FixedSize: return width == 32 ? WireType.Fixed32 : WireType.Fixed64;
-                case DataFormat.TwosComplement:
-                case DataFormat.Default: return WireType.Variant;
+                case BinaryDataFormat.ZigZag: return WireType.SignedVariant;
+                case BinaryDataFormat.FixedSize: return width == 32 ? WireType.Fixed32 : WireType.Fixed64;
+                case BinaryDataFormat.TwosComplement:
+                case BinaryDataFormat.Default: return WireType.Variant;
                 default: throw new InvalidOperationException();
             }
         }
-        private static WireType GetDateTimeWireType(DataFormat format)
+        private static WireType GetDateTimeWireType(BinaryDataFormat format)
         {
             switch (format)
             {
-                case DataFormat.Group: return WireType.StartGroup;
-                case DataFormat.FixedSize: return WireType.Fixed64;
-                case DataFormat.Default: return WireType.String;
+                case BinaryDataFormat.Group: return WireType.StartGroup;
+                case BinaryDataFormat.FixedSize: return WireType.Fixed64;
+                case BinaryDataFormat.Default: return WireType.String;
                 default: throw new InvalidOperationException();
             }
         }
 
-        internal static IProtoSerializer TryGetCoreSerializer(RuntimeTypeModel model, DataFormat dataFormat, Type type, out WireType defaultWireType,
+        internal static IProtoSerializer TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             bool asReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
 #if !NO_GENERICS
@@ -572,7 +572,7 @@ namespace ProtoBuf.Meta
                 int key = model.GetKey(type, false, true);
                 if (asReference || dynamicType)
                 {
-                    defaultWireType = dataFormat == DataFormat.Group ? WireType.StartGroup : WireType.String;
+                    defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     BclHelpers.NetObjectOptions options = BclHelpers.NetObjectOptions.None;
                     if (asReference) options |= BclHelpers.NetObjectOptions.AsReference;
                     if (dynamicType) options |= BclHelpers.NetObjectOptions.DynamicType;
@@ -600,7 +600,7 @@ namespace ProtoBuf.Meta
                 }
                 if (key >= 0)
                 {
-                    defaultWireType = dataFormat == DataFormat.Group ? WireType.StartGroup : WireType.String;
+                    defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     return new SubItemSerializer(type, key, model[type], true);
                 }
             }

@@ -7,10 +7,10 @@ using System.Text;
 using System.Threading;
 using NUnit.Framework;
 using NUnit.Framework.SyntaxHelpers;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.Diagnostics;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class LockContention

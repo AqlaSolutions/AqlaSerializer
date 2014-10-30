@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,19 +15,19 @@ namespace Examples.Issues
     public class SO14436606
     {
         [Serializable]
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class A
         {
         }
 
         [Serializable]
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1, AsReference = true)]
+            [ProtoBuf.ProtoMember(1, AsReference = true)]
             public A A { get; set; }
 
-            [ProtoMember(2, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, AsReference = true)]
             public Dictionary<int, A> Items { get; set; }
 
             public B()
@@ -35,18 +35,18 @@ namespace Examples.Issues
                 Items = new Dictionary<int, A>();
             }
         }
-        [ProtoContract(AsReferenceDefault=true)]
+        [ProtoBuf.ProtoContract(AsReferenceDefault=true)]
         public class A_WithDefaultRef
         {
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B_WithDefaultRef
         {
-            [ProtoMember(1, AsReference = true)] // yes, AsReferenceDefault is applied only when adding missing members
+            [ProtoBuf.ProtoMember(1, AsReference = true)] // yes, AsReferenceDefault is applied only when adding missing members
             public A_WithDefaultRef A { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public Dictionary<int, A_WithDefaultRef> Items { get; set; }
 
             public B_WithDefaultRef()
@@ -55,11 +55,11 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public struct RefPair<TKey,TValue> {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public TKey Key {get; private set;}
-            [ProtoMember(2, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, AsReference = true)]
             public TValue Value {get; private set;}
             public RefPair(TKey key, TValue value) : this() {
                 Key = key;
@@ -202,10 +202,10 @@ namespace Examples.Issues
         }
 
         [Serializable]
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class C
         {
-            [ProtoMember(2, AsReference = true)]
+            [ProtoBuf.ProtoMember(2, AsReference = true)]
             public List<Tuple<int, A>> Items { get; set; }
 
             public C()

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using Enyim.Caching.Memcached;
 
-namespace ProtoBuf.Caching.Enyim
+namespace AqlaSerializer.Caching.Enyim
 {
     /// <summary>
     /// Acts as a transcoder compatible with the "enyim" client, swapping

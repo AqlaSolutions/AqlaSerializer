@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.ServiceModel.Description;
 using System.Xml;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.ServiceModel
+namespace AqlaSerializer.ServiceModel
 {
     /// <summary>
     /// Describes a WCF operation behaviour that can perform protobuf serialization

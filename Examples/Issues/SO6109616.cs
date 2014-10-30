@@ -4,26 +4,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO6109616
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class B
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Y;
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class C
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Y;
         }
         [Test]

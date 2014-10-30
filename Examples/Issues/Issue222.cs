@@ -2,8 +2,8 @@
 using System;
 using System.Globalization;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -46,26 +46,26 @@ namespace Examples.Issues
             clone = (Bar)model.Compile().DeepClone(bar);
             Assert.AreEqual(bar.X, clone.X, "Compile");
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public DateTimeOffset X { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Bar
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public DateTimeOffset? X { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class DateTimeOffsetSurrogate
         {
           public DateTimeOffsetSurrogate(DateTimeOffset dto)
           {
             Content = dto.ToString("o");
           }
-          [ProtoMember(1)]
+          [ProtoBuf.ProtoMember(1)]
           public string Content { get; set; }
 
           public static explicit operator DateTimeOffsetSurrogate(DateTimeOffset dto)

@@ -2,7 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -11,7 +11,7 @@ using IKVM.Reflection;
 using System.Reflection;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     sealed class ImmutableCollectionDecorator : ListDecorator
     {

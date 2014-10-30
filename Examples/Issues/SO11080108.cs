@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -29,36 +29,36 @@ namespace Examples.Issues
                 Assert.AreEqual(1, resp.v3dDelta[0].askSize);
             }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class V3DDelta
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int bid { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int bidSize { get; set; }
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public int ask { get; set; }
-            [ProtoMember(4)]
+            [ProtoBuf.ProtoMember(4)]
             public int askSize { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Request
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Type { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Rq { get; set; }
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class Response
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Type { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Rsp { get; set; }
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public List<V3DDelta> v3dDelta { get; set; }
             public Response()
             {

@@ -2,48 +2,48 @@
 using System;
 using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Issue41
 {
 
-    [ProtoContract]
-    [ProtoInclude(3, typeof(B))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(3, typeof(B))]
     public class A
     {
-        [ProtoMember(1, Name = "PropA")]
+        [ProtoBuf.ProtoMember(1, Name = "PropA")]
         public string PropA { get; set; }
 
-        [ProtoMember(2, Name = "PropB")]
+        [ProtoBuf.ProtoMember(2, Name = "PropB")]
         public string PropB { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class B : A
     {
-        [ProtoMember(1, Name = "PropAB")]
+        [ProtoBuf.ProtoMember(1, Name = "PropAB")]
         public string PropAB { get; set; }
-        [ProtoMember(2, Name = "PropBB")]
+        [ProtoBuf.ProtoMember(2, Name = "PropBB")]
         public string PropBB { get; set; }
     }
 
-    [ProtoContract]
-    [ProtoInclude(2, typeof(B_Orig))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(2, typeof(B_Orig))]
     public class A_Orig
     {
-        [ProtoMember(1, Name = "PropA")]
+        [ProtoBuf.ProtoMember(1, Name = "PropA")]
         public string PropA { get; set; }
 
-        [ProtoMember(2, Name = "PropB")]
+        [ProtoBuf.ProtoMember(2, Name = "PropB")]
         public string PropB { get; set; }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class B_Orig : A_Orig
     {
-        [ProtoMember(1, Name = "PropAB")]
+        [ProtoBuf.ProtoMember(1, Name = "PropAB")]
         public string PropAB { get; set; }
-        [ProtoMember(2, Name = "PropBB")]
+        [ProtoBuf.ProtoMember(2, Name = "PropBB")]
         public string PropBB { get; set; }
     }
     [TestFixture]

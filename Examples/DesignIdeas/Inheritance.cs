@@ -1,6 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
-using ProtoBuf;
+using AqlaSerializer;
 using NUnit.Framework;
 using System;
 using System.Reflection;
@@ -24,9 +24,9 @@ namespace Examples.DesignIdeas
     ///     * merge the stream into the new instance
     ///         (see new ChangeType method)
     /// </summary>
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     class Message {
-        [ProtoMember(1)]
+        [ProtoBuf.ProtoMember(1)]
         public List<SomeBase> Data { get; private set; }
     }
     /* 
@@ -34,20 +34,20 @@ namespace Examples.DesignIdeas
      * repeated sub1 data_sub1 = 2
      * repeated sub2 data_sub2 = 3
      */ 
-    [ProtoContract]
-    [ProtoInclude(2, typeof(Sub1))]
-    [ProtoInclude(3, typeof(Sub2))]
+    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(2, typeof(Sub1))]
+    [ProtoBuf.ProtoInclude(3, typeof(Sub2))]
     class SomeBase
     {
-        [ProtoMember(10)]
+        [ProtoBuf.ProtoMember(10)]
         public int Test { get; set; }
     }
-    [ProtoContract] class Sub1 : SomeBase {
-        [ProtoMember(11)]
+    [ProtoBuf.ProtoContract] class Sub1 : SomeBase {
+        [ProtoBuf.ProtoMember(11)]
         public string Foo { get; set; }
     }
-    [ProtoContract] class Sub2 : SomeBase {
-        [ProtoMember(11)]
+    [ProtoBuf.ProtoContract] class Sub2 : SomeBase {
+        [ProtoBuf.ProtoMember(11)]
         public float Bar { get; set; }
     }
 

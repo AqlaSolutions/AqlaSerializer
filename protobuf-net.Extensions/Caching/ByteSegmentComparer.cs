@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ProtoBuf.Caching
+namespace AqlaSerializer.Caching
 {
     /// <summary>
     /// A comparer (for dictionary use) that can compare segments of buffers; the

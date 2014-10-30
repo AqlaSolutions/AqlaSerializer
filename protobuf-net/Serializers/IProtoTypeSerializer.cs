@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 #if !NO_RUNTIME
-using ProtoBuf.Meta;
-namespace ProtoBuf.Serializers
+using AqlaSerializer.Meta;
+namespace AqlaSerializer.Serializers
 {
     interface IProtoTypeSerializer : IProtoSerializer
     {

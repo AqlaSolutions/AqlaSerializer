@@ -548,14 +548,14 @@ namespace WcfClient.NWind
         OrderSet LoadFoo();
 
         [System.ServiceModel.OperationContract]
-        [ProtoBuf.ServiceModel.ProtoBehavior]
+        [AqlaSerializer.ServiceModel.ProtoBehavior]
         OrderSet LoadBar();
 
         [System.ServiceModel.OperationContract]
         OrderSet RoundTripFoo(OrderSet set);
 
         [System.ServiceModel.OperationContract]
-        [ProtoBuf.ServiceModel.ProtoBehavior]
+        [AqlaSerializer.ServiceModel.ProtoBehavior]
         OrderSet RoundTripBar(OrderSet set);
     }
 

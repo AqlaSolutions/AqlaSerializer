@@ -5,12 +5,12 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml.Serialization;
-using ProtoBuf;
+using AqlaSerializer;
 namespace DAL
 {
     static class Database
     {
-        public const DataFormat SubObjectFormat = DataFormat.Group;
+        public const ProtoBuf.DataFormat SubObjectFormat = ProtoBuf.DataFormat.Group;
 
         static Database()
         {
@@ -18,21 +18,21 @@ namespace DAL
         }
     }
 
-    [ProtoContract]
+    [ProtoBuf.ProtoContract]
     public class VariousFieldTypes
     {
-        [ProtoMember(1)] public int Int32 { get; set; }
-        [ProtoMember(2)] public uint UInt32 { get; set; }
-        [ProtoMember(3)] public long Int64{ get; set; }
-        [ProtoMember(4), DefaultValue((ulong)0)] public ulong UInt64 { get; set; }
-        [ProtoMember(5)] public short Int16 { get; set; }
-        [ProtoMember(6)] public ushort UInt16 { get; set; }
-        [ProtoMember(7)] public byte Byte { get; set; }
-        [ProtoMember(8)] public sbyte SByte { get; set; }
-        [ProtoMember(9)] public float Single { get; set; }
-        [ProtoMember(10)] public double Double { get; set; }
-        [ProtoMember(11)] public decimal Decimal { get; set; }
-        [ProtoMember(12)] public string String { get; set; }
+        [ProtoBuf.ProtoMember(1)] public int Int32 { get; set; }
+        [ProtoBuf.ProtoMember(2)] public uint UInt32 { get; set; }
+        [ProtoBuf.ProtoMember(3)] public long Int64{ get; set; }
+        [ProtoBuf.ProtoMember(4), DefaultValue((ulong)0)] public ulong UInt64 { get; set; }
+        [ProtoBuf.ProtoMember(5)] public short Int16 { get; set; }
+        [ProtoBuf.ProtoMember(6)] public ushort UInt16 { get; set; }
+        [ProtoBuf.ProtoMember(7)] public byte Byte { get; set; }
+        [ProtoBuf.ProtoMember(8)] public sbyte SByte { get; set; }
+        [ProtoBuf.ProtoMember(9)] public float Single { get; set; }
+        [ProtoBuf.ProtoMember(10)] public double Double { get; set; }
+        [ProtoBuf.ProtoMember(11)] public decimal Decimal { get; set; }
+        [ProtoBuf.ProtoMember(12)] public string String { get; set; }
     }
 
     // these are just so I don't need to hack everything too much
@@ -63,12 +63,12 @@ namespace DAL
     }
     enum AutoSync { OnInsert }
 
-    [ProtoContract, DataContract, Serializable]
+    [ProtoBuf.ProtoContract, DataContract, Serializable]
     public class DatabaseCompat
     {
         public const bool MASTER_GROUP = false;
 
-        [ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
+        [ProtoBuf.ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
         [XmlArray]
         public List<OrderCompat> Orders { get; set; }
 
@@ -78,7 +78,7 @@ namespace DAL
         }
     }
 
-    [ProtoContract, DataContract, Serializable]
+    [ProtoBuf.ProtoContract, DataContract, Serializable]
     public class DatabaseCompatRem
 #if REMOTING
     : ISerializable
@@ -89,7 +89,7 @@ namespace DAL
     {
         public const bool MASTER_GROUP = false;
 
-        [ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
+        [ProtoBuf.ProtoMember(1, DataFormat = Database.SubObjectFormat), Tag(1), DataMember(Order = 1)]
         [XmlArray]
         public List<OrderCompat> Orders { get; set; }
 
@@ -271,7 +271,7 @@ namespace DAL
         }
 
         [Column(Storage = "_OrderDate", DbType = "DateTime")]
-        [DataMember(Order = 4), Tag(4), ProtoMember(4, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 4), Tag(4), ProtoBuf.ProtoMember(4, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<System.DateTime> OrderDate
         {
             get
@@ -292,7 +292,7 @@ namespace DAL
         }
 
         [Column(Storage = "_RequiredDate", DbType = "DateTime")]
-        [DataMember(Order = 5), Tag(5), ProtoMember(5, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 5), Tag(5), ProtoBuf.ProtoMember(5, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<System.DateTime> RequiredDate
         {
             get
@@ -313,7 +313,7 @@ namespace DAL
         }
 
         [Column(Storage = "_ShippedDate", DbType = "DateTime")]
-        [DataMember(Order = 6), Tag(6), ProtoMember(6, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 6), Tag(6), ProtoBuf.ProtoMember(6, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<System.DateTime> ShippedDate
         {
             get
@@ -355,7 +355,7 @@ namespace DAL
         }
 
         [Column(Storage = "_Freight", DbType = "Money")]
-        [DataMember(Order = 8), Tag(8), ProtoMember(8, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 8), Tag(8), ProtoBuf.ProtoMember(8, DataFormat = Database.SubObjectFormat)]
         public System.Nullable<decimal> Freight
         {
             get
@@ -502,7 +502,7 @@ namespace DAL
         }
 
         [Association(Name = "Order_Order_Detail", Storage = "_Lines", OtherKey = "OrderID")]
-        [DataMember(Order = 15, EmitDefaultValue = false), Tag(15), ProtoMember(15, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 15, EmitDefaultValue = false), Tag(15), ProtoBuf.ProtoMember(15, DataFormat = Database.SubObjectFormat)]
         [XmlArray]
         public List<OrderLineCompat> Lines
         {
@@ -629,7 +629,7 @@ namespace DAL
         }
 
         [Column(Storage = "_UnitPrice", DbType = "Money NOT NULL")]
-        [DataMember(Order = 3), Tag(3), ProtoMember(3, DataFormat = Database.SubObjectFormat)]
+        [DataMember(Order = 3), Tag(3), ProtoBuf.ProtoMember(3, DataFormat = Database.SubObjectFormat)]
         public decimal UnitPrice
         {
             get

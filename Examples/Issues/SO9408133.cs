@@ -4,43 +4,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO9408133
     {
-        [ProtoContract] public class Ship
+        [ProtoBuf.ProtoContract] public class Ship
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int Foo { get; set; }
         }
-        [ProtoContract] public class SomeType
+        [ProtoBuf.ProtoContract] public class SomeType
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Bar { get; set; }
         }
 
-        [ProtoContract]
-        [ProtoInclude(1, typeof(SomeNodeType)), ProtoInclude(2, typeof(SomeOtherType))]
-        [ProtoInclude(3, typeof(ResourceNode<Ship>)), ProtoInclude(4, typeof(ResourceNode<SomeType>))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(SomeNodeType)), ProtoBuf.ProtoInclude(2, typeof(SomeOtherType))]
+        [ProtoBuf.ProtoInclude(3, typeof(ResourceNode<Ship>)), ProtoBuf.ProtoInclude(4, typeof(ResourceNode<SomeType>))]
         public class Node { }
-        [ProtoContract] public class SomeNodeType : Node { }
-        [ProtoContract] public class SomeOtherType : Node { }
+        [ProtoBuf.ProtoContract] public class SomeNodeType : Node { }
+        [ProtoBuf.ProtoContract] public class SomeOtherType : Node { }
 
-        [ProtoContract]
-        [ProtoInclude(1, typeof(ShipResource)), ProtoInclude(1, typeof(SomeResource))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(ShipResource)), ProtoBuf.ProtoInclude(1, typeof(SomeResource))]
         public class ResourceNode<T> : Node { }
-        [ProtoContract] public class ShipResource : ResourceNode<Ship>
+        [ProtoBuf.ProtoContract] public class ShipResource : ResourceNode<Ship>
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Ship Value { get; set; }
         }
-        [ProtoContract] public class SomeResource : ResourceNode<SomeType>
+        [ProtoBuf.ProtoContract] public class SomeResource : ResourceNode<SomeType>
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public SomeType Value { get; set; }
         }
 

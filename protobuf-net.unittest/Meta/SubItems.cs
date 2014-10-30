@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System.IO;
 
-namespace ProtoBuf.unittest.Meta
+namespace AqlaSerializer.unittest.Meta
 {
     [TestFixture]
     public class SubItems
@@ -186,13 +186,13 @@ namespace ProtoBuf.unittest.Meta
 
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class TypeWithNulls
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public int? First { get; set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public decimal? Second { get; set; }
         }
     }

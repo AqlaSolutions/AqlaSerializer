@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using System.IO;
-using ProtoBuf;
+using AqlaSerializer;
 using System.Runtime.Serialization;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -54,10 +54,10 @@ namespace Examples.Issues
             Assert.IsTrue(orig.SequenceEqual(clone));
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class HasBytes
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public byte[] Blob { get; set; }
         }
 
@@ -94,12 +94,12 @@ namespace Examples.Issues
             Assert.AreEqual(0, clone.Count);
         }
 
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Foo
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Name { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public int Count { get; set; }
         }
     }

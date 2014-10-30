@@ -2,8 +2,8 @@
 
 using System.Diagnostics;
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,39 +16,39 @@ namespace Examples.Issues
     [TestFixture]
     public class SO18277323
     {
-        [ProtoContract]
-        [ProtoInclude(3, typeof(SourceTableResponse))]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(3, typeof(SourceTableResponse))]
         public class BaseResponse
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public bool Success { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Error { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class SourceTableResponse : BaseResponse
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public Dictionary<string, Dictionary<string, string>> FieldValuesByTableName { get; set; }
         }
 
-        [ProtoContract]
-        [ProtoInclude(3, typeof(CustomSourceTableResponse), DataFormat = DataFormat.Group)]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(3, typeof(CustomSourceTableResponse), DataFormat = ProtoBuf.DataFormat.Group)]
         public class CustomBaseResponse
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public bool Success { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Error { get; set; }
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class CustomSourceTableResponse : CustomBaseResponse
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public List<FieldTable> FieldValuesByTableName { get { return fieldValuesByTableName; } }
             private readonly List<FieldTable> fieldValuesByTableName = new List<FieldTable>();
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class FieldTable
         {
             public FieldTable() { }
@@ -56,13 +56,13 @@ namespace Examples.Issues
             {
                 TableName = tableName;
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string TableName { get; set; }
-            [ProtoMember(2, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(2, DataFormat = ProtoBuf.DataFormat.Group)]
             public List<FieldValue> FieldValues { get { return fieldValues; } }
             private readonly List<FieldValue> fieldValues = new List<FieldValue>();
         }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         public class FieldValue
         {
             public FieldValue() { }
@@ -71,9 +71,9 @@ namespace Examples.Issues
                 Name = name;
                 Value = value;
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public string Name { get; set; }
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public string Value { get; set; }
         }
 

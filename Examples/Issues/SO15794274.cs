@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using NUnit.Framework;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -96,28 +96,28 @@ namespace Examples.Issues
 
         private const bool AsRef = true;
 
-        [ProtoContract]
-        [ProtoInclude(1, typeof(Node), DataFormat = DataFormat.Group)]
+        [ProtoBuf.ProtoContract]
+        [ProtoBuf.ProtoInclude(1, typeof(Node), DataFormat = ProtoBuf.DataFormat.Group)]
         public interface INode
         {
-            [ProtoMember(2, DataFormat = DataFormat.Group, AsReference = AsRef)]
+            [ProtoBuf.ProtoMember(2, DataFormat = ProtoBuf.DataFormat.Group, AsReference = AsRef)]
             INode Parent { get; set; }
-            [ProtoMember(3, DataFormat = DataFormat.Group, AsReference = AsRef)]
+            [ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.Group, AsReference = AsRef)]
             INode Left { get; set; }
-            [ProtoMember(4, DataFormat = DataFormat.Group, AsReference = AsRef)]
+            [ProtoBuf.ProtoMember(4, DataFormat = ProtoBuf.DataFormat.Group, AsReference = AsRef)]
             INode Right { get; set; }
 
             void AddGraph(HashSet<object> graph, ref int chk);
         }
 
-        [ProtoContract, Serializable]
+        [ProtoBuf.ProtoContract, Serializable]
         public class Node : INode
         {
             INode m_parent;
             INode m_left;
             INode m_right;
 
-            //[ProtoMember(1, DataFormat = DataFormat.Group, AsReference = AsRef)]
+            //[ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group, AsReference = AsRef)]
             public INode Left
             {
                 get
@@ -131,7 +131,7 @@ namespace Examples.Issues
                     m_left.Parent = this;
                 }
             }
-            //[ProtoMember(2, DataFormat = DataFormat.Group, AsReference = AsRef)]
+            //[ProtoBuf.ProtoMember(2, DataFormat = ProtoBuf.DataFormat.Group, AsReference = AsRef)]
             public INode Right
             {
                 get
@@ -146,7 +146,7 @@ namespace Examples.Issues
                 }
             }
 
-            //[ProtoMember(3, DataFormat = DataFormat.Group, AsReference = AsRef)]
+            //[ProtoBuf.ProtoMember(3, DataFormat = ProtoBuf.DataFormat.Group, AsReference = AsRef)]
             public INode Parent
             {
                 get
@@ -178,10 +178,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract(SkipConstructor = true), Serializable]
+        [ProtoBuf.ProtoContract(SkipConstructor = true), Serializable]
         public class Tree
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public readonly INode Root;
 
             public Tree(INode root)
@@ -199,10 +199,10 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoContract(SkipConstructor = true), Serializable]
+        [ProtoBuf.ProtoContract(SkipConstructor = true), Serializable]
         public class Forest
         {
-            [ProtoMember(1, DataFormat = DataFormat.Group)]
+            [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public readonly Tree[] Trees;
 
             public Forest(Tree[] trees)

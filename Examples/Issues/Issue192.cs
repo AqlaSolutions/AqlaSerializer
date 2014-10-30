@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 using System.IO;
 
 namespace Examples.Issues
@@ -12,12 +12,12 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue192
     {
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class SomeType { }
-        [ProtoContract]
+        [ProtoBuf.ProtoContract]
         class Wrapper
         {
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<SomeType>[] List { get; set; }
         }
         // the important thing is that this error is identical to the one from SerializeWrappedDeepList

@@ -1,15 +1,15 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System.Collections.Generic;
 using NUnit.Framework;
-using ProtoBuf;
+using AqlaSerializer;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class Issue295
     {
-        [ProtoContract(SkipConstructor = true)]
-        [ProtoInclude(500, typeof(Plant))]
+        [ProtoBuf.ProtoContract(SkipConstructor = true)]
+        [ProtoBuf.ProtoInclude(500, typeof(Plant))]
         public class Asset
         {
             public Asset()
@@ -17,19 +17,19 @@ namespace Examples.Issues
                 AllAssets = new List<Asset>();
                 ChildAssets = new List<Asset>();
             }
-            [ProtoMember(1)]
+            [ProtoBuf.ProtoMember(1)]
             public List<Asset> AllAssets { get; private set; }
 
-            [ProtoMember(2)]
+            [ProtoBuf.ProtoMember(2)]
             public List<Asset> AssetHierarcy { get; private set; }
 
-            [ProtoMember(3)]
+            [ProtoBuf.ProtoMember(3)]
             public List<Asset> ChildAssets { get; private set; }
         }
-        [ProtoContract(SkipConstructor = true)]
+        [ProtoBuf.ProtoContract(SkipConstructor = true)]
         public class Plant : Asset
         {
-            [ProtoMember(105)]
+            [ProtoBuf.ProtoMember(105)]
             public Asset Blowers { get; set; }
         }
 
