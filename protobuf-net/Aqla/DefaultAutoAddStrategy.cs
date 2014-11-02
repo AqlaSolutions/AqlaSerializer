@@ -329,10 +329,8 @@ namespace AqlaSerializer
 
                         effectiveType = property.PropertyType;
                         isPublic = Helpers.GetGetMethod(property, false, false) != null;
-                        if (isPublic && explicitPropertiesContract)
-                            isPublic = Helpers.GetSetMethod(property, false, false) != null;
                         isField = false;
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, explicitPropertiesContract);
                     }
                     else if ((field = member as FieldInfo) != null)
                     {
@@ -343,7 +341,7 @@ namespace AqlaSerializer
                         { // only care about static things on enums; WinRT has a __value instance field!
                             continue;
                         }
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType);
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, false);
                     }
                     else if ((method = member as MethodInfo) != null)
                     {
@@ -449,7 +447,7 @@ namespace AqlaSerializer
             _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
-        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFieldsMode implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType)
+        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFieldsMode implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType, bool ignoreNonWritableForOverwriteCollection)
         {
             switch (implicitMode)
             {
@@ -481,7 +479,7 @@ namespace AqlaSerializer
 #endif
             if (effectiveType != null)
             {
-                var normalizedAttribute = NormalizeProtoMember(member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName);
+                var normalizedAttribute = NormalizeProtoMember(member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName, ignoreNonWritableForOverwriteCollection);
                 if (normalizedAttribute != null) members.Add(normalizedAttribute);
             }
         }
@@ -629,7 +627,7 @@ namespace AqlaSerializer
             return (value & required) == required;
         }
 
-        protected virtual SerializableMemberAttribute NormalizeProtoMember(MemberInfo member, AttributeFamily family, bool forced, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferByTagName)
+        protected virtual SerializableMemberAttribute NormalizeProtoMember(MemberInfo member, AttributeFamily family, bool forced, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferByTagName, bool ignoreNonWritableForOverwriteCollection)
         {
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
@@ -888,7 +886,10 @@ namespace AqlaSerializer
             result.DynamicType = dynamicType;
             result.IsPacked = isPacked;
             if (readOnly && !appendCollection)
+            {
+                if (ignoreNonWritableForOverwriteCollection) return null;
                 throw new ProtoException("The property " + member.Name + " of " + member.DeclaringType.Name + " is not writable but AppendCollection is true!");
+            }
             result.AppendCollection = appendCollection;
             result.IsRequired = isRequired;
             result.Name = Helpers.IsNullOrEmpty(name) ? member.Name : name;
