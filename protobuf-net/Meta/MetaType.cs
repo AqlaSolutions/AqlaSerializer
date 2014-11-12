@@ -958,8 +958,12 @@ namespace AqlaSerializer.Meta
                 ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
                 if (nestedItemType != null)
                 {
-                    if ((RuntimeTypeModel.CheckTypeCanBeAdded(model, itemType) ? model.FindOrAddAuto(itemType, false, false, false) : -1) == -1 || model.Add(itemType, false).IsList)
+                    if (!RuntimeTypeModel.CheckTypeCanBeAdded(model, itemType)
+                        || model.FindOrAddAuto(itemType, false, false, false) == -1
+                        || model.Add(itemType, false).IsList)
+                    {
                         throw TypeModel.CreateNestedListsNotSupported();
+                    }
                 }
             }
 
