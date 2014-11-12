@@ -48,6 +48,17 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed class RuntimeTypeModel : TypeModel
     {
+        public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
+        {
+            if (type == null) throw new ArgumentNullException("type");
+            return !type.IsArray
+                && type != model.MapType(typeof(Enum))
+                && type != model.MapType(typeof(object))
+                && type != model.MapType(typeof(ValueType))
+                && (Helpers.GetNullableUnderlyingType(type) == null && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown));
+        }
+
+
         private short options;
         private const short
            OPTIONS_InferTagFromNameDefault = 1,

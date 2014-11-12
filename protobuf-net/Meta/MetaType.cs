@@ -928,7 +928,7 @@ namespace AqlaSerializer.Meta
             return newField;
         }
 
-        internal static void ResolveListTypes(TypeModel model, Type type, ref Type itemType, ref Type defaultType)
+        internal static void ResolveListTypes(RuntimeTypeModel model, Type type, ref Type itemType, ref Type defaultType)
         {
             if (type == null) return;
             // handle arrays
@@ -958,7 +958,8 @@ namespace AqlaSerializer.Meta
                 ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
                 if (nestedItemType != null)
                 {
-                    throw TypeModel.CreateNestedListsNotSupported();
+                    if ((RuntimeTypeModel.CheckTypeCanBeAdded(model, itemType) ? model.FindOrAddAuto(itemType, false, false, false) : -1) == -1 || model.Add(itemType, false).IsList)
+                        throw TypeModel.CreateNestedListsNotSupported();
                 }
             }
 
