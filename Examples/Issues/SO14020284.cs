@@ -10,6 +10,7 @@ using System.Text;
 
 namespace Examples.Issues
 {
+    [Ignore("Inheritance convertation is not supported in AqlaSerializer")]
     [TestFixture]
     public class SO14020284
     {

@@ -1287,24 +1287,6 @@ namespace AqlaSerializer
             //trapCount--;
         }
 
-
-        /// <summary>
-        /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
-        /// </summary>
-        public static void NoteRootObjectIfNotSet(object value, ProtoReader reader)
-        {
-            if (reader == null) throw new ArgumentNullException("reader");
-            if (reader.trapCount != 0)
-            {
-                if (reader.netCache.RegisterTrappedRootObject(value))
-                {
-                    if (reader._trappedKey != 0)
-                        throw new InvalidOperationException("TrappedKey != 0");
-                    reader.trapCount--;
-                }
-            }
-        }
-
         /// <summary>
         /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
         /// </summary>
@@ -1376,25 +1358,6 @@ namespace AqlaSerializer
                 if (available != 0) throw new ProtoException("Unconsumed data left in the buffer; this suggests corrupt input");
             }
         }
-
-        /// <summary>
-        /// Merge two objects using the details from the current reader; this is used to change the type
-        /// of objects when an inheritance relationship is discovered later than usual during deserilazation.
-        /// </summary>
-        public static object Merge(ProtoReader parent, object from, object to)
-        {
-            if (parent == null) throw new ArgumentNullException("parent");
-            TypeModel model = parent.Model;
-            SerializationContext ctx = parent.Context;
-            if(model == null) throw new InvalidOperationException("Types cannot be merged unless a type-model has been specified");
-            using (MemoryStream ms = new MemoryStream())
-            {
-                model.Serialize(ms, from, ctx);
-                ms.Position = 0;
-                return model.Deserialize(ms, to, null);
-            }
-        }
-
 #region RECYCLER
 
         internal static ProtoReader Create(Stream source, TypeModel model, SerializationContext context, int len)

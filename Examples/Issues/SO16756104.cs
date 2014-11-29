@@ -26,6 +26,7 @@ namespace Examples.Issues
             Serializer.DeepClone(list);
         }
 
+        [Ignore("Changed in AqlaSerializer")]
         [Test, ExpectedException(typeof(NullReferenceException))]
         public void TestNullableStringList()
         {

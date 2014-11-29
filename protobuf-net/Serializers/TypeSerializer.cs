@@ -17,8 +17,9 @@ namespace AqlaSerializer.Serializers
 {
     sealed class TypeSerializer : IProtoTypeSerializer
     {
-        public bool HasCallbacks(TypeModel.CallbackType callbackType) {
-            if(callbacks != null && callbacks[callbackType] != null) return true;
+        public bool HasCallbacks(TypeModel.CallbackType callbackType)
+        {
+            if (callbacks != null && callbacks[callbackType] != null) return true;
             for (int i = 0; i < serializers.Length; i++)
             {
                 if (serializers[i].ExpectedType != forType && ((IProtoTypeSerializer)serializers[i]).HasCallbacks(callbackType)) return true;
@@ -49,7 +50,7 @@ namespace AqlaSerializer.Serializers
             {
                 if (fieldNumbers[i] == fieldNumbers[i - 1]) throw new InvalidOperationException("Duplicate field-number detected; " +
                            fieldNumbers[i].ToString() + " on: " + forType.FullName);
-                if(!hasSubTypes && serializers[i].ExpectedType != forType)
+                if (!hasSubTypes && serializers[i].ExpectedType != forType)
                 {
                     hasSubTypes = true;
                 }
@@ -71,7 +72,7 @@ namespace AqlaSerializer.Serializers
                 if (!forType.IsAssignableFrom(constructType))
 #endif
                 {
-                    throw new InvalidOperationException(forType.FullName + " cannot be assigned from "+ constructType.FullName);
+                    throw new InvalidOperationException(forType.FullName + " cannot be assigned from " + constructType.FullName);
                 }
             }
             this.constructType = constructType;
@@ -80,11 +81,11 @@ namespace AqlaSerializer.Serializers
             this.callbacks = callbacks;
             this.isRootType = isRootType;
             this.useConstructor = useConstructor;
-            
+
             if (baseCtorCallbacks != null && baseCtorCallbacks.Length == 0) baseCtorCallbacks = null;
             this.baseCtorCallbacks = baseCtorCallbacks;
 #if !NO_GENERICS
-            if (Helpers.GetNullableUnderlyingType( forType) != null)
+            if (Helpers.GetNullableUnderlyingType(forType) != null)
             {
                 throw new ArgumentException("Cannot create a TypeSerializer for nullable types", "forType");
             }
@@ -123,7 +124,8 @@ namespace AqlaSerializer.Serializers
 
         private bool CanHaveInheritance
         {
-            get {
+            get
+            {
 #if WINRT
                 return (typeInfo.IsClass || typeInfo.IsInterface) && !typeInfo.IsSealed;
 #else
@@ -148,7 +150,7 @@ namespace AqlaSerializer.Serializers
             if (!CanHaveInheritance) return null;
             Type actualType = value.GetType();
             if (actualType == forType) return null;
-           
+
             for (int i = 0; i < serializers.Length; i++)
             {
                 IProtoSerializer ser = serializers[i];
@@ -186,7 +188,7 @@ namespace AqlaSerializer.Serializers
         }
         public object Read(object value, ProtoReader source)
         {
-            if (isRootType && value != null) { Callback(value, TypeModel.CallbackType.BeforeDeserialize, source.Context); } 
+            if (isRootType && value != null) { Callback(value, TypeModel.CallbackType.BeforeDeserialize, source.Context); }
             int fieldNumber, lastFieldNumber = 0, lastFieldIndex = 0;
             bool fieldHandled;
 
@@ -205,31 +207,19 @@ namespace AqlaSerializer.Serializers
                         IProtoSerializer ser = serializers[i];
                         //Helpers.DebugWriteLine(": " + ser.ToString());
                         Type serType = ser.ExpectedType;
-                        if (value == null)
+                        if (value == null || !forType.IsInstanceOfType(value))
                         {
                             if (serType == forType) value = CreateInstance(source, true);
                         }
-                        else
+                        if (ser.ReturnsValue)
                         {
-                            if (serType != forType && ((IProtoTypeSerializer)ser).CanCreateInstance()
-                                && serType
-#if WINRT
-                                .GetTypeInfo()
-#endif
-                                .IsSubclassOf(value.GetType()))
-                            {
-                                value = ProtoReader.Merge(source, value, ((IProtoTypeSerializer)ser).CreateInstance(source));
-                            }
-                            else if (!Helpers.IsValueType(ExpectedType)|| (!Helpers.IsPrimitive(ExpectedType) && !Helpers.IsEnum(ExpectedType)))
-                                ProtoReader.NoteRootObjectIfNotSet(value, source);
-                        }
-
-                        if (ser.ReturnsValue) {
                             value = ser.Read(value, source);
-                        } else { // pop
+                        }
+                        else
+                        { // pop
                             ser.Read(value, source);
                         }
-                        
+
                         lastFieldIndex = i;
                         lastFieldNumber = fieldNumber;
                         fieldHandled = true;
@@ -240,16 +230,19 @@ namespace AqlaSerializer.Serializers
                 {
                     //Helpers.DebugWriteLine(": [" + fieldNumber + "] (unknown)");
                     if (value == null) value = CreateInstance(source, true);
-                    if (isExtensible) {
-                        source.AppendExtensionData((IExtensible)value); 
-                    } else {
+                    if (isExtensible)
+                    {
+                        source.AppendExtensionData((IExtensible)value);
+                    }
+                    else
+                    {
                         source.SkipField();
                     }
                 }
             }
             //Helpers.DebugWriteLine("<< Reading fields for " + forType.FullName);
-            if(value == null) value = CreateInstance(source, true);
-            if (isRootType) { Callback(value, TypeModel.CallbackType.AfterDeserialize, source.Context); } 
+            if (value == null) value = CreateInstance(source, true);
+            if (isRootType) { Callback(value, TypeModel.CallbackType.AfterDeserialize, source.Context); }
             return value;
         }
 
@@ -291,12 +284,12 @@ namespace AqlaSerializer.Serializers
                         }
                         break;
                 }
-                if(handled)
+                if (handled)
                 {
                     result = method.Invoke(obj, args);
                 }
                 else
-                { 
+                {
                     throw Meta.CallbackSet.CreateInvalidCallbackSignature(method);
                 }
 
@@ -314,18 +307,20 @@ namespace AqlaSerializer.Serializers
             else if (useConstructor && hasConstructor)
             {
                 obj = Activator.CreateInstance(constructType
-#if !CF && !SILVERLIGHT && !WINRT && !PORTABLE 
-                    , true
+#if !CF && !SILVERLIGHT && !WINRT && !PORTABLE
+, true
 #endif
-                    );
+);
             }
             else
             {
                 obj = BclHelpers.GetUninitializedObject(constructType);
             }
             ProtoReader.NoteObject(obj, source);
-            if (baseCtorCallbacks != null) {
-                for (int i = 0; i < baseCtorCallbacks.Length; i++) {
+            if (baseCtorCallbacks != null)
+            {
+                for (int i = 0; i < baseCtorCallbacks.Length; i++)
+                {
                     InvokeCallback(baseCtorCallbacks[i], obj, source.Context);
                 }
             }
@@ -371,7 +366,7 @@ namespace AqlaSerializer.Serializers
 
                     if (constructType != null && constructType != forType)
                     {
-                        using(Compiler.Local actualType = new Compiler.Local(ctx, ctx.MapType(typeof(System.Type))))
+                        using (Compiler.Local actualType = new Compiler.Local(ctx, ctx.MapType(typeof(System.Type))))
                         {
                             // would have jumped to "fields" if an expected sub-type, so two options:
                             // a: *exactly* that type, b: an *unexpected* type
@@ -406,7 +401,7 @@ namespace AqlaSerializer.Serializers
 
                 }
                 // fields
-                
+
                 ctx.MarkLabel(startFields);
                 for (int i = 0; i < serializers.Length; i++)
                 {
@@ -429,7 +424,7 @@ namespace AqlaSerializer.Serializers
         {
             if (method != null)
             {
-                if(copyValue) ctx.CopyValue(); // assumes the target is on the stack, and that we want to *retain* it on the stack
+                if (copyValue) ctx.CopyValue(); // assumes the target is on the stack, and that we want to *retain* it on the stack
                 ParameterInfo[] parameters = method.GetParameters();
                 bool handled = true;
 
@@ -480,13 +475,14 @@ namespace AqlaSerializer.Serializers
                 }
             }
         }
-        private void EmitCallbackIfNeeded(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType) {
+        private void EmitCallbackIfNeeded(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
+        {
             Helpers.DebugAssert(valueFrom != null);
             if (isRootType && ((IProtoTypeSerializer)this).HasCallbacks(callbackType))
             {
                 ((IProtoTypeSerializer)this).EmitCallback(ctx, valueFrom, callbackType);
             }
-        }   
+        }
         void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
         {
             bool actuallyHasInheritance = false;
@@ -505,7 +501,7 @@ namespace AqlaSerializer.Serializers
 
             Helpers.DebugAssert(((IProtoTypeSerializer)this).HasCallbacks(callbackType), "Shouldn't be calling this if there is nothing to do");
             MethodInfo method = callbacks == null ? null : callbacks[callbackType];
-            if(method == null && !actuallyHasInheritance)
+            if (method == null && !actuallyHasInheritance)
             {
                 return;
             }
@@ -521,7 +517,7 @@ namespace AqlaSerializer.Serializers
                     IProtoTypeSerializer typeser;
                     Type serType = ser.ExpectedType;
                     if (serType != forType &&
-                        (typeser = (IProtoTypeSerializer) ser).HasCallbacks(callbackType))
+                        (typeser = (IProtoTypeSerializer)ser).HasCallbacks(callbackType))
                     {
                         Compiler.CodeLabel ifMatch = ctx.DefineLabel(), nextTest = ctx.DefineLabel();
                         ctx.CopyValue();
@@ -552,7 +548,7 @@ namespace AqlaSerializer.Serializers
                 // pre-callbacks
                 if (HasCallbacks(TypeModel.CallbackType.BeforeDeserialize))
                 {
-                    if(ExpectedType.IsValueType)
+                    if (ExpectedType.IsValueType)
                     {
                         EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.BeforeDeserialize);
                     }
@@ -562,7 +558,7 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadValue(loc);
                         ctx.BranchIfFalse(callbacksDone, false);
                         EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.BeforeDeserialize);
-                        ctx.MarkLabel(callbacksDone);    
+                        ctx.MarkLabel(callbacksDone);
                     }
                 }
 
@@ -590,7 +586,8 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadValue(group.First);
                         ctx.Subtract(); // jump-tables are zero-based
                         Compiler.CodeLabel[] jmp = new Compiler.CodeLabel[groupItemCount];
-                        for (int i = 0; i < groupItemCount; i++) {
+                        for (int i = 0; i < groupItemCount; i++)
+                        {
                             jmp[i] = ctx.DefineLabel();
                         }
                         ctx.Switch(jmp);
@@ -615,7 +612,7 @@ namespace AqlaSerializer.Serializers
                 {
                     ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("SkipField"));
                 }
-                
+
                 ctx.MarkLabel(@continue);
                 ctx.EmitBasicRead("ReadFieldHeader", ctx.MapType(typeof(int)));
                 ctx.CopyValue();
@@ -648,94 +645,44 @@ namespace AqlaSerializer.Serializers
                 Helpers.DebugAssert(loc != null);
                 if (!ExpectedType.IsValueType)
                 {
-                    // changes: create instance if null, otherwise call NoteRootObjectIfNotSet
-
                     Compiler.CodeLabel afterIf = ctx.DefineLabel();
-                    Compiler.CodeLabel elseBranch = ctx.DefineLabel();
-                    ctx.LoadValue(loc);
+                    Compiler.CodeLabel ifContent = ctx.DefineLabel();
 
-                    // if == null
-                    ctx.BranchIfTrue(elseBranch, false);
+                    // if != null && of correct type
+                    ctx.LoadValue(loc);
+                    ctx.BranchIfFalse(ifContent, false);
+                    ctx.LoadValue(loc);
+                    ctx.TryCast(forType);
+                    ctx.BranchIfFalse(ifContent, false);
+                    ctx.Branch(afterIf, false);
                     {
+                        ctx.MarkLabel(ifContent);
+
                         ((IProtoTypeSerializer)this).EmitCreateInstance(ctx);
 
                         if (callbacks != null) EmitInvokeCallback(ctx, callbacks.BeforeDeserialize, true, null, forType);
                         ctx.StoreValue(loc);
-                        ctx.Branch(afterIf, false);
-                    }
-                    // else
-                    {
-                        ctx.MarkLabel(elseBranch);
-                        EmitNoteRootObjectIfNotSet(ctx, loc);
                     }
                     ctx.MarkLabel(afterIf);
-                }
-                else if (!ExpectedType.IsPrimitive && !ExpectedType.IsEnum)
-                {
-                    EmitNoteRootObjectIfNotSet(ctx, loc);
                 }
 
                 serializer.EmitRead(ctx, loc);
             }
-            else {
-                //RuntimeTypeModel rtm = (RuntimeTypeModel)ctx.Model;
-                if (((IProtoTypeSerializer)serializer).CanCreateInstance())
-                {
-                    Compiler.CodeLabel allDone = ctx.DefineLabel();
-
-                    ctx.LoadValue(loc);
-                    ctx.BranchIfFalse(allDone, false); // null is always ok
-
-                    ctx.LoadValue(loc);
-                    ctx.TryCast(serType);
-                    ctx.BranchIfTrue(allDone, false); // not null, but of the correct type
-
-                    // otherwise, need to convert it
-                    ctx.LoadReaderWriter();
-                    ctx.LoadValue(loc);
-                    ((IProtoTypeSerializer)serializer).EmitCreateInstance(ctx);
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("Merge"));
-                    ctx.Cast(expected);
-                    ctx.StoreValue(loc); // Merge always returns a value
-
-                    // nothing needs doing
-                    ctx.MarkLabel(allDone);
-                }
-                else
-                {
-                    // changes: call NoteRootObjectIfNotSet if not null
-                    Compiler.CodeLabel afterIf = ctx.DefineLabel();
-
-                    ctx.LoadValue(loc);
-
-                    // if != null
-                    ctx.BranchIfFalse(afterIf, false);
-                    {
-                        EmitNoteRootObjectIfNotSet(ctx, loc);
-                    }
-                    ctx.MarkLabel(afterIf);
-                }
+            else
+            {
                 ctx.LoadValue(loc);
-                ctx.Cast(serType);
+                if (forType.IsValueType || !serializer.ReturnsValue)
+                    ctx.Cast(serType);
+                else
+                    ctx.TryCast(serType); // default value can be another inheritance branch
                 serializer.EmitRead(ctx, null);
-                      
             }
-            
+
             if (serializer.ReturnsValue)
             {   // update the variable
                 ctx.StoreValue(loc);
             }
             ctx.Branch(@continue, false); // "continue"
-        }
-
-        private static void EmitNoteRootObjectIfNotSet(CompilerContext ctx, Local loc)
-        {
-            ctx.LoadValue(loc);
-            if (loc.Type.IsValueType)
-                ctx.CastToObject(loc.Type);
-            ctx.LoadReaderWriter();
-            ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("NoteRootObjectIfNotSet",
-                    BindingFlags.Static | BindingFlags.Public));
         }
 
         void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx)
@@ -790,7 +737,7 @@ namespace AqlaSerializer.Serializers
                 ctx.BranchIfTrue(afterNullCheck, false);
 
                 ((IProtoTypeSerializer)this).EmitCreateInstance(ctx);
-                
+
                 if (callbacks != null) EmitInvokeCallback(ctx, callbacks.BeforeDeserialize, true, null, forType);
                 ctx.StoreValue(storage);
                 ctx.MarkLabel(afterNullCheck);
