@@ -3,7 +3,7 @@
 TemporaryGeneratedFile_*.cs
 /**/obj
 /**/bin
-/Proto 2012.sln.DotSettings.user
+*.sln.DotSettings.user
 *.user
 /Package
 /Nuget/lib

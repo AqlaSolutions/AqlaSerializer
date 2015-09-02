@@ -13,7 +13,7 @@
     <AssemblyName>aqlaserializer</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../AqlaSerializerKey.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\AqlaSerializerKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
