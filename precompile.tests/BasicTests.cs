@@ -24,6 +24,16 @@ namespace precompile.tests
         }
 
         [Test]
+        public void ExecuteWinRT()
+        {
+            PreCompileContext ctx;
+            Assert.IsTrue(CommandLineAttribute.TryParse(new[] { @"..\..\..\MetroDto\bin\x86\release\MetroDto.dll"
+                , "-o:MySerializer.dll", "-t:MySerializer" }, out ctx), "TryParse");
+            Assert.IsTrue(ctx.SanityCheck(), "SanityCheck");
+            Assert.IsTrue(ctx.Execute(), "Execute");
+        }
+
+        [Test]
         public void ExecuteNet45WithInternalTypes()
         {
             PreCompileContext ctx;

@@ -156,19 +156,19 @@ public partial class SM2Stats : global::AqlaSerializer.IExtensible
 public enum MemStatus
 {
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Memorized", Value = 0)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 0)]
     Memorized = 0,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Lapsed", Value = 1)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 1)]
     Lapsed = 1,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"InAcquisition", Value = 2)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 2)]
     InAcquisition = 2,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"NotSeen", Value = 3)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 3)]
     NotSeen = 3,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"None", Value = 4)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 4)]
     None = 4
 }
 
@@ -176,21 +176,21 @@ public enum MemStatus
 public enum Grade
 {
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Zero", Value = 0)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 0)]
     Zero = 0,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"One", Value = 1)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 1)]
     One = 1,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Two", Value = 2)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 2)]
     Two = 2,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Three", Value = 3)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 3)]
     Three = 3,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Four", Value = 4)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 4)]
     Four = 4,
 
-    [global::AqlaSerializer.ProtoEnum(Name = @"Five", Value = 5)]
+    [global::AqlaSerializer.EnumSerializableValue(Value = 5)]
     Five = 5
 }
