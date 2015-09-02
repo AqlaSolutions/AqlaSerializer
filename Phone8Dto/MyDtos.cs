@@ -666,6 +666,7 @@ namespace DAL
             }
             set
             {
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if ((this._Discount != value))
                 {
                     this.OnDiscountChanging(value);

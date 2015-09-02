@@ -69,13 +69,14 @@ namespace Examples.Issues
                     min = Math.Min(min, elapsed);
                     max = Math.Max(max, elapsed);
                     currentAverage = average / complete;
+                    // ReSharper disable once CompareOfFloatsByEqualityOperator
                     if (min != oldMin || (complete % 500) == 0)
                     {
                         Trace.WriteLine(string.Format("{5}\tCycle {0}: {1:N2} ms - avg: {2:N2} ms - min: {3:N2} - max: {4:N2}", i, elapsed, currentAverage, min, max, caption));
                     }
                 }                
             });
-            Trace.WriteLine(string.Format("{5}\tComplete {0}: avg: {2:N2} ms - min: {3:N2} - max: {4:N2}", complete, 0, average / complete, min, max, caption));
+            Trace.WriteLine(string.Format("{4}\tComplete {0}: avg: {1:N2} ms - min: {2:N2} - max: {3:N2}", complete, average / complete, min, max, caption));
         }
         public enum EnumOne
         {
