@@ -23,11 +23,14 @@ namespace AqlaSerializer.Serializers
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
         bool IProtoSerializer.ReturnsValue { get { return true; } }
 
+        private readonly bool includeKind;
+
         public DateTimeSerializer(AqlaSerializer.Meta.TypeModel model)
         {
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(DateTime));
 #endif
+            includeKind = model != null && model.SerializeDateTimeKind();
         }
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
@@ -37,13 +40,16 @@ namespace AqlaSerializer.Serializers
         }
         public void Write(object value, ProtoWriter dest)
         {
-            BclHelpers.WriteDateTime((DateTime)value, dest);
+            if(includeKind)
+                BclHelpers.WriteDateTimeWithKind((DateTime)value, dest);
+            else
+                BclHelpers.WriteDateTime((DateTime)value, dest);
         }
 #endif
 #if FEAT_COMPILER
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.EmitWrite(ctx.MapType(typeof(BclHelpers)), "WriteDateTime", valueFrom);
+            ctx.EmitWrite(ctx.MapType(typeof(BclHelpers)), includeKind ? "WriteDateTimeWithKind" : "WriteDateTime", valueFrom);
         }
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

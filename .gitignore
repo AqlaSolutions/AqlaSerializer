@@ -11,3 +11,10 @@ TestResult.xml
 aqlaserializer.*.nupkg
 protobuf-net-mono/docs
 SilverlightExtended_Web/build
+.vs
+artifacts
+*.user
+TestFiles/
+*.suo
+Tools/PEVerify.*
+packages/

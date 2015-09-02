@@ -68,7 +68,9 @@ namespace AqlaSerializer.Meta
 #if FEAT_COMPILER && !FX11
  OPTIONS_AutoCompile = 16,
 #endif
- OPTIONS_UseImplicitZeroDefaults = 32,
+           OPTIONS_UseImplicitZeroDefaults = 32,
+           OPTIONS_AllowParseableTypes = 64,
+           OPTIONS_IncludeDateTimeKind = 256;
            OPTIONS_AllowParseableTypes = 64;
 
         private bool GetOption(short option)
@@ -139,6 +141,24 @@ namespace AqlaSerializer.Meta
                 _autoAddStrategy = value;
             }
         }
+
+        /// <summary>
+        /// Global switch that determines whether DateTime serialization should include the <c>Kind</c> of the date/time.
+        /// </summary>
+        public bool IncludeDateTimeKind
+        {
+            get { return GetOption(OPTIONS_IncludeDateTimeKind); }
+            set { SetOption(OPTIONS_IncludeDateTimeKind, value); }
+        }
+
+        /// <summary>
+        /// Should the <c>Kind</c> be included on date/time values?
+        /// </summary>
+        protected internal override bool SerializeDateTimeKind()
+        {
+            return GetOption(OPTIONS_IncludeDateTimeKind);
+        }
+        
 
         private sealed class Singleton
         {
@@ -1408,10 +1428,16 @@ namespace AqlaSerializer.Meta
             Type knownTypesLookupType;
             WriteGetKeyImpl(type, basicHasInheritance, basicMethodPairs, basicIlVersion, assemblyName, out il, out knownTypesCategory, out knownTypes, out knownTypesLookupType);
 
+            // trivial flags
+            il = Override(type, "SerializeDateTimeKind");
+            il.Emit(IncludeDateTimeKind ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Ret);
+            // end: trivial flags
+
             Compiler.CompilerContext ctx = WriteSerializeDeserialize(assemblyName, type, basicMethodPairs, methodPairs, basicIlVersion, ref il);
 
             WriteConstructors(type, ref basicIndex, basicMethodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
-
+            
 
             Type finalType = type.CreateType();
             if (!Helpers.IsNullOrEmpty(path))
@@ -2339,6 +2365,7 @@ namespace AqlaSerializer.Meta
                 if (!CallbackSet.CheckCallbackParameters(this, factory)) throw new ArgumentException("Invalid factory signature in " + factory.DeclaringType.FullName + "." + factory.Name, "factory");
             }
         }
+
     }
     /// <summary>
     /// Contains the stack-trace of the owning code when a lock-contention scenario is detected
