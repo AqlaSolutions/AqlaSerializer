@@ -61,17 +61,16 @@ namespace AqlaSerializer.Meta
 
         private short options;
         private const short
-           OPTIONS_InferTagFromNameDefault = 1,
-           OPTIONS_IsDefaultModel = 2,
-           OPTIONS_Frozen = 4,
-           OPTIONS_AutoAddMissingTypes = 8,
+            OPTIONS_InferTagFromNameDefault = 1,
+            OPTIONS_IsDefaultModel = 2,
+            OPTIONS_Frozen = 4,
+            OPTIONS_AutoAddMissingTypes = 8,
 #if FEAT_COMPILER && !FX11
- OPTIONS_AutoCompile = 16,
+            OPTIONS_AutoCompile = 16,
 #endif
-           OPTIONS_UseImplicitZeroDefaults = 32,
-           OPTIONS_AllowParseableTypes = 64,
-           OPTIONS_IncludeDateTimeKind = 256;
-           OPTIONS_AllowParseableTypes = 64;
+            OPTIONS_UseImplicitZeroDefaults = 32,
+            OPTIONS_AllowParseableTypes = 64,
+            OPTIONS_IncludeDateTimeKind = 256;
 
         private bool GetOption(short option)
         {
@@ -1427,7 +1426,7 @@ namespace AqlaSerializer.Meta
             FieldBuilder knownTypes;
             Type knownTypesLookupType;
             WriteGetKeyImpl(type, basicHasInheritance, basicMethodPairs, basicIlVersion, assemblyName, out il, out knownTypesCategory, out knownTypes, out knownTypesLookupType);
-
+            
             // trivial flags
             il = Override(type, "SerializeDateTimeKind");
             il.Emit(IncludeDateTimeKind ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
@@ -1437,7 +1436,7 @@ namespace AqlaSerializer.Meta
             Compiler.CompilerContext ctx = WriteSerializeDeserialize(assemblyName, type, basicMethodPairs, methodPairs, basicIlVersion, ref il);
 
             WriteConstructors(type, ref basicIndex, basicMethodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
-            
+
 
             Type finalType = type.CreateType();
             if (!Helpers.IsNullOrEmpty(path))
