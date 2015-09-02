@@ -29,6 +29,17 @@ namespace AqlaSerializer
     {
         private Helpers() { }
 
+        public static bool IsInstanceOfType(Type type, object obj)
+        {
+#if WINRT
+            return obj != null && type.GetTypeInfo().IsAssignableFrom(obj.GetType().GetTypeInfo());
+#elif FEAT_IKVM
+            throw new NotSupportedException();
+#else
+            return obj != null && type.IsInstanceOfType(obj);
+#endif
+        }
+
         public static bool IsInterface(Type type)
         {
 #if WINRT
@@ -135,7 +146,7 @@ namespace AqlaSerializer
         public static void DebugWriteLine(string message)
         {
 #if DEBUG
-#if MF      
+#if MF
             Microsoft.SPOT.Debug.Print(message);
 #else
             System.Diagnostics.Debug.WriteLine(message);
@@ -180,7 +191,7 @@ namespace AqlaSerializer
         [System.Diagnostics.Conditional("DEBUG")]
         public static void DebugAssert(bool condition)
         {
-#if DEBUG   
+#if DEBUG
 #if MF
             Microsoft.SPOT.Debug.Assert(condition);
 #else
@@ -354,7 +365,7 @@ namespace AqlaSerializer
 
         public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance, object[] index)
         {
-#if !UNITY && (PORTABLE || WINRT|| CF2||CF35)
+#if !UNITY && (PORTABLE || WINRT || CF2 || CF35)
             return prop.GetValue(instance, index);
 #else
             return prop.GetValue(instance, index);
@@ -678,7 +689,7 @@ namespace AqlaSerializer
 #endif
         public static MethodInfo GetShadowSetter(TypeModel model, PropertyInfo property)
         {
-#if WINRT            
+#if WINRT
             MethodInfo method = Helpers.GetInstanceMethod(property.DeclaringType.GetTypeInfo(), "Set" + property.Name, new Type[] { property.PropertyType });
 #else
 

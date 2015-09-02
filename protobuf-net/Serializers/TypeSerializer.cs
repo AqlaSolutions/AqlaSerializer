@@ -207,7 +207,7 @@ namespace AqlaSerializer.Serializers
                         IProtoSerializer ser = serializers[i];
                         //Helpers.DebugWriteLine(": " + ser.ToString());
                         Type serType = ser.ExpectedType;
-                        if (value == null || !forType.IsInstanceOfType(value))
+                        if (value == null ||  !Helpers.IsInstanceOfType(forType, value))
                         {
                             if (serType == forType) value = CreateInstance(source, true);
                         }
