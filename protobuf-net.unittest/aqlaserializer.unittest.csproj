@@ -121,6 +121,7 @@
     <Compile Include="Aqla\ExportImportTypes.cs" />
     <Compile Include="AqlaAttributes\ImplicitFallback.cs" />
     <Compile Include="AqlaAttributes\ImplicitFields.cs" />
+    <Compile Include="Aqla\Issue106ReferenceTest.cs" />
     <Compile Include="Aqla\MembersAddTypes.cs" />
     <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Aqla\CoreReferenceSerialization.cs" />
