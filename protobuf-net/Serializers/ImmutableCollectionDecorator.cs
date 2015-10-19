@@ -136,6 +136,7 @@ namespace AqlaSerializer.Serializers
             return true;
         }
 #endif
+        
         private readonly MethodInfo builderFactory, add, addRange, finish;
         internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull,
             MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish)
@@ -172,6 +173,9 @@ namespace AqlaSerializer.Serializers
             if (packedWireType != WireType.None && source.WireType == WireType.String)
             {
                 SubItemToken token = ProtoReader.StartSubItem(source);
+                if (!ProtoReader.HasSubValue(packedWireType, source))
+                    throw new InvalidOperationException("Empty element problem");
+                Tail.Read(null, source);
                 while (ProtoReader.HasSubValue(packedWireType, source))
                 {
                     args[0] = Tail.Read(null, source);
@@ -181,11 +185,12 @@ namespace AqlaSerializer.Serializers
             }
             else
             {
-                do
+                Tail.Read(null, source);
+                while (source.TryReadFieldHeader(field))
                 {
                     args[0] = Tail.Read(null, source);
                     add.Invoke(builderInstance, args);
-                } while (source.TryReadFieldHeader(field));
+                }
             }
 
             return finish.Invoke(builderInstance, null);

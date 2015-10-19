@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using AqlaSerializer;
-using NUnit.Framework.SyntaxHelpers;
 using System.IO;
 
 namespace Examples.Issues

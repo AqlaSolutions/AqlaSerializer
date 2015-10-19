@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using System.IO;
-using NUnit.Framework.SyntaxHelpers;
 using System;
 using NUnit.Framework;
 using AqlaSerializer;

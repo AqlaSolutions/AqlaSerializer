@@ -67,7 +67,7 @@ namespace AqlaSerializer.Serializers
                 bool writePacked = (options & OPTIONS_WritePacked) != 0;
                 using (Compiler.Local token = writePacked ? new Compiler.Local(ctx, ctx.MapType(typeof(SubItemToken))) : null)
                 {
-                    Type mappedWriter = ctx.MapType(typeof (ProtoWriter));
+                    Type mappedWriter = ctx.MapType(typeof(ProtoWriter));
                     if (writePacked)
                     {
                         ctx.LoadValue(fieldNumber);
@@ -84,6 +84,8 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadReaderWriter();
                         ctx.EmitCall(mappedWriter.GetMethod("SetPackedField"));
                     }
+                    ListDecorator.EmitWriteEmptyElement(ctx, itemType, Tail, false);
+                    
                     EmitWriteArrayLoop(ctx, i, arr);
 
                     if (writePacked)
@@ -155,6 +157,7 @@ namespace AqlaSerializer.Serializers
                 token = new SubItemToken(); // default
             }
             bool checkForNull = !SupportNull;
+            ListDecorator.WriteEmptyElement(Tail, dest, itemType);
             for (int i = 0; i < len; i++)
             {
                 object obj = arr[i];
@@ -166,6 +169,7 @@ namespace AqlaSerializer.Serializers
                 ProtoWriter.EndSubItem(token, dest);
             }            
         }
+
         public override object Read(object value, ProtoReader source)
         {
             int reservedTrap = ProtoReader.ReserveNoteObject(source);
@@ -174,6 +178,11 @@ namespace AqlaSerializer.Serializers
             if (packedWireType != WireType.None && source.WireType == WireType.String)
             {
                 SubItemToken token = ProtoReader.StartSubItem(source);
+
+                if (!ProtoReader.HasSubValue(packedWireType, source))
+                    throw new InvalidOperationException("Empty element problem");
+                Tail.Read(null, source);
+
                 while (ProtoReader.HasSubValue(packedWireType, source))
                 {
                     list.Add(Tail.Read(null, source));
@@ -181,11 +190,13 @@ namespace AqlaSerializer.Serializers
                 ProtoReader.EndSubItem(token, source);
             }
             else
-            { 
-                do
+            {
+                Tail.Read(null, source);
+
+                while (source.TryReadFieldHeader(field))
                 {
                     list.Add(Tail.Read(null, source));
-                } while (source.TryReadFieldHeader(field));
+                }
             }
             int oldLen = AppendToCollection ? ((value == null ? 0 : ((Array)value).Length)) : 0;
             Array result = Array.CreateInstance(itemType, oldLen + list.Count);

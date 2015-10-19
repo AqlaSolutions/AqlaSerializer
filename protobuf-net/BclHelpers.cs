@@ -450,7 +450,8 @@ namespace AqlaSerializer
                 {
                     case FieldExistingObjectKey:
                         tmp = source.ReadInt32();
-                        value = source.NetCache.GetKeyedObject(tmp);
+                        // special handling for first empty element in list
+                        value = tmp == -2 ? null : source.NetCache.GetKeyedObject(tmp);
                         break;
                     case FieldNewObjectKey:
                         isNewObject = true;
@@ -597,7 +598,15 @@ namespace AqlaSerializer
             if (asReference)
             {
                 bool existing;
-                int objectKey = dest.NetCache.AddObjectKey(value, out existing);
+                int objectKey;
+                if (value != null)
+                    objectKey = dest.NetCache.AddObjectKey(value, out existing);
+                else
+                {
+                    // special handling for first empty element in list
+                    objectKey = -2;
+                    existing = true;
+                }
                 ProtoWriter.WriteFieldHeader(existing ? FieldExistingObjectKey : FieldNewObjectKey, WireType.Variant, dest);
                 ProtoWriter.WriteInt32(objectKey, dest);
                 if (existing)

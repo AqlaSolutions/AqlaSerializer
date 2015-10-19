@@ -3,7 +3,6 @@ using NUnit.Framework;
 using Examples.Ppt;
 using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework.SyntaxHelpers;
 using System;
 using System.IO;
 using System.Collections;
@@ -215,26 +214,7 @@ namespace Examples
             Assert.AreNotSame(item.Items, clone.List);
             Assert.IsTrue(item.Items.SequenceEqual(clone.List));
         }
-
-        [Test]
-        public void UnpackedNullOrEmptyListDeserializesAsNull()
-        {
-            var item = new EntityWithUnpackedInts();
-            Assert.IsNull(item.ItemsNoDefault);
-            var clone = Serializer.DeepClone(item);
-            Assert.IsNull(clone.ItemsNoDefault);
-
-            item.ItemsNoDefault = new List<int>();
-            clone = Serializer.DeepClone(item);
-            Assert.IsNull(clone.ItemsNoDefault);
-
-            item.ItemsNoDefault.Add(123);
-            clone = Serializer.DeepClone(item);
-            Assert.IsNotNull(clone.ItemsNoDefault);
-            Assert.AreEqual(1, clone.ItemsNoDefault.Count);
-            Assert.AreEqual(123, clone.ItemsNoDefault[0]);
-        }
-
+        
         [Test]
         public void PackedEmptyListDeserializesAsEmpty()
         {
@@ -254,29 +234,7 @@ namespace Examples
             Assert.AreEqual(1, clone.ListNoDefault.Count);
             Assert.AreEqual(123, clone.ListNoDefault[0]);
         }
-
-        [Test]
-        public void UnpackedNullOrEmptyArrayDeserializesAsNull()
-        {
-            var item = new EntityWithUnpackedInts();
-            Assert.IsNull(item.ItemArray);
-            var clone = Serializer.DeepClone(item);
-            Assert.IsNull(clone.ItemArray);
-
-            item.ItemArray = new int[0];
-            clone = Serializer.DeepClone(item);
-            Assert.IsNull(clone.ItemArray);
-
-            item.ItemArray = new int[1] { 123 };
-            clone = Serializer.DeepClone(item);
-            Assert.IsNotNull(clone.ItemArray);
-            Assert.AreEqual(1, clone.ItemArray.Length);
-            Assert.AreEqual(123, clone.ItemArray[0]);
-
-            
-        }
-
-
+        
         [Test]
         public void PackedEmptyArrayDeserializesAsEmpty()
         {
@@ -296,25 +254,33 @@ namespace Examples
             Assert.AreEqual(1, clone.ItemArray.Length);
             Assert.AreEqual(123, clone.ItemArray[0]);
         }
-
+        
         [Test]
-        public void UnpackedNullOrEmptyCustomDeserializesAsNull()
+        public void PackedNullListDeserializesAsNull()
         {
-            var item = new EntityWithUnpackedInts();
-            Assert.IsNull(item.Custom);
+            var item = new EntityWithPackedInts();
+            Assert.IsNull(item.ListNoDefault);
             var clone = Serializer.DeepClone(item);
-            Assert.IsNull(clone.Custom);
-
-            item.Custom = new CustomEnumerable();
+            Assert.IsNull(clone.ListNoDefault);
+           
+            item.ListNoDefault = null;
             clone = Serializer.DeepClone(item);
-            Assert.IsNull(clone.Custom);
-
-            item.Custom.Add(123);
-            clone = Serializer.DeepClone(item);
-            Assert.IsNotNull(clone.Custom);
-            Assert.AreEqual(123, item.Custom.Single());
+            Assert.IsNull(clone.ListNoDefault);
         }
+        
+        [Test]
+        public void PackedNullArrayDeserializesAsNull()
+        {
+            var item = new EntityWithPackedInts();
+            Assert.IsNull(item.ItemArray);
+            var clone = Serializer.DeepClone(item);
+            Assert.IsNull(clone.ItemArray);
 
+            item.ItemArray = null;
+            clone = Serializer.DeepClone(item);
+            Assert.IsNull(clone.ItemArray);
+        }
+        
         [Test]
         public void PackedEmptyCustomDeserializesAsEmpty()
         {
