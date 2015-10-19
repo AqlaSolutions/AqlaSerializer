@@ -772,11 +772,11 @@ namespace AqlaSerializer.Meta
             {   // fallback: look for ICollection<T>'s Add(typedObject) method
 
                 bool forceList = listTypeInfo.IsInterface &&
-                    listTypeInfo == model.MapType(typeof(System.Collections.Generic.IEnumerable<>)).MakeGenericType(types)
+                    model.MapType(typeof(System.Collections.Generic.IEnumerable<>)).MakeGenericType(types)
 #if WINRT
                     .GetTypeInfo()
 #endif
-;
+.IsAssignableFrom(listTypeInfo);
 
 #if WINRT
                 TypeInfo constuctedListType = typeof(System.Collections.Generic.ICollection<>).MakeGenericType(types).GetTypeInfo();

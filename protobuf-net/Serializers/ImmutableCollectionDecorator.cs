@@ -21,35 +21,43 @@ namespace AqlaSerializer.Serializers
         static Type ResolveIReadOnlyCollection(Type declaredType, Type t)
         {
 #if WINRT
+            if (CheckIsIReadOnlyCollectionExactly(declaredType.GetTypeInfo())) return declaredType;
             foreach (Type intImplBasic in declaredType.GetTypeInfo().ImplementedInterfaces)
             {
                 TypeInfo intImpl = intImplBasic.GetTypeInfo();
-                if (intImpl.IsGenericType && intImpl.Name.StartsWith("IReadOnlyCollection`"))
-                {
-                    if(t != null)
-                    {
-                        Type[] typeArgs = intImpl.GenericTypeArguments;
-                        if (typeArgs.Length != 1 && typeArgs[0] != t) continue;
-                    }
-                    return intImplBasic;
-                }
+                if (CheckIsIReadOnlyCollectionExactly(intImpl)) return intImplBasic;
             }
 #else
+            if (CheckIsIReadOnlyCollectionExactly(declaredType)) return declaredType;
             foreach (Type intImpl in declaredType.GetInterfaces())
             {
-                if (intImpl.IsGenericType && intImpl.Name.StartsWith("IReadOnlyCollection`"))
-                {
-                    if(t != null)
-                    {
-                        Type[] typeArgs = intImpl.GetGenericArguments();
-                        if (typeArgs.Length != 1 && typeArgs[0] != t) continue;
-                    }
-                    return intImpl;
-                }
+                if (CheckIsIReadOnlyCollectionExactly(intImpl)) return intImpl;
             }
 #endif
             return null;
         }
+
+#if WINRT
+        static bool CheckIsIReadOnlyCollectionExactly(TypeInfo t)
+#else
+        static bool CheckIsIReadOnlyCollectionExactly(Type t)
+#endif
+        {
+            if (t != null && t.IsGenericType && t.Name.StartsWith("IReadOnlyCollection`"))
+            {
+#if WINRT
+                Type[] typeArgs = t.GenericTypeArguments;
+                if (typeArgs.Length != 1 && typeArgs[0].GetTypeInfo().Equals(t)) return false;
+#else
+                Type[] typeArgs = t.GetGenericArguments();
+                if (typeArgs.Length != 1 && typeArgs[0] != t) return false;
+#endif
+
+                return true;
+            }
+            return false;
+        }
+
         internal static bool IdentifyImmutable(TypeModel model, Type declaredType, out MethodInfo builderFactory, out MethodInfo add, out MethodInfo addRange, out MethodInfo finish)
         {
             builderFactory = add = addRange = finish = null;
@@ -84,7 +92,7 @@ namespace AqlaSerializer.Serializers
             }
 
             if (ResolveIReadOnlyCollection(declaredType, null) == null) return false; // no IReadOnlyCollection<T> found
-
+            
             // and we want to use the builder API, so for generic Foo<T> or IFoo<T> we want to use Foo.CreateBuilder<T>
             string name = declaredType.Name;
             int i = name.IndexOf('`');
@@ -136,7 +144,7 @@ namespace AqlaSerializer.Serializers
             return true;
         }
 #endif
-        
+
         private readonly MethodInfo builderFactory, add, addRange, finish;
         internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull,
             MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish)
