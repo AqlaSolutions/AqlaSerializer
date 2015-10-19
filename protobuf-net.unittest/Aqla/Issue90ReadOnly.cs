@@ -36,15 +36,5 @@ namespace AqlaSerializer.unittest.Aqla
                     }
                 });
         }
-
-        //[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-        //public class Sheep2
-        //{
-        //    public IReadOnlyCollection<string> Children { get; set; }
-        //    public Sheep2()
-        //    {
-        //        Children = new List<string>();
-        //    }
-        //}
     }
 }
