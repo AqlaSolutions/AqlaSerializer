@@ -35,9 +35,9 @@ using System.Runtime.CompilerServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.58")]
+[assembly: AssemblyVersion("1.0.0.767")]
 #if !CF
-[assembly: AssemblyFileVersion("1.0.0.58")]
+[assembly: AssemblyFileVersion("1.0.0.767")]
 #endif
 #if !FX11
 [assembly: InternalsVisibleTo("aqlaserializer.unittest, PublicKey="

@@ -2,17 +2,29 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>1.0.0.58</version>
+    <version>1.0.0.767</version>
     <authors>Vladyslav Taranov</authors>
+    <copyright>Vladyslav Taranov 2015, fork source from Marc Gravell 2015</copyright>
     <owners>Vladyslav Taranov</owners>
-    <summary>It is a fast and portable binary serializer designed to be easily used on your existing code with minimal changes on a wide range of .NET platforms (based on protobuf-net).</summary>
-    <description>With AqlaSerializer you can store objects as a small in size binary data (far smaller than xml). And it's more CPU effective than BinaryFormatter and other core .NET serializers (which could be unavailable on your target platform). Its format is designed to be: small in size - efficient data storage (far smaller than xml) cheap to process - both at the client and server platform independent - portable between different programming architectures extensible - to add new data to old messages. AqlaSerializer project goal is not to make a Protocol Buffers compatible implementation but instead support all common .NET features. It is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, Mono 2.x, Silverlight, etc. The code is heavily based on Marc Gravell's protobuf-net.</description>
+    <summary>Fork of well known protobuf-net, contains improved API, reference tracking, list handling and multiple fixes. It's a binary serializer designed for serializing **objects** on a wide range of .NET platforms.</summary>
+    <description>AqlaSerializer is intended to serialize objects, not just data. 
+
+What the difference? Data serializers don't care much about language runtime specifics like references, inheritance, etc. In contrast, an object serializer should take such things into account.
+
+Like protobuf-net AqlaSerializer makes possible to store objects as a small in size binary data (far smaller than xml). And it's more CPU effective than BinaryFormatter and other core .NET serializers (which could be unavailable on your target platform). Its format is designed to be: small in size - efficient data storage (far smaller than xml) cheap to process - both at the client and server platform independent - portable between different programming architectures extensible - to add new data to old messages.
+
+AqlaSerializer project goal is not to make a Protocol Buffers compatible implementation but instead support all common .NET features. It is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, Mono 2.x, Silverlight, etc. The code is heavily based on Marc Gravell's protobuf-net but there are a lot of improvements and fixes.
+
+The original protobuf-net project contains many "red" unit tests but I managed to fix a lot of them.
+
+Some platforms may be not available through nuget, you can download their binaries manually from github.</description>
     <projectUrl>https://github.com/AqlaSolutions/AqlaSerializer</projectUrl>
     <licenseUrl>https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt</licenseUrl>
     <tags>binary serialization protocol buffers protobuf deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
-      * 1.0.0.58 - initial AqlaSerializer release
+* 1.0.0.58 - initial AqlaSerializer release
+* 1.0.0.767 - improvements in list handling, merged changes from original protobuf-net 
     </releaseNotes>
   </metadata>
 </package>
