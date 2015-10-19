@@ -118,7 +118,8 @@ namespace AqlaSerializer.Serializers
             // convert the incoming value
             object[] args = { value };
             value = toTail.Invoke(null, args);
-            
+            if (value != null) // it's our responsibility to note object if we created it
+                ProtoReader.NoteObject(value, source);
             // invoke the tail and convert the outgoing value
             args[0] = rootTail.Read(value, source);
             return fromTail.Invoke(null, args);
@@ -133,7 +134,23 @@ namespace AqlaSerializer.Serializers
             {
                 ctx.LoadValue(valueFrom); // load primary onto stack
                 ctx.EmitCall(toTail); // static convert op, primary-to-surrogate
+
+                if (!Helpers.IsValueType(toTail.ReturnType))
+                    ctx.CopyValue();
+
                 ctx.StoreValue(converted); // store into surrogate local
+
+                Compiler.CodeLabel afterNoteObject = default(Compiler.CodeLabel);
+                if (!Helpers.IsValueType(toTail.ReturnType))
+                {
+                    afterNoteObject = ctx.DefineLabel();
+                    ctx.BranchIfFalse(afterNoteObject, true);
+                }
+                ctx.LoadValue(converted);
+                ctx.CastToObject(toTail.ReturnType);
+                ctx.EmitCallNoteObject();
+                if (!Helpers.IsValueType(toTail.ReturnType))
+                    ctx.MarkLabel(afterNoteObject);
 
                 rootTail.EmitRead(ctx, converted); // downstream processing against surrogate local
 

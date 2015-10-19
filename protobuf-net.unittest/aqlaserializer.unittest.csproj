@@ -123,6 +123,7 @@
     <Compile Include="AqlaAttributes\ImplicitFields.cs" />
     <Compile Include="Aqla\Issue103DictionaryTest.cs" />
     <Compile Include="Aqla\Issue106ReferenceTest.cs" />
+    <Compile Include="Aqla\Issue91Converter.cs" />
     <Compile Include="Aqla\MembersAddTypes.cs" />
     <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Aqla\CoreReferenceSerialization.cs" />

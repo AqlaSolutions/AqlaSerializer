@@ -10,21 +10,23 @@ namespace Examples.Issues
     public class SO19161823
     {
         [Test]
-        public void Execute()
+        public void Execute([Values(false, true)] bool compile)
         {
-            RuntimeTypeModel.Default.Add(typeof(IDummy), false)
+            var model = TypeModel.Create();
+            model.AutoCompile = compile;
+            model.Add(typeof(IDummy), false)
                 .SetSurrogate(typeof(DummySurrogate));
 
             var container = new Container { Data = new Dummy { Positive = 3 } };
 
             using (var file = File.Create("test.bin"))
             {
-                Serializer.Serialize(file, container);
+                model.Serialize(file, container);
             }
 
             using (var file = File.OpenRead("test.bin"))
             {
-                container = Serializer.Deserialize<Container>(file);
+                container = model.Deserialize<Container>(file);
                 Assert.AreEqual(3, container.Data.Positive);
             }
         }
