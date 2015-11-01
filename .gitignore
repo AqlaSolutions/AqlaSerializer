@@ -18,3 +18,4 @@ TestFiles/
 *.suo
 Tools/PEVerify.*
 packages/
+/Aqla.PrivateIssues.Tests

@@ -38,7 +38,7 @@ namespace AqlaSerializer
         public bool UseAqlaMembersOnly
         {
             get { return HasFlag(OPTIONS_UseAqlaMembersOnly); }
-            set { throw new NotImplementedException(); SetFlag(OPTIONS_UseAqlaMembersOnly, value); }
+            set {SetFlag(OPTIONS_UseAqlaMembersOnly, value); }
         }
 
         /// <summary>

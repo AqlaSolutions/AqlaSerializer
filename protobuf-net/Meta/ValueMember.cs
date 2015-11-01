@@ -86,27 +86,44 @@ namespace AqlaSerializer.Meta
                 defaultValue = ParseDefaultValue(memberType, defaultValue);
             }
             this.defaultValue = defaultValue;
+             asReference =  GetAsReferenceDefault(model, memberType, false, IsDeterminatedAsAutoTuple);
+            AppendCollection = !Helpers.CanWrite(model, member);
+        }
+        
+        // autotuple is determinated when building serializer
+        // AsReference is re-checked in Serializer property
 
-            if (CheckCanThisBeAsReference())
+        internal static bool GetAsReferenceDefault(RuntimeTypeModel model, Type memberType, bool isProtobufNetLegacyMember, bool isDeterminatedAsAutoTuple)
+        {
+            //Type itemType = null;
+
+            //Type defaultType = null;
+
+            //// check for list types
+            //RuntimeTypeModel.ResolveListTypes(model, memberType, ref itemType, ref defaultType);
+            
+            if (CheckCanBeAsReference(memberType, isDeterminatedAsAutoTuple))
             {
                 MetaType type = model.FindWithoutAdd(memberType);
                 if (type != null)
                 {
                     type = type.GetSurrogateOrSelf();
-                    this.asReference = type.AsReferenceDefault;
+                    return type.AsReferenceDefault;
                 }
                 else
                 { // we need to scan the hard way; can't risk recursion by fully walking it
-                    this.asReference =  model.AutoAddStrategy.GetAsReferenceDefault(memberType);
+                    return model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
                 }
             }
-            AppendCollection = !Helpers.CanWrite(model, member);
+            return false;
         }
 
         bool CheckCanThisBeAsReference()
         {
-            return CheckCanBeAsReference(memberType, this.serializer is TupleSerializer);
+            return CheckCanBeAsReference(memberType, IsDeterminatedAsAutoTuple);
         }
+
+        private bool IsDeterminatedAsAutoTuple { get { return this.serializer is TupleSerializer; } }
 
         internal static bool CheckCanBeAsReference(Type type, bool autoTuple)
         {
@@ -288,7 +305,7 @@ namespace AqlaSerializer.Meta
         public bool AsReference
         {
             get { return asReference; }
-            set { 
+            set {
                 ThrowIfFrozen();
                 if (!CheckCanThisBeAsReference()) value = false;
                 asReference = value;

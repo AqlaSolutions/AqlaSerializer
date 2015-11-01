@@ -739,8 +739,7 @@ namespace AqlaSerializer
                                 notAsReference = true;
                             }
                         }
-
-                        if (!asRefHasValue)
+                        if (!asRefHasValue && !ValueMember.GetAsReferenceDefault(_model, Helpers.GetMemberType(member), true, false))
                         {
                             // by default enable for ProtoMember
                             notAsReferenceHasValue = true;
@@ -988,7 +987,7 @@ namespace AqlaSerializer
             if (attrib.TryGet(memberName, out obj) && obj != null) name = (string)obj;
         }
 
-        public virtual bool GetAsReferenceDefault(Type type)
+        public virtual bool GetAsReferenceDefault(Type type, bool isProtobufNetLegacyMember)
         {
             if (type == null) throw new ArgumentNullException("type");
             if (Helpers.IsEnum(type)) return false; // never as-ref
@@ -1006,7 +1005,27 @@ namespace AqlaSerializer
                     if (typeAttribs[i].TryGet("AsReferenceDefault", out tmp)) return (bool)tmp;
                 }
             }
-            return true;
+            return !isProtobufNetLegacyMember;
+        }
+
+        public virtual bool GetIgnoreListHandling(Type type)
+        {
+            if (type == null) throw new ArgumentNullException("type");
+            AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
+            for (int i = 0; i < typeAttribs.Length; i++)
+            {
+                if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && CanUse(AttributeType.Aqla))
+                {
+                    object tmp;
+                    if (typeAttribs[i].TryGet("IgnoreListHandling", out tmp)) return (bool)tmp;
+                }
+                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && CanUse(AttributeType.ProtoBuf))
+                {
+                    object tmp;
+                    if (typeAttribs[i].TryGet("IgnoreListHandling", out tmp)) return (bool)tmp;
+                }
+            }
+            return false;
         }
 
         public bool DisableAutoTuples { get; set; }

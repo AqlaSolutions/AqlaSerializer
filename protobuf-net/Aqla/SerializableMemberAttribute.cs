@@ -137,7 +137,7 @@ namespace AqlaSerializer
         }
 
         /// <summary>
-        /// Enables full object-tracking/full-graph support.
+        /// Disables full object-tracking/full-graph support.
         /// </summary>
         public bool NotAsReference
         {
