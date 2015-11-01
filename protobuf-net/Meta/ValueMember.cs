@@ -95,13 +95,6 @@ namespace AqlaSerializer.Meta
 
         internal static bool GetAsReferenceDefault(RuntimeTypeModel model, Type memberType, bool isProtobufNetLegacyMember, bool isDeterminatedAsAutoTuple)
         {
-            //Type itemType = null;
-
-            //Type defaultType = null;
-
-            //// check for list types
-            //RuntimeTypeModel.ResolveListTypes(model, memberType, ref itemType, ref defaultType);
-            
             if (CheckCanBeAsReference(memberType, isDeterminatedAsAutoTuple))
             {
                 MetaType type = model.FindWithoutAdd(memberType);
@@ -112,7 +105,19 @@ namespace AqlaSerializer.Meta
                 }
                 else
                 { // we need to scan the hard way; can't risk recursion by fully walking it
-                    return model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
+                    bool r = model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
+                    if (isProtobufNetLegacyMember && !r)
+                    {
+                        Type itemType = null;
+
+                        Type defaultType = null;
+
+                        // check for list types
+                        model.ResolveListTypes(memberType, ref itemType, ref defaultType);
+
+                        r = itemType != null && GetAsReferenceDefault(model, itemType, isProtobufNetLegacyMember, false);
+                    }
+                    return r;
                 }
             }
             return false;
