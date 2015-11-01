@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>1.0.0.776</version>
+    <version>1.0.0.793</version>
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2015, fork source from Marc Gravell 2015</copyright>
     <owners>Vladyslav Taranov</owners>
@@ -23,9 +23,10 @@ Some platforms may be not available through nuget, you can download their binari
     <tags>binary serialization protocol buffers protobuf deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
+* 1.0.0.793: fixed AsReferenceDefault correct usage for legacy protobuf-net attributes
 * 1.0.0.776:
 - fixed issue when surrogated value was not correctly reference tracked
-- add method is recognized not only on IEnumerable<T> but also on its inheritors like IReadOnlyCollection<T>
+- add method is recognized not only on IEnumerable&lt;T&gt; but also on its inheritors like IReadOnlyCollection&lt;T&gt;
 
 * 1.0.0.767 - improvements in list handling, merged changes from original protobuf-net 
 
