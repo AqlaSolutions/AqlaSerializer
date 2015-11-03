@@ -8,6 +8,8 @@ AqlaSerializer project goal is not to make a Protocol Buffers compatible impleme
 
 It is a free open source project in which you can participiate.
 
+Nuget: <a href="https://www.nuget.org/packages/aqlaserializer/">aqlaserializer</a>.
+
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/wiki">wiki</a>.
 
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt">License.txt</a>.
