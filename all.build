@@ -18,7 +18,7 @@
     <ProjectToBuild Include="protobuf-net_Portable\aqlaserializer_Portable.csproj"/>
     <ProjectToBuild Include="protobuf-net_WinRT\aqlaserializer_WinRT.csproj"/>
     <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj"/>
-    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj"/>
+<!--    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj"/> -->
 
     <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
     <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
@@ -41,7 +41,7 @@
     <MonoFiles Include="protobuf-net-mono\bin\Release\aqlaserializer.*"/>
     <MonoFiles Include="protobuf-net-mono\docs\aqlaserializer.xml"/>
 
-    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
+<!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/> -->
 
     <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
   </ItemGroup>
@@ -136,7 +136,7 @@
     <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
 
-    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/>
+<!--    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/> -->
     <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30-enyim"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
