@@ -428,7 +428,7 @@ namespace AqlaSerializer.Meta
                     ser = new UriDecorator(model, ser);
                 }
 #if PORTABLE
-                else if(memberType.FullName == typeof(Uri).FullName)
+                else if(!asReference && memberType.FullName == typeof(Uri).FullName)
                 {
                     // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
                     ser = new ReflectedUriDecorator(memberType, model, ser);

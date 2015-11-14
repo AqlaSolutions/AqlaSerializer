@@ -3,7 +3,7 @@
 using System;
 using System.Reflection;
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     /// <summary>
     /// Manipulates with uris via reflection rather than strongly typed objects.
@@ -17,7 +17,7 @@ namespace ProtoBuf.Serializers
 
         private readonly ConstructorInfo typeConstructor;
 
-        public ReflectedUriDecorator(Type type, ProtoBuf.Meta.TypeModel model, IProtoSerializer tail) : base(tail)
+        public ReflectedUriDecorator(Type type, Meta.TypeModel model, IProtoSerializer tail) : base(tail)
         {
             expectedType = type;
 
@@ -62,7 +62,7 @@ namespace ProtoBuf.Serializers
             ctx.MarkLabel(@end);
             
         }
-#endif 
+#endif
     }
 }
 #endif

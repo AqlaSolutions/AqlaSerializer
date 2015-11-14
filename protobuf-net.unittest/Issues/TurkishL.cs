@@ -17,7 +17,7 @@ namespace ProtoBuf.unittest.Attribs
             using (var ms = new MemoryStream())
             {
                 var t = new ForTupleSerializer(123, "abc");
-                Serializer.Serialize(ms, t);
+                AqlaSerializer.Serializer.Serialize(ms, t);
                 ser = ms.ToArray();
             }
         }

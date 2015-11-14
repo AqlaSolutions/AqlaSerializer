@@ -110,16 +110,20 @@ namespace AqlaSerializer
         {
             return (T) RuntimeTypeModel.Default.Deserialize(source, null, typeof(T));
         }
+
+#if !FEAT_IKVM
         /// <summary>
-		/// Creates a new instance from a protocol-buffer stream
-		/// </summary>
-		/// <param name="type">The type to be created.</param>
-		/// <param name="source">The binary stream to apply to the new instance (cannot be null).</param>
-		/// <returns>A new, initialized instance.</returns>
-		public static object Deserialize(Type type, Stream source)
+        /// Creates a new instance from a protocol-buffer stream
+        /// </summary>
+        /// <param name="type">The type to be created.</param>
+        /// <param name="source">The binary stream to apply to the new instance (cannot be null).</param>
+        /// <returns>A new, initialized instance.</returns>
+        public static object Deserialize(Type type, Stream source)
 		{
 			return RuntimeTypeModel.Default.Deserialize(source, null, type);
 		}
+#endif
+
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream.
         /// </summary>
