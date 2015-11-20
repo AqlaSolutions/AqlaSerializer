@@ -1,6 +1,9 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using AltLinq;
 
 namespace AqlaSerializer
 {
@@ -39,9 +42,30 @@ namespace AqlaSerializer
 #if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
 #else
-            throw new NotSupportedException("Constructor-skipping is not supported on this platform");
+            if (_getUninitializedObject == null)
+            {
+                try
+                {
+                    var t = Helpers.GetAssembly(typeof(string)).GetType("System.Runtime.Serialization.FormatterServices");
+                    if (t != null)
+                    {
+                        var formatterServiceType = Helpers.GetTypeInfo(t);
+                        MethodInfo method = Helpers.GetStaticMethod(formatterServiceType, "GetUninitializedObject");
+                        if (method != null)
+                        {
+                            _getUninitializedObject = (Func<Type, object>)Helpers.CreateDelegate(typeof(Func<Type, object>), method);
+                        }
+                    }
+                }
+                catch  { /* best efforts only */ }
+                if(_getUninitializedObject == null) _getUninitializedObject = x => null;
+            }
+            return _getUninitializedObject(type);
 #endif
         }
+
+        static Func<Type, object> _getUninitializedObject;
+
 #if FX11
         private BclHelpers() { } // not a static class for C# 1.2 reasons
 #endif
