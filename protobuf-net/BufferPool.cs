@@ -1,4 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+
+using System;
 using System.Threading;
 namespace AqlaSerializer
 {
@@ -46,6 +48,9 @@ namespace AqlaSerializer
 #endif
             return new byte[BufferLength];
         }
+
+        static readonly bool Is32Bit = IntPtr.Size <= 4;
+
         internal static void ResizeAndFlushLeft(ref byte[] buffer, int toFitAtLeastBytes, int copyFromIndex, int copyBytes)
         {
             Helpers.DebugAssert(buffer != null);
@@ -53,10 +58,9 @@ namespace AqlaSerializer
             Helpers.DebugAssert(copyFromIndex >= 0);
             Helpers.DebugAssert(copyBytes >= 0);
 
-            // try doubling, else match
-            int newLength = buffer.Length * 2;
+            // try growing, else match
+            int newLength = (Is32Bit && buffer.Length > 1024 * 1024 * 10) ? (buffer.Length + 1024 * 1024 * 1) : buffer.Length * 2;
             if (newLength < toFitAtLeastBytes) newLength = toFitAtLeastBytes;
-
             byte[] newBuffer = new byte[newLength];
             if (copyBytes > 0)
             {
