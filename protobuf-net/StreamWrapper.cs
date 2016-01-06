@@ -1,4 +1,5 @@
 ﻿//#define DEBUG_WRITING
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -9,6 +10,8 @@ namespace AqlaSerializer
     internal class StreamWrapper
     {
         readonly Stream _stream;
+        long _lastFlushPosition;
+        readonly Stream _nonSeekingStream;
         readonly long _startOffset;
         readonly bool _autoSize;
 
@@ -37,12 +40,18 @@ namespace AqlaSerializer
         }
 
 
-        public StreamWrapper(Stream stream, bool autoSize)
+        public StreamWrapper(Stream stream, bool isForWriting)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (!stream.CanSeek) throw new ArgumentException("Cannot seek in stream", nameof(stream));
+            if (!stream.CanSeek || !stream.CanRead)
+            {
+                if (!isForWriting)
+                    throw new InvalidOperationException("Deserializing streams should support both Read and Seek operations");
+                _nonSeekingStream = stream;
+                stream = new MemoryStream();
+            }
             _stream = stream;
-            _autoSize = autoSize;
+            _autoSize = isForWriting;
             _startOffset = stream.Position;
         }
 
@@ -51,7 +60,7 @@ namespace AqlaSerializer
         {
             if (position >= 4 && position <= 7)
             {
-                
+
             }
         }
 
@@ -150,6 +159,31 @@ namespace AqlaSerializer
         public void Flush()
         {
             _stream.Flush();
+            if (_nonSeekingStream != null)
+            {
+                var p = CurPosition;
+                CurPosition = _lastFlushPosition;
+                long count = BytesUsed - _lastFlushPosition;
+                bool pooling = count <= BufferPool.BufferLength;
+                byte[] buffer = pooling ? BufferPool.GetBuffer() : new byte[1024 * 250];
+                int read;
+                while ((read = _stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    count -= read;
+
+                    if (count <= 0)
+                    {
+                        _nonSeekingStream.Write(buffer, 0, read + (int)count);
+                        break;
+                    }
+
+                    _nonSeekingStream.Write(buffer, 0, read);
+                }
+                if (pooling)
+                    BufferPool.ReleaseBufferToPool(ref buffer);
+                CurPosition = p;
+            }
+            _lastFlushPosition = CurPosition;
         }
     }
 }
