@@ -40,7 +40,9 @@ namespace Examples
                 stream.SetLength(0);
                 m.SerializeWithLengthPrefix(stream, new Wrapper(), typeof(Wrapper), PrefixStyle.Base128, 0);
                 Assert.That(stream.Length, Is.AtLeast(311097602));
+                stream.Flush(true);
                 stream.Position = 0;
+                stream.Flush(true);
                 m.DeserializeWithLengthPrefix(stream, null, typeof(Wrapper), PrefixStyle.Base128, 0);
                 Assert.That(stream.Position, Is.EqualTo(stream.Length));
             }

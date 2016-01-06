@@ -28,8 +28,9 @@ namespace Examples.Issues
             {
             }
 
-            using (var fs = File.OpenWrite(file))
+            using (var fs = File.Open(file, FileMode.Create))
             {
+                fs.SetLength(0);
                 Serializer.Serialize(fs, family);
             }
             using (var fs = File.OpenRead(file))

@@ -605,7 +605,7 @@ namespace AqlaSerializer
         public static void EndSubItem(SubItemToken token, ProtoReader reader)
         {
             if (reader == null) throw new ArgumentNullException("reader");
-            int value = token.value;
+            var value = token.value;
             switch (reader.wireType)
             {
                 case WireType.EndGroup:
@@ -621,7 +621,7 @@ namespace AqlaSerializer
                     {
                         throw reader.CreateException("Sub-message not read correctly");
                     }
-                    reader.blockEnd = value;
+                    reader.blockEnd = (int)value;
                     reader.depth--;
                     break;
                 /*default:
