@@ -144,7 +144,7 @@ namespace AqlaSerializer
             get { return netCache;}
         }
 
-        private int fieldNumber;
+        private int fieldNumber, flushLock;
         WireType wireType;
         internal WireType WireType { get { return wireType; } }
         /// <summary>
@@ -304,6 +304,7 @@ namespace AqlaSerializer
                     }
 #endif
                     writer.wireType = WireType.None;
+                    writer.flushLock++;
                     return new SubItemToken(writer.dest.CurPosition++); // leave 1 space (optimistic) for length
                 case WireType.Fixed32:
                     {
@@ -311,6 +312,7 @@ namespace AqlaSerializer
                         SubItemToken token = new SubItemToken(writer.dest.CurPosition);
                         writer.dest.CurPosition += 4;
                         writer.wireType = WireType.None;
+                        writer.flushLock++;
                         return token;
                     }
                 default:
@@ -397,6 +399,11 @@ namespace AqlaSerializer
                 default:
                     throw new ArgumentOutOfRangeException("style");
             }
+
+            if (--writer.flushLock == 0)
+            {
+                Flush(writer, true);
+            }
         }
 
         /// <summary>
@@ -432,7 +439,7 @@ namespace AqlaSerializer
         {   // importantly, this does **not** own the stream, and does not dispose it
             if (dest != null)
             {
-                dest.Flush();
+                dest.Flush(false);
                 dest = null;
             }
             if (_tempBuffer != null)
@@ -449,13 +456,13 @@ namespace AqlaSerializer
         /// </summary>
         public void Close()
         {
-            if (depth != 0) throw new InvalidOperationException("Unable to close stream in an incomplete state");
+            if (depth != 0 || flushLock != 0) throw new InvalidOperationException("Unable to close stream in an incomplete state");
             Dispose();
         }
 
         internal void CheckDepthFlushlock()
         {
-            if (depth != 0) throw new InvalidOperationException("The writer is in an incomplete state");
+            if (depth != 0 || flushLock != 0) throw new InvalidOperationException("The writer is in an incomplete state");
         }
 
         /// <summary>
@@ -901,7 +908,13 @@ namespace AqlaSerializer
 
         public static void Flush(ProtoWriter writer)
         {
-            writer.dest.Flush();
+            Flush(writer, false);
+        }
+
+        public static void Flush(ProtoWriter writer, bool onlyWhenSize)
+        {
+            if (writer.flushLock == 0)
+                writer.dest.Flush(onlyWhenSize);
         }
 
     }

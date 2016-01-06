@@ -10,9 +10,10 @@ namespace AqlaSerializer
     internal class StreamWrapper
     {
         readonly Stream _stream;
+        readonly MemoryStream _streamAsMs;
         long _lastFlushPosition;
         readonly Stream _nonSeekingStream;
-        readonly long _startOffset;
+        long _startOffset;
         readonly bool _autoSize;
 
         public long CurPosition
@@ -48,7 +49,7 @@ namespace AqlaSerializer
                 if (!isForWriting)
                     throw new InvalidOperationException("Deserializing streams should support both Read and Seek operations");
                 _nonSeekingStream = stream;
-                stream = new MemoryStream();
+                stream = _streamAsMs = new MemoryStream();
             }
             _stream = stream;
             _autoSize = isForWriting;
@@ -156,14 +157,15 @@ namespace AqlaSerializer
             SetBytesUsed(CurPosition);
         }
 
-        public void Flush()
+        public void Flush(bool onlyWhenSize)
         {
+            long count = BytesUsed - _lastFlushPosition;
+            if (onlyWhenSize && count < BufferPool.BufferLength / 2) return;
             _stream.Flush();
             if (_nonSeekingStream != null)
             {
                 var p = CurPosition;
                 CurPosition = _lastFlushPosition;
-                long count = BytesUsed - _lastFlushPosition;
                 bool pooling = count <= BufferPool.BufferLength;
                 byte[] buffer = pooling ? BufferPool.GetBuffer() : new byte[1024 * 250];
                 int read;
@@ -181,7 +183,12 @@ namespace AqlaSerializer
                 }
                 if (pooling)
                     BufferPool.ReleaseBufferToPool(ref buffer);
+                _nonSeekingStream.Flush();
                 CurPosition = p;
+
+                // CurPosition should not change while we truncate the MemoryStream
+                _startOffset -= _streamAsMs.Length;
+                _streamAsMs.SetLength(0);
             }
             _lastFlushPosition = CurPosition;
         }
