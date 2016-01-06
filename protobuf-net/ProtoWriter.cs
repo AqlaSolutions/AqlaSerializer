@@ -375,11 +375,36 @@ namespace AqlaSerializer
                     {
                         var p = writer.dest.CurPosition;
 
+                        byte[] buffer = writer._tempBuffer;
+                        if (len <= buffer.Length)
                         {
-                            byte[] buffer = writer.GetTempBuffer(len);
                             // Helpers.BlockCopy(blob, value + 1, blob, value + 1 + offset, len);
                             writer.dest.GetBuffer(value + 1, buffer, 0, len);
                             writer.dest.PutBuffer(value + 1 + offset, buffer, 0, len);
+                        }
+                        else
+                        {
+                            const int minBlockSize = 1024 * 1024;
+                            if (buffer.Length < minBlockSize)
+                                buffer = writer.GetTempBuffer(minBlockSize);
+
+                            writer.dest.CurPosition = value + 1;
+
+                            int pos = len;
+
+                            // need to read from end to start to not overwrite
+
+                            while (pos > 0)
+                            {
+                                int totalLeft = len - (len - pos);
+                                int maxLength = buffer.Length;
+                                int blockSize = totalLeft > maxLength ? maxLength : totalLeft;
+                                writer.dest.GetBuffer(value + 1 + pos - blockSize, buffer, 0, blockSize);
+                                writer.dest.PutBuffer(value + 1 + offset + pos - blockSize, buffer, 0, blockSize);
+                                pos -= blockSize;
+                            }
+
+                            // Helpers.BlockCopy(blob, value + 1, blob, value + 1 + offset, len);
                         }
 
                         tmp = (uint)len;
