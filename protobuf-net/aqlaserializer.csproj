@@ -225,6 +225,7 @@
     <Compile Include="Meta\TypeFormatEventArgs.cs" />
     <Compile Include="Meta\TypeModel.cs" />
     <Compile Include="Meta\ValueMember.cs" />
+    <Compile Include="MonoMemoryStream.cs" />
     <Compile Include="NetObjectCache.cs" />
     <Compile Include="PrefixStyle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

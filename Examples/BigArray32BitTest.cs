@@ -62,14 +62,13 @@ namespace Examples
         }
 
         [Test]
-        public void Execute()
+        public void Execute([Values(300 * 1024 * 1024, 600 * 1024 * 1024, 900 * 1024 * 1024)] int count)
         {
             var m = TypeModel.Create();
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));
             using (var stream = new FileStream("BigArray32BitTest.bin", FileMode.Create))
             {
                 stream.SetLength(0);
-                int count = 900 * 1024 * 1024;
                 GC.GetTotalMemory(true);
                 m.SerializeWithLengthPrefix(stream, new Wrapper() { Count = count }, typeof(Wrapper), PrefixStyle.Base128, 0);
                 Assert.That(stream.Length, Is.AtLeast(count));

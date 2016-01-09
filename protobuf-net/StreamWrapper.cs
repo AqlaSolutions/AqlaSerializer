@@ -13,7 +13,7 @@ namespace AqlaSerializer
         const int NonSeekingBigWriteBufferSize = NonSeekingDefaultWriteBufferSize * 10;
         const int FlushSizeCheck = 1024 * 1024;
         readonly Stream _stream;
-        readonly MemoryStream _streamAsMs;
+        readonly MonoMemoryStream _streamAsMs;
         long _lastFlushPosition;
         readonly Stream _nonSeekingStream;
         byte[] _nonSeekingWriteBuffer;
@@ -54,7 +54,7 @@ namespace AqlaSerializer
                 if (!isForWriting)
                     throw new InvalidOperationException("Deserializing streams should support both Read and Seek operations");
                 _nonSeekingStream = stream;
-                stream = _streamAsMs = new MemoryStream();
+                stream = _streamAsMs = new MonoMemoryStream();
                 _nonSeekingWriteBuffer = new byte[NonSeekingDefaultWriteBufferSize];
             }
             _stream = stream;
