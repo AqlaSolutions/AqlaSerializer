@@ -62,7 +62,7 @@ namespace Examples
         }
 
         [Test]
-        public void Execute([Values(300 * 1024 * 1024, 600 * 1024 * 1024, 900 * 1024 * 1024)] int count)
+        public void Execute([Values(900 * 1024 * 1024)] int count)
         {
             var m = TypeModel.Create();
             m.ForceInMemoryBuffer = false;
