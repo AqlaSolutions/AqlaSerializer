@@ -175,7 +175,7 @@ namespace ExperimentalDataTableSerialization
         }
         static void ProtoWrite(DataTable table, Stream stream)
         {
-            using (var writer = new ProtoWriter(stream, null, null))
+            using (var writer = new ProtoWriter(stream, null, null, true))
             {
                 // table name
                 if (!string.IsNullOrEmpty(table.TableName))

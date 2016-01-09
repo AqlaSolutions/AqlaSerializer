@@ -58,7 +58,7 @@ namespace AqlaSerializer.unittest.Meta
             CustomerStruct cs1 = new CustomerStruct { Id = 123, Name = "Fred" };
             using (MemoryStream ms = new MemoryStream())
             {
-                using (ProtoWriter writer = new ProtoWriter(ms, null, null))
+                using (ProtoWriter writer = new ProtoWriter(ms, null, null, true))
                 {
                     ser(cs1, writer);
                 }

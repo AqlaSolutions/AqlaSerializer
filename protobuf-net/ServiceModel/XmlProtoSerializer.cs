@@ -114,7 +114,7 @@ namespace AqlaSerializer.ServiceModel
             }
             else
             {
-                using (MemoryStream ms = new MemoryStream())
+                using (MonoMemoryStream ms = new MonoMemoryStream())
                 {
                     if (isList)
                     {
@@ -122,7 +122,7 @@ namespace AqlaSerializer.ServiceModel
                     }
                     else
                     {
-                        using (ProtoWriter protoWriter = new ProtoWriter(ms, model, null))
+                        using (ProtoWriter protoWriter = new ProtoWriter(ms, model, null, false))
                         {
                             model.Serialize(key, graph, protoWriter, true);
                         }

@@ -437,12 +437,12 @@ namespace AqlaSerializer
         /// <param name="dest">The destination stream</param>
         /// <param name="model">The model to use for serialization; this can be null, but this will impair the ability to serialize sub-objects</param>
         /// <param name="context">Additional context about this serialization operation</param>
-        public ProtoWriter(Stream dest, TypeModel model, SerializationContext context)
+        public ProtoWriter(Stream dest, TypeModel model, SerializationContext context, bool forceInMemoryBuffer)
         {
             if (dest == null) throw new ArgumentNullException("dest");
             if (!dest.CanWrite) throw new ArgumentException("Cannot write to stream", "dest");
             //if (model == null) throw new ArgumentNullException("model");
-            this.dest = new StreamWrapper(dest, true);
+            this.dest = new StreamWrapper(dest, true, forceInMemoryBuffer);
             this.model = model;
             this.wireType = WireType.None;
             if (context == null) { context = SerializationContext.Default; }

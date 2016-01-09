@@ -1215,7 +1215,7 @@ namespace AqlaSerializer
             try
             {
                 //TODO: replace this with stream-based, buffered raw copying
-                using (ProtoWriter writer = new ProtoWriter(dest, model, null))
+                using (ProtoWriter writer = new ProtoWriter(dest, model, null, Model.ForceInMemoryBuffer))
                 {
                     AppendExtensionField(writer);
                     writer.Close();

@@ -65,6 +65,7 @@ namespace Examples
         public void Execute([Values(300 * 1024 * 1024, 600 * 1024 * 1024, 900 * 1024 * 1024)] int count)
         {
             var m = TypeModel.Create();
+            m.ForceInMemoryBuffer = false;
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));
             using (var stream = new FileStream("BigArray32BitTest.bin", FileMode.Create))
             {

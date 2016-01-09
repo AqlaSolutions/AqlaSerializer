@@ -46,10 +46,12 @@ namespace AqlaSerializer
         }
 
 
-        public StreamWrapper(Stream stream, bool isForWriting)
+        public bool CanWrite { get { return _stream.CanWrite; } }
+
+        public StreamWrapper(Stream stream, bool isForWriting, bool forceInMemoryBuffer)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (!stream.CanSeek || !stream.CanRead)
+            if (forceInMemoryBuffer || !stream.CanSeek || !stream.CanRead)
             {
                 if (!isForWriting)
                     throw new InvalidOperationException("Deserializing streams should support both Read and Seek operations");
