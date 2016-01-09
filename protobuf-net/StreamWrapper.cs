@@ -9,10 +9,15 @@ namespace AqlaSerializer
 {
     internal class StreamWrapper
     {
+        const int NonSeekingDefaultWriteBufferSize = 1024 * 100;
+        const int NonSeekingBigWriteBufferSize = NonSeekingDefaultWriteBufferSize * 10;
+        const int FlushSizeCheck = 1024 * 1024;
         readonly Stream _stream;
         readonly MemoryStream _streamAsMs;
         long _lastFlushPosition;
         readonly Stream _nonSeekingStream;
+        byte[] _nonSeekingWriteBuffer;
+        bool _nonSeekingWriteBufferResized;
         long _startOffset;
         readonly bool _autoSize;
 
@@ -50,6 +55,7 @@ namespace AqlaSerializer
                     throw new InvalidOperationException("Deserializing streams should support both Read and Seek operations");
                 _nonSeekingStream = stream;
                 stream = _streamAsMs = new MemoryStream();
+                _nonSeekingWriteBuffer = new byte[NonSeekingDefaultWriteBufferSize];
             }
             _stream = stream;
             _autoSize = isForWriting;
@@ -157,17 +163,24 @@ namespace AqlaSerializer
             SetBytesUsed(CurPosition);
         }
 
-        public void Flush(bool onlyWhenSize)
+        public void Flush(bool reallyFlush)
         {
             long count = BytesUsed - _lastFlushPosition;
-            if (onlyWhenSize && count < BufferPool.BufferLength / 2) return;
-            _stream.Flush();
+            if (!reallyFlush && count < FlushSizeCheck) return;
+            if (reallyFlush)
+                _stream.Flush();
             if (_nonSeekingStream != null)
             {
                 var p = CurPosition;
                 CurPosition = _lastFlushPosition;
-                bool pooling = count <= BufferPool.BufferLength;
-                byte[] buffer = pooling ? BufferPool.GetBuffer() : new byte[1024 * 250];
+
+                if (count > NonSeekingDefaultWriteBufferSize && !_nonSeekingWriteBufferResized)
+                {
+                    _nonSeekingWriteBuffer = new byte[NonSeekingBigWriteBufferSize];
+                    _nonSeekingWriteBufferResized = true;
+                }
+
+                byte[] buffer = _nonSeekingWriteBuffer;
                 int read;
                 while ((read = _stream.Read(buffer, 0, buffer.Length)) > 0)
                 {
@@ -181,9 +194,9 @@ namespace AqlaSerializer
 
                     _nonSeekingStream.Write(buffer, 0, read);
                 }
-                if (pooling)
-                    BufferPool.ReleaseBufferToPool(ref buffer);
-                _nonSeekingStream.Flush();
+                if (reallyFlush)
+                    _nonSeekingStream.Flush();
+
                 CurPosition = p;
 
                 // CurPosition should not change while we truncate the MemoryStream

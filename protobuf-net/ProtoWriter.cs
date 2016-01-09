@@ -427,7 +427,7 @@ namespace AqlaSerializer
 
             if (--writer.flushLock == 0)
             {
-                Flush(writer, true);
+                Flush(writer, false);
             }
         }
 
@@ -464,7 +464,7 @@ namespace AqlaSerializer
         {   // importantly, this does **not** own the stream, and does not dispose it
             if (dest != null)
             {
-                dest.Flush(false);
+                dest.Flush(true);
                 dest = null;
             }
             if (_tempBuffer != null)
@@ -933,13 +933,13 @@ namespace AqlaSerializer
 
         public static void Flush(ProtoWriter writer)
         {
-            Flush(writer, false);
+            Flush(writer, true);
         }
 
-        public static void Flush(ProtoWriter writer, bool onlyWhenSize)
+        public static void Flush(ProtoWriter writer, bool reallyFlush)
         {
             if (writer.flushLock == 0)
-                writer.dest.Flush(onlyWhenSize);
+                writer.dest.Flush(reallyFlush);
         }
 
     }
