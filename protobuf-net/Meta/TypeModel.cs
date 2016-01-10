@@ -24,6 +24,13 @@ namespace AqlaSerializer.Meta
         }
 #endif
 
+        public bool AllowStreamRewriting { get; set; }
+
+        protected TypeModel()
+        {
+            AllowStreamRewriting = true;
+        }
+
         /// <summary>
         /// Should the <c>Kind</c> be included on date/time values?
         /// </summary>

@@ -1,8 +1,9 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
 using System;
-
+using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Xml;
 using AqlaSerializer.Meta;
 #if MF
 using OverflowException = System.ApplicationException;
@@ -24,6 +25,16 @@ namespace AqlaSerializer
     {
         private Stream dest;
         TypeModel model;
+
+        byte[] _tempBuffer = BufferPool.GetBuffer();
+
+        byte[] GetTempBuffer(int requiredMinSize)
+        {
+            if (_tempBuffer.Length < requiredMinSize)
+                BufferPool.ResizeAndFlushLeft(ref _tempBuffer, requiredMinSize, 0, 0);
+            return _tempBuffer;
+        }
+
         /// <summary>
         /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type).
         /// </summary>
@@ -230,6 +241,7 @@ namespace AqlaSerializer
                     Flush(writer); // commit any existing data from the buffer
                     // now just write directly to the underlying stream
                     writer.dest.Write(data, offset, length);
+                    writer.bytesFlushed += length;
                     writer.position += length; // since we've flushed offset etc is 0, and remains
                                         // zero since we're writing directly to the stream
                     return;
@@ -262,6 +274,7 @@ namespace AqlaSerializer
                 while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
                 {
                     writer.dest.Write(buffer, 0, bytesRead);
+                    writer.bytesFlushed += bytesRead;
                     writer.position += bytesRead;
                 }
             }
@@ -362,6 +375,15 @@ namespace AqlaSerializer
             }
         }
 
+        void DebugFlushFile()
+        {
+            bool prev = streamAsBufferAllowed;
+            streamAsBufferAllowed = true;
+            Flush(this);
+            streamAsBufferAllowed = prev;
+            dest.Flush();
+        }
+
         /// <summary>
         /// Indicates the end of a nested record.
         /// </summary>
@@ -390,35 +412,31 @@ namespace AqlaSerializer
             }
 
             int inBufferPos = value - writer.bytesFlushed;
-            
-            // should operate on stream directly?
-            if (inBufferPos < 0)
+            int positionDiff = (writer.bytesFlushed + writer.ioIndex - value);
+
+            int len;
+            byte[] buffer;
+
+            // so we're backfilling the length into an existing sequence
+            // should operate on buffer?
+            if (inBufferPos >= 0)
             {
-                // so we're backfilling the length into an existing sequence
-                int len;
                 switch (style)
                 {
                     case PrefixStyle.Fixed32:
-                        len = (int)((writer.ioIndex - inBufferPos) - 4);
+                        len = (int)(positionDiff - 4);
                         ProtoWriter.WriteInt32ToBuffer(len, writer.ioBuffer, inBufferPos);
                         break;
                     case PrefixStyle.Fixed32BigEndian:
-                        len = (int)((writer.ioIndex - inBufferPos) - 4);
-                        byte[] buffer = writer.ioBuffer;
-                        ProtoWriter.WriteInt32ToBuffer(len, buffer, inBufferPos);
-                        // and swap the byte order
-                        byte b = buffer[inBufferPos];
-                        buffer[inBufferPos] = buffer[inBufferPos + 3];
-                        buffer[inBufferPos + 3] = b;
-                        b = buffer[inBufferPos + 1];
-                        buffer[inBufferPos + 1] = buffer[inBufferPos + 2];
-                        buffer[inBufferPos + 2] = b;
+                        len = (int)(positionDiff - 4);
+                        buffer = writer.ioBuffer;
+                        ProtoWriter.WriteInt32ToBufferBE(len, buffer, inBufferPos);
                         break;
                     case PrefixStyle.Base128:
                         // string - complicated because we only reserved one byte;
                         // if the prefix turns out to need more than this then
                         // we need to shuffle the existing data
-                        len = (int)((writer.ioIndex - inBufferPos) - 1);
+                        len = (int)(positionDiff - 1);
                         int offset = 0;
                         uint tmp = (uint)len;
                         while ((tmp >>= 7) != 0) offset++;
@@ -445,9 +463,132 @@ namespace AqlaSerializer
                         throw new ArgumentOutOfRangeException("style");
                 }
             }
-            else // do the same thing buf for stream?
+            else // do the same thing but for stream
             {
-                
+                byte[] temp = null;
+                int writeFromTemp = 0;
+                var dest = writer.dest;
+                var prevPos = dest.Position;
+
+                switch (style)
+                {
+                    case PrefixStyle.Fixed32:
+                        writeFromTemp = 4;
+                        len = (int)(positionDiff - writeFromTemp);
+                        temp = writer.GetTempBuffer(writeFromTemp);
+                        ProtoWriter.WriteInt32ToBuffer(len, temp, 0);
+                        break;
+                    case PrefixStyle.Fixed32BigEndian:
+                        writeFromTemp = 4;
+                        len = (int)(positionDiff - writeFromTemp);
+                        temp = writer.GetTempBuffer(writeFromTemp);
+                        ProtoWriter.WriteInt32ToBufferBE(len, temp, 0);
+                        break;
+                    case PrefixStyle.Base128:
+                        // string - complicated because we only reserved one byte;
+                        // if the prefix turns out to need more than this then
+                        // we need to shuffle the existing data
+                        len = (int)(positionDiff - 1);
+                        int offset = 0;
+                        uint tmp = (uint)len;
+                        while ((tmp >>= 7) != 0) offset++;
+                        if (offset == 0)
+                        {
+                            dest.Position += inBufferPos; // negative
+                            dest.WriteByte((byte)(len & 0x7F));
+                        }
+                        else
+                        {
+                            DemandSpace(offset, writer);
+                            buffer = writer.ioBuffer;
+                            if (inBufferPos == -1)
+                                Helpers.BlockCopy(buffer, inBufferPos + 1, buffer, inBufferPos + 1 + offset, len);
+                            else
+                            {
+                                // move data from inBufferPos + 1 to inBufferPos + 1 + offset
+                                int left = len;
+                                int blockInBufferPos = inBufferPos + 1; // negative
+                                // first - in memory
+                                int inMemoryWas = len + blockInBufferPos;
+                                if (inMemoryWas > 0)
+                                {
+                                    Helpers.BlockCopy(buffer, 0, buffer, offset, inMemoryWas);
+                                    left -= inMemoryWas;
+                                }
+
+                                int inMemoryDataStart = offset;
+
+                                // second - from stream to stream (and memory)
+                                int maxBlockSize = Math.Min(left, 1024 * 1024);
+                                temp = writer.GetTempBuffer(maxBlockSize);
+                                long streamPosition = dest.Position;
+                                long streamEndPosition = streamPosition;
+                                while (left > 0)
+                                {
+                                    int thisBlockSize = Math.Min(left, maxBlockSize);
+                                    streamPosition -= thisBlockSize;
+                                    dest.Position = streamPosition;
+                                    int actual = dest.Read(temp, 0, thisBlockSize);
+                                    Debug.Assert(thisBlockSize == actual);
+                                    int overhead = Math.Min(inMemoryDataStart, thisBlockSize);
+                                    if (overhead > 0)
+                                    {
+                                        // we have more bytes than we can put to the stream
+                                        // so they go to memory
+
+                                        Helpers.BlockCopy(temp, thisBlockSize - overhead, buffer, inMemoryDataStart - overhead, overhead);
+
+                                        inMemoryDataStart -= overhead;
+                                        thisBlockSize -= overhead;
+                                        left -= overhead;
+                                    }
+
+                                    if (thisBlockSize > 0)
+                                    {
+                                        dest.Position = streamPosition + offset;
+                                        Debug.Assert(dest.Position + thisBlockSize <= streamEndPosition);
+                                        dest.Write(temp, 0, thisBlockSize);
+                                    }
+
+                                    left -= thisBlockSize;
+                                }
+                                dest.Position = streamEndPosition;
+                            }
+
+                            // from inBufferPos
+                            temp = writer.GetTempBuffer(10);
+                            int count = 0;
+                            tmp = (uint)len;
+                            do
+                            {
+                                temp[count++] = (byte)((tmp & 0x7F) | 0x80);
+                            } while ((tmp >>= 7) != 0);
+                            temp[count - 1] = (byte)(temp[count - 1] & ~0x80);
+
+                            writeFromTemp = count;
+
+                            writer.position += offset;
+                            writer.ioIndex += offset;
+
+                        }
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("style");
+                }
+
+                if (writeFromTemp != 0)
+                {
+                    Debug.Assert(temp != null, "temp != null");
+
+                    int lengthInStream = Math.Min(-inBufferPos, writeFromTemp);
+                    dest.Position += inBufferPos;
+                    dest.Write(temp, 0, lengthInStream);
+                    
+                    if (lengthInStream != writeFromTemp)
+                        Helpers.BlockCopy(temp, lengthInStream, writer.ioBuffer, 0, writeFromTemp - lengthInStream);
+                }
+
+                dest.Position = prevPos;
             }
             // and this object is no longer a blockage - also flush if sensible
 
@@ -459,7 +600,7 @@ namespace AqlaSerializer
             }
             
         }
-
+        
         bool IsFlushAdvised()
         {
             return IsFlushAdvised(ioIndex);
@@ -486,7 +627,8 @@ namespace AqlaSerializer
         {
             if (dest == null) throw new ArgumentNullException("dest");
             if (!dest.CanWrite) throw new ArgumentException("Cannot write to stream", "dest");
-            if (dest.CanSeek && dest.CanRead) streamAsBufferAllowed = true;
+            if ((model != null && model.AllowStreamRewriting) && dest.CanSeek && dest.CanRead)
+                streamAsBufferAllowed = true;
             //if (model == null) throw new ArgumentNullException("model");
             this.dest = dest;
             this.ioBuffer = BufferPool.GetBuffer();
@@ -514,6 +656,8 @@ namespace AqlaSerializer
                 Flush(this);
                 dest = null;
             }
+            if (_tempBuffer != null)
+                BufferPool.ReleaseBufferToPool(ref _tempBuffer);
             model = null;
             BufferPool.ReleaseBufferToPool(ref ioBuffer);
         }
@@ -571,7 +715,7 @@ namespace AqlaSerializer
             if ((writer.streamAsBufferAllowed || writer.flushLock == 0) && writer.ioIndex != 0)
             {
                 writer.dest.Write(writer.ioBuffer, 0, writer.ioIndex);
-                writer.bytesFlushed = writer.ioIndex;
+                writer.bytesFlushed += writer.ioIndex;
                 writer.ioIndex = 0;                
             }
         }
@@ -784,6 +928,14 @@ namespace AqlaSerializer
             buffer[index + 1] = (byte)(value >> 8);
             buffer[index + 2] = (byte)(value >> 16);
             buffer[index + 3] = (byte)(value >> 24);
+        }
+
+        private static void WriteInt32ToBufferBE(int value, byte[] buffer, int index)
+        {
+            buffer[index + 3] = (byte)value;
+            buffer[index + 2] = (byte)(value >> 8);
+            buffer[index + 1] = (byte)(value >> 16);
+            buffer[index] = (byte)(value >> 24);
         }
 
         /// <summary>

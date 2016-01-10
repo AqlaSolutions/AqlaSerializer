@@ -66,21 +66,37 @@ namespace Examples
         {
             var m = TypeModel.Create();
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));
-            using (var stream = new FileStream("BigArray32BitTest.bin", FileMode.Create))
+            const string fileName = "BigArray32BitTest.bin";
+            TestClone(fileName, count, m);
+            File.Delete(fileName);
+        }
+
+        //[Test]
+        public void GenerateCorrect([Values(400 * 1024 * 1024)] int count)
+        {
+            var m = TypeModel.Create();
+            m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));
+            m.AllowStreamRewriting = false;
+            const string fileName = "BigArray32BitTest_correct.bin";
+            TestClone(fileName, count, m);
+        }
+
+        static void TestClone(string fileName, int size, RuntimeTypeModel m)
+        {
+            using (var stream = new FileStream(fileName, FileMode.Create))
             {
                 stream.SetLength(0);
                 GC.GetTotalMemory(true);
-                m.SerializeWithLengthPrefix(stream, new Wrapper() { Count = count }, typeof(Wrapper), PrefixStyle.Base128, 0);
-                Assert.That(stream.Length, Is.AtLeast(count));
-                Assert.That(stream.Length, Is.LessThan(count + 10000));
+                m.SerializeWithLengthPrefix(stream, new Wrapper() { Count = size }, typeof(Wrapper), PrefixStyle.Base128, 0);
+                Assert.That(stream.Length, Is.AtLeast(size));
+                Assert.That(stream.Length, Is.LessThan(size + 10000));
                 stream.Flush(true);
                 GC.GetTotalMemory(true);
                 stream.Position = 0;
                 var w = (Wrapper)m.DeserializeWithLengthPrefix(stream, null, typeof(Wrapper), PrefixStyle.Base128, 0);
-                Assert.That(w.Count, Is.EqualTo(count));
+                Assert.That(w.Count, Is.EqualTo(size));
                 Assert.That(stream.Position, Is.EqualTo(stream.Length));
             }
-            File.Delete("BigArray32BitTest.bin");
         }
     }
 }
