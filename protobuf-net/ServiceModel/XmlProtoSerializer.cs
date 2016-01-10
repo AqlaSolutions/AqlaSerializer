@@ -114,7 +114,7 @@ namespace AqlaSerializer.ServiceModel
             }
             else
             {
-                using (MonoMemoryStream ms = new MonoMemoryStream())
+                using (MemoryStream ms = new MemoryStream())
                 {
                     if (isList)
                     {

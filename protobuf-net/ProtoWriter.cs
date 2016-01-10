@@ -410,13 +410,16 @@ namespace AqlaSerializer
                         tmp = (uint)len;
                         
                         writer.dest.CurPosition = value;
+
+                        int index = 0;
                         do
                         {
-                            value++;
-                            writer.dest.WriteByte((byte)((tmp & 0x7F) | 0x80));
+                            buffer[index++] = (byte)((tmp & 0x7F) | 0x80);
                         } while ((tmp >>= 7) != 0);
 
-                        writer.dest.PreviousByte = (byte)(writer.dest.PreviousByte & ~0x80);
+                        buffer[index - 1] = (byte)(buffer[index - 1] & ~0x80);
+
+                        writer.dest.Write(buffer, 0, index );
 
                         writer.dest.CurPosition = p + offset;
                     }
@@ -500,15 +503,18 @@ namespace AqlaSerializer
         /// </summary>
         private static void WriteUInt32Variant(uint value, ProtoWriter writer)
         {
-            int count = 0;
-            do {
-                writer.dest.WriteByte((byte)((value & 0x7F) | 0x80));
-                count++;
+            var buffer = writer._tempBuffer;
+            int index = 0;
+            do
+            {
+                buffer[index++] = (byte)((value & 0x7F) | 0x80);
             } while ((value >>= 7) != 0);
 
-            writer.dest.PreviousByte &= 0x7F;
+            buffer[index - 1] = (byte)(buffer[index - 1] & 0x7F);
+
+            writer.dest.Write(buffer, 0, index);
         }
- 
+
         static readonly UTF8Encoding encoding = new UTF8Encoding();
 
         internal static uint Zig(int value)
@@ -521,13 +527,16 @@ namespace AqlaSerializer
         }
         private static void WriteUInt64Variant(ulong value, ProtoWriter writer)
         {
-            int count = 0;
+            var buffer = writer._tempBuffer;
+            int index = 0;
             do
             {
-                writer.dest.WriteByte((byte)((value & 0x7F) | 0x80));
-                count++;
+                buffer[index++] = (byte)((value & 0x7F) | 0x80);
             } while ((value >>= 7) != 0);
-            writer.dest.PreviousByte &= 0x7F;
+
+            buffer[index - 1] = (byte)(buffer[index - 1] & 0x7F);
+
+            writer.dest.Write(buffer, 0, index);
         }
         /// <summary>
         /// Writes a string to the stream; supported wire-types: String

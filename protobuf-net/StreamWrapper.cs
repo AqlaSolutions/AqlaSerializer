@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace AqlaSerializer
 {
-    internal class StreamWrapper
+    internal sealed class StreamWrapper
     {
         const int NonSeekingDefaultWriteBufferSize = 1024 * 100;
         const int NonSeekingBigWriteBufferSize = NonSeekingDefaultWriteBufferSize * 10;
@@ -104,9 +104,7 @@ namespace AqlaSerializer
                 }
             }
         }
-
-        public byte PreviousByte { get { return this[CurPosition - 1]; } set { this[CurPosition - 1] = value; } }
-
+        
         public void GetBuffer(long streamPosition, byte[] dest, int destOffset, int count)
         {
             var p = CurPosition;

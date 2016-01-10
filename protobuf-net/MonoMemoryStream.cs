@@ -43,19 +43,15 @@ namespace AqlaSerializer
     /// <summary>
     /// This MemoryStream contains optimized for 32 bit growing strategy for minimal memory overhead
     /// </summary>
-    class MonoMemoryStream : Stream
+    sealed class MonoMemoryStream : Stream
     {
         bool canWrite;
-        bool allowGetBuffer;
         int capacity;
         int length;
         byte[] internalBuffer;
         int initialIndex;
-        bool expandable;
-        bool streamClosed;
         int position;
-        int dirty_bytes;
-
+        
         public MonoMemoryStream() : this(0)
         {
         }
@@ -69,9 +65,6 @@ namespace AqlaSerializer
 
             this.capacity = capacity;
             internalBuffer = new byte[capacity];
-
-            expandable = true;
-            allowGetBuffer = true;
         }
 
         public MonoMemoryStream(byte[] buffer)
@@ -124,53 +117,35 @@ namespace AqlaSerializer
             length = capacity;
             position = index;
             initialIndex = index;
-
-            allowGetBuffer = publicallyVisible;
-            expandable = false;
         }
-
-        void CheckIfClosedThrowDisposed()
-        {
-            if (streamClosed)
-                throw new ObjectDisposedException("MemoryStream");
-        }
-
+        
         public override bool CanRead
         {
-            get { return !streamClosed; }
+            get { return true; }
         }
 
         public override bool CanSeek
         {
-            get { return !streamClosed; }
+            get { return true; }
         }
 
         public override bool CanWrite
         {
-            get { return (!streamClosed && canWrite); }
+            get { return (canWrite); }
         }
 
-        public virtual int Capacity
+        public int Capacity
         {
             get
             {
-                CheckIfClosedThrowDisposed();
                 return capacity - initialIndex;
             }
 
             set
             {
-                CheckIfClosedThrowDisposed();
                 if (value == capacity)
                     return; // LAMENESS: see MemoryStreamTest.ConstructorFive
-
-                if (!expandable)
-                    throw new NotSupportedException("Cannot expand this MemoryStream");
-
-                if (value < 0 || value < length)
-                    throw new ArgumentOutOfRangeException("value",
-                    "New capacity cannot be negative or less than the current capacity " + value + " " + capacity);
-
+                
                 if (value == internalBuffer.Length)
                     return;
 
@@ -180,8 +155,7 @@ namespace AqlaSerializer
                     newBuffer = new byte[value];
                     Buffer.BlockCopy(internalBuffer, 0, newBuffer, 0, length);
                 }
-
-                dirty_bytes = 0; // discard any dirty area beyond previous length
+                
                 internalBuffer = newBuffer; // It's null when capacity is set to 0
                 capacity = value;
             }
@@ -191,13 +165,6 @@ namespace AqlaSerializer
         {
             get
             {
-                // LAMESPEC: The spec says to throw an IOException if the
-                // stream is closed and an ObjectDisposedException if
-                // "methods were called after the stream was closed".  What
-                // is the difference?
-
-                CheckIfClosedThrowDisposed();
-
                 // This is ok for MemoryStreamTest.ConstructorFive
                 return length - initialIndex;
             }
@@ -207,58 +174,27 @@ namespace AqlaSerializer
         {
             get
             {
-                CheckIfClosedThrowDisposed();
                 return position - initialIndex;
             }
 
             set
             {
-                CheckIfClosedThrowDisposed();
-                if (value < 0)
-                    throw new ArgumentOutOfRangeException("value",
-                                "Position cannot be negative");
-
-                if (value > Int32.MaxValue)
-                    throw new ArgumentOutOfRangeException("value",
-                    "Position must be non-negative and less than 2^31 - 1 - origin");
-
                 position = initialIndex + (int)value;
             }
         }
-
-        protected override void Dispose(bool disposing)
-        {
-            streamClosed = true;
-            expandable = false;
-        }
-
+        
         public override void Flush()
         {
             // Do nothing
         }
 
-        public virtual byte[] GetBuffer()
+        public byte[] GetBuffer()
         {
-            if (!allowGetBuffer)
-                throw new UnauthorizedAccessException();
-
             return internalBuffer;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            CheckIfClosedThrowDisposed();
-
-            if (buffer == null)
-                throw new ArgumentNullException("buffer");
-
-            if (offset < 0 || count < 0)
-                throw new ArgumentOutOfRangeException("offset or count less than zero.");
-
-            if (buffer.Length - offset < count)
-                throw new ArgumentException("offset+count",
-                                  "The size of the buffer is less than offset + count.");
-
             if (position >= length || count == 0)
                 return 0;
 
@@ -272,21 +208,11 @@ namespace AqlaSerializer
 
         public override int ReadByte()
         {
-            CheckIfClosedThrowDisposed();
-            if (position >= length)
-                return -1;
-
             return internalBuffer[position++];
         }
 
         public override long Seek(long offset, SeekOrigin loc)
         {
-            CheckIfClosedThrowDisposed();
-
-            // It's funny that they don't throw this exception for < Int32.MinValue
-            if (offset > (long)Int32.MaxValue)
-                throw new ArgumentOutOfRangeException("Offset out of range. " + offset);
-
             int refPoint;
             switch (loc)
             {
@@ -339,49 +265,23 @@ namespace AqlaSerializer
 
         void Expand(int newSize)
         {
-            // We don't need to take into account the dirty bytes when incrementing the
-            // Capacity, as changing it will only preserve the valid clear region.
             if (newSize > capacity)
                 Capacity = CalculateNewCapacity(newSize);
-            else if (dirty_bytes > 0)
-            {
-                Array.Clear(internalBuffer, length, dirty_bytes);
-                dirty_bytes = 0;
-            }
         }
 
         public override void SetLength(long value)
         {
-            if (!expandable && value > capacity)
-                throw new NotSupportedException("Expanding this MemoryStream is not supported");
-
-            CheckIfClosedThrowDisposed();
-
-            if (!canWrite)
-            {
-                throw new NotSupportedException("Cannot write to this MemoryStream");
-            }
-
-            // LAMESPEC: AGAIN! It says to throw this exception if value is
-            // greater than "the maximum length of the MemoryStream".  I haven't
-            // seen anywhere mention what the maximum length of a MemoryStream is and
-            // since we're this far this memory stream is expandable.
-            if (value < 0 || (value + initialIndex) > (long)Int32.MaxValue)
-                throw new ArgumentOutOfRangeException();
-
             int newSize = (int)value + initialIndex;
 
             if (newSize > length)
                 Expand(newSize);
-            else if (newSize < length) // Postpone the call to Array.Clear till expand time
-                dirty_bytes += length - newSize;
-
+            
             length = newSize;
             if (position > length)
                 position = length;
         }
 
-        public virtual byte[] ToArray()
+        public byte[] ToArray()
         {
             int l = length - initialIndex;
             byte[] outBuffer = new byte[l];
@@ -393,21 +293,6 @@ namespace AqlaSerializer
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            CheckIfClosedThrowDisposed();
-
-            if (!canWrite)
-                throw new NotSupportedException("Cannot write to this stream.");
-
-            if (buffer == null)
-                throw new ArgumentNullException("buffer");
-
-            if (offset < 0 || count < 0)
-                throw new ArgumentOutOfRangeException();
-
-            if (buffer.Length - offset < count)
-                throw new ArgumentException("offset+count",
-                                 "The size of the buffer is less than offset + count.");
-
             // reordered to avoid possible integer overflow
             if (position > length - count)
                 Expand(position + count);
@@ -420,10 +305,6 @@ namespace AqlaSerializer
 
         public override void WriteByte(byte value)
         {
-            CheckIfClosedThrowDisposed();
-            if (!canWrite)
-                throw new NotSupportedException("Cannot write to this stream.");
-
             if (position >= length)
             {
                 Expand(position + 1);
@@ -433,13 +314,8 @@ namespace AqlaSerializer
             internalBuffer[position++] = value;
         }
 
-        public virtual void WriteTo(Stream stream)
+        public void WriteTo(Stream stream)
         {
-            CheckIfClosedThrowDisposed();
-
-            if (stream == null)
-                throw new ArgumentNullException("stream");
-
             stream.Write(internalBuffer, initialIndex, length - initialIndex);
         }
     }
