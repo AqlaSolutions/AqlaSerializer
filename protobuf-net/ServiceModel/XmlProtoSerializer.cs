@@ -122,7 +122,7 @@ namespace AqlaSerializer.ServiceModel
                     }
                     else
                     {
-                        using (ProtoWriter protoWriter = new ProtoWriter(ms, model, null, false))
+                        using (ProtoWriter protoWriter = new ProtoWriter(ms, model, null))
                         {
                             model.Serialize(key, graph, protoWriter, true);
                         }

@@ -605,7 +605,7 @@ namespace AqlaSerializer
         public static void EndSubItem(SubItemToken token, ProtoReader reader)
         {
             if (reader == null) throw new ArgumentNullException("reader");
-            var value = token.value;
+            int value = token.value;
             switch (reader.wireType)
             {
                 case WireType.EndGroup:
@@ -621,7 +621,7 @@ namespace AqlaSerializer
                     {
                         throw reader.CreateException("Sub-message not read correctly");
                     }
-                    reader.blockEnd = (int)value;
+                    reader.blockEnd = value;
                     reader.depth--;
                     break;
                 /*default:
@@ -1215,7 +1215,7 @@ namespace AqlaSerializer
             try
             {
                 //TODO: replace this with stream-based, buffered raw copying
-                using (ProtoWriter writer = new ProtoWriter(dest, model, null, Model.ForceInMemoryBuffer))
+                using (ProtoWriter writer = new ProtoWriter(dest, model, null))
                 {
                     AppendExtensionField(writer);
                     writer.Close();

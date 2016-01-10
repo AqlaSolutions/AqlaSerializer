@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -225,7 +225,6 @@
     <Compile Include="Meta\TypeFormatEventArgs.cs" />
     <Compile Include="Meta\TypeModel.cs" />
     <Compile Include="Meta\ValueMember.cs" />
-    <Compile Include="MonoMemoryStream.cs" />
     <Compile Include="NetObjectCache.cs" />
     <Compile Include="PrefixStyle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -283,7 +282,6 @@
     <Compile Include="ServiceModel\ProtoEndpointBehavior.cs" />
     <Compile Include="ServiceModel\ProtoOperationBehavior.cs" />
     <Compile Include="ServiceModel\XmlProtoSerializer.cs" />
-    <Compile Include="StreamWrapper.cs" />
     <Compile Include="SubItemToken.cs" />
     <Compile Include="WireType.cs">
       <SubType>Code</SubType>

@@ -26,7 +26,7 @@ namespace Examples
 
             var ms = new MemoryStream();
             var obj = new Foo { Bar = "abc", Blap = "abc" };
-            using (var writer = new ProtoWriter(ms, model, null, true))
+            using (var writer = new ProtoWriter(ms, model, null))
             {
                 writer.Model.Serialize(writer, obj);
             }

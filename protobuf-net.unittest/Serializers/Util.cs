@@ -38,7 +38,7 @@ namespace AqlaSerializer.unittest.Serializers
             using (MemoryStream ms = new MemoryStream())
             {
                 int reported;
-                using (ProtoWriter writer = new ProtoWriter(ms, RuntimeTypeModel.Default, null, true))
+                using (ProtoWriter writer = new ProtoWriter(ms, RuntimeTypeModel.Default, null))
                 {
                     serializer(obj, writer);
                     reported = ProtoWriter.GetPosition(writer);
@@ -105,7 +105,7 @@ namespace AqlaSerializer.unittest.Serializers
         {
             using (var ms = new MemoryStream())
             {
-                using (var pw = new ProtoWriter(ms, RuntimeTypeModel.Default, null, true))
+                using (var pw = new ProtoWriter(ms, RuntimeTypeModel.Default, null))
                 {
                     action(pw);
                 }

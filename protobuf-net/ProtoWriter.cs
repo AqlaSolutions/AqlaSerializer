@@ -22,17 +22,8 @@ namespace AqlaSerializer
     /// </summary>
     public sealed class ProtoWriter : IDisposable
     {
+        private Stream dest;
         TypeModel model;
-        StreamWrapper dest;
-        byte[] _tempBuffer = BufferPool.GetBuffer();
-
-        byte[] GetTempBuffer(int requiredMinSize)
-        {
-            if (_tempBuffer.Length < requiredMinSize)
-                BufferPool.ResizeAndFlushLeft(ref _tempBuffer, requiredMinSize, 0, 0);
-            return _tempBuffer;
-        }
-
         /// <summary>
         /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type).
         /// </summary>
@@ -222,33 +213,82 @@ namespace AqlaSerializer
             {
                 case WireType.Fixed32:
                     if (length != 4) throw new ArgumentException("length");
-                    break;
+                    goto CopyFixedLength;  // ugly but effective
                 case WireType.Fixed64:
                     if (length != 8) throw new ArgumentException("length");
-                    break;
+                    goto CopyFixedLength;  // ugly but effective
                 case WireType.String:
                     WriteUInt32Variant((uint)length, writer);
                     writer.wireType = WireType.None;
                     if (length == 0) return;
-                    break;
-                default:
-                    throw CreateException(writer);
+                    if (writer.flushLock != 0 || length <= writer.ioBuffer.Length) // write to the buffer
+                    {
+                        goto CopyFixedLength; // ugly but effective
+                    }
+                    // writing data that is bigger than the buffer (and the buffer
+                    // isn't currently locked due to a sub-object needing the size backfilled)
+                    Flush(writer); // commit any existing data from the buffer
+                    // now just write directly to the underlying stream
+                    writer.dest.Write(data, offset, length);
+                    writer.position += length; // since we've flushed offset etc is 0, and remains
+                                        // zero since we're writing directly to the stream
+                    return;
             }
-            
-            writer.dest.Write(data, offset, length);
-            writer.wireType = WireType.None;
+            throw CreateException(writer);
+        CopyFixedLength: // no point duplicating this lots of times, and don't really want another stackframe
+            DemandSpace(length, writer);
+            Helpers.BlockCopy(data, offset, writer.ioBuffer, writer.ioIndex, length);
+            IncrementedAndReset(length, writer);
         }
-
         private static void CopyRawFromStream(Stream source, ProtoWriter writer)
         {
-            byte[] buffer = writer.GetTempBuffer(32767);
-            int read;
-            while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+            byte[] buffer = writer.ioBuffer;
+            int space = buffer.Length - writer.ioIndex, bytesRead = 1; // 1 here to spoof case where already full
+            
+            // try filling the buffer first   
+            while (space > 0 && (bytesRead = source.Read(buffer, writer.ioIndex, space)) > 0)
             {
-                writer.dest.Write(buffer, 0, read);
+                writer.ioIndex += bytesRead;
+                writer.position += bytesRead;
+                space -= bytesRead;                
             }
-        }
+            if (bytesRead <= 0) return; // all done using just the buffer; stream exhausted
 
+            // at this point the stream still has data, but buffer is full; 
+            if (writer.flushLock == 0)
+            {
+                // flush the buffer and write to the underlying stream instead
+                Flush(writer);
+                while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    writer.dest.Write(buffer, 0, bytesRead);
+                    writer.position += bytesRead;
+                }
+            }
+            else
+            {
+                do
+                {
+                    // need more space; resize (double) as necessary,
+                    // requesting a reasonable minimum chunk each time
+                    // (128 is the minimum; there may actually be much
+                    // more space than this in the buffer)
+                    DemandSpace(128, writer);
+                    if((bytesRead = source.Read(writer.ioBuffer, writer.ioIndex,
+                        writer.ioBuffer.Length - writer.ioIndex)) <= 0) break;
+                    writer.position += bytesRead;
+                    writer.ioIndex += bytesRead;
+                } while (true);
+            }
+
+        }
+        private static void IncrementedAndReset(int length, ProtoWriter writer)
+        {
+            Helpers.DebugAssert(length >= 0);
+            writer.ioIndex += length;
+            writer.position += length;
+            writer.wireType = WireType.None;
+        }
         int depth = 0;
         const int RecursionCheckDepth = 25;
         /// <summary>
@@ -304,15 +344,17 @@ namespace AqlaSerializer
                     }
 #endif
                     writer.wireType = WireType.None;
+                    DemandSpace(32, writer); // make some space in anticipation...
                     writer.flushLock++;
-                    return new SubItemToken(writer.dest.CurPosition++); // leave 1 space (optimistic) for length
+                    writer.position++;
+                    return new SubItemToken(writer.ioIndex++); // leave 1 space (optimistic) for length
                 case WireType.Fixed32:
                     {
                         if (!allowFixed) throw CreateException(writer);
-                        SubItemToken token = new SubItemToken(writer.dest.CurPosition);
-                        writer.dest.CurPosition += 4;
-                        writer.wireType = WireType.None;
+                        DemandSpace(32, writer); // make some space in anticipation...
                         writer.flushLock++;
+                        SubItemToken token = new SubItemToken(writer.ioIndex);
+                        ProtoWriter.IncrementedAndReset(4, writer); // leave 4 space (rigid) for length
                         return token;
                     }
                 default:
@@ -333,7 +375,7 @@ namespace AqlaSerializer
         {
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.wireType != WireType.None) { throw CreateException(writer); }
-            var value = token.value;
+            int value = token.value;
             if (writer.depth <= 0) throw CreateException(writer);
             if (writer.depth-- > RecursionCheckDepth)
             {
@@ -342,7 +384,7 @@ namespace AqlaSerializer
             writer.packedFieldNumber = 0; // ending the sub-item always wipes packed encoding
             if (value < 0)
             {   // group - very simple append
-                WriteHeaderCore((int)(-value), WireType.EndGroup, writer);
+                WriteHeaderCore(-value, WireType.EndGroup, writer);
                 writer.wireType = WireType.None;
                 return;
             }
@@ -352,86 +394,58 @@ namespace AqlaSerializer
             switch(style)
             {
                 case PrefixStyle.Fixed32:
-                    len = (int)((writer.dest.CurPosition - value) - 4);
-                    WriteInt32ToBuffer(len, value, writer);
+                    len = (int)((writer.ioIndex - value) - 4);
+                    ProtoWriter.WriteInt32ToBuffer(len, writer.ioBuffer, value);
                     break;
                 case PrefixStyle.Fixed32BigEndian:
-                    len = (int)((writer.dest.CurPosition - value) - 4);
-                    WriteInt32ToBufferBE(len, value, writer);
+                    len = (int)((writer.ioIndex - value) - 4);
+                    byte[] buffer = writer.ioBuffer;
+                    ProtoWriter.WriteInt32ToBuffer(len, buffer, value);
+                    // and swap the byte order
+                    byte b = buffer[value];
+                    buffer[value] = buffer[value + 3];
+                    buffer[value + 3] = b;
+                    b = buffer[value + 1];
+                    buffer[value + 1] = buffer[value + 2];
+                    buffer[value + 2] = b;
                     break;
                 case PrefixStyle.Base128:
                     // string - complicated because we only reserved one byte;
                     // if the prefix turns out to need more than this then
                     // we need to shuffle the existing data
-                    len = (int)((writer.dest.CurPosition - value) - 1);
+                    len = (int)((writer.ioIndex - value) - 1);
                     int offset = 0;
                     uint tmp = (uint)len;
                     while ((tmp >>= 7) != 0) offset++;
                     if (offset == 0)
                     {
-                        writer.dest[value] = (byte)(len & 0x7F);
+                        writer.ioBuffer[value] = (byte)(len & 0x7F);
                     }
                     else
                     {
-                        var p = writer.dest.CurPosition;
-
-                        byte[] buffer = writer._tempBuffer;
-                        if (len <= buffer.Length)
-                        {
-                            // Helpers.BlockCopy(blob, value + 1, blob, value + 1 + offset, len);
-                            writer.dest.GetBuffer(value + 1, buffer, 0, len);
-                            writer.dest.PutBuffer(value + 1 + offset, buffer, 0, len);
-                        }
-                        else
-                        {
-                            const int minBlockSize = 1024 * 1024;
-                            if (buffer.Length < minBlockSize)
-                                buffer = writer.GetTempBuffer(minBlockSize);
-
-                            writer.dest.CurPosition = value + 1;
-
-                            int pos = len;
-
-                            // need to read from end to start to not overwrite
-
-                            while (pos > 0)
-                            {
-                                int totalLeft = len - (len - pos);
-                                int maxLength = buffer.Length;
-                                int blockSize = totalLeft > maxLength ? maxLength : totalLeft;
-                                writer.dest.GetBuffer(value + 1 + pos - blockSize, buffer, 0, blockSize);
-                                writer.dest.PutBuffer(value + 1 + offset + pos - blockSize, buffer, 0, blockSize);
-                                pos -= blockSize;
-                            }
-
-                            // Helpers.BlockCopy(blob, value + 1, blob, value + 1 + offset, len);
-                        }
-
+                        DemandSpace(offset, writer);
+                        byte[] blob = writer.ioBuffer;
+                        Helpers.BlockCopy(blob, value + 1, blob, value + 1 + offset, len);
                         tmp = (uint)len;
-                        
-                        writer.dest.CurPosition = value;
-
-                        int index = 0;
                         do
                         {
-                            buffer[index++] = (byte)((tmp & 0x7F) | 0x80);
+                            blob[value++] = (byte)((tmp & 0x7F) | 0x80);
                         } while ((tmp >>= 7) != 0);
-
-                        buffer[index - 1] = (byte)(buffer[index - 1] & ~0x80);
-
-                        writer.dest.Write(buffer, 0, index );
-
-                        writer.dest.CurPosition = p + offset;
+                        blob[value - 1] = (byte)(blob[value - 1] & ~0x80);
+                        writer.position += offset;
+                        writer.ioIndex += offset;
                     }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("style");
             }
-
-            if (--writer.flushLock == 0)
+            // and this object is no longer a blockage - also flush if sensible
+            const int ADVISORY_FLUSH_SIZE = 1024;
+            if (--writer.flushLock == 0 && writer.ioIndex >= ADVISORY_FLUSH_SIZE)
             {
-                Flush(writer, false);
+                ProtoWriter.Flush(writer);
             }
+            
         }
 
         /// <summary>
@@ -440,12 +454,13 @@ namespace AqlaSerializer
         /// <param name="dest">The destination stream</param>
         /// <param name="model">The model to use for serialization; this can be null, but this will impair the ability to serialize sub-objects</param>
         /// <param name="context">Additional context about this serialization operation</param>
-        public ProtoWriter(Stream dest, TypeModel model, SerializationContext context, bool forceInMemoryBuffer)
+        public ProtoWriter(Stream dest, TypeModel model, SerializationContext context)
         {
             if (dest == null) throw new ArgumentNullException("dest");
             if (!dest.CanWrite) throw new ArgumentException("Cannot write to stream", "dest");
             //if (model == null) throw new ArgumentNullException("model");
-            this.dest = new StreamWrapper(dest, true, forceInMemoryBuffer);
+            this.dest = dest;
+            this.ioBuffer = BufferPool.GetBuffer();
             this.model = model;
             this.wireType = WireType.None;
             if (context == null) { context = SerializationContext.Default; }
@@ -467,17 +482,32 @@ namespace AqlaSerializer
         {   // importantly, this does **not** own the stream, and does not dispose it
             if (dest != null)
             {
-                dest.Flush(true);
+                Flush(this);
                 dest = null;
             }
-            if (_tempBuffer != null)
-                BufferPool.ReleaseBufferToPool(ref _tempBuffer);
             model = null;
+            BufferPool.ReleaseBufferToPool(ref ioBuffer);
         }
 
+        private byte[] ioBuffer;
+        private int ioIndex;
         // note that this is used by some of the unit tests and should not be removed
-        internal static int GetPosition(ProtoWriter writer) { return (int)writer.dest.BytesUsed; }
-        
+        internal static int GetPosition(ProtoWriter writer) { return writer.position; }
+        private int position;
+        private static void DemandSpace(int required, ProtoWriter writer)
+        {
+            // check for enough space
+            if ((writer.ioBuffer.Length - writer.ioIndex) < required)
+            {
+                if (writer.flushLock == 0)
+                {
+                    Flush(writer); // try emptying the buffer
+                    if ((writer.ioBuffer.Length - writer.ioIndex) >= required) return;
+                }
+                // either can't empty the buffer, or that didn't help; need more space
+                BufferPool.ResizeAndFlushLeft(ref writer.ioBuffer, required + writer.ioIndex, 0, writer.ioIndex);
+            }
+        }
         /// <summary>
         /// Flushes data to the underlying stream, and releases any resources. The underlying stream is *not* disposed
         /// by this operation.
@@ -497,24 +527,37 @@ namespace AqlaSerializer
         /// Get the TypeModel associated with this writer
         /// </summary>
         public TypeModel Model { get { return model; } }
-        
+
+        /// <summary>
+        /// Writes any buffered data (if possible) to the underlying stream.
+        /// </summary>
+        /// <param name="writer">The writer to flush</param>
+        /// <remarks>It is not always possible to fully flush, since some sequences
+        /// may require values to be back-filled into the byte-stream.</remarks>
+        internal static void Flush(ProtoWriter writer)
+        {
+            if (writer.flushLock == 0 && writer.ioIndex != 0)
+            {
+                writer.dest.Write(writer.ioBuffer, 0, writer.ioIndex);
+                writer.ioIndex = 0;                
+            }
+        }
+
         /// <summary>
         /// Writes an unsigned 32-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
         private static void WriteUInt32Variant(uint value, ProtoWriter writer)
         {
-            var buffer = writer._tempBuffer;
-            int index = 0;
-            do
-            {
-                buffer[index++] = (byte)((value & 0x7F) | 0x80);
+            DemandSpace(5, writer);
+            int count = 0;
+            do {
+                writer.ioBuffer[writer.ioIndex++] = (byte)((value & 0x7F) | 0x80);
+                count++;
             } while ((value >>= 7) != 0);
-
-            buffer[index - 1] = (byte)(buffer[index - 1] & 0x7F);
-
-            writer.dest.Write(buffer, 0, index);
+            writer.ioBuffer[writer.ioIndex - 1] &= 0x7F;
+            writer.position += count;
         }
-
+ 
         static readonly UTF8Encoding encoding = new UTF8Encoding();
 
         internal static uint Zig(int value)
@@ -527,16 +570,15 @@ namespace AqlaSerializer
         }
         private static void WriteUInt64Variant(ulong value, ProtoWriter writer)
         {
-            var buffer = writer._tempBuffer;
-            int index = 0;
+            DemandSpace(10, writer);
+            int count = 0;
             do
             {
-                buffer[index++] = (byte)((value & 0x7F) | 0x80);
+                writer.ioBuffer[writer.ioIndex++] = (byte)((value & 0x7F) | 0x80);
+                count++;
             } while ((value >>= 7) != 0);
-
-            buffer[index - 1] = (byte)(buffer[index - 1] & 0x7F);
-
-            writer.dest.Write(buffer, 0, index);
+            writer.ioBuffer[writer.ioIndex - 1] &= 0x7F;
+            writer.position += count;
         }
         /// <summary>
         /// Writes a string to the stream; supported wire-types: String
@@ -558,16 +600,15 @@ namespace AqlaSerializer
             int actual = bytes.Length;
             writer.WriteUInt32Variant((uint)actual);
             writer.Ensure(actual);
-            Helpers.BlockCopy(bytes, 0, writer.ioBuffer, writer.CurPosition, actual);
+            Helpers.BlockCopy(bytes, 0, writer.ioBuffer, writer.ioIndex, actual);
 #else
             int predicted = encoding.GetByteCount(value);
             WriteUInt32Variant((uint)predicted, writer);
-            byte[] buffer = writer.GetTempBuffer(predicted);
-            int actual = encoding.GetBytes(value, 0, value.Length, buffer, 0);
-            writer.dest.Write(buffer, 0, actual);
+            DemandSpace(predicted, writer);
+            int actual = encoding.GetBytes(value, 0, value.Length, writer.ioBuffer, writer.ioIndex);
             Helpers.DebugAssert(predicted == actual);
 #endif
-            writer.wireType = WireType.None;
+            IncrementedAndReset(actual, writer);
         }
         /// <summary>
         /// Writes an unsigned 64-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
@@ -597,27 +638,24 @@ namespace AqlaSerializer
         /// </summary>
         public static void WriteInt64(long value, ProtoWriter writer)
         {
+            byte[] buffer;
             int index;
             if (writer == null) throw new ArgumentNullException("writer");
-            var dest = writer.dest;
-            byte[] buffer;
             switch (writer.wireType)
             {
                 case WireType.Fixed64:
-
-                    buffer = writer.GetTempBuffer(8);
-                    buffer[0] = (byte)value;
-                    buffer[1] = (byte)(value >> 8);
-                    buffer[2] = (byte)(value >> 16);
-                    buffer[3] = (byte)(value >> 24);
-                    buffer[4] = (byte)(value >> 32);
-                    buffer[5] = (byte)(value >> 40);
-                    buffer[6] = (byte)(value >> 48);
-                    buffer[7] = (byte)(value >> 56);
-
-                    dest.Write(buffer, 0, 8);
-
-                    writer.wireType = WireType.None;
+                    DemandSpace(8, writer);
+                    buffer = writer.ioBuffer;
+                    index = writer.ioIndex;
+                    buffer[index] = (byte)value;
+                    buffer[index + 1] = (byte)(value >> 8);
+                    buffer[index + 2] = (byte)(value >> 16);
+                    buffer[index + 3] = (byte)(value >> 24);
+                    buffer[index + 4] = (byte)(value >> 32);
+                    buffer[index + 5] = (byte)(value >> 40);
+                    buffer[index + 6] = (byte)(value >> 48);
+                    buffer[index + 7] = (byte)(value >> 56);
+                    IncrementedAndReset(8, writer);
                     return;
                 case WireType.SignedVariant:
                     WriteUInt64Variant(Zig(value), writer);
@@ -631,21 +669,20 @@ namespace AqlaSerializer
                     }
                     else
                     {
-                        buffer = writer.GetTempBuffer(10);
-                        buffer[0] = (byte)(value | 0x80);
-                        buffer[1] = (byte)((int)(value >> 7) | 0x80);
-                        buffer[2] = (byte)((int)(value >> 14) | 0x80);
-                        buffer[3] = (byte)((int)(value >> 21) | 0x80);
-                        buffer[4] = (byte)((int)(value >> 28) | 0x80);
-                        buffer[5] = (byte)((int)(value >> 35) | 0x80);
-                        buffer[6] = (byte)((int)(value >> 42) | 0x80);
-                        buffer[7] = (byte)((int)(value >> 49) | 0x80);
-                        buffer[8] = (byte)((int)(value >> 56) | 0x80);
-                        buffer[9] = 0x01; // sign bit
-
-                        dest.Write(buffer, 0, 10);
-
-                        writer.wireType = WireType.None;
+                        DemandSpace(10, writer);
+                        buffer = writer.ioBuffer;
+                        index = writer.ioIndex;
+                        buffer[index] = (byte)(value | 0x80);
+                        buffer[index + 1] = (byte)((int)(value >> 7) | 0x80);
+                        buffer[index + 2] = (byte)((int)(value >> 14) | 0x80);
+                        buffer[index + 3] = (byte)((int)(value >> 21) | 0x80);
+                        buffer[index + 4] = (byte)((int)(value >> 28) | 0x80);
+                        buffer[index + 5] = (byte)((int)(value >> 35) | 0x80);
+                        buffer[index + 6] = (byte)((int)(value >> 42) | 0x80);
+                        buffer[index + 7] = (byte)((int)(value >> 49) | 0x80);
+                        buffer[index + 8] = (byte)((int)(value >> 56) | 0x80);
+                        buffer[index + 9] = 0x01; // sign bit
+                        IncrementedAndReset(10, writer);
                     }
                     return;
                 case WireType.Fixed32:
@@ -708,33 +745,12 @@ namespace AqlaSerializer
         {
             ProtoWriter.WriteInt32(value, writer);
         }
-        
-        private static void WriteInt32ToBuffer(int value, long position, ProtoWriter writer)
+        private static void WriteInt32ToBuffer(int value, byte[] buffer, int index)
         {
-            var p = writer.dest.CurPosition;
-            writer.dest.CurPosition = position;
-            WriteInt32ToBuffer(value, writer);
-            writer.dest.CurPosition = p;
-        }
-
-        private static void WriteInt32ToBuffer(int value, ProtoWriter writer)
-        {
-            var buffer = writer.GetTempBuffer(4);
-            buffer[0] = (byte)value;
-            buffer[1] = (byte)(value >> 8);
-            buffer[2] = (byte)(value >> 16);
-            buffer[3] = (byte)(value >> 24);
-            writer.dest.Write(buffer, 0, 4);
-        }
-
-        private static void WriteInt32ToBufferBE(int value, long position, ProtoWriter writer)
-        {
-            var buffer = writer.GetTempBuffer(4);
-            buffer[3] = (byte)value;
-            buffer[2] = (byte)(value >> 8);
-            buffer[1] = (byte)(value >> 16);
-            buffer[0] = (byte)(value >> 24);
-            writer.dest.PutBuffer(position, buffer, 0, 4);
+            buffer[index] = (byte)value;
+            buffer[index + 1] = (byte)(value >> 8);
+            buffer[index + 2] = (byte)(value >> 16);
+            buffer[index + 3] = (byte)(value >> 24);
         }
 
         /// <summary>
@@ -742,28 +758,27 @@ namespace AqlaSerializer
         /// </summary>
         public static void WriteInt32(int value, ProtoWriter writer)
         {
-            if (writer == null) throw new ArgumentNullException("writer");
-            var dest = writer.dest;
             byte[] buffer;
+            int index;
+            if (writer == null) throw new ArgumentNullException("writer");
             switch (writer.wireType)
             {
                 case WireType.Fixed32:
-                    WriteInt32ToBuffer(value, writer);
-                    writer.wireType = WireType.None;
+                    DemandSpace(4, writer);
+                    WriteInt32ToBuffer(value, writer.ioBuffer, writer.ioIndex);                    
+                    IncrementedAndReset(4, writer);
                     return;
                 case WireType.Fixed64:
-                    buffer = writer.GetTempBuffer(8);
-
-                    buffer[0] = (byte)value;
-                    buffer[1] = (byte)(value >> 8);
-                    buffer[2] = (byte)(value >> 16);
-                    buffer[3] = (byte)(value >> 24);
-                    buffer[4] = buffer[5] =
-                                buffer[6] = buffer[7] = 0;
-
-                    dest.Write(buffer, 0, 8);
-
-                    writer.wireType = WireType.None;
+                    DemandSpace(8, writer);
+                    buffer = writer.ioBuffer;
+                    index = writer.ioIndex;
+                    buffer[index] = (byte)value;
+                    buffer[index + 1] = (byte)(value >> 8);
+                    buffer[index + 2] = (byte)(value >> 16);
+                    buffer[index + 3] = (byte)(value >> 24);
+                    buffer[index + 4] = buffer[index + 5] =
+                        buffer[index + 6] = buffer[index + 7] = 0;
+                    IncrementedAndReset(8, writer);
                     return;
                 case WireType.SignedVariant:
                     WriteUInt32Variant(Zig(value), writer);
@@ -777,18 +792,18 @@ namespace AqlaSerializer
                     }
                     else
                     {
-                        buffer = writer.GetTempBuffer(10);
-                        buffer[0] = (byte)(value | 0x80);
-                        buffer[1] = (byte)((value >> 7) | 0x80);
-                        buffer[2] = (byte)((value >> 14) | 0x80);
-                        buffer[3] = (byte)((value >> 21) | 0x80);
-                        buffer[4] = (byte)((value >> 28) | 0x80);
-                        buffer[5] = buffer[6] =
-                                    buffer[7] = buffer[8] = (byte)0xFF;
-                        buffer[9] = (byte)0x01;
-
-                        dest.Write(buffer, 0, 10);
-                        writer.wireType = WireType.None;
+                        DemandSpace(10, writer);
+                        buffer = writer.ioBuffer;
+                        index = writer.ioIndex;
+                        buffer[index] = (byte)(value | 0x80);
+                        buffer[index + 1] = (byte)((value >> 7) | 0x80);
+                        buffer[index + 2] = (byte)((value >> 14) | 0x80);
+                        buffer[index + 3] = (byte)((value >> 21) | 0x80);
+                        buffer[index + 4] = (byte)((value >> 28) | 0x80);
+                        buffer[index + 5] = buffer[index + 6] =
+                            buffer[index + 7] = buffer[index + 8] = (byte)0xFF;
+                        buffer[index + 9] = (byte)0x01;
+                        IncrementedAndReset(10, writer);
                     }
                     return;
                 default:
@@ -862,13 +877,13 @@ namespace AqlaSerializer
         {
             if (writer == null) throw new ArgumentNullException("writer");
             string rhs = enumValue == null ? "<null>" : (enumValue.GetType().FullName + "." + enumValue.ToString());
-            throw new ProtoException("No wire-value is mapped to the enum " + rhs + " at position " + writer.dest.BytesUsed.ToString());
+            throw new ProtoException("No wire-value is mapped to the enum " + rhs + " at position " + writer.position.ToString());
         }
         // general purpose serialization exception message
         internal static Exception CreateException(ProtoWriter writer)
         {
             if (writer == null) throw new ArgumentNullException("writer");
-            return new ProtoException("Invalid serialization operation with wire-type " + writer.wireType.ToString() + " at position " + writer.dest.BytesUsed.ToString());
+            return new ProtoException("Invalid serialization operation with wire-type " + writer.wireType.ToString() + " at position " + writer.position.ToString());
         }
 
         /// <summary>
@@ -939,17 +954,5 @@ namespace AqlaSerializer
             if (writer == null) throw new ArgumentNullException("writer");
             WriteString(writer.SerializeType(value), writer);
         }
-
-        public static void Flush(ProtoWriter writer)
-        {
-            Flush(writer, true);
-        }
-
-        public static void Flush(ProtoWriter writer, bool reallyFlush)
-        {
-            if (writer.flushLock == 0)
-                writer.dest.Flush(reallyFlush);
-        }
-
     }
 }

@@ -7,8 +7,8 @@ namespace AqlaSerializer
     /// </summary>
     public struct SubItemToken
     {
-        internal readonly long value;
-        internal SubItemToken(long value) {
+        internal readonly int value;
+        internal SubItemToken(int value) {
             this.value = value;
         }
     }

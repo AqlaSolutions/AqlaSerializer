@@ -30,7 +30,6 @@ namespace Examples.Issues
 
             using (var fs = File.OpenWrite(file))
             {
-                fs.SetLength(0);
                 Serializer.Serialize(fs, family);
             }
             using (var fs = File.OpenRead(file))

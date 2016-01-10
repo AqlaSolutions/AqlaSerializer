@@ -24,16 +24,6 @@ namespace AqlaSerializer.Meta
         }
 #endif
 
-        protected TypeModel()
-        {
-            ForceInMemoryBuffer = true;
-        }
-
-        /// <summary>
-        /// When set to false allows the direct usage of serialization stream for reading and writing when CanRead and CanSeek which provides an ability to serialize to disk without consuming memory but may slow things down. Default: true.
-        /// </summary>
-        public bool ForceInMemoryBuffer { get; set; }
-
         /// <summary>
         /// Should the <c>Kind</c> be included on date/time values?
         /// </summary>
@@ -240,7 +230,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            using (ProtoWriter writer = new ProtoWriter(dest, this, context, ForceInMemoryBuffer))
+            using (ProtoWriter writer = new ProtoWriter(dest, this, context))
             {
                 writer.SetRootObject(value);
                 SerializeCore(writer, value, true);
@@ -563,7 +553,7 @@ namespace AqlaSerializer.Meta
                 type = MapType(value.GetType());
             }
             int key = GetKey(ref type);
-            using (ProtoWriter writer = new ProtoWriter(dest, this, context, ForceInMemoryBuffer))
+            using (ProtoWriter writer = new ProtoWriter(dest, this, context))
             {
                 switch (style)
                 {
@@ -1379,7 +1369,7 @@ namespace AqlaSerializer.Meta
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    using(ProtoWriter writer = new ProtoWriter(ms, this, null, ForceInMemoryBuffer))
+                    using(ProtoWriter writer = new ProtoWriter(ms, this, null))
                     {
                         writer.SetRootObject(value);
                         Serialize(key, value, writer, true);
@@ -1410,7 +1400,7 @@ namespace AqlaSerializer.Meta
             }
             using (MemoryStream ms = new MemoryStream())
             {
-                using (ProtoWriter writer = new ProtoWriter(ms, this, null, ForceInMemoryBuffer))
+                using (ProtoWriter writer = new ProtoWriter(ms, this, null))
                 {
                     if (!TrySerializeAuxiliaryType(writer, type, BinaryDataFormat.Default, Serializer.ListItemTag, value, false, true)) ThrowUnexpectedType(type);
                     writer.Close();
