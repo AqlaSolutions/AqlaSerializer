@@ -221,7 +221,7 @@ namespace AqlaSerializer
                     WriteUInt32Variant((uint)length, writer);
                     writer.wireType = WireType.None;
                     if (length == 0) return;
-                    if (writer.flushLock != 0 || length <= writer.ioBuffer.Length) // write to the buffer
+                    if (length <= writer.ioBuffer.Length || !writer.IsFlushAdvised(writer.ioIndex + length)) // write to the buffer
                     {
                         goto CopyFixedLength; // ugly but effective
                     }
@@ -255,7 +255,7 @@ namespace AqlaSerializer
             if (bytesRead <= 0) return; // all done using just the buffer; stream exhausted
 
             // at this point the stream still has data, but buffer is full; 
-            if (writer.flushLock == 0)
+            if (writer.streamAsBufferAllowed || writer.flushLock == 0)
             {
                 // flush the buffer and write to the underlying stream instead
                 Flush(writer);
@@ -347,13 +347,13 @@ namespace AqlaSerializer
                     DemandSpace(32, writer); // make some space in anticipation...
                     writer.flushLock++;
                     writer.position++;
-                    return new SubItemToken(writer.ioIndex++); // leave 1 space (optimistic) for length
+                    return new SubItemToken(writer.bytesFlushed + writer.ioIndex++); // leave 1 space (optimistic) for length
                 case WireType.Fixed32:
                     {
                         if (!allowFixed) throw CreateException(writer);
                         DemandSpace(32, writer); // make some space in anticipation...
                         writer.flushLock++;
-                        SubItemToken token = new SubItemToken(writer.ioIndex);
+                        SubItemToken token = new SubItemToken(writer.bytesFlushed + writer.ioIndex);
                         ProtoWriter.IncrementedAndReset(4, writer); // leave 4 space (rigid) for length
                         return token;
                     }
@@ -389,63 +389,91 @@ namespace AqlaSerializer
                 return;
             }
 
-            // so we're backfilling the length into an existing sequence
-            int len;
-            switch(style)
+            int inBufferPos = value - writer.bytesFlushed;
+            
+            // should operate on stream directly?
+            if (inBufferPos < 0)
             {
-                case PrefixStyle.Fixed32:
-                    len = (int)((writer.ioIndex - value) - 4);
-                    ProtoWriter.WriteInt32ToBuffer(len, writer.ioBuffer, value);
-                    break;
-                case PrefixStyle.Fixed32BigEndian:
-                    len = (int)((writer.ioIndex - value) - 4);
-                    byte[] buffer = writer.ioBuffer;
-                    ProtoWriter.WriteInt32ToBuffer(len, buffer, value);
-                    // and swap the byte order
-                    byte b = buffer[value];
-                    buffer[value] = buffer[value + 3];
-                    buffer[value + 3] = b;
-                    b = buffer[value + 1];
-                    buffer[value + 1] = buffer[value + 2];
-                    buffer[value + 2] = b;
-                    break;
-                case PrefixStyle.Base128:
-                    // string - complicated because we only reserved one byte;
-                    // if the prefix turns out to need more than this then
-                    // we need to shuffle the existing data
-                    len = (int)((writer.ioIndex - value) - 1);
-                    int offset = 0;
-                    uint tmp = (uint)len;
-                    while ((tmp >>= 7) != 0) offset++;
-                    if (offset == 0)
-                    {
-                        writer.ioBuffer[value] = (byte)(len & 0x7F);
-                    }
-                    else
-                    {
-                        DemandSpace(offset, writer);
-                        byte[] blob = writer.ioBuffer;
-                        Helpers.BlockCopy(blob, value + 1, blob, value + 1 + offset, len);
-                        tmp = (uint)len;
-                        do
+                // so we're backfilling the length into an existing sequence
+                int len;
+                switch (style)
+                {
+                    case PrefixStyle.Fixed32:
+                        len = (int)((writer.ioIndex - inBufferPos) - 4);
+                        ProtoWriter.WriteInt32ToBuffer(len, writer.ioBuffer, inBufferPos);
+                        break;
+                    case PrefixStyle.Fixed32BigEndian:
+                        len = (int)((writer.ioIndex - inBufferPos) - 4);
+                        byte[] buffer = writer.ioBuffer;
+                        ProtoWriter.WriteInt32ToBuffer(len, buffer, inBufferPos);
+                        // and swap the byte order
+                        byte b = buffer[inBufferPos];
+                        buffer[inBufferPos] = buffer[inBufferPos + 3];
+                        buffer[inBufferPos + 3] = b;
+                        b = buffer[inBufferPos + 1];
+                        buffer[inBufferPos + 1] = buffer[inBufferPos + 2];
+                        buffer[inBufferPos + 2] = b;
+                        break;
+                    case PrefixStyle.Base128:
+                        // string - complicated because we only reserved one byte;
+                        // if the prefix turns out to need more than this then
+                        // we need to shuffle the existing data
+                        len = (int)((writer.ioIndex - inBufferPos) - 1);
+                        int offset = 0;
+                        uint tmp = (uint)len;
+                        while ((tmp >>= 7) != 0) offset++;
+                        if (offset == 0)
                         {
-                            blob[value++] = (byte)((tmp & 0x7F) | 0x80);
-                        } while ((tmp >>= 7) != 0);
-                        blob[value - 1] = (byte)(blob[value - 1] & ~0x80);
-                        writer.position += offset;
-                        writer.ioIndex += offset;
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("style");
+                            writer.ioBuffer[inBufferPos] = (byte)(len & 0x7F);
+                        }
+                        else
+                        {
+                            DemandSpace(offset, writer);
+                            byte[] blob = writer.ioBuffer;
+                            Helpers.BlockCopy(blob, inBufferPos + 1, blob, inBufferPos + 1 + offset, len);
+                            tmp = (uint)len;
+                            do
+                            {
+                                blob[inBufferPos++] = (byte)((tmp & 0x7F) | 0x80);
+                            } while ((tmp >>= 7) != 0);
+                            blob[inBufferPos - 1] = (byte)(blob[inBufferPos - 1] & ~0x80);
+                            writer.position += offset;
+                            writer.ioIndex += offset;
+                        }
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("style");
+                }
+            }
+            else // do the same thing buf for stream?
+            {
+                
             }
             // and this object is no longer a blockage - also flush if sensible
-            const int ADVISORY_FLUSH_SIZE = 1024;
-            if (--writer.flushLock == 0 && writer.ioIndex >= ADVISORY_FLUSH_SIZE)
+
+            writer.flushLock--;
+
+            if (writer.IsFlushAdvised())
             {
                 ProtoWriter.Flush(writer);
             }
             
+        }
+
+        bool IsFlushAdvised()
+        {
+            return IsFlushAdvised(ioIndex);
+        }
+
+        bool IsFlushAdvised(int whenSize)
+        {
+            const int ADVISORY_FLUSH_SIZE = 1024;
+            const int STREAM_AS_BUFFER_ADVISORY_FLUSH_SIZE = 1024 * 1024 * 10; // do not backread stream unless necessary
+            bool streamRead = streamAsBufferAllowed;
+
+            return !streamRead
+                       ? flushLock == 0 && whenSize >= ADVISORY_FLUSH_SIZE
+                       : whenSize >= STREAM_AS_BUFFER_ADVISORY_FLUSH_SIZE;
         }
 
         /// <summary>
@@ -458,6 +486,7 @@ namespace AqlaSerializer
         {
             if (dest == null) throw new ArgumentNullException("dest");
             if (!dest.CanWrite) throw new ArgumentException("Cannot write to stream", "dest");
+            if (dest.CanSeek && dest.CanRead) streamAsBufferAllowed = true;
             //if (model == null) throw new ArgumentNullException("model");
             this.dest = dest;
             this.ioBuffer = BufferPool.GetBuffer();
@@ -499,7 +528,7 @@ namespace AqlaSerializer
             // check for enough space
             if ((writer.ioBuffer.Length - writer.ioIndex) < required)
             {
-                if (writer.flushLock == 0)
+                if (writer.IsFlushAdvised(writer.ioIndex + required))
                 {
                     Flush(writer); // try emptying the buffer
                     if ((writer.ioBuffer.Length - writer.ioIndex) >= required) return;
@@ -514,7 +543,7 @@ namespace AqlaSerializer
         /// </summary>
         public void Close()
         {
-            if (depth != 0 || flushLock != 0) throw new InvalidOperationException("Unable to close stream in an incomplete state");
+            CheckDepthFlushlock();
             Dispose();
         }
 
@@ -528,6 +557,9 @@ namespace AqlaSerializer
         /// </summary>
         public TypeModel Model { get { return model; } }
 
+        int bytesFlushed;
+        bool streamAsBufferAllowed;
+
         /// <summary>
         /// Writes any buffered data (if possible) to the underlying stream.
         /// </summary>
@@ -536,9 +568,10 @@ namespace AqlaSerializer
         /// may require values to be back-filled into the byte-stream.</remarks>
         internal static void Flush(ProtoWriter writer)
         {
-            if (writer.flushLock == 0 && writer.ioIndex != 0)
+            if ((writer.streamAsBufferAllowed || writer.flushLock == 0) && writer.ioIndex != 0)
             {
                 writer.dest.Write(writer.ioBuffer, 0, writer.ioIndex);
+                writer.bytesFlushed = writer.ioIndex;
                 writer.ioIndex = 0;                
             }
         }
