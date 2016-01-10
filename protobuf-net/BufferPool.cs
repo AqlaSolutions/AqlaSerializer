@@ -59,8 +59,12 @@ namespace AqlaSerializer
             Helpers.DebugAssert(copyBytes >= 0);
 
             // try growing, else match
-            int newLength = (Is32Bit && buffer.Length > 1024 * 1024 * 10) ? (buffer.Length + 1024 * 1024 * 1) : buffer.Length * 2;
-            if (newLength < toFitAtLeastBytes) newLength = toFitAtLeastBytes;
+            int newLength = (Is32Bit && toFitAtLeastBytes > 1024 * 1024 * 50)
+                // in 32bit when > 50mb grow only linearly
+                ? (toFitAtLeastBytes + 1024 * 1024 * 10)
+                // in 64bit grow twice and add 10 kb extra if not enough
+                : Math.Max(buffer.Length * 2, toFitAtLeastBytes + 1024 * 10);
+            
             byte[] newBuffer = new byte[newLength];
             if (copyBytes > 0)
             {
