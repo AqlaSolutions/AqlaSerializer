@@ -23,7 +23,9 @@ namespace AqlaSerializer.Meta
             return type;
         }
 #endif
-
+        /// <summary>
+        /// When you pass stream which CanSeek and CanRead the serializer may use it as a buffer when its own buffer grows too big. Default: true.
+        /// </summary>
         public bool AllowStreamRewriting { get; set; }
 
         protected TypeModel()
