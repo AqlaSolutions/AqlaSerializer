@@ -50,7 +50,7 @@ namespace AqlaSerializer
 
         public StreamWrapper(Stream stream, bool isForWriting, bool forceInMemoryBuffer)
         {
-            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (stream == null) throw new ArgumentNullException("stream");
             if (forceInMemoryBuffer || !stream.CanSeek || !stream.CanRead)
             {
                 if (!isForWriting)

@@ -24,10 +24,15 @@ namespace AqlaSerializer.Meta
         }
 #endif
 
+        protected TypeModel()
+        {
+            ForceInMemoryBuffer = true;
+        }
+
         /// <summary>
         /// When set to false allows the direct usage of serialization stream for reading and writing when CanRead and CanSeek which provides an ability to serialize to disk without consuming memory but may slow things down. Default: true.
         /// </summary>
-        public bool ForceInMemoryBuffer { get; set; } = true;
+        public bool ForceInMemoryBuffer { get; set; }
 
         /// <summary>
         /// Should the <c>Kind</c> be included on date/time values?
