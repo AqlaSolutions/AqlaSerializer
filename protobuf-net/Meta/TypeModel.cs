@@ -1240,7 +1240,24 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public static RuntimeTypeModel Create()
         {
-            return new RuntimeTypeModel(false);
+            return Create(true);
+        }
+
+        /// <summary>
+        /// Creates a new runtime model, to which the caller
+        /// can add support for a range of types. A model
+        /// can be used "as is", or can be compiled for
+        /// optimal performance.
+        /// </summary>
+        /// <param name="newestBehavior">If set to true the newest recommended defaults are enabled upon creation. Default: false</param>
+        public static RuntimeTypeModel Create(bool newestBehavior)
+        {
+            var r = new RuntimeTypeModel(false);
+            if (newestBehavior)
+            {
+                r.UseImplicitZeroDefaults = false;
+            }
+            return r;
         }
 #endif
 

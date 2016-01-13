@@ -102,7 +102,7 @@ namespace AqlaSerializer.Meta
         /// 
         /// If this is disabled, no such assumptions are made and only *explicit*
         /// default values are processed. This is enabled by default to 
-        /// preserve similar logic to v1.
+        /// preserve similar logic to v1 but disabled for the Create(newestBehavior: true) mode.
         /// </summary>
         public bool UseImplicitZeroDefaults
         {
