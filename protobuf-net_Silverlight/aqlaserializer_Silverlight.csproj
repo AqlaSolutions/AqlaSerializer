@@ -34,7 +34,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Bin\Debug</OutputPath>
-    <DefineConstants>TRACE;DEBUG;SILVERLIGHT NET_3_0 NET_4_0 FEAT_SAFE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SILVERLIGHT NET_3_0 NET_4_0 FEAT_SAFE FEAT_COMPILER</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
@@ -46,7 +46,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;SILVERLIGHT NET_3_0 NET_4_0 FEAT_SAFE</DefineConstants>
+    <DefineConstants>TRACE;SILVERLIGHT NET_3_0 NET_4_0 FEAT_SAFE FEAT_COMPILER</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
