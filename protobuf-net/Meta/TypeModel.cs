@@ -1240,7 +1240,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public static RuntimeTypeModel Create()
         {
-            return Create(true);
+            return Create(false);
         }
 
         /// <summary>
