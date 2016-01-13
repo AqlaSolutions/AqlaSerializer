@@ -307,7 +307,11 @@ namespace AqlaSerializer.Compiler
 #else
             uniqueIdentifier = Interlocked.Increment(ref next);
 #endif
-            method = new DynamicMethod("proto_" + uniqueIdentifier.ToString(), returnType, paramTypes, associatedType.IsInterface ? typeof(object) : associatedType, true);
+            method = new DynamicMethod("proto_" + uniqueIdentifier.ToString(), returnType, paramTypes
+#if !SILVERLIGHT
+                , associatedType.IsInterface ? typeof(object) : associatedType, true
+#endif
+                );
             this.il = method.GetILGenerator();
             if (inputType != null) this.inputValue = new Local(null, inputType);
         }

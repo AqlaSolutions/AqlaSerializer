@@ -12,7 +12,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Phone7\aqlaserializer_Phone7.csproj"/>
     <ProjectToBuild Include="protobuf-net_Phone8\aqlaserializer_Phone8.csproj"/>
     <ProjectToBuild Include="protobuf-net_Silverlight\aqlaserializer_Silverlight.csproj"/>
     <ProjectToBuild Include="protobuf-net_Portable\aqlaserializer_Portable.csproj"/>
@@ -20,30 +19,7 @@
     <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj"/>
 <!--    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj"/> -->
 
-    <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
-    <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
-    <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
-    <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
-    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\aqlaserializer.*"/>
-    <SLFiles Include="protobuf-net_Silverlight\bin\Release\aqlaserializer.*"/>
-    <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\aqlaserializer.*"/>
-    <WP7Files Include="protobuf-net_Phone7\bin\Release\aqlaserializer.*"/>
-    <WP7Files_CoreOnly Include="protobuf-net_Phone7\bin\CoreOnly\aqlaserializer.*"/>
-    <WP8Files Include="protobuf-net_Phone8\bin\Release\aqlaserializer.*"/>
-    <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\aqlaserializer.*"/>
-    <PortableFiles Include="protobuf-net_Portable\bin\Release\aqlaserializer.*"/>
-    <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\aqlaserializer.*"/>
-    <PrecompileFiles Include="precompile\bin\Release\*.*"/>
 
-    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\aqlaserializer.*"/>
-    <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
-
-    <MonoFiles Include="protobuf-net-mono\bin\Release\aqlaserializer.*"/>
-    <MonoFiles Include="protobuf-net-mono\docs\aqlaserializer.xml"/>
-
-<!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/> -->
-
-    <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
   </ItemGroup>
   <Target Name="BuildKit">
     
@@ -88,21 +64,40 @@
     <Copy SourceFiles="Licence.txt" DestinationFolder="$(ZipDirectory)"/>
     <Copy SourceFiles="What Files Do I Need.txt" DestinationFolder="$(ZipDirectory)"/>
 
-    <!-- build mono using nant -->
-    <RemoveDir Directories="protobuf-net-mono\bin; protobuf-net-mono\bin\docs"/>
-    <Exec Command="&quot;%ProgramFiles%\Mono-2.6\share\NAnt\bin\NAnt&quot; -buildfile:protobuf-net-mono\protobuf-net-mono.build -D:build.release=true" />
-    <Copy SourceFiles="@(MonoFiles)" DestinationFolder="$(ZipDirectory)\Full\mono267"/>
-
     <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=Release" BuildInParallel="true"/>
     <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=CoreOnly" BuildInParallel="true"/>
 
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20SafeAndUnity"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net30Safe"/>
     
     <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
     <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
+
+<ItemGroup>
+    <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
+    <Net20SafeAndUnityFiles Include="protobuf-net\bin\Net20SafeAndUnity\aqlaserializer.*"/>
+    <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\aqlaserializer.*"/>
+    <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
+    <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
+    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\aqlaserializer.*"/>
+    <SLFiles Include="protobuf-net_Silverlight\bin\Release\aqlaserializer.*"/>
+    <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\aqlaserializer.*"/>
+    <WP8Files Include="protobuf-net_Phone8\bin\Release\aqlaserializer.*"/>
+    <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\aqlaserializer.*"/>
+    <PortableFiles Include="protobuf-net_Portable\bin\Release\aqlaserializer.*"/>
+    <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\aqlaserializer.*"/>
+    <PrecompileFiles Include="precompile\bin\Release\*.*"/>
+
+    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\aqlaserializer.*"/>
+    <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
+
+<!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/> -->
+
+    <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
+</ItemGroup>
 
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
@@ -115,13 +110,11 @@
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl4"/>
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl4"/>
     
-    <Copy SourceFiles="@(WP7Files)" DestinationFolder="$(NugetDirectory)\sl3-wp"/>
-    <Copy SourceFiles="@(WP7Files)" DestinationFolder="$(NugetDirectory)\sl4-windowsphone71"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
-    <Copy SourceFiles="@(WP7Files)" DestinationFolder="$(ZipDirectory)\Full\wp71"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
 
-    <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
+    <Copy SourceFiles="@(Net20SafeAndUnityFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe+unity"/>
+    <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl4+net40+wp7+windows8"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable"/>
 
@@ -132,12 +125,11 @@
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
     <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl4"/>
-    <Copy SourceFiles="@(WP7Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp71"/>
     <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
 
 <!--    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/> -->
-    <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30-enyim"/>
+    <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30+enyim"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
   
