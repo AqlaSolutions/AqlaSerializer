@@ -200,9 +200,12 @@ namespace AqlaSerializer
 #endif
 #endif
         }
-#if !NO_RUNTIME
+
         public static void Sort(int[] keys, object[] values)
         {
+#if !WINRT && !PORTABLE
+            Array.Sort(keys, values);
+#else
             // bubble-sort; it'll work on MF, has small code,
             // and works well-enough for our sizes. This approach
             // also allows us to do `int` compares without having
@@ -222,8 +225,37 @@ namespace AqlaSerializer
                     }
                 }
             } while (swapped);
-        }
 #endif
+        }
+
+        public static void Sort<T, V>(T[] keys, V[] values, System.Collections.Generic.IComparer<T> comparer = null)
+        {
+            if (comparer == null) comparer = System.Collections.Generic.Comparer<T>.Default;
+#if !WINRT && !PORTABLE
+            Array.Sort(keys, values, comparer);
+#else
+            // bubble-sort; it'll work on MF, has small code,
+            // and works well-enough for our sizes. This approach
+            // also allows us to do `int` compares without having
+            // to go via IComparable etc, so win:win
+            bool swapped;
+            do {
+                swapped = false;
+                for (int i = 1; i < keys.Length; i++) {
+                    if (comparer.Compare(keys[i - 1], keys[i])>0) {
+                        var tmpKey = keys[i];
+                        keys[i] = keys[i - 1];
+                        keys[i - 1] = tmpKey;
+                        var tmpValue = values[i];
+                        values[i] = values[i - 1];
+                        values[i - 1] = tmpValue;
+                        swapped = true;
+                    }
+                }
+            } while (swapped);
+#endif
+        }
+
         public static void BlockCopy(byte[] from, int fromIndex, byte[] to, int toIndex, int count)
         {
 #if MF || WINRT
@@ -480,6 +512,17 @@ namespace AqlaSerializer
             return type.IsValueType;
 #endif
         }
+
+#if FEAT_IKVM
+        internal static bool IsValueType(System.Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsValueType;
+#else
+            return type.IsValueType;
+#endif
+        }
+#endif
 
         internal static bool IsPrimitive(Type type)
         {
