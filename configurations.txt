@@ -1,0 +1,40 @@
+all feats:
+
++ additive:
+
+PLAT_BINARYFORMATTER 
+PLAT_XMLSERIALIZER 
+FEAT_SERVICEMODEL 
+NET_3_0
+NET_3_5
+NET_4_0
+
+FEAT_COMPILER
+FEAT_IKVM
+
+- subjective:
+
+FEAT_SAFE
+NO_RUNTIME 
+PLAT_NO_INTERLOCKED 
+PLAT_NO_THREADSTATIC
+
+platform:
+
+SILVERLIGHT
+
+WINDOWS_PHONE
+PHONE7
+PHONE8
+
+WINRT
+MONODROID
+IOS
+
+The list of platforms which have support compiler support:
+
+Desktop
+Android
+Windows Phone 8
+Silverlight4
+Unity
