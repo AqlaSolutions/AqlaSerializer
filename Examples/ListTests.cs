@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using NUnit.Framework;
 using Examples.Ppt;
 using System.Collections.Generic;

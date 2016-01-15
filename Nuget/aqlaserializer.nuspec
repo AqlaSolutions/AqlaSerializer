@@ -4,7 +4,7 @@
     <id>aqlaserializer</id>
     <version>1.0.0.939</version>
     <authors>Vladyslav Taranov</authors>
-    <copyright>Vladyslav Taranov 2015, fork source from Marc Gravell 2015</copyright>
+    <copyright>Vladyslav Taranov 2016, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>
     <summary>Fork of well known protobuf-net, contains improved API, reference tracking, list handling and multiple fixes. It's a binary serializer designed for serializing **objects** on a wide range of .NET platforms.</summary>
     <description>AqlaSerializer is intended to serialize objects, not just data. 

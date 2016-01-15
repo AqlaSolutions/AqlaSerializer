@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("RevisionGenerator")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Vlad Taranov")]
+[assembly: AssemblyCompany("Vladyslav Taranov")]
 [assembly: AssemblyProduct("RevisionGenerator")]
-[assembly: AssemblyCopyright("Copyright © Vlad Taranov 2014")]
+[assembly: AssemblyCopyright("Copyright © Vladyslav Taranov 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
