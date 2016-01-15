@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !(CF || SILVERLIGHT)
 using System;
 using System.Collections.Generic;

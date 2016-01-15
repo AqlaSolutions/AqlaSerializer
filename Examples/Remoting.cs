@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if REMOTING
 using System;
 using System.IO;

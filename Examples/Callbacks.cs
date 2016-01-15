@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System.IO;
 using System.Threading;
 using NUnit.Framework;

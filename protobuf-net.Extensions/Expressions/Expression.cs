@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if CF35
 using System.Collections.Generic;
 using System.Reflection;

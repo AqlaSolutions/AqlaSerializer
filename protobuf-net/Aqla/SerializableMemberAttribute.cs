@@ -1,4 +1,4 @@
-﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 
 #if FEAT_IKVM

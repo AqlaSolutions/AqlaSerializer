@@ -1,4 +1,4 @@
-﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
 using System.Collections;

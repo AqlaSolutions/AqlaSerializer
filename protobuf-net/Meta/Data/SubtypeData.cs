@@ -1,4 +1,4 @@
-﻿// Code by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Code by Vladyslav Taranov for AqlaSerializer, 2016
 
 using System;
 using AqlaSerializer;

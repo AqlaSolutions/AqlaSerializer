@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2014
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 
 /* This is a direct modification of TomasP's EeekSoft.Asynchronous workflows library
  * found at http://tomasp.net/blog/csharp-async.aspx */
