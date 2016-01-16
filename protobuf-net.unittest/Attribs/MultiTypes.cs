@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using System.IO;
+using AqlaSerializer.Meta;
 using AqlaSerializer.unittest.Serializers;
 
 namespace AqlaSerializer.unittest
