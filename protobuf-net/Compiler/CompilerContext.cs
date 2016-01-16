@@ -333,7 +333,14 @@ namespace AqlaSerializer.Compiler
             this.il = method.GetILGenerator();
 
             var methodGen = new MethodContext.MethodGenInfo(
-                name,method,true,false,false,returnType,ownerType, pars);
+                name,
+                method,
+                true,
+                false,
+                isStatic,
+                returnType,
+                ownerType,
+                pars);
             RunSharpContext = new MethodContext(methodGen,il,model.RunSharpTypeMapper);
 
             if (inputType != null) this.inputValue = new Local(this, inputType, false);
@@ -462,6 +469,9 @@ namespace AqlaSerializer.Compiler
         {
             Emit(isStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
         }
+
+        public int ArgIndexReadWriter => 1;
+
         public void StoreValue(Local local)
         {
             if (local == this.InputValue)
@@ -546,8 +556,12 @@ namespace AqlaSerializer.Compiler
                 methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (method == null || method.ReturnType != expectedType
                 || method.GetParameters().Length != 0) throw new ArgumentException("methodName");
-            LoadReaderWriter();
-            EmitCall(method);            
+
+            var g = new CodeGen(RunSharpContext, false);
+            g.LeaveNextReturnOnStack();
+            g.Invoke(g.Arg(ArgIndexReadWriter), methodName);
+            //LoadReaderWriter();
+            //EmitCall(method);           
         }
         internal void EmitBasicRead(Type helperType, string methodName, Type expectedType)
         {
@@ -555,15 +569,29 @@ namespace AqlaSerializer.Compiler
                 methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             if (method == null || method.ReturnType != expectedType
                 || method.GetParameters().Length != 1) throw new ArgumentException("methodName");
-            LoadReaderWriter();
-            EmitCall(method);
+
+            var g = new CodeGen(RunSharpContext, false);
+            g.LeaveNextReturnOnStack();
+            g.Invoke(helperType, methodName, g.Arg(ArgIndexReadWriter));
+            //LoadReaderWriter();
+            //EmitCall(method);
         }
         internal void EmitBasicWrite(string methodName, Compiler.Local fromValue)
         {
             if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException("methodName");
-            LoadValue(fromValue);
-            LoadReaderWriter();
-            EmitCall(GetWriterMethod(methodName));
+
+            if (fromValue != null)
+            {
+                var g = new CodeGen(RunSharpContext, false);
+                g.LeaveNextReturnOnStack();
+                g.Invoke(typeof(ProtoWriter), methodName, fromValue.AsOperand, g.Arg(ArgIndexReadWriter));
+            }
+            else
+            {
+                LoadValue(fromValue);
+                LoadReaderWriter();
+                EmitCall(GetWriterMethod(methodName));
+            }
         }
         private MethodInfo GetWriterMethod(string methodName)
         {
@@ -577,17 +605,28 @@ namespace AqlaSerializer.Compiler
             }
             throw new ArgumentException("No suitable method found for: " + methodName, "methodName");
         }
+
         internal void EmitWrite(Type helperType, string methodName, Compiler.Local valueFrom)
         {
             if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException("methodName");
             MethodInfo method = helperType.GetMethod(
-                methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                methodName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             if (method == null || method.ReturnType != MapType(typeof(void))) throw new ArgumentException("methodName");
-            LoadValue(valueFrom);
-            LoadReaderWriter();
-            EmitCall(method);
+            if (valueFrom != null)
+            {
+                var g = new CodeGen(RunSharpContext, false);
+                g.LeaveNextReturnOnStack();
+                g.Invoke(typeof(ProtoWriter), methodName, valueFrom.AsOperand, g.Arg(ArgIndexReadWriter));
+            }
+            else
+            {
+                LoadValue(valueFrom);
+                LoadReaderWriter();
+                EmitCall(method);
+            }
         }
-        
+
         public void EmitCallNoteObject()
         {
             LoadReaderWriter();
