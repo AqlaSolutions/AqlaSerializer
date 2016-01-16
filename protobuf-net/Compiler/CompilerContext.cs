@@ -260,16 +260,17 @@ namespace AqlaSerializer.Compiler
         public Local InputValue { get { return inputValue; } }
 #if !(SILVERLIGHT || PHONE8)
         private readonly string assemblyName;
-        internal CompilerContext(ILGenerator il, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerPair[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
+        internal CompilerContext(MethodContext context, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerPair[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
         {
-            if (il == null) throw new ArgumentNullException("il");
+            if (context == null) throw new ArgumentNullException(nameof(context));
             if (methodPairs == null) throw new ArgumentNullException("methodPairs");
             if (model == null) throw new ArgumentNullException("model");
             if (Helpers.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException("assemblyName");
             this.assemblyName = assemblyName;
             this.isStatic = isStatic;
             this.methodPairs = methodPairs;
-            this.il = il;
+            RunSharpContext = context;
+            this.il = context.GetILGenerator();
             // nonPublic = false; <== implicit
             this.isWriter = isWriter;
             this.model = model;

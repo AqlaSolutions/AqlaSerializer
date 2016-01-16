@@ -22,7 +22,8 @@ namespace AqlaSerializer.Compiler
 {
     class MethodContext : ICodeGenContext
     {
-        public MemberInfo Member => _method.Member;
+        MemberInfo IMemberInfo.Member => _method.Member;
+        public MethodInfo Member => _method.Member;
         public Type ReturnType => _method.ReturnType;
         public Type OwnerType => _method.OwnerType;
         public string Name => _method.Name;
@@ -65,6 +66,8 @@ namespace AqlaSerializer.Compiler
         readonly MethodGenInfo _method;
         public MethodContext(MethodGenInfo method, ILGenerator il, ITypeMapper typeMapper)
         {
+            if (il == null) throw new ArgumentNullException(nameof(il));
+            if (typeMapper == null) throw new ArgumentNullException(nameof(typeMapper));
             _method = method;
             _il = il;
             TypeMapper = typeMapper;
