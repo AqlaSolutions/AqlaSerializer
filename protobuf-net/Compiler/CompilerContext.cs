@@ -275,7 +275,7 @@ namespace AqlaSerializer.Compiler
             this.isWriter = isWriter;
             this.model = model;
             this.metadataVersion = metadataVersion;
-            if (inputType != null) this.inputValue = new Local(null, inputType);
+            if (inputType != null) this.inputValue = new Local(this, inputType, false);
         }
 #endif
         public ICodeGenContext RunSharpContext { get; }
@@ -331,11 +331,12 @@ namespace AqlaSerializer.Compiler
 #endif
                 );
             this.il = method.GetILGenerator();
-            if (inputType != null) this.inputValue = new Local(null, inputType);
-            
+
             var methodGen = new MethodContext.MethodGenInfo(
                 name,method,true,false,false,returnType,ownerType, pars);
             RunSharpContext = new MethodContext(methodGen,il,model.RunSharpTypeMapper);
+
+            if (inputType != null) this.inputValue = new Local(this, inputType, false);
         }
 
 #endif
