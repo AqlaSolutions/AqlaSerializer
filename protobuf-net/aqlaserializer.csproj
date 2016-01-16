@@ -193,14 +193,6 @@
       <HintPath>..\packages\aqla.runsharp.0.2.0.2\lib\net20\IKVM.Reflection.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="RunSharp, Version=0.2.0.0, Culture=neutral, PublicKeyToken=be9f22c3116c2290, processorArchitecture=MSIL">
-      <HintPath>..\packages\aqla.runsharp.0.2.0.2\lib\net20\RunSharp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="RunSharpIKVM, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\aqla.runsharp.0.2.0.2\lib\net20\RunSharpIKVM.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
@@ -360,7 +352,12 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
+      <Project>{08f134ae-48e8-4a35-9dc7-2f31eaf4a66f}</Project>
+      <Name>RunSharp</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
