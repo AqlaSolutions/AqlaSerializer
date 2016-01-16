@@ -37,6 +37,7 @@ using AqlaSerializer;
 using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
+using AltLinq;
 
 namespace AqlaSerializer.Meta
 {
@@ -147,9 +148,9 @@ namespace AqlaSerializer.Meta
             public readonly int MetaKey, BaseKey;
             public readonly MetaType Type;
             public readonly MethodBuilder Serialize, Deserialize;
-            public readonly ILGenerator SerializeBody, DeserializeBody;
+            public readonly MethodContext SerializeBody, DeserializeBody;
             public SerializerPair(int metaKey, int baseKey, MetaType type, MethodBuilder serialize, MethodBuilder deserialize,
-                ILGenerator serializeBody, ILGenerator deserializeBody)
+                MethodContext serializeBody, MethodContext deserializeBody)
             {
                 this.MetaKey = metaKey;
                 this.BaseKey = baseKey;
@@ -170,7 +171,8 @@ namespace AqlaSerializer.Meta
         {
             return Compile(null, null);
         }
-        static ILGenerator Override(TypeBuilder type, string name)
+
+        MethodContext Override(TypeBuilder type, string name)
         {
             MethodInfo baseMethod = type.BaseType.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -180,11 +182,18 @@ namespace AqlaSerializer.Meta
             {
                 paramTypes[i] = parameters[i].ParameterType;
             }
-            MethodBuilder newMethod = type.DefineMethod(baseMethod.Name,
-                (baseMethod.Attributes & ~MethodAttributes.Abstract) | MethodAttributes.Final, baseMethod.CallingConvention, baseMethod.ReturnType, paramTypes);
-            ILGenerator il = newMethod.GetILGenerator();
+            MethodContext methodGenCtx;
+            MethodBuilder newMethod = EmitDefineMethod(
+                type,
+                baseMethod.Name,
+                (baseMethod.Attributes & ~MethodAttributes.Abstract) | MethodAttributes.Final,
+                baseMethod.CallingConvention,
+                baseMethod.ReturnType,
+                parameters.Select((p, i) => new MethodContext.ParameterGenInfo(p.ParameterType, p.Name, i + 1)).ToArray(),
+                true,
+                out methodGenCtx);
             type.DefineMethodOverride(newMethod, baseMethod);
-            return il;
+            return methodGenCtx;
         }
 
 #if FEAT_IKVM
@@ -421,7 +430,7 @@ namespace AqlaSerializer.Meta
             WriteGetKeyImpl(type, basicHasInheritance, basicMethodPairs, basicIlVersion, assemblyName, out il, out knownTypesCategory, out knownTypes, out knownTypesLookupType);
 
             // trivial flags
-            il = Override(type, "SerializeDateTimeKind");
+            il = Override(type, "SerializeDateTimeKind").GetILGenerator();
             il.Emit(IncludeDateTimeKind ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
             il.Emit(OpCodes.Ret);
             // end: trivial flags
@@ -549,58 +558,66 @@ namespace AqlaSerializer.Meta
 
         private Compiler.CompilerContext WriteSerializeDeserialize(string assemblyName, TypeBuilder type, SerializerPair[] methodPairs, SerializerPair[] rootMethodPairs, Compiler.CompilerContext.ILVersion ilVersion, ref ILGenerator il)
         {
-            il = Override(type, "Serialize");
-            Compiler.CompilerContext ctx = new Compiler.CompilerContext(il, false, true, methodPairs, this, ilVersion, assemblyName, MapType(typeof(object)));
+            Compiler.CompilerContext ctx;
             // arg0 = this, arg1 = key, arg2=obj, arg3=dest
-            Compiler.CodeLabel[] jumpTable = new Compiler.CodeLabel[types.Count];
-            for (int i = 0; i < jumpTable.Length; i++)
+            Compiler.CodeLabel[] jumpTable;
             {
-                jumpTable[i] = ctx.DefineLabel();
+                var genInfo = Override(type, "Serialize");
+                il = genInfo.GetILGenerator();
+                ctx = new Compiler.CompilerContext(genInfo, false, true, methodPairs, this, ilVersion, assemblyName, MapType(typeof(object)));
+                jumpTable = new Compiler.CodeLabel[types.Count];
+                for (int i = 0; i < jumpTable.Length; i++)
+                {
+                    jumpTable[i] = ctx.DefineLabel();
+                }
+                il.Emit(OpCodes.Ldarg_1);
+                ctx.Switch(jumpTable);
+                ctx.Return();
+                for (int i = 0; i < jumpTable.Length; i++)
+                {
+                    SerializerPair pair = methodPairs[i];
+                    ctx.MarkLabel(jumpTable[i]);
+                    var labelNoRoot = ctx.DefineLabel();
+
+                    il.Emit(OpCodes.Ldarg_S, 4);
+                    ctx.BranchIfFalse(labelNoRoot, true);
+
+                    WriteSerializePair(il, ctx, rootMethodPairs[i]);
+
+                    ctx.MarkLabel(labelNoRoot);
+
+                    WriteSerializePair(il, ctx, pair);
+                }
             }
-            il.Emit(OpCodes.Ldarg_1);
-            ctx.Switch(jumpTable);
-            ctx.Return();
-            for (int i = 0; i < jumpTable.Length; i++)
+
             {
-                SerializerPair pair = methodPairs[i];
-                ctx.MarkLabel(jumpTable[i]);
-                var labelNoRoot = ctx.DefineLabel();
+                var genInfo = Override(type, "Deserialize");
+                il = genInfo.GetILGenerator();
+                ctx = new Compiler.CompilerContext(genInfo, false, false, methodPairs, this, ilVersion, assemblyName, MapType(typeof(object)));
+                // arg0 = this, arg1 = key, arg2=obj, arg3=source
+                for (int i = 0; i < jumpTable.Length; i++)
+                {
+                    jumpTable[i] = ctx.DefineLabel();
+                }
+                il.Emit(OpCodes.Ldarg_1);
+                ctx.Switch(jumpTable);
+                ctx.LoadNullRef();
+                ctx.Return();
+                for (int i = 0; i < jumpTable.Length; i++)
+                {
+                    SerializerPair pair = methodPairs[i];
+                    ctx.MarkLabel(jumpTable[i]);
+                    var labelNoRoot = ctx.DefineLabel();
 
-                il.Emit(OpCodes.Ldarg_S, 4);
-                ctx.BranchIfFalse(labelNoRoot, true);
+                    il.Emit(OpCodes.Ldarg_S, 4);
+                    ctx.BranchIfFalse(labelNoRoot, true);
 
-                WriteSerializePair(il, ctx, rootMethodPairs[i]);
+                    WriteDeserializePair(assemblyName, type, rootMethodPairs, ilVersion, il, rootMethodPairs[i], i, ctx);
 
-                ctx.MarkLabel(labelNoRoot);
+                    ctx.MarkLabel(labelNoRoot);
 
-                WriteSerializePair(il, ctx, pair);
-            }
-
-            il = Override(type, "Deserialize");
-            ctx = new Compiler.CompilerContext(il, false, false, methodPairs, this, ilVersion, assemblyName, MapType(typeof(object)));
-            // arg0 = this, arg1 = key, arg2=obj, arg3=source
-            for (int i = 0; i < jumpTable.Length; i++)
-            {
-                jumpTable[i] = ctx.DefineLabel();
-            }
-            il.Emit(OpCodes.Ldarg_1);
-            ctx.Switch(jumpTable);
-            ctx.LoadNullRef();
-            ctx.Return();
-            for (int i = 0; i < jumpTable.Length; i++)
-            {
-                SerializerPair pair = methodPairs[i];
-                ctx.MarkLabel(jumpTable[i]);
-                var labelNoRoot = ctx.DefineLabel();
-
-                il.Emit(OpCodes.Ldarg_S, 4);
-                ctx.BranchIfFalse(labelNoRoot, true);
-
-                WriteDeserializePair(assemblyName, type, rootMethodPairs, ilVersion, il, rootMethodPairs[i], i, ctx);
-
-                ctx.MarkLabel(labelNoRoot);
-
-                WriteDeserializePair(assemblyName, type, methodPairs, ilVersion, il, pair, i, ctx);
+                    WriteDeserializePair(assemblyName, type, methodPairs, ilVersion, il, pair, i, ctx);
+                }
             }
             return ctx;
         }
@@ -613,7 +630,7 @@ namespace AqlaSerializer.Meta
             {
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Ldarg_3);
-                il.EmitCall(OpCodes.Call, EmitBoxedSerializer(type, i, keyType, methodPairs, this, ilVersion, assemblyName), null);
+                il.EmitCall(OpCodes.Call, EmitBoxedSerializer(type, i, keyType, methodPairs, this, ilVersion, assemblyName).Member, null);
                 ctx.Return();
             }
             else
@@ -638,9 +655,9 @@ namespace AqlaSerializer.Meta
         private const int KnownTypes_Array = 1, KnownTypes_Dictionary = 2, KnownTypes_Hashtable = 3, KnownTypes_ArrayCutoff = 20;
         private void WriteGetKeyImpl(TypeBuilder type, bool hasInheritance, SerializerPair[] methodPairs, Compiler.CompilerContext.ILVersion ilVersion, string assemblyName, out ILGenerator il, out int knownTypesCategory, out FieldBuilder knownTypes, out Type knownTypesLookupType)
         {
-
-            il = Override(type, "GetKeyImpl");
-            Compiler.CompilerContext ctx = new Compiler.CompilerContext(il, false, false, methodPairs, this, ilVersion, assemblyName, MapType(typeof(System.Type), true));
+            var genInfo = Override(type, "GetKeyImpl");
+            il = genInfo.GetILGenerator();
+            Compiler.CompilerContext ctx = new Compiler.CompilerContext(genInfo, false, false, methodPairs, this, ilVersion, assemblyName, MapType(typeof(System.Type), true));
 
             if (types.Count <= KnownTypes_ArrayCutoff)
             {
@@ -783,6 +800,34 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        internal MethodBuilder EmitDefineMethod(
+            TypeBuilder typeBuilder, string name, MethodAttributes attributes, CallingConventions callingConvention,
+            Type returnType, MethodContext.ParameterGenInfo[] parameters, bool isOverride, out MethodContext methodContext)
+        {
+            parameters = parameters.ToArray();
+            MethodBuilder m = typeBuilder.DefineMethod(
+                name,
+                attributes,
+                callingConvention,
+                returnType,
+                parameters.Select(p => p.Type).ToArray());
+
+            var il = m.GetILGenerator();
+            methodContext = new MethodContext(
+                new MethodContext.MethodGenInfo(
+                    name,
+                    m,
+                    false,
+                    isOverride,
+                    (attributes & MethodAttributes.Static) != 0,
+                    returnType,
+                    typeBuilder,
+                    parameters),
+                il,
+                RunSharpTypeMapper);
+            return m;
+        }
+
         private void WriteSerializers(CompilerOptions options, string assemblyName, TypeBuilder type, out int index, out bool hasInheritance, out SerializerPair[] methodPairs, out Compiler.CompilerContext.ILVersion ilVersion)
         {
             Compiler.CompilerContext ctx;
@@ -792,25 +837,49 @@ namespace AqlaSerializer.Meta
             methodPairs = new SerializerPair[types.Count];
             foreach (MetaType metaType in types)
             {
-                MethodBuilder writeMethod = type.DefineMethod("Write"
+                string writeName = "Write";
 #if DEBUG
- + metaType.Type.Name
+                writeName += metaType.Type.Name;
 #endif
-,
-                    MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard,
-                    MapType(typeof(void)), new Type[] { metaType.Type, MapType(typeof(ProtoWriter)) });
 
-                MethodBuilder readMethod = type.DefineMethod("Read"
+                MethodContext writeGenCtx;
+                MethodBuilder writeMethod = EmitDefineMethod(
+                    type,
+                    writeName,
+                    MethodAttributes.Private | MethodAttributes.Static,
+                    CallingConventions.Standard,
+                    MapType(typeof(void)),
+                    new[]
+                    {
+                        new MethodContext.ParameterGenInfo(metaType.Type, "obj", 1),
+                        new MethodContext.ParameterGenInfo(MapType(typeof(ProtoWriter)), "dest", 2),
+                    },
+                    false,
+                    out writeGenCtx);
+
+                
+                string readName = "Read";
 #if DEBUG
- + metaType.Type.Name
+                readName += metaType.Type.Name;
 #endif
-,
-                    MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard,
-                    metaType.Type, new Type[] { metaType.Type, MapType(typeof(ProtoReader)) });
-
+                MethodContext readGenCtx;
+                MethodBuilder readMethod = EmitDefineMethod(
+                    type,
+                    readName,
+                    MethodAttributes.Private | MethodAttributes.Static,
+                    CallingConventions.Standard,
+                    metaType.Type,
+                    new[]
+                    {
+                        new MethodContext.ParameterGenInfo(metaType.Type, "obj", 1),
+                        new MethodContext.ParameterGenInfo(MapType(typeof(ProtoReader)), "source", 2),
+                    },
+                    false,
+                    out readGenCtx);
+                
                 SerializerPair pair = new SerializerPair(
                     GetKey(metaType.Type, true, false), GetKey(metaType.Type, true, true), metaType,
-                    writeMethod, readMethod, writeMethod.GetILGenerator(), readMethod.GetILGenerator());
+                    writeMethod, readMethod, writeGenCtx, readGenCtx);
                 methodPairs[index++] = pair;
                 if (pair.MetaKey != pair.BaseKey) hasInheritance = true;
             }
@@ -852,25 +921,48 @@ namespace AqlaSerializer.Meta
             methodPairs = new SerializerPair[types.Count];
             foreach (MetaType metaType in types)
             {
-                MethodBuilder writeMethod = type.DefineMethod("WriteRoot"
+                string writeName = "WriteRoot";
 #if DEBUG
- + metaType.Type.Name
+                writeName += metaType.Type.Name;
 #endif
-,
-                    MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard,
-                    MapType(typeof(void)), new Type[] { metaType.Type, MapType(typeof(ProtoWriter)) });
+                MethodContext writeGenCtx;
+                MethodBuilder writeMethod = EmitDefineMethod(
+                    type,
+                    writeName,
+                    MethodAttributes.Private | MethodAttributes.Static,
+                    CallingConventions.Standard,
+                    MapType(typeof(void)),
+                    new[]
+                    {
+                        new MethodContext.ParameterGenInfo(metaType.Type, "obj", 1),
+                        new MethodContext.ParameterGenInfo(MapType(typeof(ProtoWriter)), "dest", 2)
+                    },
+                    false,
+                    out writeGenCtx
+                    );
 
-                MethodBuilder readMethod = type.DefineMethod("ReadRoot"
+                string readName = "ReadRoot";
 #if DEBUG
- + metaType.Type.Name
+                readName += metaType.Type.Name;
 #endif
-,
-                    MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard,
-                    metaType.Type, new Type[] { metaType.Type, MapType(typeof(ProtoReader)) });
+                MethodContext readGenCtx;
+                MethodBuilder readMethod = EmitDefineMethod(
+                    type,
+                    readName,
+                    MethodAttributes.Private | MethodAttributes.Static,
+                    CallingConventions.Standard,
+                    metaType.Type,
+                    new[]
+                    {
+                        new MethodContext.ParameterGenInfo(metaType.Type, "obj", 1),
+                        new MethodContext.ParameterGenInfo(MapType(typeof(ProtoReader)), "source", 2)
+                    },
+                    false,
+                    out readGenCtx);
 
                 SerializerPair pair = new SerializerPair(
                     GetKey(metaType.Type, true, false), GetKey(metaType.Type, true, true), metaType,
-                    writeMethod, readMethod, writeMethod.GetILGenerator(), readMethod.GetILGenerator());
+                    writeMethod, readMethod, writeGenCtx, readGenCtx);
                 methodPairs[index++] = pair;
                 if (pair.MetaKey != pair.BaseKey) hasInheritance = true;
             }
@@ -991,12 +1083,27 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        private static MethodBuilder EmitBoxedSerializer(TypeBuilder type, int i, Type valueType, SerializerPair[] methodPairs, TypeModel model, Compiler.CompilerContext.ILVersion ilVersion, string assemblyName)
+        private static MethodContext EmitBoxedSerializer(TypeBuilder type, int i, Type valueType, SerializerPair[] methodPairs, RuntimeTypeModel model, Compiler.CompilerContext.ILVersion ilVersion, string assemblyName)
         {
             MethodInfo dedicated = methodPairs[i].Deserialize;
-            MethodBuilder boxedSerializer = type.DefineMethod("_" + i.ToString(), MethodAttributes.Static, CallingConventions.Standard,
-                model.MapType(typeof(object)), new Type[] { model.MapType(typeof(object)), model.MapType(typeof(ProtoReader)) });
-            Compiler.CompilerContext ctx = new Compiler.CompilerContext(boxedSerializer.GetILGenerator(), true, false, methodPairs, model, ilVersion, assemblyName, model.MapType(typeof(object)));
+            string name = "_" + i.ToString();
+
+            MethodContext methodContext;
+            model.EmitDefineMethod(
+                type,
+                name,
+                MethodAttributes.Static,
+                CallingConventions.Standard,
+                model.MapType(typeof(object)),
+                new[]
+                {
+                    new MethodContext.ParameterGenInfo(model.MapType(typeof(object)), "obj", 1),
+                    new MethodContext.ParameterGenInfo(model.MapType(typeof(ProtoReader)), "source", 2),
+                },
+                false,
+                out methodContext);
+            
+            Compiler.CompilerContext ctx = new Compiler.CompilerContext(methodContext, true, false, methodPairs, model, ilVersion, assemblyName, model.MapType(typeof(object)));
             ctx.LoadValue(ctx.InputValue);
             Compiler.CodeLabel @null = ctx.DefineLabel();
             ctx.BranchIfFalse(@null, true);
@@ -1021,7 +1128,7 @@ namespace AqlaSerializer.Meta
                 ctx.CastToObject(mappedValueType);
                 ctx.Return();
             }
-            return boxedSerializer;
+            return methodContext;
         }
 
 #endif
