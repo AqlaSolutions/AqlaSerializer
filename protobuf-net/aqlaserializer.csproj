@@ -220,6 +220,7 @@
     <Compile Include="Compiler\CompilerDelegates.cs" />
     <Compile Include="Compiler\CompilerContext.cs" />
     <Compile Include="Compiler\Local.cs" />
+    <Compile Include="Compiler\MethodContext.cs" />
     <Compile Include="LinqBridge.cs" />
     <Compile Include="Meta\Data\ModelTypeRelationsData.cs" />
     <Compile Include="Meta\Data\SubtypeData.cs" />
@@ -240,6 +241,7 @@
     <Compile Include="Meta\CallbackSet.cs" />
     <Compile Include="Meta\MetaType.cs" />
     <Compile Include="Meta\RuntimeTypeModel.cs" />
+    <Compile Include="Meta\RuntimeTypeModel.Schema.cs" />
     <Compile Include="Meta\SubType.cs" />
     <Compile Include="Meta\TypeFormatEventArgs.cs" />
     <Compile Include="Meta\TypeModel.cs" />
@@ -317,6 +319,7 @@
   <ItemGroup>
     <None Include="..\AqlaSerializerKey.snk" />
     <None Include="aqlaserializer.licenseheader" />
+    <Compile Include="Meta\RuntimeTypeModel.Compilation.cs" />
     <None Include="packages.config" />
     <None Include="Web\TODO.txt" />
   </ItemGroup>

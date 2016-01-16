@@ -3,9 +3,10 @@
 //#define DEBUG_COMPILE
 using System;
 using System.Threading;
+using AltLinq;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;
-
+using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -51,7 +52,7 @@ namespace AqlaSerializer.Compiler
         }
 
 #if !(FX11 || FEAT_IKVM)
-        public static ProtoSerializer BuildSerializer(IProtoSerializer head, TypeModel model)
+        public static ProtoSerializer BuildSerializer(IProtoSerializer head, RuntimeTypeModel model)
         {
             Type type = head.ExpectedType;
             try
@@ -101,7 +102,7 @@ namespace AqlaSerializer.Compiler
             return (ProtoCallback)ctx.method.CreateDelegate(
                 typeof(ProtoCallback));
         }*/
-        public static ProtoDeserializer BuildDeserializer(IProtoSerializer head, TypeModel model)
+        public static ProtoDeserializer BuildDeserializer(IProtoSerializer head, RuntimeTypeModel model)
         {
             Type type = head.ExpectedType;
             CompilerContext ctx = new CompilerContext(type, false, true, model, typeof(object));
@@ -276,8 +277,10 @@ namespace AqlaSerializer.Compiler
             if (inputType != null) this.inputValue = new Local(null, inputType);
         }
 #endif
+        public ICodeGenContext RunSharpContext { get; }
+
 #if !(FX11 || FEAT_IKVM)
-        private CompilerContext(Type associatedType, bool isWriter, bool isStatic, TypeModel model, Type inputType)
+        private CompilerContext(Type associatedType, bool isWriter, bool isStatic, RuntimeTypeModel model, Type inputType)
         {
             if (model == null) throw new ArgumentNullException("model");
 #if FX11
@@ -289,35 +292,54 @@ namespace AqlaSerializer.Compiler
             this.isWriter = isWriter;
             this.model = model;
             nonPublic = true;
-            Type[] paramTypes;
             Type returnType;
+            MethodContext.ParameterGenInfo[] pars;
+
             if (isWriter)
             {
                 returnType = typeof(void);
-                paramTypes = new Type[] { typeof(object), typeof(ProtoWriter) };
+                pars = new[]
+                {
+                    new MethodContext.ParameterGenInfo(typeof(object), "obj", 1),
+                    new MethodContext.ParameterGenInfo(typeof(ProtoWriter), "dest", 2)
+                };
             }
             else
             {
                 returnType = typeof(object);
-                paramTypes = new Type[] { typeof(object), typeof(ProtoReader) };
+                pars = new[]
+                {
+                    new MethodContext.ParameterGenInfo(typeof(object), "obj", 1),
+                    new MethodContext.ParameterGenInfo(typeof(ProtoReader), "source", 2)
+                };
             }
+
+            Type[] paramTypes = pars.Select(p => p.Type).ToArray();
             int uniqueIdentifier;
 #if PLAT_NO_INTERLOCKED
             uniqueIdentifier = ++next;
 #else
             uniqueIdentifier = Interlocked.Increment(ref next);
 #endif
-            method = new DynamicMethod("proto_" + uniqueIdentifier.ToString(), returnType, paramTypes
+            string name = "proto_" + uniqueIdentifier.ToString();
+
+            Type ownerType = associatedType.IsInterface ? typeof(object) : associatedType;
+            method = new DynamicMethod(name, returnType, paramTypes
 #if !SILVERLIGHT
-                , associatedType.IsInterface ? typeof(object) : associatedType, true
+                , ownerType, true
 #endif
                 );
             this.il = method.GetILGenerator();
             if (inputType != null) this.inputValue = new Local(null, inputType);
+            
+            var methodGen = new MethodContext.MethodGenInfo(
+                name,method,true,false,false,returnType,ownerType, pars);
+            RunSharpContext = new MethodContext(methodGen,il,model.RunSharpTypeMapper);
         }
 
 #endif
         private readonly ILGenerator il;
+        
         
         private void Emit(OpCode opcode)
         {

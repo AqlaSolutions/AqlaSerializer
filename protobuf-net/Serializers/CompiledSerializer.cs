@@ -25,7 +25,7 @@ namespace AqlaSerializer.Serializers
         {
             head.Callback(value, callbackType, context); // these routes only used when bits of the model not compiled
         }
-        public static CompiledSerializer Wrap(IProtoTypeSerializer head, TypeModel model)
+        public static CompiledSerializer Wrap(IProtoTypeSerializer head, RuntimeTypeModel model)
         {
             CompiledSerializer result = head as CompiledSerializer;
             if (result == null)
@@ -38,7 +38,7 @@ namespace AqlaSerializer.Serializers
         private readonly IProtoTypeSerializer head;
         private readonly Compiler.ProtoSerializer serializer;
         private readonly Compiler.ProtoDeserializer deserializer;
-        private CompiledSerializer(IProtoTypeSerializer head, TypeModel model)
+        private CompiledSerializer(IProtoTypeSerializer head, RuntimeTypeModel model)
         {
             this.head = head;
             serializer = Compiler.CompilerContext.BuildSerializer(head, model);
