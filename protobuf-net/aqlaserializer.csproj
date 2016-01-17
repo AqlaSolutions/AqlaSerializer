@@ -245,6 +245,7 @@
     <Compile Include="Meta\SubType.cs" />
     <Compile Include="Meta\TypeFormatEventArgs.cs" />
     <Compile Include="Meta\TypeModel.cs" />
+    <Compile Include="Meta\TypeModel.List.cs" />
     <Compile Include="Meta\ValueMember.cs" />
     <Compile Include="NetObjectCache.cs" />
     <Compile Include="PrefixStyle.cs" />
