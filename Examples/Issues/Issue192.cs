@@ -20,23 +20,18 @@ namespace Examples.Issues
             [ProtoBuf.ProtoMember(1)]
             public List<SomeType>[] List { get; set; }
         }
-        // the important thing is that this error is identical to the one from SerializeWrappedDeepList
-        [Test, ExpectedException(typeof(NotSupportedException), ExpectedMessage = "Nested or jagged lists and arrays are not supported")]
-        public void SerializeDeepList()
+        
+        [Test]
+        public void SerializeWrappedDeepListEmpy()
         {
-            var list = new List<SomeType>[] { new List<SomeType> { new SomeType() }, new List<SomeType> { new SomeType() } };
-            Serializer.Serialize(Stream.Null, list);
+            var wrapped = new Wrapper() {List = new List<SomeType>[0]};
+            Assert.That(Serializer.DeepClone(wrapped).List, Is.Not.Null);
         }
-        [Test, ExpectedException(typeof(NotSupportedException), ExpectedMessage = "Nested or jagged lists and arrays are not supported")]
-        public void DeserializeDeepList()
-        {
-            Serializer.Deserialize<List<SomeType>[]>(Stream.Null);
-        }
-        [Test, ExpectedException(typeof(NotSupportedException), ExpectedMessage = "Nested or jagged lists and arrays are not supported")]
-        public void SerializeWrappedDeepList()
+        [Test]
+        public void SerializeWrappedDeepListNull()
         {
             var wrapped = new Wrapper();
-            var clone = Serializer.DeepClone(wrapped);
+            Assert.That(Serializer.DeepClone(wrapped).List, Is.Null);
         }
 
     }

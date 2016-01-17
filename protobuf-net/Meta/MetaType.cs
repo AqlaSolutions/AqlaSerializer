@@ -979,7 +979,7 @@ namespace AqlaSerializer.Meta
                         || model.FindOrAddAuto(itemType, false, false, false) == -1
                         || model.Add(itemType, false).IsList)
                     {
-                        throw TypeModel.CreateNestedListsNotSupported();
+                        //throw TypeModel.CreateNestedListsNotSupported();
                     }
                 }
             }
