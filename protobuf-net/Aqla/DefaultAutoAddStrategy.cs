@@ -252,6 +252,7 @@ namespace AqlaSerializer
                             if (item.TryGet("IgnoreListHandling", out tmp)) metaType.IgnoreListHandling = (bool)tmp;
                             if (item.TryGet("NotAsReferenceDefault", out tmp)) metaType.AsReferenceDefault = !(bool)tmp;
                             if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) implicitFirstTag = (int)tmp;
+                            if (item.TryGet("CollectionConcreteType", out tmp)) metaType.CollectionConcreteType = (Type)tmp;
                         }
                     }
 
@@ -330,7 +331,7 @@ namespace AqlaSerializer
                         effectiveType = property.PropertyType;
                         isPublic = Helpers.GetGetMethod(property, false, false) != null;
                         isField = false;
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, explicitPropertiesContract);
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, explicitPropertiesContract, metaType.CollectionConcreteType);
                     }
                     else if ((field = member as FieldInfo) != null)
                     {
@@ -341,7 +342,7 @@ namespace AqlaSerializer
                         { // only care about static things on enums; WinRT has a __value instance field!
                             continue;
                         }
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, false);
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, false, metaType.CollectionConcreteType);
                     }
                     else if ((method = member as MethodInfo) != null)
                     {
@@ -447,7 +448,7 @@ namespace AqlaSerializer
             _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
-        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFieldsMode implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType, bool ignoreNonWritableForOverwriteCollection)
+        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFieldsMode implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType, bool ignoreNonWritableForOverwriteCollection, Type defaultType)
         {
             switch (implicitMode)
             {
@@ -479,7 +480,7 @@ namespace AqlaSerializer
 #endif
             if (effectiveType != null)
             {
-                var normalizedAttribute = NormalizeProtoMember(member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName, ignoreNonWritableForOverwriteCollection);
+                var normalizedAttribute = NormalizeProtoMember(member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName, ignoreNonWritableForOverwriteCollection, defaultType);
                 if (normalizedAttribute != null) members.Add(normalizedAttribute);
             }
         }
@@ -627,7 +628,7 @@ namespace AqlaSerializer
             return (value & required) == required;
         }
 
-        protected virtual SerializableMemberAttribute NormalizeProtoMember(MemberInfo member, AttributeFamily family, bool forced, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferByTagName, bool ignoreNonWritableForOverwriteCollection)
+        protected virtual SerializableMemberAttribute NormalizeProtoMember(MemberInfo member, AttributeFamily family, bool forced, bool isEnum, IEnumerable partialMembers, int dataMemberOffset, bool inferByTagName, bool ignoreNonWritableForOverwriteCollection, Type defaultType)
         {
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
@@ -642,7 +643,7 @@ namespace AqlaSerializer
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(_model, member, true);
             AttributeMap attrib = null;
-
+            
             if (isEnum)
             {
                 attrib = AttributeMap.GetAttribute(attribs, "ProtoBuf.ProtoIgnoreAttribute");
@@ -763,6 +764,7 @@ namespace AqlaSerializer
                         GetFieldName(ref name, attrib, "Name");
                         GetFieldBoolean(ref isRequired, attrib, "IsRequired");
                         GetFieldBoolean(ref isPacked, attrib, "IsPacked");
+                        GetField(ref defaultType, attrib, "CollectionConcreteType");
                         GetFieldBoolean(ref appendCollection, attrib, "AppendCollection");
                         GetDataFormat(ref dataFormat, attrib, "DataFormat");
 
@@ -894,6 +896,7 @@ namespace AqlaSerializer
             result.Name = Helpers.IsNullOrEmpty(name) ? member.Name : name;
             result.Member = member;
             result.TagIsPinned = tagIsPinned;
+            result.CollectionConcreteType = defaultType;
             return result;
         }
 
@@ -924,9 +927,8 @@ namespace AqlaSerializer
             }
 
             var memberType = Helpers.GetMemberType(member);
-
-            Type defaultType = null;
-            if (Helpers.IsInterface(metaType.Type))
+            Type defaultType = normalizedAttribute.CollectionConcreteType;
+            if (defaultType == null && Helpers.IsInterface(metaType.Type))
                 defaultType = FindDefaultInterfaceImplementation(memberType);
 
             if (implicitFirstTag.HasValue && !normalizedAttribute.TagIsPinned)
@@ -972,6 +974,18 @@ namespace AqlaSerializer
                 return true;
             }
             return false;
+        }
+
+        protected static void GetField<T>(ref T value, AttributeMap attrib, string memberName, bool publicOnly = true)
+        {
+            if (attrib == null) return;
+            object obj;
+            if (attrib.TryGet(memberName, publicOnly, out obj) && obj != null)
+            {
+                value = (T)obj;
+                return;
+            }
+            return;
         }
 
         protected static void GetFieldNumber(ref int value, AttributeMap attrib, string memberName)

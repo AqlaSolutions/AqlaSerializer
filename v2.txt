@@ -7,6 +7,8 @@ Goals:
 
 * Collections should be treated as types not members so nesting is allowed
 
+* Store collection subtype information
+
 Problems:
 
 * Broken encapsulation of Serializers (have assumtions about implementation)
