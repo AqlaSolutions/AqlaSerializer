@@ -375,8 +375,31 @@ namespace AqlaSerializer.Meta
             {
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
 
-                var ser = BuildValueFinalSerializer(memberType, itemType);
 
+                object finalDefaultValue = null;
+                if (defaultValue != null && !IsRequired && getSpecified == null)
+                {   // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
+                    // as does "IsRequired"
+                    finalDefaultValue = defaultValue;
+                }
+
+
+                var ser = BuildValueFinalSerializer(
+                    memberType,
+                    itemType,
+                    fieldNumber,
+                    asReference,
+                    AppendCollection,
+                    member != null && Helpers.CanWrite(model, member),
+                    DynamicType,
+                    IsPacked,
+                    IsStrict,
+                    DefaultType,
+                    DataFormat,
+                    finalDefaultValue,
+                    model);
+
+                
                 if (member != null)
                 {
                     PropertyInfo prop = member as PropertyInfo;
@@ -409,70 +432,96 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        IProtoSerializer BuildValueFinalSerializer(Type valueType, Type argItemType)
+        internal static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool mayCreateNew, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, RuntimeTypeModel model)
         {
             WireType wireType;
-            Type finalType = argItemType ?? valueType;
-            IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, !AppendCollection, true);
+            Type finalType = objectItemType ?? objectType;
+            IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
             if (ser == null)
             {
-                //Type itemType = null
-                //    model.ResolveListTypes();
-                //MetaType.ResolveListTypes(model,finalType,ref itemType,ref );
-                throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
+                if (objectItemType != null)
+                {
+                    Type nestedItemType = null;
+                    Type nestedDefaultType = null;
+                    MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
+                    if (nestedItemType == null)
+                        throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
+                    if (nestedDefaultType == null)
+                    {
+                        MetaType metaType;
+                        if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
+                            nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
+                    }
+                    ser = BuildValueFinalSerializer(
+                        finalType,
+                        nestedItemType,
+                        fieldNumber,
+                        true,
+                        appendCollection,
+                        mayCreateNew,
+                        dynamicType,
+                        isPacked,
+                        isStrict,
+                        nestedDefaultType,
+                        dataFormat,
+                        null,
+                        model);
+                }
+                else throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
             }
 
             bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
 
             // apply tags
-            if (argItemType != null && supportNull)
+            if (objectItemType != null && supportNull)
             {
-                if (IsPacked)
+                if (isPacked)
                 {
                     supportNull = false;
                 }
-                ser = new TagDecorator(NullDecorator.Tag, wireType, IsStrict, ser);
+                ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
                 ser = new NullDecorator(model, ser);
                 ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
             }
             else
             {
-                ser = new TagDecorator(fieldNumber, wireType, IsStrict, ser);
+                ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
             }
             // apply lists if appropriate
-            if (argItemType != null)
+            if (objectItemType != null)
             {
 #if NO_GENERICS
-                    Type underlyingargItemType = argItemType;
+                Type underlyingItemType = objectItemType;
 #else
-                Type underlyingargItemType = supportNull ? argItemType : Helpers.GetNullableUnderlyingType(argItemType) ?? argItemType;
+                Type underlyingItemType = supportNull ? objectItemType : Helpers.GetNullableUnderlyingType(objectItemType) ?? objectItemType;
 #endif
-                Helpers.DebugAssert(underlyingargItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingargItemType);
-                if (memberType.IsArray)
+                Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
+                if (objectType.IsArray)
                 {
-                    ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, !AppendCollection, supportNull);
+                    ser = new ArrayDecorator(model, ser, fieldNumber, isPacked, wireType, objectType, !appendCollection, supportNull);
                 }
                 else
                 {
-                    ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType,
-                        member != null && Helpers.CanWrite(model, member), !AppendCollection, supportNull);
+                    ser = ListDecorator.Create(model, objectType, defaultType, ser, fieldNumber, isPacked, wireType, mayCreateNew, !appendCollection, supportNull);
                 }
             }
-            else if (defaultValue != null && !IsRequired && getSpecified == null)
-            {   // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
-                // as does "IsRequired"
+
+            if (defaultValue != null)
                 ser = new DefaultValueDecorator(model, defaultValue, ser);
-            }
-            if (!asReference && memberType == model.MapType(typeof(Uri)))
+
+            // Uri decorator is applied after default value
+            // because default value for Uri is treated as string
+
+            if (!tryAsReference && objectType == model.MapType(typeof(Uri)))
             {
                 ser = new UriDecorator(model, ser);
             }
 #if PORTABLE
-                else if(!asReference && memberType.FullName == typeof(Uri).FullName)
-                {
-                    // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
-                    ser = new ReflectedUriDecorator(memberType, model, ser);
-                }
+            else if(!tryAsReference && objectType.FullName == typeof(Uri).FullName)
+            {
+                // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
+                ser = new ReflectedUriDecorator(objectType, model, ser);
+            }
 #endif
             return ser;
         }
@@ -500,7 +549,13 @@ namespace AqlaSerializer.Meta
         }
 
         internal static IProtoSerializer TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-            bool asReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
+             bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
+        {
+            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, allowComplexTypes);
+        }
+
+        internal static IProtoSerializer TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
+            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
 #if !NO_GENERICS
             {
@@ -508,8 +563,8 @@ namespace AqlaSerializer.Meta
                 if (tmp != null) type = tmp;
             }
 #endif
-            if (asReference && !CheckCanBeAsReference(type, false))
-                asReference = false;
+            if (tryAsReference && !CheckCanBeAsReference(type, false))
+                tryAsReference = false;
 
             if (Helpers.IsEnum(type))
             {
@@ -542,7 +597,7 @@ namespace AqlaSerializer.Meta
                     return new UInt64Serializer(model);
                 case ProtoTypeCode.String:
                     defaultWireType = WireType.String;
-                    if (asReference)
+                    if (tryAsReference)
                     {
                         return new NetObjectSerializer(model, model.MapType(typeof(string)), 0, BclHelpers.NetObjectOptions.AsReference);
                     }
@@ -585,7 +640,7 @@ namespace AqlaSerializer.Meta
                     return new GuidSerializer(model);
                 case ProtoTypeCode.Uri:
                     defaultWireType = WireType.String;
-                    if (asReference)
+                    if (tryAsReference)
                     {
                         return new NetObjectSerializer(model, model.MapType(typeof(Uri)), 0, BclHelpers.NetObjectOptions.AsReference);
                     }
@@ -595,7 +650,7 @@ namespace AqlaSerializer.Meta
                     return new BlobSerializer(model, overwriteList);
                 case ProtoTypeCode.Type:
                     defaultWireType = WireType.String;
-                    if (asReference)
+                    if (tryAsReference)
                     {
                         return new NetObjectSerializer(model, model.MapType(typeof(Type)), 0, BclHelpers.NetObjectOptions.AsReference);
                     }
@@ -610,17 +665,17 @@ namespace AqlaSerializer.Meta
             if (allowComplexTypes && model != null)
             {
                 int key = model.GetKey(type, false, true);
-                if (asReference || dynamicType)
+                if (tryAsReference || dynamicType)
                 {
                     defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     BclHelpers.NetObjectOptions options = BclHelpers.NetObjectOptions.None;
-                    if (asReference) options |= BclHelpers.NetObjectOptions.AsReference;
+                    if (tryAsReference) options |= BclHelpers.NetObjectOptions.AsReference;
                     if (dynamicType) options |= BclHelpers.NetObjectOptions.DynamicType;
                     if (key >= 0)
                     { // exists
-                        if (asReference && Helpers.IsValueType(type))
+                        if (tryAsReference && Helpers.IsValueType(type))
                         {
-                            string message = "AsReference cannot be used with value-types";
+                            string message = "tryAsReference cannot be used with value-types";
 
                             if (type.Name == "KeyValuePair`2")
                             {
@@ -633,7 +688,7 @@ namespace AqlaSerializer.Meta
                             throw new InvalidOperationException(message);
                         }
                         MetaType meta = model[type];
-                        if (asReference && meta.IsAutoTuple) options |= BclHelpers.NetObjectOptions.LateSet;                        
+                        if (tryAsReference && meta.IsAutoTuple) options |= BclHelpers.NetObjectOptions.LateSet;                        
                         if (meta.UseConstructor) options |= BclHelpers.NetObjectOptions.UseConstructor;
                     }
                     return new NetObjectSerializer(model, type, key, options);
