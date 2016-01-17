@@ -11,6 +11,13 @@ namespace AqlaSerializer
         AllowMultiple = false, Inherited = false)]
     public sealed class SerializableTypeAttribute : Attribute
     {
+        Type _collectionConcreteType;
+        // TODO store collection subtype!!!
+        /// <summary>
+        /// Specifies default collection implementation, may be overriden with SerializableMember attribute
+        /// </summary>
+        public Type CollectionConcreteType { get { return _collectionConcreteType; } set { _collectionConcreteType = value; } }
+
         /// <summary>
         /// Gets or sets the defined name of the type.
         /// </summary>

@@ -174,6 +174,14 @@ namespace AqlaSerializer
             }
         }
 
+        Type _collectionConcreteType;
+
+        // TODO store collection subtype!!!
+        /// <summary>
+        /// Specifies default collection implementation
+        /// </summary>
+        public Type CollectionConcreteType { get { return _collectionConcreteType; } set { _collectionConcreteType = value; } }
+
         /// <summary>
         /// Gets or sets a value indicating whether this member is packed (lists/arrays).
         /// </summary>

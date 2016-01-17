@@ -87,6 +87,22 @@ namespace AqlaSerializer.Meta
             set { SetFlag(OPTIONS_AsReferenceDefault, value, true); }
         }
 
+        Type _collectionConcreteType;
+
+        public Type CollectionConcreteType
+        {
+            get
+            {
+                return _collectionConcreteType;
+            }
+            set
+            {
+                if (value != null && !Helpers.IsAssignableFrom(this.Type, value))
+                    throw new ArgumentException("Specified collection concrete type " + value.Name + " is not assignable to " + this.Type.Name);
+                _collectionConcreteType = value;
+            }
+        }
+
         private BasicList subTypes;
         private BasicList subTypesSimple;
 
@@ -1092,6 +1108,9 @@ namespace AqlaSerializer.Meta
                     throw new ArgumentException("Specified defaultType " + defaultType.Name + " can't be used because found default list type " + t.Name);
                 defaultType = t;
             }
+            else if (defaultType != null && !Helpers.IsAssignableFrom(effectiveType, defaultType))
+                throw new ProtoException("Specified default type " + defaultType.Name + " is not assignable to member " + this.Type.Name + "." + member.Name);
+            
 
             var vm = new ValueMember(model, this.Type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.DataFormat, defaultValue);
 #if WINRT
