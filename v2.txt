@@ -1,0 +1,85 @@
+Goals:
+
+* No Version Mode:
+   disable length prefix for subitems?
+
+* Serializers should be symmetric (no TagDecorator)
+
+* Collections should be treated as types not members so nesting is allowed
+
+Problems:
+
+* Broken encapsulation of Serializers (have assumtions about implementation)
+
+Design:
+
+Core:
+GetKey >= 0
+   ? (MetaType.)Serializer.Write
+   : TrySerializeAuxiliaryType
+       -> GetKey >= 0
+              ?   !Enum && (GetWireType = StartGroup | String) => WriteFieldHeader
+               -> (MetaType.)Serializer.Write
+              : WireType != None
+                   ?   WriteFieldHeader
+                    -> WriteBasicType or (isRoot && TypeCode == Type) => WriteType (really System.Type)
+                   :  ForEach In Enumerable => TrySerializeAuxiliaryType
+
+
+
+SerializeWithLengthPrefix:
+-> GetKey
+ProtoWriter.WriteObject
+   -> WriteHeaderCore, StartSubItem
+   -> key < 0
+      ? TrySerializeAuxiliaryType
+      : (MetaType.)Serializer.Write
+   -> EndSubItem (backfilling length)
+
+GetKey resolves proxies
+WireType: enum - variant / basic types / key >= 0 - string
+SubItem writes length prefix
+
+WriteNetObject: 
+ StartSubItem
+   Reference Data
+   StartSubItem (if not simple) - requries wireType - where set?
+    Object
+   EndSubItem
+ EndSubItem
+
+MetaType.BuildSerializer:
+(x) ListHandling => fake ValueMember.BuildSerializer
+(x) ?>SurrogateSerializer
+(x) ?>TupleSerializer
+-> for each subtype and field: prepare fieldNumbers[i], serializers[i]
+  -> ValueMember.BuildSerializer
+-> collected BaseType BeforeDeserialize callbacks
+-> TypeSerializer
+  
+ValueMember.BuildSerializer:
+-> finalType = Collection ? itemType : memberType
+-> TryGetCoreSerializer
+// applying decorators on returned serializer:
+-> +TagDecorator(fieldNumber)
+-> collection 
+     ? +Array/ListDecorator(fieldNumber, unwrapNullable(itemType))
+     : ?> DefaultValueDecorator
+-> ?>+UriDecorator
+-> ?>+Property/Field/MemberSpecifiedDecorator
+
+TryGetCoreSerializer:
+->  unwrap nullable
+(x) enum => allowCOmplexTypes ? EnumSerializer,variant : null,none
+(x) (String || Uri || Type) & ref => NetObjectSerializer,string
+(x) Inbuilt type => *Serializer,*
+(x) ?>ParseableSerializer,string
+->  allowCompltexTypes
+    ? ref || dynamic
+       ?  GetKey() > 0 => set options from type
+          -> (x)NetObjectSerializer,dataFormat == Group ? StartGroup : String
+       :  (x)SubItemSerializer,dataFormat == Group ? StartGroup : String
+->  null,none
+
+
+model.ResolveListTypes vs MetaType.*
