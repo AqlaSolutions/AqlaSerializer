@@ -374,66 +374,9 @@ namespace AqlaSerializer.Meta
             try
             {
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
-                WireType wireType;
-                Type finalType = itemType ?? memberType;
-                IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, !AppendCollection, true);
-                if (ser == null)
-                {
-                    throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
-                }
 
-                bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType( finalType) != null;
+                var ser = BuildValueFinalSerializer(memberType, itemType);
 
-                // apply tags
-                if (itemType != null && supportNull)
-                {
-                    if (IsPacked)
-                    {
-                        supportNull= false;
-                    }
-                    ser = new TagDecorator(NullDecorator.Tag, wireType, IsStrict, ser);
-                    ser = new NullDecorator(model, ser);
-                    ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
-                }
-                else
-                {
-                    ser = new TagDecorator(fieldNumber, wireType, IsStrict, ser);
-                }
-                // apply lists if appropriate
-                if (itemType != null)
-                {                    
-#if NO_GENERICS
-                    Type underlyingItemType = itemType;
-#else
-                    Type underlyingItemType = supportNull ? itemType : Helpers.GetNullableUnderlyingType( itemType) ?? itemType;
-#endif
-                    Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
-                    if (memberType.IsArray)
-                    {
-                        ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, !AppendCollection, supportNull);
-                    }
-                    else
-                    {
-                        ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType, 
-                            member != null && Helpers.CanWrite(model, member), !AppendCollection, supportNull);
-                    }
-                }
-                else if (defaultValue != null && !IsRequired && getSpecified == null)
-                {   // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
-                    // as does "IsRequired"
-                    ser = new DefaultValueDecorator(model, defaultValue, ser);
-                }
-                if (!asReference && memberType == model.MapType(typeof(Uri)))
-                {
-                    ser = new UriDecorator(model, ser);
-                }
-#if PORTABLE
-                else if(!asReference && memberType.FullName == typeof(Uri).FullName)
-                {
-                    // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
-                    ser = new ReflectedUriDecorator(memberType, model, ser);
-                }
-#endif
                 if (member != null)
                 {
                     PropertyInfo prop = member as PropertyInfo;
@@ -464,6 +407,74 @@ namespace AqlaSerializer.Meta
             {
                 model.ReleaseLock(opaqueToken);
             }
+        }
+
+        IProtoSerializer BuildValueFinalSerializer(Type valueType, Type argItemType)
+        {
+            WireType wireType;
+            Type finalType = argItemType ?? valueType;
+            IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, AsReference, dynamicType, !AppendCollection, true);
+            if (ser == null)
+            {
+                //Type itemType = null
+                //    model.ResolveListTypes();
+                //MetaType.ResolveListTypes(model,finalType,ref itemType,ref );
+                throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
+            }
+
+            bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
+
+            // apply tags
+            if (argItemType != null && supportNull)
+            {
+                if (IsPacked)
+                {
+                    supportNull = false;
+                }
+                ser = new TagDecorator(NullDecorator.Tag, wireType, IsStrict, ser);
+                ser = new NullDecorator(model, ser);
+                ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
+            }
+            else
+            {
+                ser = new TagDecorator(fieldNumber, wireType, IsStrict, ser);
+            }
+            // apply lists if appropriate
+            if (argItemType != null)
+            {
+#if NO_GENERICS
+                    Type underlyingargItemType = argItemType;
+#else
+                Type underlyingargItemType = supportNull ? argItemType : Helpers.GetNullableUnderlyingType(argItemType) ?? argItemType;
+#endif
+                Helpers.DebugAssert(underlyingargItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingargItemType);
+                if (memberType.IsArray)
+                {
+                    ser = new ArrayDecorator(model, ser, fieldNumber, IsPacked, wireType, memberType, !AppendCollection, supportNull);
+                }
+                else
+                {
+                    ser = ListDecorator.Create(model, memberType, DefaultType, ser, fieldNumber, IsPacked, wireType,
+                        member != null && Helpers.CanWrite(model, member), !AppendCollection, supportNull);
+                }
+            }
+            else if (defaultValue != null && !IsRequired && getSpecified == null)
+            {   // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
+                // as does "IsRequired"
+                ser = new DefaultValueDecorator(model, defaultValue, ser);
+            }
+            if (!asReference && memberType == model.MapType(typeof(Uri)))
+            {
+                ser = new UriDecorator(model, ser);
+            }
+#if PORTABLE
+                else if(!asReference && memberType.FullName == typeof(Uri).FullName)
+                {
+                    // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
+                    ser = new ReflectedUriDecorator(memberType, model, ser);
+                }
+#endif
+            return ser;
         }
 
         private static WireType GetIntWireType(BinaryDataFormat format, int width)

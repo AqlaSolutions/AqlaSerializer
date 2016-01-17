@@ -930,6 +930,8 @@ namespace AqlaSerializer.Meta
         internal static void ResolveListTypes(RuntimeTypeModel model, Type type, ref Type itemType, ref Type defaultType)
         {
             if (type == null) return;
+            if (Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return; // don't try this[type] for inbuilts
+            if (model.AutoAddStrategy.GetIgnoreListHandling(type)) return;
             // handle arrays
             if (type.IsArray)
             {
