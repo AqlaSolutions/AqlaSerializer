@@ -336,39 +336,12 @@ namespace AqlaSerializer.unittest.Meta
 
             public List<byte[]> Blobs{ get; set; }
         }
-        [Test, ExpectedException(typeof(NotSupportedException))]
-        public void JaggedListShouldThrow()
-        {
-            var model = RuntimeTypeModel.Create();
-            model.Add(typeof(NastyType), true).Add(1, "JaggedList");
-            model.CompileInPlace();
-        }
-        [Test, ExpectedException(typeof(NotSupportedException))]
-        public void ListOfArrayShouldThrow()
-        {
-            var model = RuntimeTypeModel.Create();
-            model.Add(typeof(NastyType), true).Add(1, "ListOfArray");
-            model.CompileInPlace();
-        }
+
         [Test, ExpectedException(typeof(NotSupportedException))]
         public void MultiDimArrayShouldThrow()
         {
             var model = RuntimeTypeModel.Create();
             model.Add(typeof(NastyType), true).Add(1, "MultiDimArray");
-            model.CompileInPlace();
-        }
-        [Test, ExpectedException(typeof(NotSupportedException))]
-        public void JaggedArrayShouldThrow()
-        {
-            var model = RuntimeTypeModel.Create();
-            model.Add(typeof(NastyType), true).Add(1, "JaggedArray");
-            model.CompileInPlace();
-        }
-        [Test, ExpectedException(typeof(NotSupportedException))]
-        public void ArrayOfListShouldThrow()
-        {
-            var model = RuntimeTypeModel.Create();
-            model.Add(typeof(NastyType), true).Add(1, "ArrayOfList");
             model.CompileInPlace();
         }
         [Test]

@@ -434,18 +434,21 @@ namespace AqlaSerializer.Meta
 
         internal static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool mayCreateNew, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, RuntimeTypeModel model)
         {
-            WireType wireType;
+            WireType wireType = 0;
             Type finalType = objectItemType ?? objectType;
-            IProtoSerializer ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
-            if (ser == null)
+
+            IProtoSerializer ser = null;
+            bool nestedCollection = false;
+            
+            if (objectItemType != null)
             {
-                if (objectItemType != null)
+                Type nestedItemType = null;
+                Type nestedDefaultType = null;
+                MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
+                if (nestedItemType != null)
                 {
-                    Type nestedItemType = null;
-                    Type nestedDefaultType = null;
-                    MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
-                    if (nestedItemType == null)
-                        throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
+                    tryAsReference = true;
+                    isPacked = false; // should have subitems
                     if (nestedDefaultType == null)
                     {
                         MetaType metaType;
@@ -466,8 +469,17 @@ namespace AqlaSerializer.Meta
                         dataFormat,
                         null,
                         model);
+                    wireType = WireType.StartGroup;
+                    nestedCollection = true;
                 }
-                else throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
+            }
+
+            if (!nestedCollection) // wrap with NetObject or not?
+                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
+
+            if (ser == null)
+            {
+                throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
             }
 
             bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
@@ -479,13 +491,15 @@ namespace AqlaSerializer.Meta
                 {
                     supportNull = false;
                 }
-                ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
+                if (!nestedCollection)
+                    ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
                 ser = new NullDecorator(model, ser);
                 ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
             }
             else
             {
-                ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
+                if (!nestedCollection)
+                    ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
             }
             // apply lists if appropriate
             if (objectItemType != null)
@@ -763,7 +777,7 @@ namespace AqlaSerializer.Meta
 , System.Collections.Generic.IComparer<ValueMember>
 #endif
         {
-            public static readonly Comparer Default = new Comparer();
+            public static readonly ValueMember.Comparer Default = new Comparer();
             public int Compare(object x, object y)
             {
                 return Compare(x as ValueMember, y as ValueMember);
