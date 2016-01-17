@@ -324,8 +324,14 @@ namespace AqlaSerializer.Meta
 
         internal int FindOrAddAuto(Type type, bool demand, bool addWithContractOnly, bool addEvenIfAutoDisabled)
         {
-            int key = types.IndexOf(MetaTypeFinder, type);
             MetaType metaType;
+            return FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled, out metaType);
+        }
+
+        internal int FindOrAddAuto(Type type, bool demand, bool addWithContractOnly, bool addEvenIfAutoDisabled, out MetaType metaType)
+        {
+            metaType = null;
+            int key = types.IndexOf(MetaTypeFinder, type);
 
             // the fast happy path: meta-types we've already seen
             if (key >= 0)
@@ -400,6 +406,10 @@ namespace AqlaSerializer.Meta
                     {
                         metaType.ApplyDefaultBehaviour();
                         metaType.Pending = false;
+                    }
+                    else
+                    {
+                        metaType = (MetaType)types[winner];
                     }
                 }
                 finally
