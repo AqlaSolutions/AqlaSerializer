@@ -1025,6 +1025,12 @@ namespace AqlaSerializer.Meta
             /// </summary>
             AfterDeserialize
         }
+
+        /// <summary>
+        /// Used for testing
+        /// </summary>
+        internal bool ForceSerializationDuringClone { get; set; }
+
 #if !NO_GENERICS && !IOS
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
@@ -1034,6 +1040,7 @@ namespace AqlaSerializer.Meta
             return (T)DeepClone(value: (object)genericValue);
         }
 #endif
+        
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
@@ -1043,8 +1050,32 @@ namespace AqlaSerializer.Meta
             throw new NotSupportedException();
 #else
             if (value == null) return null;
+
             Type type = value.GetType();
             int key = GetKey(ref type);
+
+            if (ForceSerializationDuringClone)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (ProtoWriter writer = new ProtoWriter(ms, this, null))
+                    {
+                        Serialize(writer, value);
+                        writer.Close();
+                    }
+                    ms.Position = 0;
+                    ProtoReader reader = null;
+                    try
+                    {
+                        reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
+                        return Deserialize(reader, null, type);
+                    }
+                    finally
+                    {
+                        ProtoReader.Recycle(reader);
+                    }
+                }
+            }
 
             if (key >= 0 && !Helpers.IsEnum(type))
             {
