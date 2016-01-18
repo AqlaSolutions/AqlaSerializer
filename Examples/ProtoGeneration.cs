@@ -75,33 +75,6 @@ message MyClass {
         public void GenericsWithoutExplicitNamesShouldUseTheTypeName()
         {
             string proto = Serializer.GetProto<ProtoGenerationTypes.BrokenProto.ExampleContract>();
-
-            Assert.AreEqual(@"package ProtoGenerationTypes.BrokenProto;
-
-message ExampleContract {
-   repeated Info ListOfInfo = 1;
-}
-message Info {
-   optional string Name = 1;
-   // the following represent sub-types; at most 1 should have a value
-   optional Info_Type1 Info_Type1 = 2;
-   optional Info_Type2 Info_Type2 = 3;
-}
-message Info_Type1 {
-   optional Type1 Details = 2;
-}
-message Info_Type2 {
-   optional Type2 Details = 2;
-}
-message Type1 {
-   optional string Value1 = 1;
-   optional string Value2 = 2;
-}
-message Type2 {
-   optional string Value3 = 1;
-   optional string Value4 = 2;
-}
-", proto);
         }
 
         [Test]

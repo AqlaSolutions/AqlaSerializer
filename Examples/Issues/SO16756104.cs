@@ -6,32 +6,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
     [TestFixture]
     public class SO16756104
     {
-        [Test, ExpectedException(typeof(NullReferenceException))]
+        [Test]
         public void TestNullableDoubleList()
         {
+            var tm = TypeModel.Create(true);
             var list = new List<double?> { 1, null, 2 };
-            Serializer.DeepClone(list);
+            Assert.That(tm.DeepClone(list), Is.EqualTo(list));
         }
 
-        [Test, ExpectedException(typeof(NullReferenceException))]
+        [Test]
         public void TestNullableInt32List()
         {
+            var tm = TypeModel.Create(true);
             var list = new List<int?> { 1, null, 2 };
-            Serializer.DeepClone(list);
+            Assert.That(tm.DeepClone(list), Is.EqualTo(list));
         }
-
-        [Ignore("Changed in AqlaSerializer")]
-        [Test, ExpectedException(typeof(NullReferenceException))]
+        
+        [Test]
         public void TestNullableStringList()
         {
+            var tm = TypeModel.Create(true);
             var list = new List<string> { "abc", null, "def" };
-            Serializer.DeepClone(list);
+            Assert.That(tm.DeepClone(list), Is.EqualTo(list));
         }
     }
 }

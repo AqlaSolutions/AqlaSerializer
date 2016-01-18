@@ -20,16 +20,6 @@ namespace Examples.Issues
 
             string schema = model.GetSchema(typeof (Foo));
 
-            Assert.AreEqual(@"package Examples.Issues;
-
-message Foo {
-   repeated KeyValuePair_Int32_String Lookup = 1;
-}
-message KeyValuePair_Int32_String {
-   optional int32 Key = 1;
-   optional string Value = 2;
-}
-", schema);
         }
 
         [ProtoBuf.ProtoContract]

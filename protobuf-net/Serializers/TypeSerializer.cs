@@ -38,6 +38,8 @@ namespace AqlaSerializer.Serializers
         private readonly MethodInfo[] baseCtorCallbacks;
         private readonly MethodInfo factory;
         public bool CanCreateInstance { get; set; } = true;
+        public bool AllowInheritance { get; set; } = true;
+
         public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory)
         {
             Helpers.DebugAssert(forType != null);
@@ -128,9 +130,9 @@ namespace AqlaSerializer.Serializers
             get
             {
 #if WINRT
-                return (typeInfo.IsClass || typeInfo.IsInterface) && !typeInfo.IsSealed;
+                return (typeInfo.IsClass || typeInfo.IsInterface) && !typeInfo.IsSealed && AllowInheritance;
 #else
-                return (forType.IsClass || forType.IsInterface) && !forType.IsSealed;
+                return (forType.IsClass || forType.IsInterface) && !forType.IsSealed && AllowInheritance;
 #endif
             }
         }

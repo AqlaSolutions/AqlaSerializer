@@ -97,6 +97,9 @@ namespace AqlaSerializer.Meta
         {
             if (CheckCanBeAsReference(memberType, isDeterminatedAsAutoTuple))
             {
+                if (RuntimeTypeModel.CheckTypeDoesntRequireAttributeFamily(model, memberType))
+                    isProtobufNetLegacyMember = false; // inbuilt behavior types doesn't depend on member legacy behavior
+                
                 MetaType type = model.FindWithoutAdd(memberType);
                 if (type != null)
                 {
@@ -105,19 +108,7 @@ namespace AqlaSerializer.Meta
                 }
                 else
                 { // we need to scan the hard way; can't risk recursion by fully walking it
-                    bool r = model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
-                    if (isProtobufNetLegacyMember && !r)
-                    {
-                        Type itemType = null;
-
-                        Type defaultType = null;
-
-                        // check for list types
-                        model.ResolveListTypes(memberType, ref itemType, ref defaultType);
-
-                        r = itemType != null && GetAsReferenceDefault(model, itemType, isProtobufNetLegacyMember, false);
-                    }
-                    return r;
+                    return model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
                 }
             }
             return false;
@@ -689,7 +680,7 @@ namespace AqlaSerializer.Meta
                     { // exists
                         if (tryAsReference && Helpers.IsValueType(type))
                         {
-                            string message = "tryAsReference cannot be used with value-types";
+                            string message = "AsReference cannot be used with value-types";
 
                             if (type.Name == "KeyValuePair`2")
                             {

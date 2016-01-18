@@ -38,13 +38,19 @@ namespace Examples.Issues
         }
 
         [Test]
+        public void TestDeeplyNested([Values(false,true)] bool reg, [Values(false, true)] bool compile)
+        {
+            var tm = TypeModel.Create();
+            tm.AutoCompile = compile;
+            tm.AlwaysUseTypeRegistrationForCollections = reg;
+            var obj = new A { Array1 = new[] { new B() } };
+            Assert.That(tm.DeepClone(obj).Array1.Length, Is.EqualTo(1));
+        }
+
+        [Test]
         public void ExecuteDeeplyNestedShouldNotBuffer()
         {
             var model = TypeModel.Create();
-#if DEBUG
-            // Aqla Serializer - what purpose to not buffer?
-            //model.ForwardsOnly = true;
-#endif
             Console.WriteLine("Inventing data...");
             var watch = Stopwatch.StartNew();
             var arr = new B[5];

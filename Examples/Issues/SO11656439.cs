@@ -115,17 +115,7 @@ namespace Examples.Issues
         {
             var model = TypeModel.Create();
             model.Add(typeof (ListWrapper), true);
-
-            var schema = model.GetSchema(null);
-
-            Assert.AreEqual(@"package Examples.Issues;
-
-message ListWrapper {
-   repeated string BasicList = 1;
-   repeated string MyList = 2;
-   repeated string MyContractList = 3;
-}
-", schema);
+            
             model.Compile("SanityCheckListWrapper", "SanityCheckListWrapper.dll");
             PEVerify.AssertValid("SanityCheckListWrapper.dll");
         }
