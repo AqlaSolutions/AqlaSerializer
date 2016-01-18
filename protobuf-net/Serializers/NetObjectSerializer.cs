@@ -43,11 +43,11 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            return BclHelpers.ReadNetObject(value, source, key, type == typeof(object) ? null : type, options);
+            return NetObjectHelpers.ReadNetObject(value, source, key, type == typeof(object) ? null : type, options);
         }
         public void Write(object value, ProtoWriter dest)
         {
-            BclHelpers.WriteNetObject(value, dest, key, options);
+            NetObjectHelpers.WriteNetObject(value, dest, key, options);
         }
 #endif
 
@@ -61,7 +61,7 @@ namespace AqlaSerializer.Serializers
             if (type ==  ctx.MapType(typeof(object))) ctx.LoadNullRef();
             else ctx.LoadValue(type);
             ctx.LoadValue((int)options);
-            ctx.EmitCall(ctx.MapType(typeof(BclHelpers)).GetMethod("ReadNetObject"));
+            ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("ReadNetObject"));
             ctx.CastFromObject(type);
         }
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
@@ -71,7 +71,7 @@ namespace AqlaSerializer.Serializers
             ctx.LoadReaderWriter();
             ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key));
             ctx.LoadValue((int)options);
-            ctx.EmitCall(ctx.MapType(typeof(BclHelpers)).GetMethod("WriteNetObject"));
+            ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("WriteNetObject"));
         }
 #endif
     }

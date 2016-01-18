@@ -573,6 +573,7 @@ namespace AqlaSerializer.Meta
                     type,
                     BinaryDataFormat.Default,
                     null,
+                    false,
                     model)
                 }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
             }
@@ -609,6 +610,7 @@ namespace AqlaSerializer.Meta
                         defaultType,
                         BinaryDataFormat.Default,
                         null,
+                        false,
                         model)
                 }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
             }
