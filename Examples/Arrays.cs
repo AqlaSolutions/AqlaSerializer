@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using AqlaSerializer;
 using AqlaSerializer.Meta;
 using System.Linq;
+using ProtoBuf;
+using Serializer = AqlaSerializer.Serializer;
+
 namespace Examples
 {
     [ProtoBuf.ProtoContract]
@@ -41,6 +43,64 @@ namespace Examples
                 new string[0]
             }
         };
+    }
+
+    [ProtoBuf.ProtoContract]
+    public class ArrayArrayCustom
+    {
+        [ProtoBuf.ProtoMember(1)]
+        public CustomString[][] Values { get; set; }
+
+        public static ArrayArrayCustom CreateFilled() => new ArrayArrayCustom()
+        {
+            Values = new CustomString[][]
+            {
+                new CustomString[] { "11", "12" },
+                new CustomString[] { "21", "22", "23" },
+                null,
+                new CustomString[0]
+            }
+        };
+    }
+
+    [ProtoContract]
+    public class CustomString
+    {
+        [ProtoMember(1)]
+        public string Value { get; set; }
+
+        public static implicit operator CustomString(string v)
+        {
+            return new CustomString() { Value = v };
+        }
+
+        protected bool Equals(CustomString other)
+        {
+            return string.Equals(Value, other.Value);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((CustomString)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return (Value != null ? Value.GetHashCode() : 0);
+        }
+
+        public static bool operator ==(CustomString left, CustomString right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(CustomString left, CustomString right)
+        {
+            return !Equals(left, right);
+        }
     }
 
     [ProtoBuf.ProtoContract]
@@ -353,12 +413,16 @@ namespace Examples
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
+            if (compile)
+            {
+                tm.Add(typeof(ArrayArray), true);
+                tm.Compile("arrayarray", "arrayarray.dll");
+            }
             var source = ArrayArray.CreateFilled();
             var copy = tm.DeepClone(source);
             Assert.That(copy.Values, Is.EqualTo(source.Values));
             if (compile)
             {
-                tm.Compile("arrayarray", "arrayarray.dll");
                 PEVerify.AssertValid("arrayarray.dll");
             }
         }
@@ -379,6 +443,45 @@ namespace Examples
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
             var source = new ArrayArray();
+            var copy = tm.DeepClone(source);
+            Assert.That(copy.Values, Is.EqualTo(source.Values));
+        }
+
+        [Test]
+        public void TestArrayArrayCustom([Values(false,true)] bool compile)
+        {
+            var tm = TypeModel.Create();
+            tm.AutoCompile = compile;
+            if (compile)
+            {
+                tm.Add(typeof(ArrayArrayCustom), true);
+                tm.Compile("ArrayArrayCustom", "ArrayArrayCustom.dll");
+            }
+            var source = ArrayArrayCustom.CreateFilled();
+            var copy = tm.DeepClone(source);
+            Assert.That(copy.Values, Is.EqualTo(source.Values));
+            if (compile)
+            {
+                PEVerify.AssertValid("ArrayArrayCustom.dll");
+            }
+        }
+
+        [Test]
+        public void TestArrayArrayCustomDirect([Values(false,true)] bool compile)
+        {
+            var tm = TypeModel.Create();
+            tm.AutoCompile = compile;
+            var source = ArrayArrayCustom.CreateFilled().Values;
+            var copy = tm.DeepClone(source);
+            Assert.That(copy, Is.EqualTo(source));
+        }
+
+        [Test]
+        public void TestArrayArrayCustomNull([Values(false,true)] bool compile)
+        {
+            var tm = TypeModel.Create();
+            tm.AutoCompile = compile;
+            var source = new ArrayArrayCustom();
             var copy = tm.DeepClone(source);
             Assert.That(copy.Values, Is.EqualTo(source.Values));
         }
