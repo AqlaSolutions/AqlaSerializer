@@ -57,21 +57,28 @@ namespace AqlaSerializer.Meta
             {
                 // byte arrays are handled internally
                 if (Helpers.GetTypeCode(type.GetElementType()) == ProtoTypeCode.Byte) return false;
-                return true;
+                return type.GetArrayRank() == 1;
             }
             return type != model.MapType(typeof(Enum))
-                && type != model.MapType(typeof(object))
-                && type != model.MapType(typeof(ValueType))
-                && (Helpers.GetNullableUnderlyingType(type) == null && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown));
+                   && type != model.MapType(typeof(object))
+                   && type != model.MapType(typeof(ValueType))
+                   && (Helpers.GetNullableUnderlyingType(type) == null && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown));
+            //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
         
         internal static bool CheckTypeDoesntRequireAttributeFamily(RuntimeTypeModel model, Type type)
         {
             if (!CheckTypeCanBeAdded(model, type)) return false;
-            if (type.IsArray) return true;
-            // list types are always added
             Type defaultType = null;
             Type itemType = null;
+            model.ResolveListTypes(type, ref itemType, ref defaultType);
+            if (itemType == null) return false;
+            if (model.AlwaysUseTypeRegistrationForCollections)
+                return true;
+            
+            // in legacy mode list and array types are added but ONLY NESTED
+            type = itemType;
+            itemType = null;
             model.ResolveListTypes(type, ref itemType, ref defaultType);
             return itemType != null;
         }
@@ -438,8 +445,19 @@ namespace AqlaSerializer.Meta
                 {
                     ReleaseLock(opaqueToken);
                 }
+                AddDependentSubTypes(metaType);
             }
             return key;
+        }
+
+        void AddDependentSubTypes(MetaType baseType)
+        {
+            //// e.g. IDictionary<MyKey, MyValue> - specific generic type
+            //Type defaultType;
+            //if (MetaType.IsDictionaryOrListInterface(this, baseType.Type, out defaultType))
+            //{
+            //    //baseType.AddSubType()
+            //}
         }
 
         private MetaType RecogniseCommonTypes(Type type)
@@ -476,7 +494,12 @@ namespace AqlaSerializer.Meta
         /// See <see cref="MetaType.AsReferenceDefault"/>
         /// </summary>
         public bool AddNotAsReferenceDefault { get; set; }
-        
+
+        /// <summary>
+        /// If enabled all Arrays and Lists will be handled in extended mode to always support reference tracking and null (which will break without runtime/pre-compiled dll) but may have a size overhead (going to fix that in later releases)
+        /// </summary>
+        public bool AlwaysUseTypeRegistrationForCollections { get; set; }
+
         /// <summary>
         /// Adds all types inside the specified assembly
         /// </summary>
@@ -702,7 +725,7 @@ namespace AqlaSerializer.Meta
             {
                 ReleaseLock(opaqueToken);
             }
-
+            AddDependentSubTypes(newType);
             return newType;
         }
 

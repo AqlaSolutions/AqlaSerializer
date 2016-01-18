@@ -153,15 +153,18 @@ namespace Examples.Dictionary
 
         }
         [Test]
-        public void NonEmptyDictionaryShouldDeserializeViaInterface()
+        public void NonEmptyDictionaryShouldDeserializeViaInterface([Values(false,true)] bool reg, [Values(false,true)] bool compile)
         {
+            var tm = TypeModel.Create();
+            tm.AlwaysUseTypeRegistrationForCollections = reg;
+            tm.AutoCompile = compile;
             using (var ms = new MemoryStream())
             {
                 var data = new Dictionary<string, int> { { "abc", 123 } };
 
-                Serializer.Serialize(ms, data);
+                tm.Serialize(ms, data);
                 ms.Position = 0;
-                var clone = Serializer.Deserialize<IDictionary<string, int>>(ms);
+                var clone = tm.Deserialize<IDictionary<string, int>>(ms);
 
                 Assert.IsNotNull(clone);
                 Assert.AreEqual(1, clone.Count);

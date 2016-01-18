@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Text;
 using AqlaSerializer;
 using AqlaSerializer.Serializers;
@@ -58,6 +59,8 @@ namespace AqlaSerializer.Meta
         {
             return type.ToString();
         }
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IProtoSerializer ISerializerProxy.Serializer { get { return Serializer; } }
         private MetaType baseType;
         /// <summary>
@@ -437,8 +440,8 @@ namespace AqlaSerializer.Meta
             this.factory = factory;
             if (model == null) throw new ArgumentNullException("model");
             if (type == null) throw new ArgumentNullException("type");
-
-            if (!model.AddNotAsReferenceDefault && ValueMember.CheckCanBeAsReference(type, false))
+            
+            if (model.AutoAddStrategy.GetAsReferenceDefault(type, false))
                 AsReferenceDefault = true;
 
             IProtoSerializer coreSerializer = model.TryGetBasicTypeSerializer(type);
@@ -480,6 +483,8 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public Type Type { get { return type; } }
         private IProtoTypeSerializer serializer;
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         internal IProtoTypeSerializer Serializer {
             get {
                 if (serializer == null)
@@ -515,6 +520,8 @@ namespace AqlaSerializer.Meta
         }
 
     private IProtoTypeSerializer rootSerializer;
+    [DebuggerHidden]
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     internal IProtoTypeSerializer RootSerializer
     {
             get {
@@ -567,7 +574,7 @@ namespace AqlaSerializer.Meta
                     BinaryDataFormat.Default,
                     null,
                     model)
-                }, null, true, true, null, constructType, factory) { CanCreateInstance = false };
+                }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
             }
             if (Helpers.IsEnum(type))
             {
@@ -603,7 +610,7 @@ namespace AqlaSerializer.Meta
                         BinaryDataFormat.Default,
                         null,
                         model)
-                }, null, true, true, null, constructType, factory) { CanCreateInstance = false };
+                }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
             }
             if (surrogate != null)
             {
@@ -1058,6 +1065,37 @@ namespace AqlaSerializer.Meta
                 // verify that the default type is appropriate
                 if (defaultType != null && !Helpers.IsAssignableFrom(type, defaultType)) { defaultType = null; }
             }
+        }
+
+        public static bool IsDictionaryOrListInterface(RuntimeTypeModel model, Type type, out Type defaultType)
+        {
+            defaultType = null;
+            if (!Helpers.IsInterface(type)) return false;
+            Type[] genArgs;
+            var itemType = TypeModel.GetListItemType(model, type);
+#if WINRT
+            TypeInfo typeInfo = type.GetTypeInfo();
+            if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IDictionary<,>)
+                && itemType == typeof(System.Collections.Generic.KeyValuePair<,>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
+#else
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IDictionary<,>))
+                    && itemType == model.MapType(typeof(System.Collections.Generic.KeyValuePair<,>)).MakeGenericType(genArgs = type.GetGenericArguments()))
+#endif
+            {
+                defaultType = model.MapType(typeof(System.Collections.Generic.Dictionary<,>)).MakeGenericType(genArgs);
+                return true;
+            }
+#if WINRT
+            if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IList<>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
+#else
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IList<>)).MakeGenericType(genArgs = type.GetGenericArguments()))
+#endif
+            {
+                defaultType = model.MapType(typeof(System.Collections.Generic.List<>)).MakeGenericType(genArgs);
+                return true;
+            }
+            return false;
+
         }
 
         public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue)

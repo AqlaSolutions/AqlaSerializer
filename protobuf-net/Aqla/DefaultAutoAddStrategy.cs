@@ -1003,6 +1003,7 @@ namespace AqlaSerializer
         public virtual bool GetAsReferenceDefault(Type type, bool isProtobufNetLegacyMember)
         {
             if (type == null) throw new ArgumentNullException("type");
+            if (!ValueMember.CheckCanBeAsReference(type, false)) return false;
             if (Helpers.IsEnum(type)) return false; // never as-ref
             AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
             for (int i = 0; i < typeAttribs.Length; i++)
@@ -1018,7 +1019,9 @@ namespace AqlaSerializer
                     if (typeAttribs[i].TryGet("AsReferenceDefault", out tmp)) return (bool)tmp;
                 }
             }
-            return !isProtobufNetLegacyMember;
+
+            bool ignoreAddSettings = RuntimeTypeModel.CheckTypeDoesntRequireAttributeFamily(_model, type);
+            return ignoreAddSettings || (!isProtobufNetLegacyMember && !_model.AddNotAsReferenceDefault);
         }
 
         public virtual bool GetIgnoreListHandling(Type type)

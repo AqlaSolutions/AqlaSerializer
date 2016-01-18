@@ -910,6 +910,7 @@ namespace AqlaSerializer.Meta
             var r = new RuntimeTypeModel(false);
             if (newestBehavior)
             {
+                r.AlwaysUseTypeRegistrationForCollections = true;
                 r.UseImplicitZeroDefaults = false;
             }
             return r;
@@ -1255,8 +1256,7 @@ namespace AqlaSerializer.Meta
                 default:
                     return allowBasic; // well-known basic type
             }
-            int modelKey = GetKey(ref type);
-            if (modelKey >= 0) return allowContract; // known contract type
+
 
             // is it a list?
             if (allowLists)
@@ -1270,8 +1270,13 @@ namespace AqlaSerializer.Meta
                 {
                     itemType = GetListItemType(this, type);
                 }
-                if (itemType != null) return CanSerialize(itemType, allowBasic, allowContract, false);
+                if (itemType != null) return CanSerialize(itemType, allowBasic, allowContract, true);
             }
+            if (allowContract && GetKey(ref type) >= 0)
+            {
+                return true; // known contract type
+            }
+
             return false;
         }
 

@@ -22,93 +22,26 @@ namespace Examples.Issues
         public void TestEntireModel()
         {
             var model = GetModel();
-            Assert.AreEqual(
-                @"package Examples.Issues;
-
-message animal {
-   optional int32 numberOfLegs = 1 [default = 4];
-   // the following represent sub-types; at most 1 should have a value
-   optional cat cat = 4;
-}
-message cat {
-   repeated animal animalsHunted = 1;
-}
-message vegetable {
-   optional int32 size = 1 [default = 0];
-}
-",
-
- model.GetSchema(null)
-
-);
+            model.GetSchema(null);
         }
         [Test]
         public void TestEntireModelWithMultipleNamespaces()
         {
             var model = (RuntimeTypeModel)GetModel();
             model.Add(typeof (Examples.Issues.CompletelyUnrelated.Mineral), true);
-            Assert.AreEqual(
-                @"
-message animal {
-   optional int32 numberOfLegs = 1 [default = 4];
-   // the following represent sub-types; at most 1 should have a value
-   optional cat cat = 4;
-}
-message cat {
-   repeated animal animalsHunted = 1;
-}
-message mineral {
-}
-message vegetable {
-   optional int32 size = 1 [default = 0];
-}
-",
-
- model.GetSchema(null)
-
-);
+            model.GetSchema(null);
         }
         [Test]
         public void TestInheritanceStartingWithBaseType()
         {
             var model = GetModel();
-            Assert.AreEqual(
-                @"package Examples.Issues;
-
-message animal {
-   optional int32 numberOfLegs = 1 [default = 4];
-   // the following represent sub-types; at most 1 should have a value
-   optional cat cat = 4;
-}
-message cat {
-   repeated animal animalsHunted = 1;
-}
-",
-
-                model.GetSchema(typeof(Animal))
-
-                );
+            model.GetSchema(typeof(Animal));
         }
         [Test]
         public void TestInheritanceStartingWithDerivedType()
         {
             var model = GetModel();
-            Assert.AreEqual(
-                @"package Examples.Issues;
-
-message animal {
-   optional int32 numberOfLegs = 1 [default = 4];
-   // the following represent sub-types; at most 1 should have a value
-   optional cat cat = 4;
-}
-message cat {
-   repeated animal animalsHunted = 1;
-}
-",
-
-                model.GetSchema(typeof(Animal))
-
-                );
+            model.GetSchema(typeof(Animal));
         }
 
         [ProtoBuf.ProtoContract(Name="animal"), ProtoBuf.ProtoInclude(4, typeof(Cat))]
