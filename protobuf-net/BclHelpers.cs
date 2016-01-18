@@ -550,12 +550,14 @@ namespace AqlaSerializer
                         {
                             throw new ProtoException("Object key in input stream, but reference-tracking was not expected");
                         }
-                        return value;
+                        goto return_label;
                     default:
                         source.SkipField();
                         break;
                 }
             }
+            return_label:
+            if (!root && source.ReadFieldHeader() != 0) throw new ProtoException("Expected EndGroup for NetObject but stream has " + source.WireType);
             return value;
 #endif
         }
