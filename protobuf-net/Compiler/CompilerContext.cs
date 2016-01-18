@@ -324,7 +324,7 @@ namespace AqlaSerializer.Compiler
 #endif
             string name = "proto_" + uniqueIdentifier.ToString();
 
-            Type ownerType = associatedType.IsInterface ? typeof(object) : associatedType;
+            Type ownerType = (associatedType.IsInterface || associatedType.IsArray) ? typeof(object) : associatedType;
             method = new DynamicMethod(name, returnType, paramTypes
 #if !SILVERLIGHT
                 , ownerType, true

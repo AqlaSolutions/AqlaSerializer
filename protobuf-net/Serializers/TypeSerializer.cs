@@ -22,7 +22,7 @@ namespace AqlaSerializer.Serializers
             if (callbacks != null && callbacks[callbackType] != null) return true;
             for (int i = 0; i < serializers.Length; i++)
             {
-                if (serializers[i].ExpectedType != forType && ((IProtoTypeSerializer)serializers[i]).HasCallbacks(callbackType)) return true;
+                if (serializers[i].ExpectedType != forType && ((serializers[i] as IProtoTypeSerializer)?.HasCallbacks(callbackType) ?? false)) return true;
             }
             return false;
         }
@@ -37,6 +37,7 @@ namespace AqlaSerializer.Serializers
         private readonly CallbackSet callbacks;
         private readonly MethodInfo[] baseCtorCallbacks;
         private readonly MethodInfo factory;
+        public bool CanCreateInstance { get; set; } = true;
         public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory)
         {
             Helpers.DebugAssert(forType != null);
@@ -209,7 +210,7 @@ namespace AqlaSerializer.Serializers
                         Type serType = ser.ExpectedType;
                         if (value == null ||  !Helpers.IsInstanceOfType(forType, value))
                         {
-                            if (serType == forType) value = CreateInstance(source, true);
+                            if (serType == forType && CanCreateInstance) value = CreateInstance(source, true);
                         }
                         if (ser.ReturnsValue)
                         {
@@ -492,7 +493,7 @@ namespace AqlaSerializer.Serializers
                 for (int i = 0; i < serializers.Length; i++)
                 {
                     IProtoSerializer ser = serializers[i];
-                    if (ser.ExpectedType != forType && ((IProtoTypeSerializer)ser).HasCallbacks(callbackType))
+                    if (ser.ExpectedType != forType && ((ser as IProtoTypeSerializer)?.HasCallbacks(callbackType) ?? false))
                     {
                         actuallyHasInheritance = true;
                     }
@@ -643,7 +644,7 @@ namespace AqlaSerializer.Serializers
             {
                 // emit create if null
                 Helpers.DebugAssert(loc != null);
-                if (!ExpectedType.IsValueType)
+                if (!ExpectedType.IsValueType && CanCreateInstance)
                 {
                     Compiler.CodeLabel afterIf = ctx.DefineLabel();
                     Compiler.CodeLabel ifContent = ctx.DefineLabel();
@@ -730,7 +731,7 @@ namespace AqlaSerializer.Serializers
         private void EmitCreateIfNull(Compiler.CompilerContext ctx, Compiler.Local storage)
         {
             Helpers.DebugAssert(storage != null);
-            if (!ExpectedType.IsValueType)
+            if (!ExpectedType.IsValueType && CanCreateInstance)
             {
                 Compiler.CodeLabel afterNullCheck = ctx.DefineLabel();
                 ctx.LoadValue(storage);
