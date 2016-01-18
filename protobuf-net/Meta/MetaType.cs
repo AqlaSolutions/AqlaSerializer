@@ -550,6 +550,25 @@ namespace AqlaSerializer.Meta
         }
         private IProtoTypeSerializer BuildSerializer()
         {
+            if (type.IsArray)
+            {
+                return new TypeSerializer(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[] {
+                    ValueMember.BuildValueFinalSerializer(
+                    type,
+                    type.GetElementType(),
+                    AqlaSerializer.Serializer.ListItemTag,
+                    AsReferenceDefault,
+                    false,
+                    true,
+                    false,
+                    false,
+                    false,
+                    type,
+                    BinaryDataFormat.Default,
+                    null,
+                    model)
+                }, null, true, true, null, constructType, factory) { CanCreateInstance = false };
+            }
             if (Helpers.IsEnum(type))
             {
                 return new TagDecorator(AqlaSerializer.Serializer.ListItemTag, WireType.Variant, false, new EnumSerializer(type, GetEnumMap()));
@@ -567,8 +586,24 @@ namespace AqlaSerializer.Meta
                 }
                 Type defaultType = null;
                 ResolveListTypes(model, type, ref itemType, ref defaultType);
-                ValueMember fakeMember = new ValueMember(model, AqlaSerializer.Serializer.ListItemTag, type, itemType, defaultType, BinaryDataFormat.Default);
-                return new TypeSerializer(model, type, new int[] { AqlaSerializer.Serializer.ListItemTag }, new IProtoSerializer[] { fakeMember.Serializer }, null, true, true, null, constructType, factory);
+
+                return new TypeSerializer(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[]
+                {
+                    ValueMember.BuildValueFinalSerializer(
+                        type,
+                        itemType,
+                        AqlaSerializer.Serializer.ListItemTag,
+                        AsReferenceDefault,
+                        false,
+                        true,
+                        false,
+                        false,
+                        false,
+                        defaultType,
+                        BinaryDataFormat.Default,
+                        null,
+                        model)
+                }, null, true, true, null, constructType, factory) { CanCreateInstance = false };
             }
             if (surrogate != null)
             {
@@ -897,6 +932,7 @@ namespace AqlaSerializer.Meta
         
         private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue)
         {
+            if (type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
             MemberInfo mi = null;
 #if WINRT
             mi = Helpers.IsEnum(type) ? type.GetTypeInfo().GetDeclaredField(memberName) : Helpers.GetInstanceMember(type.GetTypeInfo(), memberName);
@@ -975,12 +1011,7 @@ namespace AqlaSerializer.Meta
                 ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
                 if (nestedItemType != null)
                 {
-                    if (!RuntimeTypeModel.CheckTypeCanBeAdded(model, itemType)
-                        || model.FindOrAddAuto(itemType, false, false, false) == -1
-                        || model.Add(itemType, false).IsList)
-                    {
-                        //throw TypeModel.CreateNestedListsNotSupported();
-                    }
+                    model.FindOrAddAuto(itemType, false, false, false);
                 }
             }
 
@@ -1276,7 +1307,12 @@ namespace AqlaSerializer.Meta
         public bool IgnoreListHandling
         {
             get { return HasFlag(OPTIONS_IgnoreListHandling); }
-            set { SetFlag(OPTIONS_IgnoreListHandling, value, true); }
+            set
+            {
+                if (value && type.IsArray)
+                    throw new InvalidOperationException("Can't disable list handling for arrays");
+                SetFlag(OPTIONS_IgnoreListHandling, value, true);
+            }
         }
 
         internal bool Pending

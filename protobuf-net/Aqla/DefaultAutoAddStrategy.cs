@@ -29,10 +29,9 @@ namespace AqlaSerializer
         public virtual bool CanAutoAddType(Type type)
         {
             if (type == null) throw new ArgumentNullException("type");
-            return type != _model.MapType(typeof(Enum))
-                && type != _model.MapType(typeof(object))
-                && type != _model.MapType(typeof(ValueType))
-                && GetContractFamily(type) != AttributeFamily.None;
+            if (!RuntimeTypeModel.CheckTypeCanBeAdded(_model, type)) return false;
+            return GetContractFamily(type) != AttributeFamily.None
+                   || RuntimeTypeModel.CheckTypeDoesntRequireAttributeFamily(_model, type);
         }
 
         public virtual void ApplyDefaultBehaviour(MetaType metaType)

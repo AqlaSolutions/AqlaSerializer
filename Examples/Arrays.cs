@@ -26,7 +26,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class ArrayArray
+    public class ArrayArray
     {
         [ProtoBuf.ProtoMember(1)]
         public string[][] Values { get; set; }
@@ -356,6 +356,11 @@ namespace Examples
             var source = ArrayArray.CreateFilled();
             var copy = tm.DeepClone(source);
             Assert.That(copy.Values, Is.EqualTo(source.Values));
+            if (compile)
+            {
+                tm.Compile("arrayarray", "arrayarray.dll");
+                PEVerify.AssertValid("arrayarray.dll");
+            }
         }
 
         [Test]

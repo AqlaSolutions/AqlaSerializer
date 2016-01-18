@@ -53,11 +53,27 @@ namespace AqlaSerializer.Meta
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
             if (type == null) throw new ArgumentNullException("type");
-            return !type.IsArray
-                && type != model.MapType(typeof(Enum))
+            if (type.IsArray)
+            {
+                // byte arrays are handled internally
+                if (Helpers.GetTypeCode(type.GetElementType()) == ProtoTypeCode.Byte) return false;
+                return true;
+            }
+            return type != model.MapType(typeof(Enum))
                 && type != model.MapType(typeof(object))
                 && type != model.MapType(typeof(ValueType))
                 && (Helpers.GetNullableUnderlyingType(type) == null && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown));
+        }
+        
+        internal static bool CheckTypeDoesntRequireAttributeFamily(RuntimeTypeModel model, Type type)
+        {
+            if (!CheckTypeCanBeAdded(model, type)) return false;
+            if (type.IsArray) return true;
+            // list types are always added
+            Type defaultType = null;
+            Type itemType = null;
+            model.ResolveListTypes(type, ref itemType, ref defaultType);
+            return itemType != null;
         }
 
 
@@ -299,6 +315,7 @@ namespace AqlaSerializer.Meta
         }
         internal IProtoSerializer TryGetBasicTypeSerializer(Type type)
         {
+            if (type.IsArray) return null;
             int idx = basicTypes.IndexOf(BasicTypeFinder, type);
 
             if (idx >= 0) return ((BasicType)basicTypes[idx]).Serializer;
@@ -363,6 +380,13 @@ namespace AqlaSerializer.Meta
                 type = underlyingType; // if new added, make it reflect the underlying type
             }
 
+            if (!CheckTypeCanBeAdded(this, type))
+            {
+                if (demand)
+                    throw new InvalidOperationException("Type " + type.Name + " can't be added to model (has inbuilt behavior or not supported)");
+                return -1;
+            }
+
             if (key < 0)
             {
                 int opaqueToken = 0;
@@ -377,10 +401,8 @@ namespace AqlaSerializer.Meta
                         {
                             shouldAdd = addEvenIfAutoDisabled = true; // always add basic tuples, such as KeyValuePair
                         }
-
                         if (!shouldAdd || (
-                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None)
-                            )
+                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireAttributeFamily(this,type)))
                         {
                             if (demand) ThrowUnexpectedType(type);
                             return key;
