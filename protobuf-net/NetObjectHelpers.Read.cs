@@ -26,19 +26,20 @@ namespace AqlaSerializer
         }
 
         // inject version
-        public static object ReadNetObject_StartInject(object value, ProtoReader source, int key, Type type, BclHelpers.NetObjectOptions options, out SubItemToken token, out bool isNewObject)
+        public static object ReadNetObject_StartInject(object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, out SubItemToken token, 
+            out bool shouldEnd, out int newObjectKey, out int newTypeKey, out bool isType)
         {
-            int newObjectKey;
-            int newTypeKey;
-            bool isType;
-            bool shouldEnd;
+            bool isNewObject;
+            int key = -1;
             ReadNetObject_Start(ref value, source, ref key, ref type, options, false, out token, out isNewObject, out newObjectKey, out newTypeKey, out isType, out shouldEnd);
             return value;
         }
 
-        public static void ReadNetObject_EndInject(object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, SubItemToken token)
+        public static void ReadNetObject_EndInject(bool shouldEnd, object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, SubItemToken token)
         {
-            ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options, false);
+            if (shouldEnd)
+                ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options, false);
+            ReadNetObject_End(source);
             ProtoReader.EndSubItem(token, source);
         }
 
@@ -178,7 +179,7 @@ namespace AqlaSerializer
 #endif
         }
 
-        public static void ReadNetObject_NoteNewObject(object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, bool root)
+        static void ReadNetObject_NoteNewObject(object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, bool root)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -216,7 +217,7 @@ namespace AqlaSerializer
 #endif
         }
 
-        public static void ReadNetObject_End(ProtoReader source)
+        static void ReadNetObject_End(ProtoReader source)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();

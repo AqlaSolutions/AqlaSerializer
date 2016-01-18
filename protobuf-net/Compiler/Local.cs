@@ -105,13 +105,14 @@ namespace AqlaSerializer.Compiler
             protected override void EmitSet(CodeGen g, Operand value, bool allowExplicitConversion)
             {
                 LeakedState = false;
+                EmitGetHelper(g, value, _local.Type, allowExplicitConversion);
                 _local._ctx.StoreValue(_local);
             }
 
             protected override void EmitAddressOf(CodeGen g)
             {
                 LeakedState = false;
-                _local._ctx.LoadAddress(_local, _local._type);
+                _local._ctx.LoadRefArg(_local, _local._type);
             }
 
             public override Type GetReturnType(ITypeMapper typeMapper)

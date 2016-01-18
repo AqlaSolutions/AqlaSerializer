@@ -1003,31 +1003,35 @@ namespace AqlaSerializer.Compiler
         {
             if (type.IsValueType)
             {
-                if (local == null)
-                {
-                    throw new InvalidOperationException("Cannot load the address of a struct at the head of the stack");
-                }
-
-                if (local == this.InputValue)
-                {
-                    il.Emit(OpCodes.Ldarga_S, (isStatic ? (byte)0 : (byte)1));
-#if DEBUG_COMPILE
-                    Helpers.DebugWriteLine(OpCodes.Ldarga_S + ": $" + (isStatic ? 0 : 1));
-#endif
-                }
-                else
-                {
-                    OpCode code = UseShortForm(local) ? OpCodes.Ldloca_S : OpCodes.Ldloca;
-                    il.Emit(code, local.Value);
-#if DEBUG_COMPILE
-                    Helpers.DebugWriteLine(code + ": $" + local.Value);
-#endif
-                }
-
+                LoadRefArg(local, type);
             }
             else
             {   // reference-type; already *is* the address; just load it
                 LoadValue(local);
+            }
+        }
+
+        internal void LoadRefArg(Local local, Type type)
+        {
+            if (local == null)
+            {
+                throw new InvalidOperationException("Cannot load the address of a struct at the head of the stack");
+            }
+
+            if (local == this.InputValue)
+            {
+                il.Emit(OpCodes.Ldarga_S, (isStatic ? (byte)0 : (byte)1));
+#if DEBUG_COMPILE
+                    Helpers.DebugWriteLine(OpCodes.Ldarga_S + ": $" + (isStatic ? 0 : 1));
+#endif
+            }
+            else
+            {
+                OpCode code = UseShortForm(local) ? OpCodes.Ldloca_S : OpCodes.Ldloca;
+                il.Emit(code, local.Value);
+#if DEBUG_COMPILE
+                    Helpers.DebugWriteLine(code + ": $" + local.Value);
+#endif
             }
         }
         internal void Branch(CodeLabel label, bool @short)

@@ -431,8 +431,7 @@ namespace AqlaSerializer.Meta
 
             IProtoSerializer ser = null;
             bool nestedCollection = false;
-
-            handleNested = false;
+            
             if (handleNested && objectItemType != null)
             {
                 Type nestedItemType = null;
@@ -440,9 +439,12 @@ namespace AqlaSerializer.Meta
                 MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
                 if (nestedItemType != null)
                 {
-                    tryAsReference = true;
-                    isPacked = false; // should have subitems
-                    if (appendCollection) throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
+                    isPacked = false;
+                    bool originalAsReference = tryAsReference;
+                    if (tryAsReference && !CheckCanBeAsReference(objectItemType, false))
+                        tryAsReference = false;
+
+                    //if (appendCollection) throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
                     if (nestedDefaultType == null)
                     {
                         MetaType metaType;
@@ -453,7 +455,7 @@ namespace AqlaSerializer.Meta
                         finalType,
                         nestedItemType,
                         fieldNumber,
-                        true,
+                        originalAsReference,
                         false,
                         true,
                         dynamicType,
@@ -464,7 +466,13 @@ namespace AqlaSerializer.Meta
                         null,
                         true,
                         model);
-                    wireType = WireType.StartGroup;
+
+
+                    // TODO move it to the end of method:
+
+                    ser = new NetObjectValueDecorator(model, objectItemType, ser, tryAsReference);
+                    
+                    wireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     nestedCollection = true;
                 }
             }
@@ -485,15 +493,13 @@ namespace AqlaSerializer.Meta
                 {
                     supportNull = false;
                 }
-                if (!nestedCollection)
-                    ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
+                ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
                 ser = new NullDecorator(model, ser);
                 ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
             }
             else
             {
-                if (!nestedCollection)
-                    ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
+                ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
             }
             // apply lists if appropriate
             if (objectItemType != null)
