@@ -52,7 +52,7 @@ namespace AqlaSerializer.Serializers
         {
             SubItemToken token;
             bool isNewObject;
-            object r = BclHelpers.ReadNetObjectMasked_Start(value, source, key, type, options, true, out token,out isNewObject);
+            object r = NetObjectHelpers.ReadNetObject_StartRoot(value, source, key, type, options, out token, out isNewObject);
             if (isNewObject)
             {
                 if (_serializer is TagDecorator)
@@ -65,7 +65,7 @@ namespace AqlaSerializer.Serializers
         public void Write(object value, ProtoWriter dest)
         {
             bool write;
-            SubItemToken t = BclHelpers.WriteNetObjectMasked_Start(value, dest, key, options, true, out write);
+            SubItemToken t = NetObjectHelpers.WriteNetObject_StartRoot(value, dest, key, options, out write);
             if (write)
             {
                 _serializer.Write(value, dest);
@@ -91,11 +91,10 @@ namespace AqlaSerializer.Serializers
                 if (type == ctx.MapType(typeof(object))) ctx.LoadNullRef();
                 else ctx.LoadValue(type);
                 ctx.LoadValue((int)options);
-                ctx.LoadValue(true);
                 ctx.LoadAddress(token, token.Type);
                 ctx.LoadAddress(doRead, doRead.Type);
 
-                ctx.EmitCall(ctx.MapType(typeof(BclHelpers)).GetMethod("ReadNetObjectMasked_Start"));
+                ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("ReadNetObject_StartRoot"));
                 ctx.StoreValue(callResult);
 
                 var doReadFalseMark = ctx.DefineLabel();
@@ -148,9 +147,8 @@ namespace AqlaSerializer.Serializers
                 ctx.LoadReaderWriter();
                 ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key));
                 ctx.LoadValue((int)options);
-                ctx.LoadValue(true);
                 ctx.LoadAddress(doWrite, doWrite.Type);
-                ctx.EmitCall(ctx.MapType(typeof(BclHelpers)).GetMethod("WriteNetObjectMasked_Start"));
+                ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("WriteNetObject_StartRoot"));
                 ctx.StoreValue(token);
 
                 var doWriteFalse = ctx.DefineLabel();

@@ -248,6 +248,8 @@
     <Compile Include="Meta\TypeModel.List.cs" />
     <Compile Include="Meta\ValueMember.cs" />
     <Compile Include="NetObjectCache.cs" />
+    <Compile Include="NetObjectHelpers.Read.cs" />
+    <Compile Include="NetObjectHelpers.Write.cs" />
     <Compile Include="PrefixStyle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProtoException.cs" />

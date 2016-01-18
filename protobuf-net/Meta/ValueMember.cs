@@ -388,6 +388,7 @@ namespace AqlaSerializer.Meta
                     DefaultType,
                     DataFormat,
                     finalDefaultValue,
+                    true,
                     model);
 
                 
@@ -423,50 +424,52 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        internal static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, RuntimeTypeModel model)
+        internal static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, bool handleNested, RuntimeTypeModel model)
         {
             WireType wireType = 0;
             Type finalType = objectItemType ?? objectType;
 
             IProtoSerializer ser = null;
             bool nestedCollection = false;
-            
-            //if (objectItemType != null)
-            //{
-            //    Type nestedItemType = null;
-            //    Type nestedDefaultType = null;
-            //    MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
-            //    if (nestedItemType != null)
-            //    {
-            //        tryAsReference = true;
-            //        isPacked = false; // should have subitems
-            //        if (nestedDefaultType == null)
-            //        {
-            //            MetaType metaType;
-            //            if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
-            //                nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
-            //        }
-            //        ser = BuildValueFinalSerializer(
-            //            finalType,
-            //            nestedItemType,
-            //            fieldNumber,
-            //            true,
-            //            appendCollection,
-            //            mayCreateNew,
-            //            dynamicType,
-            //            isPacked,
-            //            isStrict,
-            //            nestedDefaultType,
-            //            dataFormat,
-            //            null,
-            //            model);
-            //        wireType = WireType.StartGroup;
-            //        nestedCollection = true;
-            //    }
-            //}
-            //bool originalAsReference = tryAsReference;
-            //if (!nestedCollection) // wrap with NetObject or not?
-            ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
+
+            handleNested = false;
+            if (handleNested && objectItemType != null)
+            {
+                Type nestedItemType = null;
+                Type nestedDefaultType = null;
+                MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
+                if (nestedItemType != null)
+                {
+                    tryAsReference = true;
+                    isPacked = false; // should have subitems
+                    if (appendCollection) throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
+                    if (nestedDefaultType == null)
+                    {
+                        MetaType metaType;
+                        if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
+                            nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
+                    }
+                    ser = BuildValueFinalSerializer(
+                        finalType,
+                        nestedItemType,
+                        fieldNumber,
+                        true,
+                        false,
+                        true,
+                        dynamicType,
+                        false,
+                        isStrict,
+                        nestedDefaultType,
+                        dataFormat,
+                        null,
+                        true,
+                        model);
+                    wireType = WireType.StartGroup;
+                    nestedCollection = true;
+                }
+            }
+            if (!nestedCollection) // wrap with NetObject or not?
+                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
 
             if (ser == null)
             {
