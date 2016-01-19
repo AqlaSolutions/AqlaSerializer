@@ -389,6 +389,7 @@ namespace AqlaSerializer.Meta
                     DataFormat,
                     finalDefaultValue,
                     true,
+                    true, // real type members always handle references if applicable
                     model);
 
                 
@@ -424,9 +425,15 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        internal static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, bool handleNested, RuntimeTypeModel model)
+        internal static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, bool handleNested, bool handleAsReference, RuntimeTypeModel model)
         {
-            WireType wireType = 0;
+            WireType wireType;
+            return BuildValueFinalSerializer(objectType, objectItemType, fieldNumber, tryAsReference, appendCollection, returnList, dynamicType, isPacked, isStrict, defaultType, dataFormat, defaultValue, handleNested, handleAsReference, false, model, out wireType);
+        }
+
+        static IProtoSerializer BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, bool handleNested, bool handleAsReference, bool isNestedValue, RuntimeTypeModel model, out WireType wireType)
+        {
+            wireType = 0;
             Type finalType = objectItemType ?? objectType;
 
             IProtoSerializer ser = null;
@@ -465,18 +472,16 @@ namespace AqlaSerializer.Meta
                         dataFormat,
                         null,
                         true,
-                        model);
+                        true, // as reference is handled for recursive members
+                        true,
+                        model,
+                        out wireType);
 
-
-                    // TODO move it to the end of method:
-
-                    ser = new NetObjectValueDecorator(objectItemType, ser, tryAsReference);
-                    
-                    wireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     nestedCollection = true;
                 }
             }
-            if (!nestedCollection) // wrap with NetObject or not?
+            if (!handleAsReference) tryAsReference = false; // handled outside
+            if (!nestedCollection)
                 ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
 
             if (ser == null)
@@ -495,11 +500,13 @@ namespace AqlaSerializer.Meta
                 }
                 ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
                 ser = new NullDecorator(model, ser);
-                ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
+                //if (!isNestedValue)
+                    ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
             }
             else
             {
-                ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
+                //if (!isNestedValue)
+                    ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
             }
             // apply lists if appropriate
             if (objectItemType != null)
@@ -517,6 +524,16 @@ namespace AqlaSerializer.Meta
                 else
                 {
                     ser = ListDecorator.Create(model, objectType, defaultType, ser, fieldNumber, isPacked, wireType, returnList, !appendCollection, supportNull);
+                }
+
+                if (handleAsReference)
+                {
+                    ser = new NetObjectValueDecorator(objectType, ser, tryAsReference);
+                    wireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
+                    if (!isNestedValue)
+                    {
+                        ser = new TagDecorator(1, wireType, false, ser);
+                    }
                 }
             }
 
