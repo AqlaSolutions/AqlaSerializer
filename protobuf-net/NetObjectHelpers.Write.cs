@@ -62,7 +62,8 @@ namespace AqlaSerializer
                     objectKey = dest.NetCache.AddObjectKey(value, out existing);
                 else
                 {
-                    // special handling for first empty element in list
+                    // was added for special handling for first empty element in list
+                    // on read side should just return null
                     objectKey = -2;
                     existing = true;
                 }

@@ -66,7 +66,7 @@ namespace AqlaSerializer.Meta
             //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
         
-        internal static bool CheckTypeDoesntRequireAttributeFamily(RuntimeTypeModel model, Type type)
+        internal static bool CheckTypeDoesntRequireContract(RuntimeTypeModel model, Type type)
         {
             if (!CheckTypeCanBeAdded(model, type)) return false;
             Type defaultType = null;
@@ -409,7 +409,7 @@ namespace AqlaSerializer.Meta
                             shouldAdd = addEvenIfAutoDisabled = true; // always add basic tuples, such as KeyValuePair
                         }
                         if (!shouldAdd || (
-                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireAttributeFamily(this,type)))
+                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this,type)))
                         {
                             if (demand) ThrowUnexpectedType(type);
                             return key;
