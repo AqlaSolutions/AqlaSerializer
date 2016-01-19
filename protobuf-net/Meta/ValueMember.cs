@@ -97,7 +97,7 @@ namespace AqlaSerializer.Meta
         {
             if (CheckCanBeAsReference(memberType, isDeterminatedAsAutoTuple))
             {
-                if (RuntimeTypeModel.CheckTypeDoesntRequireAttributeFamily(model, memberType))
+                if (RuntimeTypeModel.CheckTypeDoesntRequireContract(model, memberType))
                     isProtobufNetLegacyMember = false; // inbuilt behavior types doesn't depend on member legacy behavior
                 
                 MetaType type = model.FindWithoutAdd(memberType);

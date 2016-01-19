@@ -29,8 +29,15 @@ namespace Examples
                 }
                 else
                 {
-                    proc.Kill();
-                    throw new TimeoutException();
+                    try
+                    {
+                        proc.Kill();
+                    }
+                    catch
+                    {
+                    }
+                    Assert.Fail("PEVerify timeout: "+ path + "\r\n" + output);
+                    return false;
                 }
             }
         }

@@ -31,7 +31,7 @@ namespace AqlaSerializer
             if (type == null) throw new ArgumentNullException("type");
             if (!RuntimeTypeModel.CheckTypeCanBeAdded(_model, type)) return false;
             return GetContractFamily(type) != AttributeFamily.None
-                   || RuntimeTypeModel.CheckTypeDoesntRequireAttributeFamily(_model, type);
+                   || RuntimeTypeModel.CheckTypeDoesntRequireContract(_model, type);
         }
 
         public virtual void ApplyDefaultBehaviour(MetaType metaType)
@@ -1020,7 +1020,7 @@ namespace AqlaSerializer
                 }
             }
 
-            bool ignoreAddSettings = RuntimeTypeModel.CheckTypeDoesntRequireAttributeFamily(_model, type);
+            bool ignoreAddSettings = RuntimeTypeModel.CheckTypeDoesntRequireContract(_model, type);
             return ignoreAddSettings || (!isProtobufNetLegacyMember && !_model.AddNotAsReferenceDefault);
         }
 

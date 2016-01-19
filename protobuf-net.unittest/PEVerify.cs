@@ -1,4 +1,5 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,8 +40,14 @@ namespace AqlaSerializer.unittest
                 }
                 else
                 {
-                    proc.Kill();
-                    throw new TimeoutException();
+                    try
+                    {
+                        proc.Kill();
+                    }
+                    catch
+                    {
+                    }
+                    Assert.Fail("PEVerify timeout: " + path + "\r\n" + output);
                 }
             }
         }
