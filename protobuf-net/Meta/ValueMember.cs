@@ -470,7 +470,7 @@ namespace AqlaSerializer.Meta
 
                     // TODO move it to the end of method:
 
-                    ser = new NetObjectValueDecorator(model, objectItemType, ser, tryAsReference);
+                    ser = new NetObjectValueDecorator(objectItemType, ser, tryAsReference);
                     
                     wireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     nestedCollection = true;

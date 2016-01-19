@@ -19,29 +19,21 @@ namespace AqlaSerializer.Serializers
 {
     sealed class NetObjectValueDecorator : IProtoSerializer
     {
-        private readonly IProtoSerializer _serializer;
-        bool _asReference;
-        private readonly Type type;
+        readonly IProtoSerializer _serializer;
+        readonly bool _asReference;
+        readonly Type type;
 
-        private readonly BclHelpers.NetObjectOptions options;
+        readonly BclHelpers.NetObjectOptions _options;
 
-        public NetObjectValueDecorator(TypeModel model, Type type, IProtoSerializer serializer, bool asReference)
+        public NetObjectValueDecorator(Type type, IProtoSerializer serializer, bool asReference)
         {
             _serializer = serializer;
+            //wrapping a type makes too much complexity for just one ReadFieldHeader call
             //var typeSer = serializer as IProtoTypeSerializer;
-            //if (typeSer == null)
-            //{
-            //    typeSer = new TypeSerializer(model, type, new[] { 1 }, new[] { serializer }, null, true, true, null, type, null)
-            //    {
-            //        AllowInheritance = false, // TODO save subtype here! good place!
-            //        CanCreateInstance = false
-            //    };
-            //}
-            //_serializer = typeSer;
             _asReference = asReference;
-            options = BclHelpers.NetObjectOptions.AsReference | BclHelpers.NetObjectOptions.UseConstructor;
+            _options = BclHelpers.NetObjectOptions.AsReference | BclHelpers.NetObjectOptions.UseConstructor;
             if (serializer is TupleSerializer)
-                options |= BclHelpers.NetObjectOptions.LateSet;
+                _options |= BclHelpers.NetObjectOptions.LateSet;
             this.type = type;
         }
 
@@ -70,13 +62,13 @@ namespace AqlaSerializer.Serializers
             int newTypeKey;
             int newObjectKey;
             var t = type;
-            object newValue = NetObjectHelpers.ReadNetObject_StartInject(value, source, ref t, options, out token, out shouldEnd, out newObjectKey, out newTypeKey, out isType);
+            object newValue = NetObjectHelpers.ReadNetObject_StartInject(value, source, ref t, _options, out token, out shouldEnd, out newObjectKey, out newTypeKey, out isType);
             if (shouldEnd)
             {
                 value = newValue;
                 newValue = DoRead(value, source);
             }
-            NetObjectHelpers.ReadNetObject_EndInject(shouldEnd, newValue, source, value, t, newObjectKey, newTypeKey, isType, options, token);
+            NetObjectHelpers.ReadNetObject_EndInject(shouldEnd, newValue, source, value, t, newObjectKey, newTypeKey, isType, _options, token);
 
             return newValue;
         }
@@ -98,7 +90,7 @@ namespace AqlaSerializer.Serializers
                 return;
             }
             bool write;
-            SubItemToken t = NetObjectHelpers.WriteNetObject_StartInject(value, dest, options, out write);
+            SubItemToken t = NetObjectHelpers.WriteNetObject_StartInject(value, dest, _options, out write);
             if (write)
             {
                 // field header written!
@@ -144,42 +136,41 @@ namespace AqlaSerializer.Serializers
                 }
                 else
                 {
-                    g.Assign(t.AsOperand, ctx.MapType(type));
+                    g.Assign(t, ctx.MapType(type));
                     g.Assign(
-                        newValue.AsOperand,
-                        s.Invoke(
-                            typeof(NetObjectHelpers),
-                            "ReadNetObject_StartInject",
-                            value.AsOperand,
+                        newValue,
+                        s.Invoke(typeof(NetObjectHelpers),
+                            nameof(NetObjectHelpers.ReadNetObject_StartInject),
+                            value,
                             g.Arg(ctx.ArgIndexReadWriter),
-                            t.AsOperand,
-                            options,
-                            token.AsOperand,
-                            shouldEnd.AsOperand,
-                            newObjectKey.AsOperand,
-                            newTypeKey.AsOperand,
-                            isType.AsOperand));
+                            t,
+                            _options,
+                            token,
+                            shouldEnd,
+                            newObjectKey,
+                            newTypeKey,
+                            isType));
 
-                    g.If(shouldEnd.AsOperand);
+                    g.If(shouldEnd);
                     {
-                        g.Assign(oldValue.AsOperand, newValue.AsOperand);
-                        g.Assign(resultCasted.AsOperand, newValue.AsOperand.Cast(type));
+                        g.Assign(oldValue, newValue);
+                        g.Assign(resultCasted, newValue.AsOperand.Cast(type));
                         EmitDoRead(g, resultCasted, ctx);
                     }
                     g.End();
                     g.Invoke(
                         typeof(NetObjectHelpers),
-                        "ReadNetObject_EndInject",
-                        shouldEnd.AsOperand,
-                        newValue.AsOperand,
+                        nameof(NetObjectHelpers.ReadNetObject_EndInject),
+                        shouldEnd,
+                        newValue,
                         g.Arg(ctx.ArgIndexReadWriter),
-                        oldValue.AsOperand,
-                        t.AsOperand,
-                        newObjectKey.AsOperand,
-                        newTypeKey.AsOperand,
-                        isType.AsOperand,
-                        options,
-                        token.AsOperand);
+                        oldValue,
+                        t,
+                        newObjectKey,
+                        newTypeKey,
+                        isType,
+                        _options,
+                        token);
 
                 }
 
@@ -195,11 +186,11 @@ namespace AqlaSerializer.Serializers
             var s = ctx.RunSharpContext.StaticFactory;
             using (Local t2 = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
             {
-                g.Assign(t2.AsOperand, s.Invoke(typeof(ProtoReader), "StartSubItem", g.Arg(ctx.ArgIndexReadWriter)));
-                g.Invoke(g.Arg(ctx.ArgIndexReadWriter), "ReadFieldHeader"); // we always expect that value really has tag inside
+                g.Assign(t2, s.Invoke(typeof(ProtoReader), nameof(ProtoReader.StartSubItem), g.Arg(ctx.ArgIndexReadWriter)));
+                g.Invoke(g.Arg(ctx.ArgIndexReadWriter), nameof(ProtoReader.ReadFieldHeader)); // we always expect that value really has tag inside
                 _serializer.EmitRead(ctx, value);
                 ctx.StoreValue(value);
-                g.Invoke(typeof(ProtoReader), "EndSubItem", t2.AsOperand, g.Arg(ctx.ArgIndexReadWriter));
+                g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), t2, g.Arg(ctx.ArgIndexReadWriter));
             }
         }
 
@@ -218,13 +209,13 @@ namespace AqlaSerializer.Serializers
                 {
                     var s = ctx.RunSharpContext.StaticFactory;
                     g.Assign(
-                        t.AsOperand,
-                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), "WriteNetObject_StartInject", value.AsOperand, g.Arg(ctx.ArgIndexReadWriter), options, write.AsOperand));
-                    g.If(write.AsOperand);
+                        t,
+                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_StartInject), value, g.Arg(ctx.ArgIndexReadWriter), _options, write));
+                    g.If(write);
                     {
                         // field header written!
                         EmitDoWrite(g, value, ctx);
-                        g.Invoke(typeof(ProtoWriter), "EndSubItem", t.AsOperand, g.Arg(ctx.ArgIndexReadWriter));
+                        g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t, g.Arg(ctx.ArgIndexReadWriter));
                     }
                     g.End();
                 }
@@ -237,43 +228,12 @@ namespace AqlaSerializer.Serializers
             var s = ctx.RunSharpContext.StaticFactory;
             using (Local t2 = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
             {
-                g.Assign(t2.AsOperand, s.Invoke(typeof(ProtoWriter), "StartSubItem", null, g.Arg(ctx.ArgIndexReadWriter)));
+                g.Assign(t2, s.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.StartSubItem), null, g.Arg(ctx.ArgIndexReadWriter)));
                 _serializer.EmitWrite(ctx, value);
-                g.Invoke(typeof(ProtoWriter), "EndSubItem", t2.AsOperand, g.Arg(ctx.ArgIndexReadWriter));
+                g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t2, g.Arg(ctx.ArgIndexReadWriter));
             }
         }
 #endif
-        //        public bool HasCallbacks(TypeModel.CallbackType callbackType)
-        //        {
-        //            return _serializer.HasCallbacks(callbackType);
-        //        }
-
-        //        public bool CanCreateInstance()
-        //        {
-        //            return _serializer.CanCreateInstance();
-        //        }
-        //#if !FEAT_IKVM
-        //        public object CreateInstance(ProtoReader source)
-        //        {
-        //            return _serializer.CreateInstance(source);
-        //        }
-
-        //        public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
-        //        {
-        //            _serializer.Callback(value, callbackType, context);
-        //        }
-        //#endif
-        //#if FEAT_COMPILER
-        //        public void EmitCallback(CompilerContext ctx, Local valueFrom, TypeModel.CallbackType callbackType)
-        //        {
-        //            _serializer.EmitCallback(ctx, valueFrom, callbackType);
-        //        }
-
-        //        public void EmitCreateInstance(CompilerContext ctx)
-        //        {
-        //            _serializer.EmitCreateInstance(ctx);
-        //        }
-        //#endif
     }
 }
 #endif

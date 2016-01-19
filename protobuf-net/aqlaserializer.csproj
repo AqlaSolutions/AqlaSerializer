@@ -221,6 +221,7 @@
     <Compile Include="Compiler\CompilerContext.cs" />
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Compiler\MethodContext.cs" />
+    <Compile Include="Compiler\StackValueOperand.cs" />
     <Compile Include="LinqBridge.cs" />
     <Compile Include="Meta\Data\ModelTypeRelationsData.cs" />
     <Compile Include="Meta\Data\SubtypeData.cs" />
