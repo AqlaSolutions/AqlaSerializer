@@ -511,8 +511,8 @@ namespace AqlaSerializer.Meta
         void InitSerializers()
         {
             SetFlag(OPTIONS_Frozen, true, false);
-            serializer = BuildSerializer();
-            var s = BuildSerializer();
+            serializer = BuildSerializer(false);
+            var s = BuildSerializer(true);
             rootSerializer = new RootDecorator(model, type, model.GetKey(type, false, false), s);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
@@ -555,8 +555,14 @@ namespace AqlaSerializer.Meta
                 return itemType != null;
             }
         }
-        private IProtoTypeSerializer BuildSerializer()
+        private IProtoTypeSerializer BuildSerializer(bool isRoot)
         {
+            // reference tracking decorators (RootDecorator, NetObjectDecorator, NetObjectValueDecorator)
+            // should always be applied only one time (otherwise will consider new objects as already written):
+            // #1 For collection types references are handled either by RootDecorator or 
+            // by VirtualMember which owns the value (so outside of this scope)
+            // because the value is treated as single object
+            // #2 For members: ordinal VirtualMembers are used and they will handle references when appropriate
             if (type.IsArray)
             {
                 return new TypeSerializer(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[] {
@@ -573,7 +579,8 @@ namespace AqlaSerializer.Meta
                     type,
                     BinaryDataFormat.Default,
                     null,
-                    false,
+                    true, // still use settings from this meta type, not from nested (TODO may be add setting to toggle this per type?)
+                    false, // #1
                     model)
                 }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
             }
@@ -610,10 +617,14 @@ namespace AqlaSerializer.Meta
                         defaultType,
                         BinaryDataFormat.Default,
                         null,
-                        false,
+                        true,  // still use settings from this meta type, not from nested (TODO may be add setting to toggle this per type?)
+                        false, // #1
                         model)
                 }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
             }
+
+            // #2
+
             if (surrogate != null)
             {
                 MetaType mt = model[surrogate], mtBase;
@@ -1012,7 +1023,7 @@ namespace AqlaSerializer.Meta
             }
             // handle lists
             if (itemType == null) { itemType = TypeModel.GetListItemType(model, type); }
-
+            
             if (itemType != null && defaultType == null)
             {
 #if WINRT

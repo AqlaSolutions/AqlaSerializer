@@ -46,6 +46,36 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
+    public class ArrayArrayRef
+    {
+        [ProtoBuf.ProtoMember(1)]
+        public CustomString[][] Values { get; set; }
+
+        [ProtoBuf.ProtoMember(2)]
+        public CustomString[][] Values2 { get; set; }
+
+        [ProtoBuf.ProtoMember(3)]
+        public ArrayArrayRef Self { get; set; }
+
+        public static ArrayArrayRef CreateFilled()
+        {
+            var r = new ArrayArrayRef()
+            {
+                Values = new[]
+                {
+                    new CustomString[] { "11", "12" },
+                    new CustomString[] { "21", "22", "23" },
+                    null,
+                    new CustomString[0]
+                }
+            };
+            r.Values2 = r.Values;
+            r.Self = r;
+            return r;
+        }
+    }
+
+    [ProtoBuf.ProtoContract]
     public class ArrayArrayCustom
     {
         [ProtoBuf.ProtoMember(1)]
@@ -77,6 +107,11 @@ namespace Examples
         protected bool Equals(CustomString other)
         {
             return string.Equals(Value, other.Value);
+        }
+
+        public override string ToString()
+        {
+            return Value + "";
         }
 
         public override bool Equals(object obj)
@@ -413,17 +448,43 @@ namespace Examples
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
-            if (compile)
-            {
-                tm.Add(typeof(ArrayArray), true);
-                tm.Compile("arrayarray", "arrayarray.dll");
-            }
             var source = ArrayArray.CreateFilled();
             var copy = tm.DeepClone(source);
             Assert.That(copy.Values, Is.EqualTo(source.Values));
             if (compile)
             {
+                tm.Compile("arrayarray", "arrayarray.dll");
                 PEVerify.AssertValid("arrayarray.dll");
+            }
+        }
+
+        [Test]
+        public void TestArrayArrayAsRef([Values(false, true)] bool compile, [Values(false, true)] bool asRef)
+        {
+            var tm = TypeModel.Create();
+            tm.AutoCompile = compile;
+
+            foreach (var f in tm.Add(typeof(ArrayArrayRef), true).GetFields())
+                f.AsReference = asRef;
+
+            var source = ArrayArrayRef.CreateFilled();
+            var copy = tm.DeepClone(source);
+            Assert.That(copy.Values, Is.EqualTo(source.Values));
+            if (asRef)
+            {
+                Assert.That(copy.Values2, Is.SameAs(copy.Values2));
+                Assert.That(copy.Values[0], Is.SameAs(copy.Values[1]));
+                Assert.That(copy.Self, Is.SameAs(copy));
+            }
+            else
+            {
+                Assert.That(copy.Values2, Is.Not.SameAs(copy.Values2));
+                Assert.That(copy.Values[0], Is.Not.SameAs(copy.Values[1]));
+            }
+            if (compile)
+            {
+                tm.Compile("arrayarrayref", "arrayarrayref.dll");
+                PEVerify.AssertValid("arrayarrayref.dll");
             }
         }
 
@@ -452,16 +513,12 @@ namespace Examples
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
-            if (compile)
-            {
-                tm.Add(typeof(ArrayArrayCustom), true);
-                tm.Compile("ArrayArrayCustom", "ArrayArrayCustom.dll");
-            }
             var source = ArrayArrayCustom.CreateFilled();
             var copy = tm.DeepClone(source);
             Assert.That(copy.Values, Is.EqualTo(source.Values));
             if (compile)
             {
+                tm.Compile("ArrayArrayCustom", "ArrayArrayCustom.dll");
                 PEVerify.AssertValid("ArrayArrayCustom.dll");
             }
         }
