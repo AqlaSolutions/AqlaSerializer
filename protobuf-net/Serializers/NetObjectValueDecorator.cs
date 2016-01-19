@@ -95,8 +95,8 @@ namespace AqlaSerializer.Serializers
             {
                 // field header written!
                 DoWrite(value, dest);
-                ProtoWriter.EndSubItem(t, dest);
             }
+            ProtoWriter.EndSubItem(t, dest);
         }
 
         void DoWrite(object value, ProtoWriter dest)
@@ -110,73 +110,76 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitRead(CompilerContext ctx, Local valueFrom)
         {
-            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(type, valueFrom) : new Local(ctx, type))
-            using (Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
-            using (Local shouldEnd = new Local(ctx, ctx.MapType(typeof(bool))))
-            using (Local isType = new Local(ctx, ctx.MapType(typeof(bool))))
-            using (Local newTypeKey = new Local(ctx, ctx.MapType(typeof(int))))
-            using (Local newObjectKey = new Local(ctx, ctx.MapType(typeof(int))))
-            using (Local t = new Local(ctx, ctx.MapType(typeof(System.Type))))
-            using (Local newValue = new Local(ctx, ctx.MapType(typeof(object))))
-            using (Local oldValue = new Local(ctx, ctx.MapType(typeof(object))))
-            using (Local resultCasted = new Local(ctx, ctx.MapType(type)))
-            {
-                if (!RequiresOldValue)
-                {
-                    ctx.LoadNullRef();
-                    ctx.StoreValue(value);
-                }
-                var g = new CodeGen(ctx.RunSharpContext, false);
-                var s = ctx.RunSharpContext.StaticFactory;
-                g.WriteLine("Enter");
+            var g = new CodeGen(ctx.RunSharpContext, false);
+            var s = ctx.RunSharpContext.StaticFactory;
 
-                if (!_asReference)
+            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(type, valueFrom) : new Local(ctx, type))
+            {
+                using (Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
+                using (Local shouldEnd = new Local(ctx, ctx.MapType(typeof(bool))))
+                using (Local isType = new Local(ctx, ctx.MapType(typeof(bool))))
+                using (Local newTypeKey = new Local(ctx, ctx.MapType(typeof(int))))
+                using (Local newObjectKey = new Local(ctx, ctx.MapType(typeof(int))))
+                using (Local t = new Local(ctx, ctx.MapType(typeof(System.Type))))
+                using (Local newValue = new Local(ctx, ctx.MapType(typeof(object))))
+                using (Local oldValue = new Local(ctx, ctx.MapType(typeof(object))))
+                using (Local resultCasted = new Local(ctx, ctx.MapType(type)))
                 {
-                    EmitDoRead(g, value, ctx);
-                }
-                else
-                {
-                    g.Assign(t, ctx.MapType(type));
-                    g.Assign(
-                        newValue,
-                        s.Invoke(typeof(NetObjectHelpers),
-                            nameof(NetObjectHelpers.ReadNetObject_StartInject),
-                            value,
-                            g.Arg(ctx.ArgIndexReadWriter),
-                            t,
-                            _options,
-                            token,
+                    if (!RequiresOldValue)
+                    {
+                        ctx.LoadNullRef();
+                        ctx.StoreValue(value);
+                    }
+
+                    if (!_asReference)
+                    {
+                        EmitDoRead(g, value, ctx);
+                    }
+                    else
+                    {
+                        g.Assign(t, ctx.MapType(type));
+                        g.Assign(
+                            newValue,
+                            s.Invoke(
+                                typeof(NetObjectHelpers),
+                                nameof(NetObjectHelpers.ReadNetObject_StartInject),
+                                value,
+                                g.Arg(ctx.ArgIndexReadWriter),
+                                t,
+                                _options,
+                                token,
+                                shouldEnd,
+                                newObjectKey,
+                                newTypeKey,
+                                isType));
+
+                        g.If(shouldEnd);
+                        {
+                            g.Assign(oldValue, newValue);
+                            g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+                            EmitDoRead(g, resultCasted, ctx);
+                        }
+                        g.End();
+                        g.Invoke(
+                            typeof(NetObjectHelpers),
+                            nameof(NetObjectHelpers.ReadNetObject_EndInject),
                             shouldEnd,
+                            newValue,
+                            g.Arg(ctx.ArgIndexReadWriter),
+                            oldValue,
+                            t,
                             newObjectKey,
                             newTypeKey,
-                            isType));
+                            isType,
+                            _options,
+                            token);
 
-                    g.If(shouldEnd);
-                    {
-                        g.Assign(oldValue, newValue);
-                        g.Assign(resultCasted, newValue.AsOperand.Cast(type));
-                        EmitDoRead(g, resultCasted, ctx);
                     }
-                    g.End();
-                    g.Invoke(
-                        typeof(NetObjectHelpers),
-                        nameof(NetObjectHelpers.ReadNetObject_EndInject),
-                        shouldEnd,
-                        newValue,
-                        g.Arg(ctx.ArgIndexReadWriter),
-                        oldValue,
-                        t,
-                        newObjectKey,
-                        newTypeKey,
-                        isType,
-                        _options,
-                        token);
 
-                }
-
-                if (_serializer.ReturnsValue)
-                {
-                    ctx.LoadValue(resultCasted);
+                    if (_serializer.ReturnsValue)
+                    {
+                        ctx.LoadValue(resultCasted);
+                    }
                 }
             }
         }
@@ -215,9 +218,9 @@ namespace AqlaSerializer.Serializers
                     {
                         // field header written!
                         EmitDoWrite(g, value, ctx);
-                        g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t, g.Arg(ctx.ArgIndexReadWriter));
                     }
                     g.End();
+                    g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t, g.Arg(ctx.ArgIndexReadWriter));
                 }
             }
 
