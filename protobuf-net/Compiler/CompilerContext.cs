@@ -584,7 +584,7 @@ namespace AqlaSerializer.Compiler
             {
                 var g = new CodeGen(RunSharpContext, false);
                 g.LeaveNextReturnOnStack();
-                g.Invoke(typeof(ProtoWriter), methodName, fromValue.AsOperand, g.Arg(ArgIndexReadWriter));
+                g.Invoke(typeof(ProtoWriter), methodName, fromValue, g.Arg(ArgIndexReadWriter));
             }
             else
             {
@@ -617,7 +617,7 @@ namespace AqlaSerializer.Compiler
             {
                 var g = new CodeGen(RunSharpContext, false);
                 g.LeaveNextReturnOnStack();
-                g.Invoke(typeof(ProtoWriter), methodName, valueFrom.AsOperand, g.Arg(ArgIndexReadWriter));
+                g.Invoke(typeof(ProtoWriter), methodName, valueFrom, g.Arg(ArgIndexReadWriter));
             }
             else
             {

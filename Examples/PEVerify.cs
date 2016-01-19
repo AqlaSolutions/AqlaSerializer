@@ -1,6 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Diagnostics;
+using System.Text;
 using NUnit.Framework;
 
 namespace Examples
@@ -13,11 +14,17 @@ namespace Examples
             const string exePath = "PEVerify.exe";
             var startInfo = new ProcessStartInfo(exePath, path);
             startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.CreateNoWindow = true;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            startInfo.StandardOutputEncoding = Encoding.GetEncoding(866);
             using (Process proc = Process.Start(startInfo))
             {
-                if (proc.WaitForExit(10000))
+                bool ok = proc.WaitForExit(10000);
+                string output = proc.StandardOutput.ReadToEnd();
+                if (ok)
                 {
-                    Assert.AreEqual(0, proc.ExitCode, path);
+                    Assert.AreEqual(0, proc.ExitCode, path + "\r\n" + output);
                     return proc.ExitCode == 0;
                 }
                 else

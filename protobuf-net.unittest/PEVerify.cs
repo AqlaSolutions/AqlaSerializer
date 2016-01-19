@@ -23,15 +23,19 @@ namespace AqlaSerializer.unittest
         {
             // note; PEVerify can be found %ProgramFiles%\Microsoft SDKs\Windows\v6.0A\bin
             const string exePath = "PEVerify.exe";
-            ProcessStartInfo psi = new ProcessStartInfo(exePath, path);
-            psi.CreateNoWindow = true;
-            psi.WindowStyle = ProcessWindowStyle.Hidden;
-            using (Process proc = Process.Start(psi))
+            ProcessStartInfo startInfo = new ProcessStartInfo(exePath, path);
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            startInfo.StandardOutputEncoding = Encoding.GetEncoding(866);
+            using (Process proc = Process.Start(startInfo))
             {
-                if (proc.WaitForExit(10000))
+                bool ok = proc.WaitForExit(10000);
+                string output = proc.StandardOutput.ReadToEnd();
+                if (ok)
                 {
-                    Assert.AreEqual(exitCode, proc.ExitCode, path);
-                    if(deleteOnSuccess) File.Delete(path);
+                    Assert.AreEqual(exitCode, proc.ExitCode, path + "\r\n" + output);
+                    if (deleteOnSuccess) File.Delete(path);
                 }
                 else
                 {

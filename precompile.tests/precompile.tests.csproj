@@ -60,6 +60,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Examples\LeakDetection.cs">
+      <Link>LeakDetection.cs</Link>
+    </Compile>
     <Compile Include="..\Examples\PEVerify.cs">
       <Link>PEVerify.cs</Link>
     </Compile>

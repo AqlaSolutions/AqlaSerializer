@@ -83,6 +83,12 @@ namespace AqlaSerializer.Compiler
 
         }
 
+        public static implicit operator Operand(Local local)
+        {
+            if (local == null) throw new InvalidCastException("Local is null, use " + nameof(StackValueOperand) + " with type specified");
+            return local.AsOperand;
+        }
+        
         public ContextualOperand AsOperand { get; }
 
         class FakeOperand : Operand

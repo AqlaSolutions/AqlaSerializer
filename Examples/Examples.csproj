@@ -353,6 +353,7 @@
     <Compile Include="Issues\SO9491933.cs" />
     <Compile Include="Issues\SurrogateForObjectUsage.cs" />
     <Compile Include="ItemsWithLengthPrefix.cs" />
+    <Compile Include="LeakDetection.cs" />
     <Compile Include="ListAsInterfaceTests.cs" />
     <Compile Include="ListsWithInheritance.cs" />
     <Compile Include="ListTests.cs" />
