@@ -1013,17 +1013,6 @@ namespace AqlaSerializer.Meta
             // handle lists
             if (itemType == null) { itemType = TypeModel.GetListItemType(model, type); }
 
-            // check for nested data (not allowed)
-            if (itemType != null)
-            {
-                Type nestedItemType = null, nestedDefaultType = null;
-                ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
-                if (nestedItemType != null)
-                {
-                    model.FindOrAddAuto(itemType, false, false, false);
-                }
-            }
-
             if (itemType != null && defaultType == null)
             {
 #if WINRT
