@@ -2746,6 +2746,7 @@ namespace System.Runtime.CompilerServices
 
 // $Id: Func.cs 71137f497bf2 2012/04/16 20:01:27 azizatif $
 
+#if !WINRT && !PHONE8 && !NET_3_5 && !NET_4_0 && !PORTABLE
 namespace AltLinq
 {
 #if LINQBRIDGE_LIB
@@ -2762,6 +2763,7 @@ namespace AltLinq
     delegate TResult Func<T1, T2, T3, T4, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
 #endif
 }
+#endif
 
 // $Id: IGrouping.cs 71137f497bf2 2012/04/16 20:01:27 azizatif $
 
@@ -3086,7 +3088,7 @@ namespace AltLinq
 }
 
 // $Id: Action.cs 71137f497bf2 2012/04/16 20:01:27 azizatif $
-
+#if !WINRT && !PHONE8 && !NET_3_5 && !NET_4_0 && !PORTABLE
 namespace AltLinq
 {
 #if LINQBRIDGE_LIB
@@ -3101,7 +3103,7 @@ namespace AltLinq
     delegate void Action<T1, T2, T3, T4>(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
 #endif
 }
-
+#endif
 namespace AltLinq
 {
     class AltArgumentOutOfRangeException : ArgumentOutOfRangeException

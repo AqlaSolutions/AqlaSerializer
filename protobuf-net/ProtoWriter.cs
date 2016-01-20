@@ -212,6 +212,7 @@ namespace AqlaSerializer
             if (!writer.fieldStarted) throw new InvalidOperationException("Cannot write a field wire type " + wireType + " because field number has not been written");
             if (writer.ignoredFieldStarted)
             {
+                writer.wireType = wireType;
                 writer.ignoredFieldStarted = false;
                 return;
             }

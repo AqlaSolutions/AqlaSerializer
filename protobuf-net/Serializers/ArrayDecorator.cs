@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
 #endif
@@ -43,6 +44,7 @@ namespace AqlaSerializer.Serializers
             _arrayType = arrayType;
             _overwriteList = overwriteList;
             _protoCompatibility = protoCompatibility;
+            _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
         }
 
         public override Type ExpectedType { get { return _arrayType; } }
@@ -135,88 +137,17 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            IList arr = (IList)value;
-            int len = arr.Count;
-            SubItemToken token = new SubItemToken();
-            int fieldNumber = dest.FieldNumber;
-
-            if (_protoCompatibility)
-            {
-                bool subItemNeeded = _writePacked && len != 0;
-
-                // empty arrays are nulls, no subitem
-                if (subItemNeeded)
-                    token = ProtoWriter.StartSubItem(null, true, dest);
-                else
-                    ProtoWriter.WriteFieldHeaderCancelBegin(dest);
-
-                DoWriteArrayContent(arr, len, fieldNumber, dest);
-
-                if (subItemNeeded)
-                    ProtoWriter.EndSubItem(token, dest);
-            }
-            else
-            {
-                // packed or not they will always be in subitem
-                // if array is empty the subitem will be empty
-
-                ProtoWriter.StartSubItem(fieldNumber, null, _writePacked, dest);
-
-                DoWriteArrayContent(arr, len, fieldNumber, dest);
-
-                ProtoWriter.EndSubItem(token, dest);
-            }
+            _listHelpers.Write(value, null, dest);
         }
 
-        void DoWriteArrayContent(IList arr, int len, int fieldNumber, ProtoWriter dest)
-        {
-            for (int i = 0; i < len; i++)
-            {
-                object obj = arr[i];
-
-                if (_writePacked)
-                    ProtoWriter.WriteFieldHeaderBeginIgnored(dest);
-                else
-                    ProtoWriter.WriteFieldHeaderBegin(fieldNumber, dest);
-
-                Tail.Write(obj, dest);
-            }
-        }
+        readonly ListHelpers _listHelpers;
 
         public override object Read(object value, ProtoReader source)
         {
-            bool packed = source.WireType == WireType.String;
             int reservedTrap = ProtoReader.ReserveNoteObject(source);
             BasicList list = new BasicList();
-
-            int fieldNumber = source.FieldNumber;
-
-            bool subItemNeeded = packed || !_protoCompatibility;
+            _listHelpers.Read(null, v => list.Add(v), source);
             
-            SubItemToken token = subItemNeeded ? ProtoReader.StartSubItem(source) : new SubItemToken();
-
-            if (packed)
-            {
-                while (ProtoReader.HasSubValue(_packedWireTypeForRead, source))
-                {
-                    list.Add(Tail.Read(null, source));
-                }
-            }
-            else
-            {
-                // in non-compatible mode we are inside subitem now so need to re-read field
-                if (!_protoCompatibility || source.TryReadFieldHeader(fieldNumber))
-                {
-                    do
-                    {
-                        list.Add(Tail.Read(null, source));
-                    } while (source.TryReadFieldHeader(fieldNumber));
-                }
-            }
-
-            if (subItemNeeded)
-                ProtoReader.EndSubItem(token, source);
-
             int oldLen = AppendToCollection ? ((value == null ? 0 : ((Array)value).Length)) : 0;
             Array result = Array.CreateInstance(_itemType, oldLen + list.Count);
             ProtoReader.NoteReservedTrappedObject(reservedTrap, result, source);
@@ -322,6 +253,7 @@ Type listType;
         }
         
 #endif
+
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
             return false;
@@ -332,6 +264,7 @@ Type listType;
             return true;
         }
 
+#if !FEAT_IKVM
         public object CreateInstance(ProtoReader source)
         {
             return Array.CreateInstance(_itemType, 0);
@@ -339,12 +272,13 @@ Type listType;
 
         public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
-        
-        }
 
+        }
+#endif
+#if FEAT_COMPILER
         public void EmitCallback(CompilerContext ctx, Local valueFrom, TypeModel.CallbackType callbackType)
         {
-        
+
         }
 
         public void EmitCreateInstance(CompilerContext ctx)
@@ -356,6 +290,8 @@ Type listType;
 #endif
             ctx.EmitCtor(listType);
         }
+#endif
+
     }
 }
 #endif
