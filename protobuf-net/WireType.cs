@@ -22,12 +22,12 @@ namespace AqlaSerializer
         Fixed64 = 1,
 
         /// <summary>
-        /// Length-variant-prefixed encoding
+        /// Length-variant-prefixed encoding (may be used for nested or root object to add length prefix)
         /// </summary>
         String = 2,
 
         /// <summary>
-        /// Indicates the start of a group
+        /// Indicates the start of a group (nested object without length prefix but stream rewriting required; use it for small "wrappers" around real objects to minimize data movement in stream)
         /// </summary>
         StartGroup = 3,
 
@@ -37,7 +37,7 @@ namespace AqlaSerializer
         EndGroup = 4,
 
         /// <summary>
-        /// Fixed-length 4-byte encoding
+        /// Fixed-length 4-byte encoding, may be used as root length prefix but not for nested objects
         /// </summary>10
         Fixed32 = 5,
 

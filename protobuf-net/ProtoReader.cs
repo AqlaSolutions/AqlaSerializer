@@ -1227,7 +1227,8 @@ namespace AqlaSerializer
         private void AppendExtensionField(ProtoWriter writer)
         {
             //TODO: replace this with stream-based, buffered raw copying
-            ProtoWriter.WriteFieldHeader(fieldNumber, wireType, writer);
+            if (wireType != WireType.StartGroup)
+                ProtoWriter.WriteFieldHeader(fieldNumber, wireType, writer);
             switch (wireType)
             {
                 case WireType.Fixed32:
@@ -1243,7 +1244,7 @@ namespace AqlaSerializer
                     return;
                 case WireType.StartGroup:
                     SubItemToken readerToken = StartSubItem(this),
-                        writerToken = ProtoWriter.StartSubItem(null, writer);
+                                 writerToken = ProtoWriter.StartSubItem(null, false, writer);
                     while (ReadFieldHeader() > 0) { AppendExtensionField(writer); }
                     EndSubItem(readerToken, this);
                     ProtoWriter.EndSubItem(writerToken, writer);
