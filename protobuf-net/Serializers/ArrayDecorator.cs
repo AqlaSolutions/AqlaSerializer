@@ -148,8 +148,7 @@ namespace AqlaSerializer.Serializers
             bool writePacked = (options & OPTIONS_WritePacked) != 0;
             if (writePacked)
             {
-                ProtoWriter.WriteFieldHeader(fieldNumber, WireType.String, dest);
-                token = ProtoWriter.StartSubItem(value, dest);
+                token = ProtoWriter.StartSubItem(value, true, dest);
                 ProtoWriter.SetPackedField(fieldNumber, dest);
             }
             else

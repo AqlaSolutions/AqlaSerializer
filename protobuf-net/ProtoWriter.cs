@@ -40,8 +40,9 @@ namespace AqlaSerializer
         /// </summary>
         /// <param name="value">The object to write.</param>
         /// <param name="key">The key that uniquely identifies the type within the model.</param>
+        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
-        public static void WriteObject(object value, int key, ProtoWriter writer)
+        public static void WriteObject(object value, int key, bool prefixLength, ProtoWriter writer)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -52,7 +53,7 @@ namespace AqlaSerializer
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
 
-            SubItemToken token = StartSubItem(value, writer);
+            SubItemToken token = StartSubItem(value, prefixLength, writer);
             if (key >= 0)
             {
                 writer.model.Serialize(key, value, writer, false);
@@ -75,15 +76,16 @@ namespace AqlaSerializer
         /// </summary>
         /// <param name="value">The object to write.</param>
         /// <param name="key">The key that uniquely identifies the type within the model.</param>
+        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
-        public static void WriteRecursionSafeObject(object value, int key, ProtoWriter writer)
+        public static void WriteRecursionSafeObject(object value, int key, bool prefixLength, ProtoWriter writer)
         {
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.model == null)
             {
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
-            SubItemToken token = StartSubItem(null, writer);
+            SubItemToken token = StartSubItem(null, prefixLength, writer);
             writer.model.Serialize(key, value, writer, false);
             EndSubItem(token, writer);
         }
@@ -102,7 +104,7 @@ namespace AqlaSerializer
             {
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
-            if (writer.wireType != WireType.None) throw ProtoWriter.CreateException(writer);
+            if (writer.wireType != WireType.None || writer.fieldStarted) throw ProtoWriter.CreateException(writer);
 
             switch (style)
             {
@@ -149,14 +151,72 @@ namespace AqlaSerializer
         private int fieldNumber, flushLock;
         WireType wireType;
         internal WireType WireType { get { return wireType; } }
+
+        bool fieldStarted;
+
+        // TODO compiler optimization to merge two consequence calls start-complete
+
+        /// <summary>
+        /// Starts writing a field-header
+        /// </summary>
+        public static void WriteFieldHeaderBegin(int fieldNumber, ProtoWriter writer)
+        {
+            if (writer.wireType != WireType.None)
+                throw new InvalidOperationException(
+                    "Cannot write a field number " + fieldNumber
+                    + " until the " + writer.wireType.ToString() + " data has been written");
+
+            if (writer.fieldStarted) throw new InvalidOperationException("Cannot write a field number until a wire type for field " + writer.fieldNumber + " has been written");
+            writer.fieldNumber = fieldNumber;
+            writer.fieldStarted = true;
+        }
+
+        /// <summary>
+        /// Finished writing a field-header, indicating the format of the next data we plan to write.
+        /// </summary>
+        public static void WriteFieldHeaderComplete(WireType wireType, ProtoWriter writer)
+        {
+#if DEBUG
+            if (wireType == WireType.StartGroup) throw new InvalidOperationException("Should use StartSubItem method for nested items");
+#endif
+            WriteFieldHeaderCompleteAnyType(wireType, writer);
+        }
+
+        /// <summary>
+        /// Finished writing a field-header, indicating the format of the next data we plan to write. Any type means nested objects are allowed.
+        /// </summary>
+        static void WriteFieldHeaderCompleteAnyType(WireType wireType, ProtoWriter writer)
+        {
+            if (!writer.fieldStarted) throw new InvalidOperationException("Cannot write a field wire type " + wireType + " because field number has not been written");
+            writer.wireType = wireType;
+            writer.fieldStarted = false;
+            WriteFieldHeaderNoCheck(writer.fieldNumber, wireType, writer);
+        }
+
         /// <summary>
         /// Writes a field-header, indicating the format of the next data we plan to write.
         /// </summary>
-        public static void WriteFieldHeader(int fieldNumber, WireType wireType, ProtoWriter writer) {
+        public static void WriteFieldHeader(int fieldNumber, WireType wireType, ProtoWriter writer)
+        {
+#if DEBUG
+            if (wireType == WireType.StartGroup) throw new InvalidOperationException("Should use StartSubItem method for nested items");
+#endif
+            WriteFieldHeaderAnyType(fieldNumber, wireType, writer);
+        }
+
+        /// <summary>
+        /// Writes a field-header, indicating the format of the next data we plan to write. Any type means nested objects are allowed.
+        /// </summary>
+        static void WriteFieldHeaderAnyType(int fieldNumber, WireType wireType, ProtoWriter writer) {
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.wireType != WireType.None) throw new InvalidOperationException("Cannot write a " + wireType.ToString()
                 + " header until the " + writer.wireType.ToString() + " data has been written");
             if(fieldNumber < 0) throw new ArgumentOutOfRangeException("fieldNumber");
+            if (writer.fieldStarted) throw new InvalidOperationException("Cannot write a field until a wire type for field " + writer.fieldNumber + " has been written");
+            WriteFieldHeaderNoCheck(fieldNumber, wireType, writer);
+        }
+        
+        static void WriteFieldHeaderNoCheck(int fieldNumber, WireType wireType, ProtoWriter writer) {
 #if DEBUG
             switch (wireType)
             {   // validate requested header-type
@@ -304,17 +364,34 @@ namespace AqlaSerializer
         }
         int depth = 0;
         const int RecursionCheckDepth = 25;
+        
         /// <summary>
-        /// Indicates the start of a nested record.
+        /// Indicates the start of a nested record of specified type when fieldNumber has been written.
         /// </summary>
         /// <param name="instance">The instance to write.</param>
+        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
         /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
-        public static SubItemToken StartSubItem(object instance, ProtoWriter writer)
+        public static SubItemToken StartSubItem(object instance, bool prefixLength, ProtoWriter writer)
         {
+            WriteFieldHeaderCompleteAnyType(prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
         }
 
+        /// <summary>
+        /// Indicates the start of a nested record of specified type when fieldNumber has not been written before.
+        /// </summary>
+        /// <param name="fieldNumber"></param>
+        /// <param name="instance">The instance to write.</param>
+        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
+        /// <param name="writer">The destination.</param>
+        /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
+        public static SubItemToken StartSubItem(int fieldNumber, object instance, bool prefixLength, ProtoWriter writer)
+        {
+            WriteFieldHeaderAnyType(fieldNumber, prefixLength ? WireType.String : WireType.StartGroup, writer);
+            return StartSubItem(instance, writer, false);
+        }
+        
         MutableList recursionStack;
         private void CheckRecursionStackAndPush(object instance)
         {
@@ -693,7 +770,7 @@ namespace AqlaSerializer
 
         internal void CheckDepthFlushlock()
         {
-            if (depth != 0 || flushLock != 0) throw new InvalidOperationException("The writer is in an incomplete state");
+            if (depth != 0 || flushLock != 0 || fieldStarted) throw new InvalidOperationException("The writer is in an incomplete state");
         }
 
         /// <summary>
@@ -1068,7 +1145,10 @@ namespace AqlaSerializer
         internal static Exception CreateException(ProtoWriter writer)
         {
             if (writer == null) throw new ArgumentNullException("writer");
-            return new ProtoException("Invalid serialization operation with wire-type " + writer.wireType.ToString() + " at position " + writer.position.ToString());
+            string field = writer.fieldStarted
+                                         ? ", waiting for wire type of field number " + writer.fieldNumber
+                                         : (writer.wireType != WireType.None ? (", field number " + writer.fieldNumber) : "");
+            return new ProtoException("Invalid serialization operation with wire-type " + writer.wireType.ToString() + field + ", position " + writer.position.ToString());
         }
 
         /// <summary>
