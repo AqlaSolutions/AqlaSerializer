@@ -29,10 +29,9 @@ namespace AqlaSerializer
             return value;
         }
 
-        public static void ReadNetObject_EndInject(bool noteNewObject, object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, SubItemToken token)
+        public static void ReadNetObject_EndInjectAndNoteNewObject(object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, SubItemToken token)
         {
-            if (noteNewObject)
-                ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options);
+            ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options);
             ProtoReader.EndSubItem(token, source);
         }
 
@@ -69,7 +68,7 @@ namespace AqlaSerializer
             int fieldNumber;
             if ((fieldNumber = source.ReadFieldHeader()) == 0)
             {
-                // null handlong
+                // null handling
                 return token;
             }
             int tmp;
