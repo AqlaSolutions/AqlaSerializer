@@ -67,19 +67,20 @@ namespace AqlaSerializer.Serializers
             {
                 value = newValue;
                 newValue = DoRead(value, source);
+                NetObjectHelpers.ReadNetObject_EndInjectAndNoteNewObject(newValue, source, value, t, newObjectKey, newTypeKey, isType, _options, token);
             }
-            NetObjectHelpers.ReadNetObject_EndInject(shouldEnd, newValue, source, value, t, newObjectKey, newTypeKey, isType, _options, token);
-
+            else
+            {
+                if (type.IsValueType && newValue == null)
+                    newValue = Activator.CreateInstance(type);
+                ProtoReader.EndSubItem(token, source);
+            }
             return newValue;
         }
 
         object DoRead(object value, ProtoReader source)
         {
-            var t2 = ProtoReader.StartSubItem(source);
-            source.ReadFieldHeader(); // we always expect that value really has tag inside
-            value = _serializer.Read(value, source);
-            ProtoReader.EndSubItem(t2, source);
-            return value;
+            return _serializer.Read(value, source);
         }
 
         public void Write(object value, ProtoWriter dest)
@@ -101,9 +102,7 @@ namespace AqlaSerializer.Serializers
 
         void DoWrite(object value, ProtoWriter dest)
         {
-            var t2 = ProtoWriter.StartSubItem(null, dest);
             _serializer.Write(value, dest);
-            ProtoWriter.EndSubItem(t2, dest);
         }
 #endif
 
@@ -156,24 +155,43 @@ namespace AqlaSerializer.Serializers
                         g.If(shouldEnd);
                         {
                             g.Assign(oldValue, newValue);
+                            // valuetype: will never be null otherwise it would go to else
                             g.Assign(resultCasted, newValue.AsOperand.Cast(type));
                             EmitDoRead(g, resultCasted, ctx);
+                            g.Invoke(
+                                typeof(NetObjectHelpers),
+                                nameof(NetObjectHelpers.ReadNetObject_EndInjectAndNoteNewObject),
+                                newValue,
+                                g.Arg(ctx.ArgIndexReadWriter),
+                                oldValue,
+                                t,
+                                newObjectKey,
+                                newTypeKey,
+                                isType,
+                                _options,
+                                token);
+                        }
+                        g.Else();
+                        {
+                            if (type.IsValueType)
+                            {
+                                g.If(newValue.AsOperand == null);
+                                {
+                                    g.InitObj(resultCasted);
+                                }
+                                g.Else();
+                                {
+                                    g.Assign(resultCasted, newValue);
+                                }
+                                g.End();
+                            }
+                            else
+                                g.Assign(resultCasted, newValue);
+
+                            g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
                         }
                         g.End();
-                        g.Invoke(
-                            typeof(NetObjectHelpers),
-                            nameof(NetObjectHelpers.ReadNetObject_EndInject),
-                            shouldEnd,
-                            newValue,
-                            g.Arg(ctx.ArgIndexReadWriter),
-                            oldValue,
-                            t,
-                            newObjectKey,
-                            newTypeKey,
-                            isType,
-                            _options,
-                            token);
-
+                        
                     }
 
                     if (_serializer.ReturnsValue)
@@ -186,15 +204,8 @@ namespace AqlaSerializer.Serializers
 
         void EmitDoRead(CodeGen g, Local value, CompilerContext ctx)
         {
-            var s = ctx.RunSharpContext.StaticFactory;
-            using (Local t2 = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
-            {
-                g.Assign(t2, s.Invoke(typeof(ProtoReader), nameof(ProtoReader.StartSubItem), g.Arg(ctx.ArgIndexReadWriter)));
-                g.Invoke(g.Arg(ctx.ArgIndexReadWriter), nameof(ProtoReader.ReadFieldHeader)); // we always expect that value really has tag inside
-                _serializer.EmitRead(ctx, value);
-                ctx.StoreValue(value);
-                g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), t2, g.Arg(ctx.ArgIndexReadWriter));
-            }
+            _serializer.EmitRead(ctx, value);
+            ctx.StoreValue(value);
         }
 
         public void EmitWrite(CompilerContext ctx, Local valueFrom)
