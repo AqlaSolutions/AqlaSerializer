@@ -121,6 +121,7 @@ namespace AqlaSerializer
                 default:
                     throw new ArgumentOutOfRangeException("style");
             }
+
             SubItemToken token = StartSubItem(value, writer, true);
             if (key < 0)
             {
@@ -150,11 +151,23 @@ namespace AqlaSerializer
 
         private int fieldNumber, flushLock;
         WireType wireType;
-        internal WireType WireType { get { return wireType; } }
+        internal WireType WireType => wireType;
+        internal int FieldNumber => fieldNumber;
 
         bool fieldStarted;
+        bool ignoredFieldStarted;
 
         // TODO compiler optimization to merge two consequence calls start-complete
+
+        /// <summary>
+        /// Indicates that the next WriteFieldHeaderComplete call should be ignored
+        /// </summary>
+        /// <param name="writer"></param>
+        public static void WriteFieldHeaderBeginIgnored(ProtoWriter writer)
+        {
+            WriteFieldHeaderBegin(0, writer);
+            writer.ignoredFieldStarted = true;
+        }
 
         /// <summary>
         /// Starts writing a field-header
@@ -183,11 +196,25 @@ namespace AqlaSerializer
         }
 
         /// <summary>
+        /// Cancels writing a field-header, initiated with WriteFieldHeaderBegin
+        /// </summary>
+        public static void WriteFieldHeaderCancelBegin(ProtoWriter writer)
+        {
+            if (!writer.fieldStarted) throw CreateException(writer);
+            writer.fieldNumber = 0;
+        }
+
+        /// <summary>
         /// Finished writing a field-header, indicating the format of the next data we plan to write. Any type means nested objects are allowed.
         /// </summary>
         static void WriteFieldHeaderCompleteAnyType(WireType wireType, ProtoWriter writer)
         {
             if (!writer.fieldStarted) throw new InvalidOperationException("Cannot write a field wire type " + wireType + " because field number has not been written");
+            if (writer.ignoredFieldStarted)
+            {
+                writer.ignoredFieldStarted = false;
+                return;
+            }
             writer.wireType = wireType;
             writer.fieldStarted = false;
             WriteFieldHeaderNoCheck(writer.fieldNumber, wireType, writer);
@@ -233,30 +260,9 @@ namespace AqlaSerializer
                     throw new ArgumentException("Invalid wire-type: " + wireType.ToString(), "wireType");                
             }
 #endif
-            if (writer.packedFieldNumber == 0) {
-                writer.fieldNumber = fieldNumber;
-                writer.wireType = wireType;
-                WriteHeaderCore(fieldNumber, wireType, writer);
-            }
-            else if (writer.packedFieldNumber == fieldNumber)
-            { // we'll set things up, but note we *don't* actually write the header here
-                switch (wireType)
-                {
-                    case WireType.Fixed32:
-                    case WireType.Fixed64:
-                    case WireType.Variant:
-                    case WireType.SignedVariant:
-                        break; // fine
-                    default:
-                        throw new InvalidOperationException("Wire-type cannot be encoded as packed: " + wireType.ToString());
-                }
-                writer.fieldNumber = fieldNumber;
-                writer.wireType = wireType;
-            }
-            else
-            {
-                throw new InvalidOperationException("Field mismatch during packed encoding; expected " + writer.packedFieldNumber.ToString() + " but received " + fieldNumber.ToString());
-            }
+            writer.fieldNumber = fieldNumber;
+            writer.wireType = wireType;
+            WriteHeaderCore(fieldNumber, wireType, writer);
         }
         internal static void WriteHeaderCore(int fieldNumber, WireType wireType, ProtoWriter writer)
         {
@@ -420,7 +426,6 @@ namespace AqlaSerializer
             {
                 writer.CheckRecursionStackAndPush(instance);
             }
-            if(writer.packedFieldNumber != 0) throw new InvalidOperationException("Cannot begin a sub-item while performing packed encoding");
             switch (writer.wireType)
             {
                 case WireType.StartGroup:
@@ -473,14 +478,13 @@ namespace AqlaSerializer
         private static void EndSubItem(SubItemToken token, ProtoWriter writer, PrefixStyle style)
         {
             if (writer == null) throw new ArgumentNullException("writer");
-            if (writer.wireType != WireType.None) { throw CreateException(writer); }
+            if (writer.wireType != WireType.None || writer.fieldStarted) { throw CreateException(writer); }
             int value = token.value;
             if (writer.depth <= 0) throw CreateException(writer);
             if (writer.depth-- > RecursionCheckDepth)
             {
                 writer.PopRecursionStack();
             }
-            writer.packedFieldNumber = 0; // ending the sub-item always wipes packed encoding
             if (value < 0)
             {   // group - very simple append
                 WriteHeaderCore(-value, WireType.EndGroup, writer);
@@ -1168,7 +1172,7 @@ namespace AqlaSerializer
             if (writer == null) throw new ArgumentNullException("writer");
             // we expect the writer to be raw here; the extension data will have the
             // header detail, so we'll copy it implicitly
-            if(writer.wireType != WireType.None) throw CreateException(writer);
+            if(writer.wireType != WireType.None || writer.fieldStarted) throw CreateException(writer);
 
             IExtension extn = instance.GetExtensionObject(false);
             if (extn != null)
@@ -1183,22 +1187,7 @@ namespace AqlaSerializer
                 finally { extn.EndQuery(source); }
             }
         }
-
-
-        private int packedFieldNumber;
-        /// <summary>
-        /// Used for packed encoding; indicates that the next field should be skipped rather than
-        /// a field header written. Note that the field number must match, else an exception is thrown
-        /// when the attempt is made to write the (incorrect) field. The wire-type is taken from the
-        /// subsequent call to WriteFieldHeader. Only primitive types can be packed.
-        /// </summary>
-        public static void SetPackedField(int fieldNumber, ProtoWriter writer)
-        {
-            if (fieldNumber <= 0) throw new ArgumentOutOfRangeException("fieldNumber");
-            if (writer == null) throw new ArgumentNullException("writer");
-            writer.packedFieldNumber = fieldNumber;
-        }
-
+        
         internal string SerializeType(System.Type type)
         {
             return TypeModel.SerializeType(model, type);
