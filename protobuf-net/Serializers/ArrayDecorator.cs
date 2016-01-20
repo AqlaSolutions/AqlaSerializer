@@ -174,10 +174,10 @@ namespace AqlaSerializer.Serializers
             {
                 object obj = arr[i];
 
-                if (!_writePacked || i == 0)
-                    ProtoWriter.WriteFieldHeaderBegin(fieldNumber, dest);
-                else
+                if (_writePacked)
                     ProtoWriter.WriteFieldHeaderBeginIgnored(dest);
+                else
+                    ProtoWriter.WriteFieldHeaderBegin(fieldNumber, dest);
 
                 Tail.Write(obj, dest);
             }
