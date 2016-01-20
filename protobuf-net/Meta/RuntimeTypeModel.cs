@@ -736,8 +736,15 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AutoCompile
         {
-            get { return GetOption(OPTIONS_AutoCompile); }
-            set { SetOption(OPTIONS_AutoCompile, value); }
+            get
+            {
+                return false;
+            }
+            set
+            {
+                // TODO this is temprorary
+                value = false;
+                SetOption(OPTIONS_AutoCompile, value); }
         }
 #endif
         /// <summary>
