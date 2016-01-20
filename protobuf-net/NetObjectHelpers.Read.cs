@@ -6,7 +6,7 @@ namespace AqlaSerializer
     {
         // this method is split because we need to insert our implementation inside and it's hard to deal with delegates in emit
 
-        // full version for normal non-root objects
+        // full version for registered types
         /// <summary>
         /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
@@ -14,59 +14,45 @@ namespace AqlaSerializer
         {
             SubItemToken token;
             bool isNewObject;
-            var r = ReadNetObjectInternal(value, source, key, type, options, out token, false, out isNewObject);
-            ProtoReader.EndSubItem(token, source);
+            var r = ReadNetObjectInternal(value, source, key, type, options, out token, out isNewObject);
+            ProtoReader.EndSubItem(token, true, source);
             return r;
         }
-
-        // root version
-        public static object ReadNetObject_StartRoot(object value, ProtoReader source, int key, Type type, BclHelpers.NetObjectOptions options, out SubItemToken token, out bool isNewObject)
-        {
-            return ReadNetObjectInternal(value, source, key, type, options, out token, true, out isNewObject);
-        }
-
+        
         // inject version
         public static object ReadNetObject_StartInject(object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, out SubItemToken token, 
             out bool shouldEnd, out int newObjectKey, out int newTypeKey, out bool isType)
         {
             bool isNewObject;
             int key = -1;
-            ReadNetObject_Start(ref value, source, ref key, ref type, options, false, out token, out isNewObject, out newObjectKey, out newTypeKey, out isType, out shouldEnd);
+            token = ReadNetObject_Start(ref value, source, ref key, ref type, options, out isNewObject, out newObjectKey, out newTypeKey, out isType, out shouldEnd);
             return value;
         }
 
-        public static void ReadNetObject_EndInject(bool shouldEnd, object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, SubItemToken token)
+        public static void ReadNetObject_EndInject(bool noteNewObject, object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, SubItemToken token)
         {
-            if (shouldEnd)
-                ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options, false);
-            ReadNetObject_End(source);
+            if (noteNewObject)
+                ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options);
             ProtoReader.EndSubItem(token, source);
         }
 
-        static object ReadNetObjectInternal(object value, ProtoReader source, int key, Type type, BclHelpers.NetObjectOptions options, out SubItemToken token, bool isRoot, out bool isNewObject)
+        static object ReadNetObjectInternal(object value, ProtoReader source, int key, Type type, BclHelpers.NetObjectOptions options, out SubItemToken token, out bool isNewObject)
         {
             int newObjectKey;
             int newTypeKey;
             bool isType;
             bool shouldEnd;
-            ReadNetObject_Start(ref value, source, ref key, ref type, options, isRoot, out token, out isNewObject, out newObjectKey, out newTypeKey, out isType, out shouldEnd);
+            token = ReadNetObject_Start(ref value, source, ref key, ref type, options, out isNewObject, out newObjectKey, out newTypeKey, out isType, out shouldEnd);
             if (shouldEnd)
             {
-                if (isRoot)
-                {
-                    token = ProtoReader.StartSubItem(source);
-                    return null;
-                }
                 object oldValue = value;
                 value = ReadNetObject_NewObject(oldValue, source, key, type, isType);
-                ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options, false);
+                ReadNetObject_NoteNewObject(value, source, oldValue, type, newObjectKey, newTypeKey, isType, options);
             }
-            if (!isRoot)
-                ReadNetObject_End(source);
             return value;
         }
 
-        static void ReadNetObject_Start(ref object value, ProtoReader source, ref int key, ref Type type, BclHelpers.NetObjectOptions options, bool root, out SubItemToken token, out bool isNewObject, out int newObjectKey, out int newTypeKey, out bool isType, out bool shouldEnd)
+        static SubItemToken ReadNetObject_Start(ref object value, ProtoReader source, ref int key, ref Type type, BclHelpers.NetObjectOptions options, out bool isNewObject, out int newObjectKey, out int newTypeKey, out bool isType, out bool shouldEnd)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -75,22 +61,26 @@ namespace AqlaSerializer
             isType = false;
             shouldEnd = false;
 
-            token = !root
-                ? ProtoReader.StartSubItem(source)
-                : new SubItemToken();
-
-            int fieldNumber;
             newObjectKey = -1;
             newTypeKey = -1;
+
+            SubItemToken token = ProtoReader.StartSubItem(source);
+
+            int fieldNumber;
+            if ((fieldNumber = source.ReadFieldHeader()) == 0)
+            {
+                // null handlong
+                return token;
+            }
             int tmp;
-            while ((fieldNumber = source.ReadFieldHeader()) > 0)
+            do
             {
                 switch (fieldNumber)
                 {
                     case FieldExistingObjectKey:
                         tmp = source.ReadInt32();
-                        // special handling for first empty element in list
-                        value = tmp == -2 ? null : source.NetCache.GetKeyedObject(tmp);
+                        // null handling
+                        value = source.NetCache.GetKeyedObject(tmp);
                         break;
                     case FieldNewObjectKey:
                         isNewObject = true;
@@ -142,12 +132,13 @@ namespace AqlaSerializer
                             }
                             if (newTypeKey >= 0) source.NetCache.SetKeyedObject(newTypeKey, type);
                         }
-                        return;
+                        return token;
                     default:
                         source.SkipField();
                         break;
                 }
-            }
+            } while ((fieldNumber = source.ReadFieldHeader()) > 0);
+            return token;
 #endif
         }
 
@@ -179,7 +170,7 @@ namespace AqlaSerializer
 #endif
         }
 
-        static void ReadNetObject_NoteNewObject(object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options, bool root)
+        static void ReadNetObject_NoteNewObject(object value, ProtoReader source, object oldValue, Type type, int newObjectKey, int newTypeKey, bool isType, BclHelpers.NetObjectOptions options)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -216,17 +207,7 @@ namespace AqlaSerializer
             }
 #endif
         }
-
-        static void ReadNetObject_End(ProtoReader source)
-        {
-#if FEAT_IKVM
-            throw new NotSupportedException();
-#else
-            if (source.ReadFieldHeader() != 0) throw new ProtoException("Expected EndGroup for NetObject but stream has " + source.WireType);
-#endif
-        }
-
-
+        
         private const int
             FieldExistingObjectKey = 1,
             FieldNewObjectKey = 2,

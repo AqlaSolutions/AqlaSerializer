@@ -4,6 +4,7 @@ namespace AqlaSerializer
 {
     public static partial class NetObjectHelpers
     {
+        // TODO move inside NetObjectSerializer!
         /// <summary>
         /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
@@ -17,56 +18,40 @@ namespace AqlaSerializer
             ProtoWriter.EndSubItem(t, dest);
 #endif
         }
-
-        /// <summary>
-        /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
-        /// </summary>
-        public static SubItemToken WriteNetObject_StartRoot(object value, ProtoWriter dest, int key, BclHelpers.NetObjectOptions options, out bool writeObject)
-        {
-            return WriteNetObject_Start(value, dest, key, options, true, out writeObject);
-        }
-
+        
         /// <summary>
         /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
         public static SubItemToken WriteNetObject_StartInject(object value, ProtoWriter dest, BclHelpers.NetObjectOptions options, out bool writeObject)
         {
-            if ((options & BclHelpers.NetObjectOptions.DynamicType) != 0) throw new ProtoException("Can't use dynamic type with non-registered net object type");
-            return WriteNetObject_Start(value, dest, -1, options, false, out writeObject);
+            return WriteNetObject_Start(value, dest, -1, options, true, out writeObject);
         }
         
-        static SubItemToken WriteNetObject_Start(object value, ProtoWriter dest, int key, BclHelpers.NetObjectOptions options, bool root, out bool writeObject)
+        static SubItemToken WriteNetObject_Start(object value, ProtoWriter dest, int key, BclHelpers.NetObjectOptions options, bool inject, out bool writeObject)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
             if (dest == null) throw new ArgumentNullException("dest");
-            bool dynamicType = (options & BclHelpers.NetObjectOptions.DynamicType) != 0,
-                 asReference = (options & BclHelpers.NetObjectOptions.AsReference) != 0;
-            WireType wireType = root
-                ? WireType.String
-                : dest.WireType;
 
-            SubItemToken token = !root
-                ? ProtoWriter.StartSubItem(null, dest)
-                : new SubItemToken();
+            // length not prefixed to not move data in buffer twice just because of NetObject (will be another nested inside)
+            SubItemToken token = ProtoWriter.StartSubItem(null, false, dest);
+
+            if (value == null)
+            {
+                // null handling
+                writeObject = false;
+                return token;
+            }
 
             // even root object can be wrapped with collection
             // so it's not true root
             writeObject = true;
-            if (asReference)
+            if ((options & BclHelpers.NetObjectOptions.AsReference) != 0)
             {
                 bool existing;
                 int objectKey;
-                if (value != null)
-                    objectKey = dest.NetCache.AddObjectKey(value, out existing);
-                else
-                {
-                    // was added for special handling for first empty element in list
-                    // on read side should just return null
-                    objectKey = -2;
-                    existing = true;
-                }
+                objectKey = dest.NetCache.AddObjectKey(value, out existing);
                 ProtoWriter.WriteFieldHeader(existing ? FieldExistingObjectKey : FieldNewObjectKey, WireType.Variant, dest);
                 ProtoWriter.WriteInt32(objectKey, dest);
                 if (existing)
@@ -77,8 +62,9 @@ namespace AqlaSerializer
 
             if (writeObject)
             {
-                if (dynamicType)
+                if ((options & BclHelpers.NetObjectOptions.DynamicType) != 0)
                 {
+                    if (inject) throw new InvalidOperationException("Dynamic types should use registered type mode, *not inject*!");
                     bool existing;
                     Type type = value.GetType();
 
@@ -95,32 +81,32 @@ namespace AqlaSerializer
                         ProtoWriter.WriteFieldHeader(FieldTypeName, WireType.String, dest);
                         ProtoWriter.WriteString(dest.SerializeType(type), dest);
                     }
-
                 }
-                ProtoWriter.WriteFieldHeader(FieldObject, wireType, dest);
-                if (root)
+
+                if (inject)
                 {
-                    return ProtoWriter.StartSubItem(null, dest);
+                    ProtoWriter.WriteFieldHeaderBegin(FieldObject, dest);
+                    // do nothing, write will be outside
                 }
                 else if (value is string)
                 {
+                    ProtoWriter.WriteFieldHeader(FieldObject, WireType.String, dest);
                     ProtoWriter.WriteString((string)value, dest);
                 }
                 else if (value is Type)
                 {
+                    ProtoWriter.WriteFieldHeader(FieldObject, WireType.String, dest);
                     ProtoWriter.WriteType((Type)value, dest);
                 }
                 else if (value is Uri)
                 {
+                    ProtoWriter.WriteFieldHeader(FieldObject, WireType.String, dest);
                     ProtoWriter.WriteString(((Uri)value).AbsoluteUri, dest);
-                }
-                else if (!dynamicType && key < 0)
-                {
-                    // do nothing, write will be outside
                 }
                 else
                 {
-                    ProtoWriter.WriteObject(value, key, dest);
+                    ProtoWriter.WriteFieldHeaderBegin(FieldObject, dest);
+                    ProtoWriter.WriteObject(value, key, true, dest);
                 }
             }
             return token;

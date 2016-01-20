@@ -39,8 +39,9 @@ namespace AqlaSerializer.Serializers
         private readonly MethodInfo factory;
         public bool CanCreateInstance { get; set; } = true;
         public bool AllowInheritance { get; set; } = true;
+        readonly bool _prefixLength;
 
-        public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory)
+        public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory, bool prefixLength)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(fieldNumbers != null);
@@ -60,6 +61,7 @@ namespace AqlaSerializer.Serializers
             }
             this.forType = forType;
             this.factory = factory;
+            _prefixLength = prefixLength;
 #if WINRT
             this.typeInfo = forType.GetTypeInfo();
 #endif
@@ -169,6 +171,7 @@ namespace AqlaSerializer.Serializers
 
         public void Write(object value, ProtoWriter dest)
         {
+            var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
             if (isRootType) Callback(value, TypeModel.CallbackType.BeforeSerialize, dest.Context);
             // write inheritance first
             IProtoSerializer next = GetMoreSpecificSerializer(value);
@@ -181,6 +184,7 @@ namespace AqlaSerializer.Serializers
                 IProtoSerializer ser = serializers[i];
                 if (ser.ExpectedType == forType)
                 {
+                    ProtoWriter.WriteFieldHeaderBegin(fieldNumbers[i], dest);
                     //Helpers.DebugWriteLine(": " + ser.ToString());
                     ser.Write(value, dest);
                 }
@@ -188,9 +192,11 @@ namespace AqlaSerializer.Serializers
             //Helpers.DebugWriteLine("<< Writing fields for " + forType.FullName);
             if (isExtensible) ProtoWriter.AppendExtensionData((IExtensible)value, dest);
             if (isRootType) Callback(value, TypeModel.CallbackType.AfterSerialize, dest.Context);
+            ProtoWriter.EndSubItem(token, dest);
         }
         public object Read(object value, ProtoReader source)
         {
+            var token = ProtoReader.StartSubItem(source);
             if (isRootType && value != null) { Callback(value, TypeModel.CallbackType.BeforeDeserialize, source.Context); }
             int fieldNumber, lastFieldNumber = 0, lastFieldIndex = 0;
             bool fieldHandled;
@@ -246,6 +252,7 @@ namespace AqlaSerializer.Serializers
             //Helpers.DebugWriteLine("<< Reading fields for " + forType.FullName);
             if (value == null) value = CreateInstance(source, true);
             if (isRootType) { Callback(value, TypeModel.CallbackType.AfterDeserialize, source.Context); }
+            ProtoReader.EndSubItem(token, source);
             return value;
         }
 

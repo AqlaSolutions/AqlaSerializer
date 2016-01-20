@@ -604,11 +604,25 @@ namespace AqlaSerializer
         /// </summary>
         public static void EndSubItem(SubItemToken token, ProtoReader reader)
         {
+            EndSubItem(token, false, reader);
+        }
+
+        /// <summary>
+        /// Makes the end of consuming a nested message in the stream; the stream must be either at the correct EndGroup
+        /// marker, or all fields of the sub-message must have been consumed (in either case, this means ReadFieldHeader
+        /// should return zero)
+        /// </summary>
+        public static void EndSubItem(SubItemToken token, bool skipToEnd, ProtoReader reader)
+        {
             if (reader == null) throw new ArgumentNullException("reader");
             int value = token.value;
+            if (skipToEnd)
+                while (reader.ReadFieldHeader() != 0) reader.SkipField(); // skip field will recursively go through nested objects
+            
             switch (reader.wireType)
             {
                 case WireType.EndGroup:
+                    endGroup:
                     if (value >= 0) throw AddErrorData(new ArgumentException("token"), reader);
                     if (-value != reader.fieldNumber) throw reader.CreateException("Wrong group was ended"); // wrong group ended!
                     reader.wireType = WireType.None; // this releases ReadFieldHeader
@@ -616,11 +630,17 @@ namespace AqlaSerializer
                     break;
                 // case WireType.None: // TODO reinstate once reads reset the wire-type
                 default:
-                    if (value < reader.position) throw reader.CreateException("Sub-message not read entirely");
-                    if (reader.blockEnd != reader.position && reader.blockEnd != int.MaxValue)
+                    if (value < reader.position)
                     {
-                        throw reader.CreateException("Sub-message not read correctly");
+                        if (value < 0)
+                        {
+                            if (reader.ReadFieldHeader() != 0 || reader.wireType != WireType.EndGroup) throw reader.CreateException("Group not read entirely");
+                            goto endGroup;
+                        }
+                        throw reader.CreateException("Sub-message not read entirely");
                     }
+                    if (reader.blockEnd != reader.position && reader.blockEnd != int.MaxValue)
+                        throw reader.CreateException("Sub-message not read correctly");
                     reader.blockEnd = value;
                     reader.depth--;
                     break;

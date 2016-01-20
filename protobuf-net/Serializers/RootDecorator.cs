@@ -20,19 +20,10 @@ namespace AqlaSerializer.Serializers
     sealed class RootDecorator : IProtoTypeSerializer
     {
         private readonly IProtoTypeSerializer _serializer;
-        private readonly int key;
-        private readonly Type type;
-
-        private readonly BclHelpers.NetObjectOptions options;
-
-        public RootDecorator(TypeModel model, Type type, int key, IProtoTypeSerializer serializer)
+        
+        public RootDecorator(Type type, bool asReference, IProtoTypeSerializer serializer)
         {
-            _serializer = serializer;
-            options = BclHelpers.NetObjectOptions.AsReference | BclHelpers.NetObjectOptions.UseConstructor;
-            if (serializer is TupleSerializer)
-                options |= BclHelpers.NetObjectOptions.LateSet;
-            this.key = key;
-            this.type = type;
+            _serializer = new NetObjectValueDecorator(type, serializer, asReference);
         }
 
         public Type ExpectedType
@@ -50,120 +41,25 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            SubItemToken token;
-            bool isNewObject;
-            object r = NetObjectHelpers.ReadNetObject_StartRoot(value, source, key, type, options, out token, out isNewObject);
-            if (isNewObject)
-            {
-                if (_serializer is TagDecorator)
-                    source.ReadFieldHeader();
-                r = _serializer.Read(value, source);
-                ProtoReader.EndSubItem(token, source);
-            }
-            return r;
+            if (source.ReadFieldHeader() != 1) throw new ProtoException("Expected root field header");
+            return _serializer.Read(value, source);
         }
         public void Write(object value, ProtoWriter dest)
         {
-            bool write;
-            SubItemToken t = NetObjectHelpers.WriteNetObject_StartRoot(value, dest, key, options, out write);
-            if (write)
-            {
-                _serializer.Write(value, dest);
-                ProtoWriter.EndSubItem(t, dest);
-            }
+            ProtoWriter.WriteFieldHeaderBegin(1, dest);
+            _serializer.Write(value, dest);
         }
 #endif
 
 #if FEAT_COMPILER
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Local loc = ctx.GetLocalWithValue(type, valueFrom))
-            using (Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
-            using (Local callResult = new Local(ctx, ctx.MapType(typeof(object))))
-            using (Local resultCasted = new Local(ctx, ctx.MapType(type)))
-            using (Local doRead = new Local(ctx, ctx.MapType(typeof(bool))))
-            {
-                ctx.LoadValue(loc);
-                //ctx.CastToObject(ctx.MapType(typeof(object)));
-                ctx.CastToObject(type);
-                ctx.LoadReaderWriter();
-                ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key));
-                if (type == ctx.MapType(typeof(object))) ctx.LoadNullRef();
-                else ctx.LoadValue(type);
-                ctx.LoadValue((int)options);
-                ctx.LoadAddress(token, token.Type);
-                ctx.LoadAddress(doRead, doRead.Type);
-
-                ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("ReadNetObject_StartRoot"));
-                ctx.StoreValue(callResult);
-
-                var doReadFalseMark = ctx.DefineLabel();
-                var doReadEndIfMark = ctx.DefineLabel();
-                ctx.LoadValue(doRead);
-                ctx.BranchIfFalse(doReadFalseMark, false);
-                {
-
-                    if (_serializer is TagDecorator)
-                    {
-                        ctx.LoadReaderWriter();
-                        ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("ReadFieldHeader"));
-                        ctx.DiscardValue();
-                    }
-
-                    _serializer.EmitRead(ctx, loc);
-
-                    if (_serializer.ReturnsValue)
-                        ctx.StoreValue(resultCasted);
-
-                    ctx.LoadValue(token);
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("EndSubItem"));
-
-                    if (_serializer.ReturnsValue)
-                        ctx.LoadValue(resultCasted);
-                }
-                ctx.Branch(doReadEndIfMark, true);
-                ctx.MarkLabel(doReadFalseMark);
-                {
-                    if (_serializer.ReturnsValue)
-                    {
-                        ctx.LoadValue(callResult);
-                        ctx.CastFromObject(type);
-                    }
-                }
-                ctx.MarkLabel(doReadEndIfMark);
-
-            }
+            
         }
 
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Local loc = ctx.GetLocalWithValue(type, valueFrom))
-            using (Local doWrite = new Local(ctx, ctx.MapType(typeof(bool))))
-            using (Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
-            {
-                ctx.LoadValue(loc);
-                ctx.CastToObject(type);
-                ctx.LoadReaderWriter();
-                ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key));
-                ctx.LoadValue((int)options);
-                ctx.LoadAddress(doWrite, doWrite.Type);
-                ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("WriteNetObject_StartRoot"));
-                ctx.StoreValue(token);
 
-                var doWriteFalse = ctx.DefineLabel();
-                ctx.LoadValue(doWrite);
-                ctx.BranchIfFalse(doWriteFalse, false);
-                {
-                    _serializer.EmitWrite(ctx, loc);
-
-                    ctx.LoadValue(token);
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("EndSubItem"));
-                }
-                ctx.MarkLabel(doWriteFalse);
-
-            }
         }
 #endif
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
