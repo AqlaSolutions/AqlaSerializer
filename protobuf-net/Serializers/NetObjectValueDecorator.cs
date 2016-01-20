@@ -17,7 +17,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class NetObjectValueDecorator : IProtoSerializer
+    sealed class NetObjectValueDecorator : IProtoTypeSerializer
     {
         readonly IProtoSerializer _serializer;
         readonly bool _asReference;
@@ -235,6 +235,41 @@ namespace AqlaSerializer.Serializers
                 _serializer.EmitWrite(ctx, value);
                 g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t2, g.Arg(ctx.ArgIndexReadWriter));
             }
+        }
+#endif
+
+        public bool HasCallbacks(TypeModel.CallbackType callbackType)
+        {
+            IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
+            return pts != null && pts.HasCallbacks(callbackType);
+        }
+
+        public bool CanCreateInstance()
+        {
+            IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
+            return pts != null && pts.CanCreateInstance();
+        }
+#if !FEAT_IKVM
+        public object CreateInstance(ProtoReader source)
+        {
+            return ((IProtoTypeSerializer)_serializer).CreateInstance(source);
+        }
+        public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
+        {
+            IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
+            if (pts != null) pts.Callback(value, callbackType, context);
+        }
+#endif
+#if FEAT_COMPILER
+        public void EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
+        {
+            // we only expect this to be invoked if HasCallbacks returned true, so implicitly _serializer
+            // **must** be of the correct type
+            ((IProtoTypeSerializer)_serializer).EmitCallback(ctx, valueFrom, callbackType);
+        }
+        public void EmitCreateInstance(Compiler.CompilerContext ctx)
+        {
+            ((IProtoTypeSerializer)_serializer).EmitCreateInstance(ctx);
         }
 #endif
     }

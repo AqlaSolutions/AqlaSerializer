@@ -301,7 +301,7 @@
     <Compile Include="Serializers\ProtoDecoratorBase.cs" />
     <Compile Include="Serializers\StringSerializer.cs" />
     <Compile Include="Serializers\SubItemSerializer.cs" />
-    <Compile Include="Serializers\TagDecorator.cs" />
+    <Compile Include="Serializers\Tag.cs" />
     <Compile Include="Serializers\TypeSerializer.cs" />
     <Compile Include="ServiceModel\BinarySerializationBehaviorAttribute.cs" />
     <Compile Include="ServiceModel\ProtoBehaviorExtensionElement.cs" />

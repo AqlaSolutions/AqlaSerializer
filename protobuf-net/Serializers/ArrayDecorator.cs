@@ -16,7 +16,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class ArrayDecorator : ProtoDecoratorBase
+    sealed class ArrayDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
 
         private readonly int fieldNumber;

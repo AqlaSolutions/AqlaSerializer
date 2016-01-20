@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    class ListDecorator : ProtoDecoratorBase
+    class ListDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
         internal static bool CanPack(WireType wireType)
         {
