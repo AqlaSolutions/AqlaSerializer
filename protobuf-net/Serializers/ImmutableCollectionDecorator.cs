@@ -2,6 +2,10 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
+#if FEAT_COMPILER
+using AqlaSerializer.Compiler;
+#endif
 using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
@@ -146,21 +150,33 @@ namespace AqlaSerializer.Serializers
 #endif
 
         private readonly MethodInfo builderFactory, add, addRange, finish;
-        internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull,
-            MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish)
-            : base(model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, supportNull)
+        internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList,
+            MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+            : base(model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility)
         {
             this.builderFactory = builderFactory;
             this.add = add;
             this.addRange = addRange;
             this.finish = finish;
+            _listHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
         }
+
+        readonly ListHelpers _listHelpers;
+
 #if !FEAT_IKVM
+
+
+        public override object CreateInstance(ProtoReader source)
+        {
+            object builderInstance = builderFactory.Invoke(null, null);
+            return finish.Invoke(builderInstance, null);
+        }
+
         public override object Read(object value, ProtoReader source)
         {
             object builderInstance = builderFactory.Invoke(null, null);
-            int field = source.FieldNumber;
             object[] args = new object[1];
+
             if (AppendToCollection && value != null && ((IList)value).Count != 0)
             {   
                 if(addRange !=null)
@@ -178,36 +194,35 @@ namespace AqlaSerializer.Serializers
                 }
             }
 
-            if (packedWireType != WireType.None && source.WireType == WireType.String)
-            {
-                SubItemToken token = ProtoReader.StartSubItem(source);
-                if (!ProtoReader.HasSubValue(packedWireType, source))
-                    throw new InvalidOperationException("Empty element problem");
-                Tail.Read(null, source);
-                while (ProtoReader.HasSubValue(packedWireType, source))
-                {
-                    args[0] = Tail.Read(null, source);
-                    add.Invoke(builderInstance, args);
-                }
-                ProtoReader.EndSubItem(token, source);
-            }
-            else
-            {
-                Tail.Read(null, source);
-                while (source.TryReadFieldHeader(field))
-                {
-                    args[0] = Tail.Read(null, source);
-                    add.Invoke(builderInstance, args);
-                }
-            }
-
+            _listHelpers.Read(null,
+                o =>
+                    {
+                        args[0] = Tail.Read(null, source);
+                        add.Invoke(builderInstance, args);
+                    },
+                source);
+            
             return finish.Invoke(builderInstance, null);
         }
+
+        protected override bool WriteSubtypeInfo => false;
 #endif
 
 #if FEAT_COMPILER
+
+        public override void EmitCreateInstance(CompilerContext ctx)
+        {
+            using (Compiler.Local builder = new Compiler.Local(ctx, builderFactory.ReturnType))
+            {
+                ctx.EmitCall(builderFactory);
+                ctx.LoadAddress(builder, builder.Type);
+                ctx.EmitCall(finish);
+            }
+        }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+#if false
             using (Compiler.Local oldList = AppendToCollection ? ctx.GetLocalWithValue(ExpectedType, valueFrom) : null)
             using(Compiler.Local builder = new Compiler.Local(ctx, builderFactory.ReturnType))
             {
@@ -286,6 +301,8 @@ namespace AqlaSerializer.Serializers
                     ctx.Cast(ExpectedType);
                 }
             }
+#endif
+
         }
 #endif
     }

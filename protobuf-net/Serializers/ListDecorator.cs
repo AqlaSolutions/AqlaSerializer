@@ -2,6 +2,10 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
+#if FEAT_COMPILER
+using AqlaSerializer.Compiler;
+#endif
 using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
@@ -13,8 +17,97 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    class ListDecorator : ProtoDecoratorBase, IProtoTypeSerializer
+    internal class ListDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+#if !FEAT_IKVM
+        public override void Write(object value, ProtoWriter dest)
+        {
+            _listHelpers.Write(
+                value,
+                () =>
+                    {
+                        if (!_protoCompatibility && WriteSubtypeInfo)
+                        {
+                            var type = value.GetType();
+                            int subtypeNumber = 0;
+                            if (type != ExpectedType)
+                            {
+                                for (int i = 0; i < _subtypeNumbers.Length; i++)
+                                {
+                                    var kv = _subtypeNumbers[i];
+                                    if (Helpers.IsAssignableFrom(type, kv.Key))
+                                        subtypeNumber = kv.Value;
+                                }
+
+                                if (subtypeNumber == 0 && !Helpers.IsAssignableFrom(concreteTypeDefault, type)) TypeModel.ThrowUnexpectedSubtype(ExpectedType, type);
+                            }
+
+                            ProtoWriter.WriteFieldHeaderBeginIgnored(dest);
+                            ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
+                            ProtoWriter.WriteInt32(subtypeNumber, dest);
+                        }
+                    },
+                dest);
+        }
+        
+        public override object Read(object value, ProtoReader source)
+        {
+            object origValue = value;
+            IList list = null;
+            object[] args = null;
+
+            Action<object> addLocal;
+
+            if (IsList && !SuppressIList)
+                addLocal = o => list.Add(o);
+            else
+            {
+                addLocal = o =>
+                    {
+                        args[0] = o;
+                        this.add.Invoke(o, args);
+                    };
+            }
+
+            _listHelpers.Read(
+                () =>
+                    {
+                        if (value == null)
+                        {
+                            Type t = concreteTypeDefault;
+                            if (!_protoCompatibility)
+                            {
+                                if (!ProtoReader.HasSubValue(WireType.Variant, source)) throw new ProtoException();
+                                int num = source.ReadInt32();
+                                if (num != 0)
+                                {
+                                    foreach (var kv in _subtypeNumbers)
+                                    {
+                                        if (kv.Value == num)
+                                        {
+                                            t = kv.Key;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                            }
+                            value = Activator.CreateInstance(t);
+                            ProtoReader.NoteObject(value, source);
+                        }
+                        if (IsList)
+                            list = (IList)value;
+                        else
+                            args = new object[1];
+                    },
+                addLocal,
+                source);
+            
+            return origValue == value ? null : value;
+        }
+
+#endif
+
         internal static bool CanPack(WireType wireType)
         {
             switch (wireType)
@@ -28,66 +121,69 @@ namespace AqlaSerializer.Serializers
                     return false;
             }
         }
-        private readonly byte options;
 
-        private const byte OPTIONS_IsList = 1,
-                           OPTIONS_SuppressIList = 2,
-                           OPTIONS_WritePacked = 4,
-                           OPTIONS_ReturnList = 8,
-                           OPTIONS_OverwriteList = 16,
-                           OPTIONS_SupportNull = 32;
+        readonly byte options;
 
-        private readonly Type declaredType, concreteType;
+        const byte OPTIONS_IsList = 1;
+        const byte OPTIONS_SuppressIList = 2;
+        const byte OPTIONS_WritePacked = 4;
+        const byte OPTIONS_ReturnList = 8;
+        const byte OPTIONS_OverwriteList = 16;
+        
+        readonly Type declaredType;
+        readonly Type concreteTypeDefault;
+        readonly MethodInfo add;
 
-        private readonly MethodInfo add;
+        bool IsList => (options & OPTIONS_IsList) != 0;
+        bool SuppressIList => (options & OPTIONS_SuppressIList) != 0;
+        protected bool WritePacked => (options & OPTIONS_WritePacked) != 0;
+        bool ReturnList => (options & OPTIONS_ReturnList) != 0;
+        protected readonly WireType _packedWireTypeForRead;
+        readonly KeyValuePair<Type,int>[] _subtypeNumbers;
 
-        private readonly int fieldNumber;
+        readonly Type _itemType;
+        protected readonly bool _protoCompatibility;
 
-        private bool IsList { get { return (options & OPTIONS_IsList) != 0; } }
-        private bool SuppressIList { get { return (options & OPTIONS_SuppressIList) != 0; } }
-        private bool WritePacked { get { return (options & OPTIONS_WritePacked) != 0; } }
-        private bool SupportNull { get { return (options & OPTIONS_SupportNull) != 0; } }
-        private bool ReturnList { get { return (options & OPTIONS_ReturnList) != 0; } }
-        protected readonly WireType packedWireType;
+        readonly ListHelpers _listHelpers;
 
-        readonly Type itemType;
+        protected virtual bool WriteSubtypeInfo => true;
 
-        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull)
+        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
             if (returnList && ImmutableCollectionDecorator.IdentifyImmutable(model, declaredType, out builderFactory, out add, out addRange, out finish))
             {
                 return new ImmutableCollectionDecorator(
-                    model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, supportNull,
-                    builderFactory, add, addRange, finish);
+                    model, declaredType, concreteTypeDefault, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList,
+                    builderFactory, add, addRange, finish, subtypeNumbers, protoCompatibility);
             }
-
 #endif
-            return new ListDecorator(model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, supportNull);
+            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility);
         }
 
-        protected ListDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, bool supportNull)
+        protected ListDecorator(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
             : base(tail)
         {
-            this.itemType = tail.ExpectedType;
+            _itemType = tail.ExpectedType;
             if (returnList) options |= OPTIONS_ReturnList;
             if (overwriteList) options |= OPTIONS_OverwriteList;
-            if (supportNull) options |= OPTIONS_SupportNull;
             if ((writePacked || packedWireType != WireType.None) && fieldNumber <= 0) throw new ArgumentOutOfRangeException("fieldNumber");
             if (!CanPack(packedWireType))
             {
                 if (writePacked) throw new InvalidOperationException("Only simple data-types can use packed encoding");
                 packedWireType = WireType.None;
-            }            
+            }
 
-            this.fieldNumber = fieldNumber;
+            _packedWireTypeForRead = packedWireType;
+            _subtypeNumbers = subtypeNumbers;
+            _protoCompatibility = protoCompatibility;
+
             if (writePacked) options |= OPTIONS_WritePacked;
-            this.packedWireType = packedWireType;
             if (declaredType == null) throw new ArgumentNullException("declaredType");
             if (declaredType.IsArray) throw new ArgumentException("Cannot treat arrays as lists", "declaredType");
             this.declaredType = declaredType;
-            this.concreteType = concreteType;
+            this.concreteTypeDefault = concreteTypeDefault;
             
             // look for a public list.Add(typedObject) method
             if (RequireAdd)
@@ -106,22 +202,21 @@ namespace AqlaSerializer.Serializers
                 if (add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
+            _listHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
         }
-        protected virtual bool RequireAdd { get { return true; } }
+        protected virtual bool RequireAdd => true;
 
-        public override Type ExpectedType { get { return declaredType;  } }
-        public override bool RequiresOldValue { get { return AppendToCollection; } }
-        public override bool ReturnsValue { get { return ReturnList; } }
+        public override Type ExpectedType => declaredType;
+        public override bool RequiresOldValue => AppendToCollection;
+        public override bool ReturnsValue => ReturnList;
 
-        protected bool AppendToCollection
-        {
-            get { return (options & OPTIONS_OverwriteList) == 0; }
-        }
+        protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;
 
 #if FEAT_COMPILER
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
-            /* This looks more complex than it is. Look at the non-compiled Read to
+#if false
+/* This looks more complex than it is. Look at the non-compiled Read to
              * see what it is trying to do, but note that it needs to cope with a
              * few more scenarios. Note that it picks the **most specific** Add,
              * unlike the runtime version that uses IList when possible. The core
@@ -147,21 +242,21 @@ namespace AqlaSerializer.Serializers
                     ctx.LoadValue(list);
                     ctx.StoreValue(origlist);
                 }
-                if (concreteType != null)
+                if (concreteTypeDefault != null)
                 {
                     ctx.LoadValue(list);
                     Compiler.CodeLabel notNull = ctx.DefineLabel();
                     ctx.BranchIfTrue(notNull, true);
-                    ctx.EmitCtor(concreteType);
+                    ctx.EmitCtor(concreteTypeDefault);
                     ctx.CopyValue();
-                    ctx.CastToObject(concreteType);
+                    ctx.CastToObject(concreteTypeDefault);
                     ctx.EmitCallNoteObject();
                     ctx.StoreValue(list);
                     ctx.MarkLabel(notNull);
                 }
 
                 bool castListForAdd = !add.DeclaringType.IsAssignableFrom(declaredType);
-                EmitReadList(ctx, list, Tail, add, packedWireType, castListForAdd);
+                EmitReadList(ctx, list, Tail, add, _packedWireTypeForRead, castListForAdd);
 
                 if (returnList)
                 {
@@ -184,14 +279,18 @@ namespace AqlaSerializer.Serializers
                     }
                 }
             }
+#endif
+
         }
 
-        internal static void EmitReadList(AqlaSerializer.Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, WireType packedWireType, bool castListForAdd)
+#if false
+
+        internal static void EmitReadList(AqlaSerializer.Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, WireType _packedWireTypeForRead, bool castListForAdd)
         {
             using (Compiler.Local fieldNumber = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
             {
-                Compiler.CodeLabel readPacked = packedWireType == WireType.None ? new Compiler.CodeLabel() : ctx.DefineLabel();                                   
-                if (packedWireType != WireType.None)
+                Compiler.CodeLabel readPacked = _packedWireTypeForRead == WireType.None ? new Compiler.CodeLabel() : ctx.DefineLabel();                                   
+                if (_packedWireTypeForRead != WireType.None)
                 {
                     ctx.LoadReaderWriter();
                     ctx.LoadValue(typeof(ProtoReader).GetProperty("WireType"));
@@ -222,7 +321,7 @@ namespace AqlaSerializer.Serializers
                     ctx.MarkLabel(@end);
                 }
 
-                if (packedWireType != WireType.None)
+                if (_packedWireTypeForRead != WireType.None)
                 {
                     Compiler.CodeLabel allDone = ctx.DefineLabel();
                     ctx.Branch(allDone, false);
@@ -231,7 +330,7 @@ namespace AqlaSerializer.Serializers
                     ctx.LoadReaderWriter();
                     ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("StartSubItem"));
 
-                    ctx.LoadValue((int)packedWireType);
+                    ctx.LoadValue((int)_packedWireTypeForRead);
                     ctx.LoadReaderWriter();
                     ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("HasSubValue"));
                     ctx.DiscardValue();
@@ -240,7 +339,7 @@ namespace AqlaSerializer.Serializers
 
                     Compiler.CodeLabel testForData = ctx.DefineLabel(), noMoreData = ctx.DefineLabel();
                     ctx.MarkLabel(testForData);
-                    ctx.LoadValue((int)packedWireType);
+                    ctx.LoadValue((int)_packedWireTypeForRead);
                     ctx.LoadReaderWriter();
                     ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("HasSubValue"));
                     ctx.BranchIfFalse(noMoreData, false);
@@ -264,7 +363,7 @@ namespace AqlaSerializer.Serializers
             EmitReadAndAddItem(ctx, list, tail, add, castListForAdd, false);
         }
 
-        private static void EmitReadAndAddItem(Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, bool castListForAdd, bool isFake)
+        static void EmitReadAndAddItem(Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, bool castListForAdd, bool isFake)
         {
             ctx.LoadAddress(list, list.Type); // needs to be the reference in case the list is value-type (static-call)
             if (castListForAdd) ctx.Cast(add.DeclaringType);
@@ -345,10 +444,13 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 
+#endif
+
 #if WINRT
         private static readonly TypeInfo ienumeratorType = typeof(IEnumerator).GetTypeInfo(), ienumerableType = typeof (IEnumerable).GetTypeInfo();
 #else
-        private static readonly System.Type ienumeratorType = typeof (IEnumerator), ienumerableType = typeof (IEnumerable);
+        static readonly System.Type ienumeratorType = typeof (IEnumerator);
+        static readonly System.Type ienumerableType = typeof (IEnumerable);
 #endif
         protected MethodInfo GetEnumeratorInfo(TypeModel model, out MethodInfo moveNext, out MethodInfo current)
         {
@@ -433,36 +535,10 @@ namespace AqlaSerializer.Serializers
             return getEnumerator;
         }
 #if FEAT_COMPILER
-        static internal void EmitWriteEmptyElement(AqlaSerializer.Compiler.CompilerContext ctx, Type itemType, IProtoSerializer tail, bool writeNullChecked)
-        {
-            if (itemType.IsValueType)
-            {
-                using (Compiler.Local temp = new Compiler.Local(ctx, ctx.MapType(itemType)))
-                {
-                    ctx.LoadAddress(temp, ctx.MapType(itemType));
-                    ctx.EmitCtor(ctx.MapType(itemType));
-                    ctx.LoadValue(temp);
-                    EmitWriteEmptyElement_Write(ctx, itemType, tail, false);
-                }
-            }
-            else
-            {
-                ctx.LoadNullRef();
-                EmitWriteEmptyElement_Write(ctx, itemType, tail, writeNullChecked);
-            }
-
-        }
-
-        static void EmitWriteEmptyElement_Write(AqlaSerializer.Compiler.CompilerContext ctx, Type itemType, IProtoSerializer tail, bool writeNullChecked)
-        {
-            if (writeNullChecked)
-                ctx.WriteNullCheckedTail(itemType, tail, null);
-            else
-                tail.EmitWrite(ctx, null);
-        }
-
+        
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
+            #if false
             using (Compiler.Local list = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             {
                 MethodInfo moveNext, current, getEnumerator = GetEnumeratorInfo(ctx.Model, out moveNext, out current);
@@ -490,8 +566,6 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadReaderWriter();
                         ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("SetPackedField"));
                     }
-
-                    EmitWriteEmptyElement(ctx, itemType, Tail, false);
                     
                     ctx.LoadAddress(list, ExpectedType);
                     ctx.EmitCall(getEnumerator);
@@ -526,109 +600,41 @@ namespace AqlaSerializer.Serializers
                     }                    
                 }
             }
-        }
 #endif
 
+        }
+#endif
+        public virtual bool HasCallbacks(TypeModel.CallbackType callbackType)
+        {
+            return false;
+        }
+
+        public virtual bool CanCreateInstance()
+        {
+            return true;
+        }
 #if !FEAT_IKVM
-
-        internal static void WriteEmptyElement(IProtoSerializer tail, ProtoWriter dest, Type itemType)
+        public virtual object CreateInstance(ProtoReader source)
         {
-            tail.Write(
-                Helpers.IsValueType(itemType) && Helpers.GetNullableUnderlyingType(itemType) == null
-                    ? Activator.CreateInstance(itemType)
-                    : null,
-                dest);
+            return Activator.CreateInstance(concreteTypeDefault);
         }
 
-
-        public override void Write(object value, ProtoWriter dest)
+        public virtual void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
-            SubItemToken token;
-            bool writePacked = WritePacked;
-            if (writePacked)
-            {
-                ProtoWriter.WriteFieldHeader(fieldNumber, WireType.String, dest);
-                token = ProtoWriter.StartSubItem(value, dest);
-                ProtoWriter.SetPackedField(fieldNumber, dest);
-            }
-            else
-            {
-                token = new SubItemToken(); // default
-            }
-            bool checkForNull = !SupportNull;
-            WriteEmptyElement(Tail, dest, itemType);
-            foreach (object subItem in (IEnumerable)value)
-            {
-                if (checkForNull && subItem == null) { throw new NullReferenceException(); }
-                Tail.Write(subItem, dest);
-            }
-            if (writePacked)
-            {
-                ProtoWriter.EndSubItem(token, dest);
-            }
-        }
-        public override object Read(object value, ProtoReader source)
-        {
-            int field = source.FieldNumber;
-            object origValue = value;
-            if (value == null)
-            {
-                value = Activator.CreateInstance(concreteType);
-                ProtoReader.NoteObject(value, source);
-            }
-            bool isList = IsList && !SuppressIList;
-            if (packedWireType != WireType.None && source.WireType == WireType.String)
-            {
-                SubItemToken token = ProtoReader.StartSubItem(source);
-
-                if (!ProtoReader.HasSubValue(packedWireType, source))
-                    throw new InvalidOperationException("Empty element problem");
-                Tail.Read(null, source);
-
-                if (isList)
-                {
-                    IList list = (IList)value;
-                    while (ProtoReader.HasSubValue(packedWireType, source))
-                    {
-                        list.Add(Tail.Read(null, source));
-                    }
-                }
-                else {
-                    object[] args = new object[1];
-                    while (ProtoReader.HasSubValue(packedWireType, source))
-                    {
-                        args[0] = Tail.Read(null, source);
-                        add.Invoke(value, args);
-                    }
-                }
-                ProtoReader.EndSubItem(token, source);
-            }
-            else
-            {
-                Tail.Read(null, source);
-
-                if (isList)
-                {
-                    IList list = (IList)value;
-                    while (source.TryReadFieldHeader(field))
-                    {
-                        list.Add(Tail.Read(null, source));
-                    }
-                }
-                else
-                {
-                    object[] args = new object[1];
-                    while (source.TryReadFieldHeader(field))
-                    {
-                        args[0] = Tail.Read(null, source);
-                        add.Invoke(value, args);
-                    }
-                }
-            }
-            return origValue == value ? null : value;
+        
         }
 #endif
+#if FEAT_COMPILER
+        public virtual void EmitCallback(CompilerContext ctx, Local valueFrom, TypeModel.CallbackType callbackType)
+        {
+        
+        }
 
+        public virtual void EmitCreateInstance(CompilerContext ctx)
+        {
+            ctx.EmitCtor(concreteTypeDefault);
+        }
+#endif
     }
 }
 #endif

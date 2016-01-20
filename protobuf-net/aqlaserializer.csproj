@@ -265,8 +265,8 @@
     <Compile Include="Serializers\ArrayDecorator.cs" />
     <Compile Include="Serializers\ByteSerializer.cs" />
     <Compile Include="Serializers\ImmutableCollectionDecorator.cs" />
+    <Compile Include="Serializers\ListHelpers.cs" />
     <Compile Include="Serializers\NetObjectValueDecorator.cs" />
-    <Compile Include="Serializers\NullDecorator.cs" />
     <Compile Include="Serializers\ParseableSerializer.cs" />
     <Compile Include="Serializers\KeyValuePairDecorator.cs" />
     <Compile Include="Serializers\ListDecorator.cs" />
@@ -301,7 +301,7 @@
     <Compile Include="Serializers\ProtoDecoratorBase.cs" />
     <Compile Include="Serializers\StringSerializer.cs" />
     <Compile Include="Serializers\SubItemSerializer.cs" />
-    <Compile Include="Serializers\Tag.cs" />
+    <Compile Include="Serializers\EnsureWireTypeDecorator.cs" />
     <Compile Include="Serializers\TypeSerializer.cs" />
     <Compile Include="ServiceModel\BinarySerializationBehaviorAttribute.cs" />
     <Compile Include="ServiceModel\ProtoBehaviorExtensionElement.cs" />
