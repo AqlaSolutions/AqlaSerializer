@@ -22,32 +22,29 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            _listHelpers.Write(
-                value,
-                () =>
+            int? subTypeNumber = null;
+            int? length = null;
+            if (!_protoCompatibility)
+            {
+                if (WriteSubtypeInfo)
+                {
+                    var type = value.GetType();
+                    if (type != ExpectedType)
                     {
-                        if (!_protoCompatibility && WriteSubtypeInfo)
+                        for (int i = 0; i < _subtypeNumbers.Length; i++)
                         {
-                            var type = value.GetType();
-                            int subtypeNumber = 0;
-                            if (type != ExpectedType)
-                            {
-                                for (int i = 0; i < _subtypeNumbers.Length; i++)
-                                {
-                                    var kv = _subtypeNumbers[i];
-                                    if (Helpers.IsAssignableFrom(type, kv.Key))
-                                        subtypeNumber = kv.Value;
-                                }
-
-                                if (subtypeNumber == 0 && !Helpers.IsAssignableFrom(concreteTypeDefault, type)) TypeModel.ThrowUnexpectedSubtype(ExpectedType, type);
-                            }
-
-                            ProtoWriter.WriteFieldHeaderBeginIgnored(dest);
-                            ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
-                            ProtoWriter.WriteInt32(subtypeNumber, dest);
+                            var kv = _subtypeNumbers[i];
+                            if (Helpers.IsAssignableFrom(type, kv.Key))
+                                subTypeNumber = kv.Value;
                         }
-                    },
-                dest);
+
+                        if (!subTypeNumber.HasValue && !Helpers.IsAssignableFrom(concreteTypeDefault, type)) TypeModel.ThrowUnexpectedSubtype(ExpectedType, type);
+                    }
+                }
+                // we still write length in case it will be read as array
+                length = (value as ICollection)?.Count;
+            }
+            _listHelpers.Write(value, subTypeNumber, length, null, dest);
         }
         
         public override object Read(object value, ProtoReader source)
@@ -70,28 +67,23 @@ namespace AqlaSerializer.Serializers
             }
 
             _listHelpers.Read(
-                () =>
+                (subTypeNumber, length) =>
                     {
                         if (value == null)
                         {
-                            Type t = concreteTypeDefault;
-                            if (!_protoCompatibility)
+                            Type t = concreteTypeDefault ?? declaredType;
+                            if (subTypeNumber.HasValue)
                             {
-                                if (!ProtoReader.HasSubValue(WireType.Variant, source)) throw new ProtoException();
-                                int num = source.ReadInt32();
-                                if (num != 0)
+                                foreach (var kv in _subtypeNumbers)
                                 {
-                                    foreach (var kv in _subtypeNumbers)
+                                    if (kv.Value == subTypeNumber)
                                     {
-                                        if (kv.Value == num)
-                                        {
-                                            t = kv.Key;
-                                            break;
-                                        }
+                                        t = kv.Key;
+                                        break;
                                     }
                                 }
-
                             }
+
                             value = Activator.CreateInstance(t);
                             ProtoReader.NoteObject(value, source);
                         }
@@ -129,7 +121,7 @@ namespace AqlaSerializer.Serializers
         const byte OPTIONS_WritePacked = 4;
         const byte OPTIONS_ReturnList = 8;
         const byte OPTIONS_OverwriteList = 16;
-        
+
         readonly Type declaredType;
         readonly Type concreteTypeDefault;
         readonly MethodInfo add;

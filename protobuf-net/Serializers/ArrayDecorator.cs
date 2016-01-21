@@ -19,12 +19,74 @@ namespace AqlaSerializer.Serializers
 {
     sealed class ArrayDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+#if !FEAT_IKVM
+        public override void Write(object value, ProtoWriter dest)
+        {
+            _listHelpers.Write(value, null, ((IList)value)?.Count, null, dest);
+        }
+
+        readonly ListHelpers _listHelpers;
+
+        public override object Read(object value, ProtoReader source)
+        {
+            Array result = null;
+            BasicList list = null;
+            int reservedTrap = -1;
+            int index;
+            Action<object> addMethod = null;
+            
+            _listHelpers.Read(
+                (subtypeNumber, length) =>
+                    {
+                        if (length >= 0)
+                        {
+                            int oldLen;
+                            result = Read_CreateInstance(value, length.Value, null, out oldLen, source);
+                            index = oldLen;
+                            addMethod = v => result.SetValue(v, index++);
+                        }
+                        else
+                        {
+                            reservedTrap = ProtoReader.ReserveNoteObject(source);
+                            list = new BasicList();
+                            addMethod = v => list.Add(v);
+                        }
+                    },
+                addMethod,
+                source);
+
+            if (result == null)
+            {
+                int oldLen;
+                result = Read_CreateInstance(value, list.Count, reservedTrap, out oldLen, source);
+                list.CopyTo(result, oldLen);
+            }
+            return result;
+        }
+
+        Array Read_CreateInstance(object value, int appendCount, int? reservedTrap, out int oldLen, ProtoReader source)
+        {
+            oldLen = AppendToCollection ? (((Array)value)?.Length ?? 0) : 0;
+            Array result = Array.CreateInstance(_itemType, oldLen + appendCount);
+            if (reservedTrap.HasValue)
+                ProtoReader.NoteReservedTrappedObject(reservedTrap.Value, result, source);
+            else
+                ProtoReader.NoteObject(value, source);
+            if (oldLen != 0) ((Array)value).CopyTo(result, 0);
+            return result;
+        }
+#endif
+
         readonly bool _writePacked;
         readonly WireType _packedWireTypeForRead;
         readonly Type _arrayType; // this is, for example, typeof(int[])
         readonly bool _overwriteList;
         readonly Type _itemType; // this is, for example, typeof(int[])
         readonly bool _protoCompatibility;
+
+
+        bool AppendToCollection => !_overwriteList;
+        
         public ArrayDecorator(TypeModel model, IProtoSerializer tail, bool writePacked, WireType packedWireTypeForRead, Type arrayType, bool overwriteList, bool protoCompatibility)
             : base(tail)
         {
@@ -130,31 +192,6 @@ namespace AqlaSerializer.Serializers
             ctx.BranchIfLess(processItem, false);
 #endif
 
-        }
-#endif
-        bool AppendToCollection => !_overwriteList;
-
-#if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
-        {
-            _listHelpers.Write(value, null, dest);
-        }
-
-        readonly ListHelpers _listHelpers;
-
-        public override object Read(object value, ProtoReader source)
-        {
-            int reservedTrap = ProtoReader.ReserveNoteObject(source);
-            BasicList list = new BasicList();
-            _listHelpers.Read(null, v => list.Add(v), source);
-            
-            int oldLen = AppendToCollection ? ((value == null ? 0 : ((Array)value).Length)) : 0;
-            Array result = Array.CreateInstance(_itemType, oldLen + list.Count);
-            ProtoReader.NoteReservedTrappedObject(reservedTrap, result, source);
-            if (oldLen != 0) ((Array)value).CopyTo(result, 0);
-            list.CopyTo(result, oldLen);
-
-            return result;
         }
 #endif
 
