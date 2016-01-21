@@ -59,13 +59,21 @@ namespace AqlaSerializer
         /// </summary>
         public static void WriteTimeSpan(TimeSpan timeSpan, ProtoWriter dest)
         {
-            WriteTimeSpanImpl(timeSpan, dest, DateTimeKind.Unspecified);
+            WriteTimeSpan(timeSpan, dest.WireType, dest);
         }
-        private static void WriteTimeSpanImpl(TimeSpan timeSpan, ProtoWriter dest, DateTimeKind kind)
+
+        /// <summary>
+        /// Writes a TimeSpan to a protobuf stream
+        /// </summary>
+        public static void WriteTimeSpan(TimeSpan timeSpan, WireType wireType, ProtoWriter dest)
+        {
+            WriteTimeSpanImpl(timeSpan, wireType, dest, DateTimeKind.Unspecified);
+        }
+        private static void WriteTimeSpanImpl(TimeSpan timeSpan, WireType wireType, ProtoWriter dest, DateTimeKind kind)
         {
             if (dest == null) throw new ArgumentNullException("dest");
             long value;
-            switch(dest.WireType)
+            switch(wireType)
             {
                 case WireType.String:
                 case WireType.StartGroup:
@@ -111,7 +119,7 @@ namespace AqlaSerializer
                         scale = TimeSpanScale.Ticks;
                     }
 
-                    SubItemToken token = ProtoWriter.StartSubItem(null, dest);
+                    SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, dest);
             
                     if(value != 0) {
                         ProtoWriter.WriteFieldHeader(FieldTimeSpanValue, WireType.SignedVariant, dest);
@@ -200,7 +208,7 @@ namespace AqlaSerializer
                     delta = value - EpochOrigin[0];
                     break;
             }
-            WriteTimeSpanImpl(delta, dest, includeKind ? value.Kind : DateTimeKind.Unspecified);
+            WriteTimeSpanImpl(delta, dest.WireType, dest, includeKind ? value.Kind : DateTimeKind.Unspecified);
         }
 
         private static long ReadTimeSpanTicks(ProtoReader source, out DateTimeKind kind) {
@@ -345,7 +353,7 @@ namespace AqlaSerializer
         {
             byte[] blob = value.ToByteArray();
 
-            SubItemToken token = ProtoWriter.StartSubItem(null, dest);
+            SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, dest);
             if (value != Guid.Empty)
             {
                 ProtoWriter.WriteFieldHeader(FieldGuidLow, WireType.Fixed64, dest);

@@ -17,7 +17,7 @@ namespace AqlaSerializer.unittest.Serializers
             Util.Test(pw =>
             {
                 ProtoWriter.WriteFieldHeader(5, WireType.String, pw);
-                SubItemToken token = ProtoWriter.StartSubItem(new object(), pw);
+                SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(new object(), pw);
                 ProtoWriter.WriteFieldHeader(6, WireType.String, pw);
                 ProtoWriter.WriteBytes(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7 }, pw);
                 ProtoWriter.EndSubItem(token, pw);

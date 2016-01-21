@@ -48,7 +48,7 @@ namespace AqlaSerializer.Serializers
         {
             // WriteFieldHeaderBegin called outside
             // but wireType is not set yet
-            ProtoWriter.WriteFieldHeaderComplete(_wireType, dest);
+            ProtoWriter.WriteFieldHeaderCompleteAnyType(_wireType, dest);
             Tail.Write(value, dest);
         }
 #endif
@@ -59,7 +59,7 @@ namespace AqlaSerializer.Serializers
         {
             ctx.LoadValue((int)_wireType);
             ctx.LoadReaderWriter();
-            ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderComplete"));
+            ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCompleteAnyType"));
             Tail.EmitWrite(ctx, valueFrom);
         }
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
