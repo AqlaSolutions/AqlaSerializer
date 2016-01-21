@@ -109,29 +109,7 @@ namespace AqlaSerializer.Compiler
             
             using (Local typedVal = new Local(ctx, type))
             {
-                if (!type.IsValueType)
-                {
-                    ctx.LoadValue(ctx.InputValue);
-                    ctx.CastFromObject(type);
-                    ctx.StoreValue(typedVal);
-                }
-                else
-                {   
-                    ctx.LoadValue(ctx.InputValue);
-                    CodeLabel notNull = ctx.DefineLabel(), endNull = ctx.DefineLabel();
-                    ctx.BranchIfTrue(notNull, true);
-
-                    ctx.LoadAddress(typedVal, type);
-                    ctx.EmitCtor(type);
-                    ctx.Branch(endNull, true);
-
-                    ctx.MarkLabel(notNull);
-                    ctx.LoadValue(ctx.InputValue);
-                    ctx.CastFromObject(type);
-                    ctx.StoreValue(typedVal);
-
-                    ctx.MarkLabel(endNull);
-                }
+                ctx.StoreValueOrDefaultFromObject(ctx.inputValue, typedVal);
                 head.EmitRead(ctx, typedVal);
 
                 if (head.ReturnsValue) {
@@ -146,6 +124,37 @@ namespace AqlaSerializer.Compiler
                 typeof(ProtoDeserializer));
         }
 #endif
+
+        public void StoreValueOrDefaultFromObject(Local storeFrom, Local storeTo)
+        {
+            if (storeFrom == null) throw new ArgumentNullException(nameof(storeFrom));
+            if (storeTo == null) throw new ArgumentNullException(nameof(storeTo));
+            var ctx = this;
+            ctx.LoadValue(storeFrom);
+            if (storeTo.Type.IsValueType)
+            {
+                CodeLabel notNull = ctx.DefineLabel(), endNull = ctx.DefineLabel();
+                ctx.BranchIfTrue(notNull, true);
+                {
+                    ctx.LoadAddress(storeTo, storeTo.Type);
+                    ctx.EmitCtor(storeTo.Type);
+                    ctx.Branch(endNull, true);
+                }
+                {
+                    ctx.MarkLabel(notNull);
+                    ctx.LoadValue(storeFrom);
+                    ctx.CastFromObject(storeTo.Type);
+                    ctx.StoreValue(storeTo);
+                }
+                ctx.MarkLabel(endNull);
+            }
+            else
+            {
+                ctx.CastFromObject(storeTo.Type);
+                ctx.StoreValue(storeTo);
+            }
+        }
+
         internal void Return()
         {
             Emit(OpCodes.Ret);
