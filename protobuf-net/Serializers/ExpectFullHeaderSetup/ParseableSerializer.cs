@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class ParseableSerializer : IProtoSerializer
+    sealed class ParseableSerializer : IProtoSerializerWithAutoType
     {
         private readonly MethodInfo parse;
         public static ParseableSerializer TryCreate(Type type, TypeModel model)

@@ -9,7 +9,7 @@ using Type = IKVM.Reflection.Type;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class GuidSerializer : IProtoSerializer
+    sealed class GuidSerializer : IProtoSerializerWithAutoType
     {
 #if FEAT_IKVM
         readonly Type expectedType;

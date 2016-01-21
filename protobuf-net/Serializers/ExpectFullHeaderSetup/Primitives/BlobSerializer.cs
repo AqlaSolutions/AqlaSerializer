@@ -12,7 +12,7 @@ using Type = IKVM.Reflection.Type;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class BlobSerializer : IProtoSerializer
+    sealed class BlobSerializer : IProtoSerializerWithAutoType
     {
         public Type ExpectedType { get { return expectedType; } }
 
