@@ -16,9 +16,9 @@ namespace AqlaSerializer.Serializers
     /// <summary>
     /// When we expect an extended wire type like SignedVariant we need to "upgrade" it to our version in reader
     /// </summary>
-    sealed class FieldHeaderDecorator : ProtoDecoratorBase, IProtoTypeSerializer
+    class WireTypeDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
-        public FieldHeaderDecorator(WireType wireType, IProtoSerializer tail, bool strict = false)
+        public WireTypeDecorator(WireType wireType, IProtoSerializer tail, bool strict = false)
             : base(tail)
         {
             _strict = strict;

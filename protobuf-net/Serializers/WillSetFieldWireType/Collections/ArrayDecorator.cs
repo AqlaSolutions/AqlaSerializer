@@ -25,8 +25,6 @@ namespace AqlaSerializer.Serializers
             _listHelpers.Write(value, null, ((IList)value)?.Count, null, dest);
         }
 
-        readonly ListHelpers _listHelpers;
-
         public override object Read(object value, ProtoReader source)
         {
             Array result = null;
@@ -77,6 +75,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 
+        readonly ListHelpers _listHelpers;
         readonly bool _writePacked;
         readonly WireType _packedWireTypeForRead;
         readonly Type _arrayType; // this is, for example, typeof(int[])

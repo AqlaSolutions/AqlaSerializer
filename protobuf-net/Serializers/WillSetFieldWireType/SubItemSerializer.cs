@@ -49,7 +49,8 @@ namespace AqlaSerializer.Serializers
         private readonly Type type;
         private readonly ISerializerProxy proxy;
         private readonly bool recursionCheck;
-        public SubItemSerializer(Type type, int key, ISerializerProxy proxy, bool recursionCheck)
+        readonly bool _prefixLength;
+        public SubItemSerializer(Type type, int key, ISerializerProxy proxy, bool recursionCheck, bool prefixLength)
         {
             if (type == null) throw new ArgumentNullException("type");
             if (proxy == null) throw new ArgumentNullException("proxy");
@@ -57,6 +58,7 @@ namespace AqlaSerializer.Serializers
             this.proxy= proxy;
             this.key = key;
             this.recursionCheck = recursionCheck;
+            _prefixLength = prefixLength;
         }
         Type IProtoSerializer.ExpectedType
         {
@@ -70,11 +72,11 @@ namespace AqlaSerializer.Serializers
         {
             if (recursionCheck)
             {
-                ProtoWriter.WriteObject(value, key, dest);
+                ProtoWriter.WriteObject(value, key, _prefixLength, dest);
             }
             else
             {
-                ProtoWriter.WriteRecursionSafeObject(value, key, dest);
+                ProtoWriter.WriteRecursionSafeObject(value, key, _prefixLength, dest);
             }
         }
         object IProtoSerializer.Read(object value, ProtoReader source)

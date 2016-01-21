@@ -169,7 +169,6 @@
     <Compile Include="Serializers\KeyValuePairTests.cs" />
     <Compile Include="Serializers\NilSerializer.cs" />
     <Compile Include="Serializers\SubItems.cs" />
-    <Compile Include="Serializers\Tag.cs" />
     <Compile Include="Serializers\Util.cs" />
     <Compile Include="Serializers\Writer.cs" />
     <Compile Include="ThirdParty\NHibernateProxies.cs" />

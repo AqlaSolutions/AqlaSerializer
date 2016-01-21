@@ -192,8 +192,8 @@ namespace ExperimentalDataTableSerialization
                 foreach (DataColumn col in cols)
                 {
                     // for each, write the name and data type
-                    ProtoWriter.WriteFieldHeader(2, WireType.StartGroup, writer);
-                    var token = ProtoWriter.StartSubItem(col, writer);
+                    ProtoWriter.WriteFieldHeaderAnyType(2, WireType.StartGroup, writer);
+                    var token = ProtoWriter.StartSubItemWithoutWritingHeader(col, writer);
                     ProtoWriter.WriteFieldHeader(1, WireType.String, writer);
                     ProtoWriter.WriteString(col.ColumnName, writer);
                     ProtoWriter.WriteFieldHeader(2, WireType.Variant, writer);
@@ -269,8 +269,8 @@ namespace ExperimentalDataTableSerialization
                 foreach (DataRow row in table.Rows)
                 {
                     i = 0;
-                    ProtoWriter.WriteFieldHeader(3, WireType.StartGroup, writer);
-                    var token = ProtoWriter.StartSubItem(row, writer);
+                    ProtoWriter.WriteFieldHeaderAnyType(3, WireType.StartGroup, writer);
+                    var token = ProtoWriter.StartSubItemWithoutWritingHeader(row, writer);
                     foreach (DataColumn col in cols)
                     {
                         var value = row[col];

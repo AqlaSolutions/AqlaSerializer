@@ -32,7 +32,7 @@ namespace AqlaSerializer.Serializers
         private readonly TypeInfo typeInfo;
 #endif
         public Type ExpectedType { get { return forType; } }
-        private readonly IProtoSerializer[] serializers;
+        private readonly IProtoSerializerWithWireType[] serializers;
         private readonly int[] fieldNumbers;
         private readonly bool isRootType, useConstructor, isExtensible, hasConstructor;
         private readonly CallbackSet callbacks;
@@ -42,7 +42,7 @@ namespace AqlaSerializer.Serializers
         public bool AllowInheritance { get; set; } = true;
         readonly bool _prefixLength;
 
-        public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializer[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory, bool prefixLength)
+        public TypeSerializer(TypeModel model, Type forType, int[] fieldNumbers, IProtoSerializerWithWireType[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory, bool prefixLength)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(fieldNumbers != null);
@@ -151,23 +151,36 @@ namespace AqlaSerializer.Serializers
             IProtoTypeSerializer ser = (IProtoTypeSerializer)GetMoreSpecificSerializer(value);
             if (ser != null) ser.Callback(value, callbackType, context);
         }
-        private IProtoSerializer GetMoreSpecificSerializer(object value)
+
+        IProtoSerializerWithWireType GetMoreSpecificSerializer(object value)
         {
-            if (!CanHaveInheritance) return null;
+            int fieldNumber;
+            IProtoSerializerWithWireType serializer;
+            GetMoreSpecificSerializer(value, out serializer, out fieldNumber);
+            return serializer;
+        }
+
+        private bool GetMoreSpecificSerializer(object value, out IProtoSerializerWithWireType serializer, out int fieldNumber)
+        {
+            fieldNumber = 0;
+            serializer = null;
+            if (!CanHaveInheritance) return false;
             Type actualType = value.GetType();
-            if (actualType == forType) return null;
+            if (actualType == forType) return false;
 
             for (int i = 0; i < serializers.Length; i++)
             {
-                IProtoSerializer ser = serializers[i];
+                IProtoSerializerWithWireType ser = serializers[i];
                 if (ser.ExpectedType != forType && Helpers.IsAssignableFrom(ser.ExpectedType, actualType))
                 {
-                    return ser;
+                    serializer = ser;
+                    fieldNumber = fieldNumbers[i];
+                    return true;
                 }
             }
-            if (actualType == constructType) return null; // needs to be last in case the default concrete type is also a known sub-type
+            if (actualType == constructType) return false; // needs to be last in case the default concrete type is also a known sub-type
             TypeModel.ThrowUnexpectedSubtype(forType, actualType); // might throw (if not a proxy)
-            return null;
+            return false;
         }
 
         public void Write(object value, ProtoWriter dest)
@@ -175,9 +188,14 @@ namespace AqlaSerializer.Serializers
             var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
             if (isRootType) Callback(value, TypeModel.CallbackType.BeforeSerialize, dest.Context);
             // write inheritance first
-            IProtoSerializer next = GetMoreSpecificSerializer(value);
-            if (next != null) next.Write(value, dest);
-
+            // TODO add WriteFieldHeaderBegin to emit for subtypes AND members
+            IProtoSerializerWithWireType next;
+            int fn;
+            if (GetMoreSpecificSerializer(value, out next, out fn))
+            {
+                ProtoWriter.WriteFieldHeaderBegin(fn, dest);
+                next.Write(value, dest);
+            }
             // write all actual fields
             //Helpers.DebugWriteLine(">> Writing fields for " + forType.FullName);
             for (int i = 0; i < serializers.Length; i++)

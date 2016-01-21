@@ -20,59 +20,17 @@ namespace AqlaSerializer.unittest.Meta
     public class TestCustomerStruct
     {
         [Test]
-        public void RunStructDesrializerForEmptyStream()
+        public void RunStruct()
         {
             var model = AqlaSerializer.Meta.TypeModel.Create();
-            var head = new TypeSerializer(model, typeof(CustomerStruct),
-                new int[] { 1, 2 },
-                new IProtoSerializer[] {
-                    new PropertyDecorator(model, typeof(CustomerStruct), typeof(CustomerStruct).GetProperty("Id"), new TagDecorator(1, WireType.Variant, false, new Int32Serializer(model))),
-                    new FieldDecorator(typeof(CustomerStruct), typeof(CustomerStruct).GetField("Name"), new TagDecorator(2, WireType.String, false, new StringSerializer(model)))
-                }, null, false, true, null, null, null);
-            var deser = CompilerContext.BuildDeserializer(head, model);
+            var t = model.Add(typeof(CustomerStruct), false);
+            t.AddField(1, "Id");
+            t.AddField(2, "Name");
 
-            using (var reader = new ProtoReader(Stream.Null, null, null))
-            {
-                Assert.IsInstanceOfType(typeof(CustomerStruct), deser(null, reader));
-            }
-            using (var reader = new ProtoReader(Stream.Null, null, null))
-            {
-                CustomerStruct before = new CustomerStruct { Id = 123, Name = "abc" };
-                CustomerStruct after = (CustomerStruct)deser(before, reader);
-                Assert.AreEqual(before.Id, after.Id);
-                Assert.AreEqual(before.Name, after.Name);
-            }
-        }
-        [Test]
-        public void GenerateTypeSerializer()
-        {
-            var model = AqlaSerializer.Meta.TypeModel.Create();
-            var head = new TypeSerializer(model, typeof(CustomerStruct),
-                new int[] { 1, 2 },
-                new IProtoSerializer[] {
-                    new PropertyDecorator(model, typeof(CustomerStruct), typeof(CustomerStruct).GetProperty("Id"), new TagDecorator(1, WireType.Variant,false,  new Int32Serializer(model))),
-                    new FieldDecorator(typeof(CustomerStruct), typeof(CustomerStruct).GetField("Name"), new TagDecorator(2, WireType.String,false,  new StringSerializer(model)))
-                }, null, false, true, null, null, null);
-            var ser = CompilerContext.BuildSerializer(head, model);
-            var deser = CompilerContext.BuildDeserializer(head, model);
-            CustomerStruct cs1 = new CustomerStruct { Id = 123, Name = "Fred" };
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (ProtoWriter writer = new ProtoWriter(ms, null, null))
-                {
-                    ser(cs1, writer);
-                }
-                byte[] blob = ms.ToArray();
-                ms.Position = 0;
-                using (ProtoReader reader = new ProtoReader(ms, null, null))
-                {
-                    CustomerStruct? cst = (CustomerStruct?)deser(null, reader);
-                    Assert.IsTrue(cst.HasValue);
-                    CustomerStruct cs2 = cst.Value;
-                    Assert.AreEqual(cs1.Id, cs2.Id);
-                    Assert.AreEqual(cs1.Name, cs2.Name);
-                }
-            }
+            CustomerStruct before = new CustomerStruct { Id = 123, Name = "abc" };
+            CustomerStruct after = (CustomerStruct)model.DeepClone(before);
+            Assert.AreEqual(before.Id, after.Id);
+            Assert.AreEqual(before.Name, after.Name);
         }
     }
 }

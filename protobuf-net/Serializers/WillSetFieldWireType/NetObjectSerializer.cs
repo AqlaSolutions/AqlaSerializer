@@ -1,9 +1,12 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+#if FEAT_COMPILER
 using AqlaSerializer.Compiler;
-using AqlaSerializer.Meta;
 using TriAxis.RunSharp;
+#endif
+using System.Diagnostics;
+using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -45,7 +48,7 @@ namespace AqlaSerializer.Serializers
         public object Read(object value, ProtoReader source)
         {
             var r = NetObjectHelpers.ReadNetObject(value, source, key, type == typeof(object) ? null : type, options);
-            if (type.IsValueType && r == null) return Activator.CreateInstance(type);
+            if (Helpers.IsValueType(type) && r == null) return Activator.CreateInstance(type);
             return r;
         }
         public void Write(object value, ProtoWriter dest)
@@ -57,7 +60,7 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (var resultBoxed = new Local(ctx, typeof(object)))
+            using (var resultBoxed = new Local(ctx, ctx.MapType(typeof(object))))
             using (var resultUnboxed = new Local(ctx, type))
             {
                 ctx.LoadValue(valueFrom);

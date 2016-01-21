@@ -150,9 +150,9 @@ namespace AqlaSerializer.Serializers
 #endif
 
         private readonly MethodInfo builderFactory, add, addRange, finish;
-        internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList,
+        internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList,
             MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
-            : base(model, declaredType, concreteType, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility)
+            : base(model, declaredType, concreteType, tail, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility)
         {
             this.builderFactory = builderFactory;
             this.add = add;

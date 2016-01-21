@@ -61,8 +61,8 @@ namespace AqlaSerializer.Meta
 
         internal BinaryDataFormat DataFormat { get { return dataFormat; } }
 
-        private IProtoSerializer serializer;
-        internal IProtoSerializer Serializer
+        private IProtoSerializerWithWireType serializer;
+        internal IProtoSerializerWithWireType Serializer
         {
             get
             {
@@ -71,14 +71,13 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        private IProtoSerializer BuildSerializer()
+        private IProtoSerializerWithWireType BuildSerializer()
         {
             // note the caller here is MetaType.BuildSerializer, which already has the sync-lock
             WireType wireType = WireType.String;
             if(dataFormat == BinaryDataFormat.Group) wireType = WireType.StartGroup; // only one exception
             
-            IProtoSerializer ser = new SubItemSerializer(derivedType.Type, derivedType.GetKey(false, false), derivedType, false);
-            return new TagDecorator(fieldNumber, wireType, false, ser);
+            return new SubItemSerializer(derivedType.Type, derivedType.GetKey(false, false), derivedType, false, false);
         }
     }
 }

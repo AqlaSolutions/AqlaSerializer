@@ -140,27 +140,26 @@ namespace AqlaSerializer.Serializers
 
         protected virtual bool WriteSubtypeInfo => true;
 
-        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
             if (returnList && ImmutableCollectionDecorator.IdentifyImmutable(model, declaredType, out builderFactory, out add, out addRange, out finish))
             {
                 return new ImmutableCollectionDecorator(
-                    model, declaredType, concreteTypeDefault, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList,
+                    model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, returnList, overwriteList,
                     builderFactory, add, addRange, finish, subtypeNumbers, protoCompatibility);
             }
 #endif
-            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility);
+            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility);
         }
 
-        protected ListDecorator(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+        protected ListDecorator(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
             : base(tail)
         {
             _itemType = tail.ExpectedType;
             if (returnList) options |= OPTIONS_ReturnList;
             if (overwriteList) options |= OPTIONS_OverwriteList;
-            if ((writePacked || packedWireType != WireType.None) && fieldNumber <= 0) throw new ArgumentOutOfRangeException("fieldNumber");
             if (!CanPack(packedWireType))
             {
                 if (writePacked) throw new InvalidOperationException("Only simple data-types can use packed encoding");
