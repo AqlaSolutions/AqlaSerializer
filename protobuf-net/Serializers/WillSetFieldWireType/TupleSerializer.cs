@@ -1,6 +1,7 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using System.Collections.Generic;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
 #endif
@@ -19,14 +20,14 @@ namespace AqlaSerializer.Serializers
     {
         private readonly MemberInfo[] members;
         private readonly ConstructorInfo ctor;
-        private IProtoSerializer[] tails;
+        private IProtoSerializerWithWireType[] tails;
         public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, MemberInfo[] members)
         {
             if (ctor == null) throw new ArgumentNullException("ctor");
             if (members == null) throw new ArgumentNullException("members");
             this.ctor = ctor;
             this.members = members;
-            this.tails = new IProtoSerializer[members.Length];
+            this.tails = new IProtoSerializerWithWireType[members.Length];
 
             ParameterInfo[] parameters = ctor.GetParameters();
             for(int i = 0 ; i < members.Length ; i++)
@@ -45,13 +46,12 @@ namespace AqlaSerializer.Serializers
                 {
                     asReference = model[tmp].AsReferenceDefault;
                 }
-                IProtoSerializer tail = ValueMember.TryGetCoreSerializer(model, BinaryDataFormat.Default, tmp, out wireType, asReference, false, false, true), serializer;
+                IProtoSerializerWithWireType tail = ValueMember.TryGetCoreSerializer(model, BinaryDataFormat.Default, tmp, out wireType, asReference, false, false, true), serializer;
                 if (tail == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + tmp.FullName);
                 }
 
-                tail = new TagDecorator(i + 1, wireType, false, tail);
                 if(itemType == null)
                 {
                     serializer = tail;
@@ -60,11 +60,11 @@ namespace AqlaSerializer.Serializers
                 {
                     if (finalType.IsArray)
                     {
-                        serializer = new ArrayDecorator(model, tail, i + 1, false, wireType, finalType, false, false);
+                        serializer = new ArrayDecorator(model, tail, false, wireType, finalType, false, false);
                     }
                     else
                     {
-                        serializer = ListDecorator.Create(model, finalType, defaultType, tail, i + 1, false, wireType, true, false, false);
+                        serializer = ListDecorator.Create(model, finalType, defaultType, tail, false, wireType, true, false, new KeyValuePair<Type, int>[0], false);
                     }
                 }
                 tails[i] = serializer;
@@ -140,6 +140,7 @@ namespace AqlaSerializer.Serializers
             {
                 var r = ctor.Invoke(values);
                 // inside references won't work, but from outside will
+                // this is a common problem when deserializing immutable types
                 ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
                 return r;
             }
@@ -150,7 +151,11 @@ namespace AqlaSerializer.Serializers
             for (int i = 0; i < tails.Length; i++)
             {
                 object val = GetValue(value, i);
-                if (val != null) tails[i].Write(val, dest);
+                if (val != null)
+                {
+                    ProtoWriter.WriteFieldHeaderBegin(i + 1, dest);
+                    tails[i].Write(val, dest);
+                }
             }
         }
 #endif
@@ -189,7 +194,10 @@ namespace AqlaSerializer.Serializers
                             ctx.LoadValue((PropertyInfo)members[i]);
                             break;
                     }
-                    ctx.WriteNullCheckedTail(type, tails[i], null);
+                    ctx.LoadValue(i + 1);
+                    ctx.LoadReaderWriter();
+                    ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderBegin)));
+                    ctx.WriteNullCheckedTail(type, tails[i], null, true);
                 }
             }
         }

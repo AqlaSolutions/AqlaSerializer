@@ -264,7 +264,7 @@
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BooleanSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ArrayDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\ByteSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\FieldHeaderDecorator.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\WireTypeDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ImmutableCollectionDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ListHelpers.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\NetObjectValueDecorator.cs" />
@@ -276,8 +276,8 @@
     <Compile Include="Serializers\WillSetFieldWireType\Fields\MemberSpecifiedDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\SystemTypeSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\TupleSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\ReflectedUriDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\UriDecorator.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\ReflectedUriDecorator.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\UriDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\EnumSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\DefaultValueDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\GuidSerializer.cs" />

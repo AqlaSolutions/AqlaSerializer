@@ -69,7 +69,7 @@ namespace AqlaSerializer.Serializers
             }
             else
             {
-                if (type.IsValueType && newValue == null)
+                if (Helpers.IsValueType(type) && newValue == null)
                     newValue = Activator.CreateInstance(type);
                 ProtoReader.EndSubItem(token, source);
             }

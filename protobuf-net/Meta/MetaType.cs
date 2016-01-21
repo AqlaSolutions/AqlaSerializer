@@ -513,7 +513,7 @@ namespace AqlaSerializer.Meta
             SetFlag(OPTIONS_Frozen, true, false);
             serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(model, type, model.GetKey(type, false, false), s);
+            rootSerializer = new RootDecorator(type, AsReferenceDefault, s);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
 #endif
@@ -565,7 +565,7 @@ namespace AqlaSerializer.Meta
             // #2 For members: ordinal VirtualMembers are used and they will handle references when appropriate
             if (type.IsArray)
             {
-                return new TypeSerializer(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[] {
+                return new ArrayDecorator(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[] {
                     ValueMember.BuildValueFinalSerializer(
                     type,
                     type.GetElementType(),
@@ -582,7 +582,7 @@ namespace AqlaSerializer.Meta
                     true, // still use settings from this meta type, not from nested (TODO may be add setting to toggle this per type?)
                     false, // #1
                     model)
-                }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
+                }, null, true, true, null, constructType, factory); { CanCreateInstance = false, AllowInheritance = false };
             }
             if (Helpers.IsEnum(type))
             {
@@ -602,7 +602,7 @@ namespace AqlaSerializer.Meta
                 Type defaultType = null;
                 ResolveListTypes(model, type, ref itemType, ref defaultType);
 
-                return new TypeSerializer(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[]
+                return new ListDecorator(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[]
                 {
                     ValueMember.BuildValueFinalSerializer(
                         type,
@@ -644,7 +644,7 @@ namespace AqlaSerializer.Meta
             int fieldCount = fields.Count;
             int subTypeCount = subTypes == null ? 0 : subTypes.Count;
             int[] fieldNumbers = new int[fieldCount + subTypeCount];
-            IProtoSerializer[] serializers = new IProtoSerializer[fieldCount + subTypeCount];
+            IProtoSerializerWithWireType[] serializers = new IProtoSerializerWithWireType[fieldCount + subTypeCount];
             int i = 0;
             if (subTypeCount != 0)
             {
@@ -691,7 +691,7 @@ namespace AqlaSerializer.Meta
                 baseCtorCallbacks.CopyTo(arr, 0);
                 Array.Reverse(arr);
             }
-            return new TypeSerializer(model, type, fieldNumbers, serializers, arr, baseType == null, UseConstructor, callbacks, constructType, factory);
+            return new TypeSerializer(model, type, fieldNumbers, serializers, arr, baseType == null, UseConstructor, callbacks, constructType, factory, false);
         }
 
         [Flags]

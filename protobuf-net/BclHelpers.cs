@@ -327,7 +327,7 @@ namespace AqlaSerializer
             uint high = (uint)bits[2];
             uint signScale = (uint)(((bits[3] >> 15) & 0x01FE) | ((bits[3] >> 31) & 0x0001));
 
-            SubItemToken token = ProtoWriter.StartSubItem(null, writer);
+            SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, writer);
             if (low != 0) {
                 ProtoWriter.WriteFieldHeader(FieldDecimalLow, WireType.Variant, writer);
                 ProtoWriter.WriteUInt64(low, writer);
