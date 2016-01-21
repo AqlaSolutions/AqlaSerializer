@@ -3,7 +3,7 @@
 using AqlaSerializer.Meta;
 namespace AqlaSerializer.Serializers
 {
-    interface IProtoTypeSerializer : IProtoSerializer
+    interface IProtoTypeSerializer : IProtoSerializerWithWireType
     {
         bool HasCallbacks(TypeModel.CallbackType callbackType);
         bool CanCreateInstance();

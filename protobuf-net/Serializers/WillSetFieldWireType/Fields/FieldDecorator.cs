@@ -15,7 +15,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class FieldDecorator : ProtoDecoratorBase
+    sealed class FieldDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
 
         public override Type ExpectedType { get { return forType; } }
@@ -23,7 +23,7 @@ namespace AqlaSerializer.Serializers
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
         public override bool ReturnsValue { get { return false; } }
-        public FieldDecorator(Type forType, FieldInfo field, IProtoSerializer tail) : base(tail)
+        public FieldDecorator(Type forType, FieldInfo field, IProtoSerializerWithWireType tail) : base(tail)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(field != null);
@@ -35,13 +35,17 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value != null);
             value = field.GetValue(value);
-            if(value != null) Tail.Write(value, dest);
+            if(value != null)
+                Tail.Write(value, dest);
+            else
+                ProtoWriter.WriteFieldHeaderCancelBegin(dest);
         }
         public override object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value != null);
             object newValue = Tail.Read((Tail.RequiresOldValue ? field.GetValue(value) : null), source);
-            if(newValue != null) field.SetValue(value,newValue);
+            if(newValue != null)
+                field.SetValue(value,newValue);
             return null;
         }
 #endif
@@ -51,7 +55,7 @@ namespace AqlaSerializer.Serializers
         {
             ctx.LoadAddress(valueFrom, ExpectedType);
             ctx.LoadValue(field);
-            ctx.WriteNullCheckedTail(field.FieldType, Tail, null);
+            ctx.WriteNullCheckedTail(field.FieldType, Tail, null, true);
         }
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

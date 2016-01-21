@@ -61,7 +61,7 @@ namespace AqlaSerializer.Meta
         }
         [DebuggerHidden]
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        IProtoSerializer ISerializerProxy.Serializer { get { return Serializer; } }
+        IProtoSerializerWithWireType ISerializerProxy.Serializer { get { return Serializer; } }
         private MetaType baseType;
         /// <summary>
         /// Gets the base-type for this type

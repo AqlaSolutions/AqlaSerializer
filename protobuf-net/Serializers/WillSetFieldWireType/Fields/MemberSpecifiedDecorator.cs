@@ -14,14 +14,14 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class MemberSpecifiedDecorator : ProtoDecoratorBase
+    sealed class MemberSpecifiedDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
 
         public override Type ExpectedType { get { return Tail.ExpectedType; } }
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly MethodInfo getSpecified, setSpecified;
-        public MemberSpecifiedDecorator(MethodInfo getSpecified, MethodInfo setSpecified, IProtoSerializer tail)
+        public MemberSpecifiedDecorator(MethodInfo getSpecified, MethodInfo setSpecified, IProtoSerializerWithWireType tail)
             : base(tail)
         {
             if (getSpecified == null && setSpecified == null) throw new InvalidOperationException();
@@ -35,6 +35,8 @@ namespace AqlaSerializer.Serializers
             {
                 Tail.Write(value, dest);
             }
+            else
+                ProtoWriter.WriteFieldHeaderCancelBegin(dest);
         }
         public override object Read(object value, ProtoReader source)
         {
@@ -57,8 +59,17 @@ namespace AqlaSerializer.Serializers
                 ctx.LoadAddress(loc, ExpectedType);
                 ctx.EmitCall(getSpecified);
                 Compiler.CodeLabel done = ctx.DefineLabel();
-                ctx.BranchIfFalse(done, false);
-                Tail.EmitWrite(ctx, loc);
+                Compiler.CodeLabel notSpecified = ctx.DefineLabel();
+                ctx.BranchIfFalse(notSpecified, false);
+                {
+                    Tail.EmitWrite(ctx, loc);
+                }
+                ctx.Branch(done, true);
+                ctx.MarkLabel(notSpecified);
+                {
+                    ctx.LoadReaderWriter();
+                    ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                }
                 ctx.MarkLabel(done);
             }
 

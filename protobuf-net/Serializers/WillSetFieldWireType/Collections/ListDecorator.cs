@@ -140,7 +140,7 @@ namespace AqlaSerializer.Serializers
 
         protected virtual bool WriteSubtypeInfo => true;
 
-        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
@@ -154,7 +154,7 @@ namespace AqlaSerializer.Serializers
             return new ListDecorator(model, declaredType, concreteTypeDefault, tail, fieldNumber, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility);
         }
 
-        protected ListDecorator(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializer tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+        protected ListDecorator(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, int fieldNumber, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
             : base(tail)
         {
             _itemType = tail.ExpectedType;

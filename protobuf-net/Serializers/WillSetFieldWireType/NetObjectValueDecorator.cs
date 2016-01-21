@@ -17,7 +17,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class NetObjectValueDecorator : IProtoTypeSerializer
+    sealed class NetObjectValueDecorator : IProtoTypeSerializer // type here is just for wrapping
     {
         readonly IProtoSerializer _serializer;
         readonly Type type;
@@ -26,7 +26,7 @@ namespace AqlaSerializer.Serializers
 
         // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
-        public NetObjectValueDecorator(Type type, IProtoSerializer serializer, bool asReference)
+        public NetObjectValueDecorator(Type type, IProtoSerializerWithWireType serializer, bool asReference)
         {
             _serializer = serializer;
             //wrapping a type makes too much complexity for just one ReadFieldHeader call

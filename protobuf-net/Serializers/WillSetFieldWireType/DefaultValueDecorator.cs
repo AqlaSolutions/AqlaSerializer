@@ -12,14 +12,14 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class DefaultValueDecorator : ProtoDecoratorBase
+    sealed class DefaultValueDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
 
         public override Type ExpectedType { get { return Tail.ExpectedType; } }
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly object defaultValue;
-        public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializer tail) : base(tail)
+        public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {
             if (defaultValue == null) throw new ArgumentNullException("defaultValue");
             Type type = model.MapType(defaultValue.GetType());
@@ -62,6 +62,9 @@ namespace AqlaSerializer.Serializers
                 ctx.Branch(done, true);
                 ctx.MarkLabel(needToPop);
                 ctx.DiscardValue();
+
+                ctx.LoadReaderWriter();
+                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
             }
             else
             {
@@ -70,7 +73,7 @@ namespace AqlaSerializer.Serializers
                 Tail.EmitWrite(ctx, valueFrom);
 
                 ctx.LoadReaderWriter();
-                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCancelBegin"));
+                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
             }
             ctx.MarkLabel(done);
         }

@@ -8,6 +8,14 @@ using Type = IKVM.Reflection.Type;
 
 namespace AqlaSerializer.Serializers
 {
+    /// <summary>
+    /// Expects field number to be set. Will set its own wire type. All high-level serializers should assume they are in a field and always set wire type 
+    /// </summary>
+    interface IProtoSerializerWithWireType : IProtoSerializer
+    {
+        
+    }
+    
     interface IProtoSerializer
     {
         /// <summary>
