@@ -688,7 +688,7 @@ namespace AqlaSerializer.Meta
                     }
                     return new WireTypeDecorator(defaultWireType, new SystemTypeSerializer(model));
             }
-            IProtoSerializer parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
+            var parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
             if (parseable != null)
             {
                 defaultWireType = WireType.String;

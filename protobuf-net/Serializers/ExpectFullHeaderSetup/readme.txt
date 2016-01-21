@@ -1,1 +1,0 @@
-﻿These serializers will NOT complete field with wiretype so the field header should be setup for them

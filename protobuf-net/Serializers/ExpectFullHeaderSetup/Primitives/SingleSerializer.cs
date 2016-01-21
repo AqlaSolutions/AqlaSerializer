@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class SingleSerializer : IProtoSerializer
+    sealed class SingleSerializer : IProtoSerializerWithAutoType
     {
 #if FEAT_IKVM
         readonly Type expectedType;

@@ -14,7 +14,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class DecimalSerializer : IProtoSerializer
+    sealed class DecimalSerializer : IProtoSerializerWithAutoType
     {
         #if FEAT_IKVM
         readonly Type expectedType;

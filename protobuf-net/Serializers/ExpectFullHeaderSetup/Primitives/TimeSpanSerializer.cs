@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class TimeSpanSerializer : IProtoSerializer
+    sealed class TimeSpanSerializer : IProtoSerializerWithAutoType
     {
 #if FEAT_IKVM
         readonly Type expectedType;

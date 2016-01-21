@@ -15,7 +15,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class BooleanSerializer : IProtoSerializer
+    sealed class BooleanSerializer : IProtoSerializerWithAutoType
     {
 #if FEAT_IKVM
         readonly Type expectedType;

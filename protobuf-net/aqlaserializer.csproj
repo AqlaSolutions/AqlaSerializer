@@ -319,7 +319,6 @@
     <Content Include="..\Licence.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Serializers\ExpectFullHeaderSetup\readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\AqlaSerializerKey.snk" />

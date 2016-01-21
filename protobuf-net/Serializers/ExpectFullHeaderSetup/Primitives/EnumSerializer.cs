@@ -12,7 +12,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class EnumSerializer : IProtoSerializer
+    sealed class EnumSerializer : IProtoSerializerWithAutoType
     {
         public struct EnumPair
         {
