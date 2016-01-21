@@ -24,6 +24,10 @@ namespace AqlaSerializer.Serializers
         readonly bool _protoCompatibility;
         readonly bool _writePacked;
 
+        public const int FieldItem = 1;
+        public const int FieldSubtype = 2;
+        public const int FieldLength = 3;
+
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializer tail)
         {
             _packedWireTypeForRead = packedWireTypeForRead;
@@ -32,10 +36,29 @@ namespace AqlaSerializer.Serializers
             _writePacked = writePacked;
         }
 #if !FEAT_IKVM
-        public void Write(object value, Action prepareInstance, ProtoWriter dest)
+        public void Write(object value, int? subTypeNumber, int? length, Action prepareInstance, ProtoWriter dest)
         {
             SubItemToken token = new SubItemToken();
             int fieldNumber = dest.FieldNumber;
+
+            if (!_protoCompatibility)
+            {
+                Action additional =
+                    () =>
+                        {
+                            if (subTypeNumber != null)
+                            {
+                                ProtoWriter.WriteFieldHeader(FieldSubtype, WireType.Variant, dest);
+                                ProtoWriter.WriteInt32(subTypeNumber.Value, dest);
+                            }
+                            if (length != null)
+                            {
+                                ProtoWriter.WriteFieldHeader(FieldLength, WireType.Variant, dest);
+                                ProtoWriter.WriteInt32(length.Value, dest);
+                            }
+                        };
+                prepareInstance = additional + prepareInstance;
+            }
 
             bool writePacked = _writePacked;
             if (_protoCompatibility)
@@ -70,7 +93,7 @@ namespace AqlaSerializer.Serializers
 
                 prepareInstance?.Invoke();
 
-                WriteContent(value, 1, dest);
+                WriteContent(value, _writePacked ? fieldNumber : FieldItem, dest);
                 ProtoWriter.EndSubItem(token, dest);
             }
         }
@@ -118,7 +141,9 @@ namespace AqlaSerializer.Serializers
             return !isFirst;
         }
 
-        public void Read(Action prepareInstance, Action<object> add, ProtoReader source)
+        public delegate void ReadPrepareInstanceDelegate(int? subTypeNumber, int? length);
+
+        public void Read(ReadPrepareInstanceDelegate prepareInstance, Action<object> add, ProtoReader source)
         {
             bool packed = _packedWireTypeForRead != WireType.None && source.WireType == WireType.String;
             int fieldNumber = source.FieldNumber;
@@ -127,7 +152,36 @@ namespace AqlaSerializer.Serializers
 
             SubItemToken token = subItemNeeded ? ProtoReader.StartSubItem(source) : new SubItemToken();
 
-            prepareInstance?.Invoke();
+            int? length = null;
+            int? subTypeNumber = null;
+            if (!_protoCompatibility)
+            {
+                bool read;
+
+                do
+                {
+                    read = false;
+                    if (source.TryReadFieldHeader(FieldSubtype))
+                    {
+                        subTypeNumber = source.ReadInt32();
+                        read = true;
+                    }
+
+                    if (source.TryReadFieldHeader(FieldLength))
+                    {
+                        // we write length to construct an array before deserializing
+                        // so we can handle references to array from inside it
+
+                        length = source.ReadInt32();
+                        read = true;
+                    }
+                } while (read);
+            }
+
+            // this is not an error that we don't wait for the first item
+            // if we are here it's either not compatible mode (so should call anyway)
+            // or there is at least one element
+            prepareInstance?.Invoke(subTypeNumber, length);
 
             if (packed)
             {
@@ -138,7 +192,7 @@ namespace AqlaSerializer.Serializers
             }
             else
             {
-                if (subItemNeeded) fieldNumber = 1;
+                if (subItemNeeded) fieldNumber = FieldItem;
                 if (!_protoCompatibility || source.TryReadFieldHeader(fieldNumber))
                 {
                     do
