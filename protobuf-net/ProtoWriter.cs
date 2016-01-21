@@ -207,7 +207,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Finished writing a field-header, indicating the format of the next data we plan to write. Any type means nested objects are allowed.
         /// </summary>
-        static void WriteFieldHeaderCompleteAnyType(WireType wireType, ProtoWriter writer)
+        public static void WriteFieldHeaderCompleteAnyType(WireType wireType, ProtoWriter writer)
         {
             if (!writer.fieldStarted) throw new InvalidOperationException("Cannot write a field wire type " + wireType + " because field number has not been written");
             if (writer.ignoredFieldStarted)
@@ -235,7 +235,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a field-header, indicating the format of the next data we plan to write. Any type means nested objects are allowed.
         /// </summary>
-        static void WriteFieldHeaderAnyType(int fieldNumber, WireType wireType, ProtoWriter writer) {
+        public static void WriteFieldHeaderAnyType(int fieldNumber, WireType wireType, ProtoWriter writer) {
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.wireType != WireType.None) throw new InvalidOperationException("Cannot write a " + wireType.ToString()
                 + " header until the " + writer.wireType.ToString() + " data has been written");
@@ -384,6 +384,30 @@ namespace AqlaSerializer
             WriteFieldHeaderCompleteAnyType(prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
         }
+        
+        /// <summary>
+        /// Indicates the start of a nested record of specified type when fieldNumber has been written.
+        /// </summary>
+        /// <param name="instance">The instance to write.</param>
+        /// <param name="writer">The destination.</param>
+        /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
+        public static SubItemToken StartSubItemWithoutWritingHeader(object instance, ProtoWriter writer)
+        {
+            return StartSubItem(instance, writer, false);
+        }
+
+        /// <summary>
+        /// Indicates the start of a nested record of specified type when fieldNumber has been written.
+        /// </summary>
+        /// <param name="instance">The instance to write.</param>
+        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
+        /// <param name="writer">The destination.</param>
+        /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
+        public static SubItemToken StartSubItemWithoutWireType(object instance, bool prefixLength, ProtoWriter writer)
+        {
+            WriteFieldHeaderCompleteAnyType(prefixLength ? WireType.String : WireType.StartGroup, writer);
+            return StartSubItem(instance, writer, false);
+        }
 
         /// <summary>
         /// Indicates the start of a nested record of specified type when fieldNumber has not been written before.
@@ -398,7 +422,7 @@ namespace AqlaSerializer
             WriteFieldHeaderAnyType(fieldNumber, prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
         }
-        
+
         MutableList recursionStack;
         private void CheckRecursionStackAndPush(object instance)
         {

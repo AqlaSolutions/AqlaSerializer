@@ -129,7 +129,7 @@ namespace AqlaSerializer.Meta
                 }
                 else
                 {
-                    ProtoWriter.WriteFieldHeader(tag, wireType, writer);
+                    ProtoWriter.WriteFieldHeaderBegin(tag, writer);
                     switch (wireType)
                     {
                         case WireType.None:
@@ -137,7 +137,7 @@ namespace AqlaSerializer.Meta
                         case WireType.StartGroup:
                         case WireType.String:
                             // needs a wrapping length etc
-                            SubItemToken token = ProtoWriter.StartSubItem(value, writer);
+                            SubItemToken token = ProtoWriter.StartSubItem(value, wireType == WireType.String, writer);
                             Serialize(modelKey, value, writer, isRoot);
                             ProtoWriter.EndSubItem(token, writer);
                             return true;
