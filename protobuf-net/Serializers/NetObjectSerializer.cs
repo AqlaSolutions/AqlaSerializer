@@ -1,8 +1,9 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using AqlaSerializer.Compiler;
 using AqlaSerializer.Meta;
-
+using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -43,7 +44,9 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            return NetObjectHelpers.ReadNetObject(value, source, key, type == typeof(object) ? null : type, options);
+            var r = NetObjectHelpers.ReadNetObject(value, source, key, type == typeof(object) ? null : type, options);
+            if (type.IsValueType && r == null) return Activator.CreateInstance(type);
+            return r;
         }
         public void Write(object value, ProtoWriter dest)
         {
@@ -54,18 +57,31 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.LoadValue(valueFrom);
-            ctx.CastToObject(type);
-            ctx.LoadReaderWriter();
-            ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key));
-            if (type ==  ctx.MapType(typeof(object))) ctx.LoadNullRef();
-            else ctx.LoadValue(type);
-            ctx.LoadValue((int)options);
-            ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("ReadNetObject"));
-            ctx.CastFromObject(type);
+            using (var resultBoxed = new Local(ctx, typeof(object)))
+            using (var resultUnboxed = new Local(ctx, type))
+            {
+                ctx.LoadValue(valueFrom);
+                ctx.CastToObject(type);
+                ctx.LoadReaderWriter();
+                ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key));
+                if (type == ctx.MapType(typeof(object))) ctx.LoadNullRef(); else ctx.LoadValue(type);
+                ctx.LoadValue((int)options);
+                ctx.EmitCall(ctx.MapType(typeof(NetObjectHelpers)).GetMethod("ReadNetObject"));
+                // unboxing will convert null or value to nullable automatically
+                if (type.IsValueType && Helpers.GetNullableUnderlyingType(type) == null)
+                {
+                    // TODO do we need to ensure this? versioning - change between reference type/nullable and value type
+                    ctx.StoreValue(resultBoxed);
+                    ctx.StoreValueOrDefaultFromObject(resultBoxed, resultUnboxed);
+                    ctx.LoadValue(resultUnboxed);
+                }
+                else
+                    ctx.CastFromObject(type);
+            }
         }
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+            // nullable will be boxed as null or as value automatically, e.g. you will never get "123?" there
             ctx.LoadValue(valueFrom);
             ctx.CastToObject(type);
             ctx.LoadReaderWriter();

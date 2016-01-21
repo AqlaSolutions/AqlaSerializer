@@ -20,18 +20,20 @@ namespace AqlaSerializer.Serializers
     sealed class NetObjectValueDecorator : IProtoTypeSerializer
     {
         readonly IProtoSerializer _serializer;
-        readonly bool _asReference;
         readonly Type type;
 
         readonly BclHelpers.NetObjectOptions _options;
+
+        // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
         public NetObjectValueDecorator(Type type, IProtoSerializer serializer, bool asReference)
         {
             _serializer = serializer;
             //wrapping a type makes too much complexity for just one ReadFieldHeader call
             //var typeSer = serializer as IProtoTypeSerializer;
-            _asReference = asReference;
-            _options = BclHelpers.NetObjectOptions.AsReference | BclHelpers.NetObjectOptions.UseConstructor;
+            _options = BclHelpers.NetObjectOptions.UseConstructor;
+            if (asReference)
+                _options |= BclHelpers.NetObjectOptions.AsReference;
             if (serializer is TupleSerializer)
                 _options |= BclHelpers.NetObjectOptions.LateSet;
             this.type = type;
@@ -52,10 +54,6 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            if (!_asReference)
-            {
-                return DoRead(value, source);
-            }
             SubItemToken token;
             bool shouldEnd;
             bool isType;
@@ -85,11 +83,6 @@ namespace AqlaSerializer.Serializers
 
         public void Write(object value, ProtoWriter dest)
         {
-            if (!_asReference)
-            {
-                DoWrite(value, dest);
-                return;
-            }
             bool write;
             SubItemToken t = NetObjectHelpers.WriteNetObject_StartInject(value, dest, _options, out write);
             if (write)
@@ -126,73 +119,71 @@ namespace AqlaSerializer.Serializers
                 {
                     if (!RequiresOldValue)
                     {
-                        ctx.LoadNullRef();
-                        ctx.StoreValue(value);
+                        if (type.IsValueType)
+                            g.InitObj(value);
+                        else
+                        {
+                            ctx.LoadNullRef();
+                            ctx.StoreValue(value);
+                        }
                     }
+                    g.Assign(t, ctx.MapType(type));
+                    g.Assign(
+                        newValue,
+                        s.Invoke(
+                            typeof(NetObjectHelpers),
+                            nameof(NetObjectHelpers.ReadNetObject_StartInject),
+                            value,
+                            g.Arg(ctx.ArgIndexReadWriter),
+                            t,
+                            _options,
+                            token,
+                            shouldEnd,
+                            newObjectKey,
+                            newTypeKey,
+                            isType));
 
-                    if (!_asReference)
+                    g.If(shouldEnd);
                     {
-                        EmitDoRead(g, value, ctx);
-                    }
-                    else
-                    {
-                        g.Assign(t, ctx.MapType(type));
-                        g.Assign(
+                        g.Assign(oldValue, newValue);
+                        // valuetype: will never be null otherwise it would go to else
+                        g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+                        EmitDoRead(g, resultCasted, ctx);
+                        g.Invoke(
+                            typeof(NetObjectHelpers),
+                            nameof(NetObjectHelpers.ReadNetObject_EndInjectAndNoteNewObject),
                             newValue,
-                            s.Invoke(
-                                typeof(NetObjectHelpers),
-                                nameof(NetObjectHelpers.ReadNetObject_StartInject),
-                                value,
-                                g.Arg(ctx.ArgIndexReadWriter),
-                                t,
-                                _options,
-                                token,
-                                shouldEnd,
-                                newObjectKey,
-                                newTypeKey,
-                                isType));
-
-                        g.If(shouldEnd);
-                        {
-                            g.Assign(oldValue, newValue);
-                            // valuetype: will never be null otherwise it would go to else
-                            g.Assign(resultCasted, newValue.AsOperand.Cast(type));
-                            EmitDoRead(g, resultCasted, ctx);
-                            g.Invoke(
-                                typeof(NetObjectHelpers),
-                                nameof(NetObjectHelpers.ReadNetObject_EndInjectAndNoteNewObject),
-                                newValue,
-                                g.Arg(ctx.ArgIndexReadWriter),
-                                oldValue,
-                                t,
-                                newObjectKey,
-                                newTypeKey,
-                                isType,
-                                _options,
-                                token);
-                        }
-                        g.Else();
-                        {
-                            if (type.IsValueType)
-                            {
-                                g.If(newValue.AsOperand == null);
-                                {
-                                    g.InitObj(resultCasted);
-                                }
-                                g.Else();
-                                {
-                                    g.Assign(resultCasted, newValue);
-                                }
-                                g.End();
-                            }
-                            else
-                                g.Assign(resultCasted, newValue);
-
-                            g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
-                        }
-                        g.End();
-                        
+                            g.Arg(ctx.ArgIndexReadWriter),
+                            oldValue,
+                            t,
+                            newObjectKey,
+                            newTypeKey,
+                            isType,
+                            _options,
+                            token);
                     }
+                    g.Else();
+                    {
+                        // nullable will just unbox how it should be from null or value
+                        if (type.IsValueType && _serializer.ReturnsValue && (Helpers.GetNullableUnderlyingType(type) == null))
+                        {
+                            // TODO do we need to ensure this? versioning - change between reference type/nullable and value type
+                            g.If(newValue.AsOperand == null);
+                            {
+                                g.InitObj(resultCasted);
+                            }
+                            g.Else();
+                            {
+                                g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+                            }
+                            g.End();
+                        }
+                        else
+                            g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+
+                        g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
+                    }
+                    g.End();
 
                     if (_serializer.ReturnsValue)
                     {
@@ -213,15 +204,11 @@ namespace AqlaSerializer.Serializers
             using (Local value = ctx.GetLocalWithValue(type, valueFrom))
             {
                 var g = new CodeGen(ctx.RunSharpContext, false);
-                if (!_asReference)
-                {
-                    EmitDoWrite(g, value, ctx);
-                    return;
-                }
                 using (Local write = new Local(ctx, ctx.MapType(typeof(bool))))
                 using (Local t = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
                 {
                     var s = ctx.RunSharpContext.StaticFactory;
+                    // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
                     g.Assign(
                         t,
                         s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_StartInject), value, g.Arg(ctx.ArgIndexReadWriter), _options, write));
