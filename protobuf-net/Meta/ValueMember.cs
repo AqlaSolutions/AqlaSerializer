@@ -616,76 +616,76 @@ namespace AqlaSerializer.Meta
             {
                 case ProtoTypeCode.Int32:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new Int32Serializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new Int32Serializer(model));
                 case ProtoTypeCode.UInt32:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new UInt32Serializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new UInt32Serializer(model));
                 case ProtoTypeCode.Int64:
                     defaultWireType = GetIntWireType(dataFormat, 64);
-                    return new Int64Serializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new Int64Serializer(model));
                 case ProtoTypeCode.UInt64:
                     defaultWireType = GetIntWireType(dataFormat, 64);
-                    return new UInt64Serializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new UInt64Serializer(model));
                 case ProtoTypeCode.String:
                     defaultWireType = WireType.String;
                     if (tryAsReference)
                     {
                         return new NetObjectSerializer(model, model.MapType(typeof(string)), 0, BclHelpers.NetObjectOptions.AsReference);
                     }
-                    return new StringSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new StringSerializer(model));
                 case ProtoTypeCode.Single:
                     defaultWireType = WireType.Fixed32;
-                    return new SingleSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new SingleSerializer(model));
                 case ProtoTypeCode.Double:
                     defaultWireType = WireType.Fixed64;
-                    return new DoubleSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new DoubleSerializer(model));
                 case ProtoTypeCode.Boolean:
                     defaultWireType = WireType.Variant;
-                    return new BooleanSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new BooleanSerializer(model));
                 case ProtoTypeCode.DateTime:
                     defaultWireType = GetDateTimeWireType(dataFormat);
-                    return new DateTimeSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new DateTimeSerializer(model));
                 case ProtoTypeCode.Decimal:
                     defaultWireType = WireType.String;
-                    return new DecimalSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new DecimalSerializer(model));
                 case ProtoTypeCode.Byte:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new ByteSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new ByteSerializer(model));
                 case ProtoTypeCode.SByte:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new SByteSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new SByteSerializer(model));
                 case ProtoTypeCode.Char:
                     defaultWireType = WireType.Variant;
-                    return new CharSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new CharSerializer(model));
                 case ProtoTypeCode.Int16:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new Int16Serializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new Int16Serializer(model));
                 case ProtoTypeCode.UInt16:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new UInt16Serializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new UInt16Serializer(model));
                 case ProtoTypeCode.TimeSpan:
                     defaultWireType = GetDateTimeWireType(dataFormat);
-                    return new TimeSpanSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new TimeSpanSerializer(model));
                 case ProtoTypeCode.Guid:
                     defaultWireType = WireType.String;
-                    return new GuidSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new GuidSerializer(model));
                 case ProtoTypeCode.Uri:
                     defaultWireType = WireType.String;
                     if (tryAsReference)
                     {
                         return new NetObjectSerializer(model, model.MapType(typeof(Uri)), 0, BclHelpers.NetObjectOptions.AsReference);
                     }
-                    return new StringSerializer(model); // treat as string; wrapped in decorator later
+                    return new FieldHeaderDecorator(defaultWireType, new StringSerializer(model)); // treat as string; wrapped in decorator later
                 case ProtoTypeCode.ByteArray:
-                    defaultWireType = WireType.String; // TODO as reference for blobs!!!
-                    return new BlobSerializer(model, overwriteList);
+                    defaultWireType = WireType.String;
+                    return new FieldHeaderDecorator(defaultWireType, new NetObjectValueDecorator(model.MapType(typeof(byte[])), new BlobSerializer(model, overwriteList), true));
                 case ProtoTypeCode.Type:
                     defaultWireType = WireType.String;
                     if (tryAsReference)
                     {
                         return new NetObjectSerializer(model, model.MapType(typeof(Type)), 0, BclHelpers.NetObjectOptions.AsReference);
                     }
-                    return new SystemTypeSerializer(model);
+                    return new FieldHeaderDecorator(defaultWireType, new SystemTypeSerializer(model));
             }
             IProtoSerializer parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
             if (parseable != null)
