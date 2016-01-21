@@ -60,7 +60,7 @@ namespace AqlaSerializer.Compiler
                 CompilerContext ctx = new CompilerContext(type, true, true, model, typeof(object));
                 ctx.LoadValue(ctx.InputValue);
                 ctx.CastFromObject(type);
-                ctx.WriteNullCheckedTail(type, head, null);
+                ctx.WriteNullCheckedTail(type, head, null, false);
                 ctx.Emit(OpCodes.Ret);
                 return (ProtoSerializer)ctx.method.CreateDelegate(
                     typeof(ProtoSerializer));
@@ -679,7 +679,7 @@ namespace AqlaSerializer.Compiler
 
         private int nextLabel;
 
-        internal void WriteNullCheckedTail(Type type, IProtoSerializer tail, Compiler.Local valueFrom)
+        internal void WriteNullCheckedTail(Type type, IProtoSerializer tail, Compiler.Local valueFrom, bool cancelField)
         {
             if (type.IsValueType)
             {
@@ -713,6 +713,11 @@ namespace AqlaSerializer.Compiler
                 CodeLabel hasVal = DefineLabel(), @end = DefineLabel();
                 BranchIfTrue(hasVal, true);
                 DiscardValue();
+                if (cancelField)
+                {
+                    LoadReaderWriter();
+                    EmitCall(MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                }
                 Branch(@end, false);
                 MarkLabel(hasVal);
                 tail.EmitWrite(this, null);

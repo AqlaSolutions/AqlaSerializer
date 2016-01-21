@@ -87,7 +87,7 @@ namespace AqlaSerializer.Serializers
 
         bool AppendToCollection => !_overwriteList;
         
-        public ArrayDecorator(TypeModel model, IProtoSerializer tail, bool writePacked, WireType packedWireTypeForRead, Type arrayType, bool overwriteList, bool protoCompatibility)
+        public ArrayDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireTypeForRead, Type arrayType, bool overwriteList, bool protoCompatibility)
             : base(tail)
         {
             Helpers.DebugAssert(arrayType != null, "arrayType should be non-null");

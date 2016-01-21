@@ -15,7 +15,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class PropertyDecorator : ProtoDecoratorBase
+    sealed class PropertyDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
         public override Type ExpectedType { get { return forType; } }
         private readonly PropertyInfo property;
@@ -24,7 +24,7 @@ namespace AqlaSerializer.Serializers
         public override bool ReturnsValue { get { return false; } }
         private readonly bool readOptionsWriteValue;
         private readonly MethodInfo shadowSetter;
-        public PropertyDecorator(TypeModel model, Type forType, PropertyInfo property, IProtoSerializer tail) : base(tail)
+        public PropertyDecorator(TypeModel model, Type forType, PropertyInfo property, IProtoSerializerWithWireType tail) : base(tail)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(property != null);
@@ -55,7 +55,10 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value != null);
             value = Helpers.GetPropertyValue(property, value);
-            if(value != null) Tail.Write(value, dest);
+            if(value != null)
+                Tail.Write(value, dest);
+            else
+                ProtoWriter.WriteFieldHeaderCancelBegin(dest);
         }
         public override object Read(object value, ProtoReader source)
         {
@@ -83,7 +86,11 @@ namespace AqlaSerializer.Serializers
         {
             ctx.LoadAddress(valueFrom, ExpectedType);
             ctx.LoadValue(property);
-            ctx.WriteNullCheckedTail(property.PropertyType, Tail, null);
+
+
+            //ctx.LoadReaderWriter();
+            //ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCancelBegin"));
+            ctx.WriteNullCheckedTail(property.PropertyType, Tail, null, true);
         }
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

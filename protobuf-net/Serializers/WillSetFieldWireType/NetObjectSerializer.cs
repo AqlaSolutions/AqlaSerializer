@@ -14,7 +14,7 @@ using System.Reflection;
 namespace AqlaSerializer.Serializers
 {
 
-    sealed class NetObjectSerializer : IProtoSerializer
+    sealed class NetObjectSerializer : IProtoSerializerWithWireType
     {
         private readonly int key;
         private readonly Type type;
