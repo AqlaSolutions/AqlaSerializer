@@ -192,7 +192,7 @@ namespace AqlaSerializer.Meta
             IEnumerable sequence = value as IEnumerable;
             if (sequence != null)
             {
-                if (isInsideList) throw CreateNestedListsNotSupported();
+                if (isInsideList) throw new ProtoException("TrySerializeAuxiliaryType should not be called for nested lists, instead they should be registered in model");
                 foreach (object item in sequence) {
                     if (item == null) { throw new NullReferenceException(); }
                     if (!TrySerializeAuxiliaryType(writer, null, format, tag, item, true, isRoot))
@@ -786,7 +786,7 @@ namespace AqlaSerializer.Meta
                 }
                 if (itemType != null)
                 {
-                    if (insideList) throw TypeModel.CreateNestedListsNotSupported();
+                    if (insideList) throw new ProtoException("TryDeserializeAuxiliaryType should not be called for nested lists, instead they should be registered in model");
                     found = TryDeserializeList(this, reader, format, tag, type, itemType, isRoot, ref value);
                     if (!found && autoCreate)
                     {
@@ -1027,11 +1027,8 @@ namespace AqlaSerializer.Meta
             /// </summary>
             AfterDeserialize
         }
-
-        /// <summary>
-        /// Used for testing
-        /// </summary>
-        internal bool ForceSerializationDuringClone { get; set; }
+        
+        public bool ForceSerializationDuringClone { get; set; }
 
 #if !NO_GENERICS && !IOS
         /// <summary>
@@ -1054,8 +1051,7 @@ namespace AqlaSerializer.Meta
             if (value == null) return null;
 
             Type type = value.GetType();
-            int key = GetKey(ref type);
-
+            
             if (ForceSerializationDuringClone)
             {
                 using (MemoryStream ms = new MemoryStream())
@@ -1078,6 +1074,7 @@ namespace AqlaSerializer.Meta
                     }
                 }
             }
+            int key = GetKey(ref type);
 
             if (key >= 0 && !Helpers.IsEnum(type))
             {

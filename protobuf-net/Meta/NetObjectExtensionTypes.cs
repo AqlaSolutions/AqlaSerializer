@@ -14,7 +14,7 @@ namespace AqlaSerializer.Meta
         NonReference = 4,
         Collection = 8,
 
-        All = Null | Reference | Reference | Collection
+        All = Null | Reference | NonReference | Collection
     }
 
     public static class NetObjectExtensionTypesExtensions

@@ -27,6 +27,7 @@ namespace AqlaSerializer.Serializers
         public NetObjectSerializer(TypeModel model, Type type, int key, BclHelpers.NetObjectOptions options)
         {
             bool dynamicType = (options & BclHelpers.NetObjectOptions.DynamicType) != 0;
+            Debug.Assert(dynamicType || key != -1);
             this.key = dynamicType ? -1 : key;
             this.type = dynamicType ? model.MapType(typeof(object)) : type;
             this.options = options;

@@ -14,7 +14,7 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class SubItemSerializer : IProtoTypeSerializer
+    sealed class ModelTypeSerializer : IProtoTypeSerializer
     {
         bool IProtoTypeSerializer.HasCallbacks(TypeModel.CallbackType callbackType)
         {
@@ -50,7 +50,7 @@ namespace AqlaSerializer.Serializers
         private readonly ISerializerProxy proxy;
         private readonly bool recursionCheck;
         readonly bool _prefixLength;
-        public SubItemSerializer(Type type, int key, ISerializerProxy proxy, bool recursionCheck, bool prefixLength)
+        public ModelTypeSerializer(Type type, int key, ISerializerProxy proxy, bool recursionCheck, bool prefixLength)
         {
             if (type == null) throw new ArgumentNullException("type");
             if (proxy == null) throw new ArgumentNullException("proxy");
@@ -76,7 +76,7 @@ namespace AqlaSerializer.Serializers
             }
             else
             {
-                ProtoWriter.WriteRecursionSafeObject(value, key, _prefixLength, dest);
+                ProtoWriter.WriteRecursionSafeObject(value, key, dest);
             }
         }
         object IProtoSerializer.Read(object value, ProtoReader source)

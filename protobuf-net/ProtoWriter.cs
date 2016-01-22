@@ -83,18 +83,15 @@ namespace AqlaSerializer
         /// </summary>
         /// <param name="value">The object to write.</param>
         /// <param name="key">The key that uniquely identifies the type within the model.</param>
-        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
-        public static void WriteRecursionSafeObject(object value, int key, bool prefixLength, ProtoWriter writer)
+        public static void WriteRecursionSafeObject(object value, int key, ProtoWriter writer)
         {
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.model == null)
             {
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
-            SubItemToken token = StartSubItem(null, prefixLength, writer);
             writer.model.Serialize(key, value, writer, false);
-            EndSubItem(token, writer);
         }
 
         internal static void WriteObject(object value, int key, ProtoWriter writer, PrefixStyle style, int fieldNumber)
@@ -220,6 +217,7 @@ namespace AqlaSerializer
         {
             if (!writer.fieldStarted) throw CreateException(writer);
             writer.fieldNumber = 0;
+            writer.fieldStarted = false;
         }
 
         /// <summary>
@@ -403,13 +401,13 @@ namespace AqlaSerializer
             if (writer.expectRoot)
             {
                 writer.expectRoot = false;
-                return new SubItemToken(int.MaxValue);
+                return new SubItemToken(int.MinValue);
             }
             if (writer.fieldStarted && writer.ignoredFieldStarted)
             {
                 writer.ignoredFieldStarted = false;
                 writer.fieldStarted = false;
-                return new SubItemToken(int.MaxValue);
+                return new SubItemToken(int.MinValue);
             }
             WriteFieldHeaderCompleteAnyType(prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
@@ -524,7 +522,7 @@ namespace AqlaSerializer
         {
             if (writer == null) throw new ArgumentNullException("writer");
             if (writer.fieldStarted) { throw CreateException(writer); }
-            if (token.value == int.MaxValue)
+            if (token.value == int.MinValue)
             {
                 writer.wireType = WireType.None;
                 return;

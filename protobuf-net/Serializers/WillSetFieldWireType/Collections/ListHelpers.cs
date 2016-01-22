@@ -89,7 +89,7 @@ namespace AqlaSerializer.Serializers
                 // packed or not they will always be in subitem
                 // if array is empty the subitem will be empty
 
-                ProtoWriter.StartSubItem(null, writePacked, dest);
+                token = ProtoWriter.StartSubItem(null, writePacked, dest);
 
                 prepareInstance?.Invoke();
 
@@ -193,7 +193,7 @@ namespace AqlaSerializer.Serializers
             else
             {
                 if (subItemNeeded) fieldNumber = FieldItem;
-                if (!_protoCompatibility || source.TryReadFieldHeader(fieldNumber))
+                if (_protoCompatibility || source.TryReadFieldHeader(fieldNumber))
                 {
                     do
                     {
