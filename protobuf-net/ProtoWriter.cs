@@ -218,6 +218,7 @@ namespace AqlaSerializer
             if (!writer.fieldStarted) throw CreateException(writer);
             writer.fieldNumber = 0;
             writer.fieldStarted = false;
+            writer.ignoredFieldStarted = false;
         }
 
         /// <summary>
@@ -226,14 +227,13 @@ namespace AqlaSerializer
         public static void WriteFieldHeaderCompleteAnyType(WireType wireType, ProtoWriter writer)
         {
             if (!writer.fieldStarted) throw new InvalidOperationException("Cannot write a field wire type " + wireType + " because field number has not been written");
+            writer.wireType = wireType;
+            writer.fieldStarted = false;
             if (writer.ignoredFieldStarted)
             {
-                writer.wireType = wireType;
                 writer.ignoredFieldStarted = false;
                 return;
             }
-            writer.wireType = wireType;
-            writer.fieldStarted = false;
             WriteFieldHeaderNoCheck(writer.fieldNumber, wireType, writer);
         }
 

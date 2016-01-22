@@ -77,12 +77,26 @@ namespace AqlaSerializer.Meta
             if (itemType == null) return false;
             if (model.AlwaysUseTypeRegistrationForCollections)
                 return true;
-            
+
             // in legacy mode list and array types are added but ONLY NESTED
-            type = itemType;
-            itemType = null;
+            return CheckTypeIsCollection(model, itemType);
+        }
+
+        internal static bool CheckTypeIsCollection(RuntimeTypeModel model, Type type)
+        {
+            Type defaultType = null;
+            Type itemType = null;
             model.ResolveListTypes(type, ref itemType, ref defaultType);
             return itemType != null;
+        }
+
+        internal static bool CheckTypeIsNestedCollection(RuntimeTypeModel model, Type type)
+        {
+            Type defaultType = null;
+            Type itemType = null;
+            model.ResolveListTypes(type, ref itemType, ref defaultType);
+            if (itemType == null) return false;
+            return CheckTypeIsCollection(model, type);
         }
 
 

@@ -41,13 +41,15 @@ namespace Examples
         }
         void CheckBytes(TypeModel model, object obj, string expected, string message)
         {
-            using(var ms = new MemoryStream())
-            {
-                model.Serialize(ms, obj);
+            model.ForceSerializationDuringClone = true;
+            Assert.That(model.DeepClone(obj), Is.Not.Null);
+            //    using(var ms = new MemoryStream())
+            //    {
+            //        model.Serialize(ms, obj);
 
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual(expected, Program.GetByteString(ms.ToArray()), message);
-            }
+            //        Debug.WriteLine("AqlaSerializer changed format");
+            //        //Assert.AreEqual(expected, Program.GetByteString(ms.ToArray()), message);
+            //    }
         }
         
         [Test]

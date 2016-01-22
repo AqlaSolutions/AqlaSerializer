@@ -197,7 +197,7 @@ namespace AqlaSerializer.Serializers
             _listHelpers.Read(null,
                 o =>
                     {
-                        args[0] = Tail.Read(null, source);
+                        args[0] = o;
                         add.Invoke(builderInstance, args);
                     },
                 source);

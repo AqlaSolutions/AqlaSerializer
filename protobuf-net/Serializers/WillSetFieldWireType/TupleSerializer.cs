@@ -19,14 +19,16 @@ namespace AqlaSerializer.Serializers
     sealed class TupleSerializer : IProtoTypeSerializer
     {
         private readonly MemberInfo[] members;
+        readonly bool _prefixLength;
         private readonly ConstructorInfo ctor;
         private IProtoSerializerWithWireType[] tails;
-        public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, MemberInfo[] members)
+        public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, MemberInfo[] members, bool prefixLength)
         {
             if (ctor == null) throw new ArgumentNullException("ctor");
             if (members == null) throw new ArgumentNullException("members");
             this.ctor = ctor;
             this.members = members;
+            _prefixLength = prefixLength;
             this.tails = new IProtoSerializerWithWireType[members.Length];
 
             ParameterInfo[] parameters = ctor.GetParameters();
@@ -120,6 +122,7 @@ namespace AqlaSerializer.Serializers
                 reservedTrap = ProtoReader.ReserveNoteObject(source);
                 invokeCtor = true;
             }
+            var token = ProtoReader.StartSubItem(source); // TODO emit
             for (int i = 0; i < values.Length; i++)
                     values[i] = GetValue(value, i);
             int field;
@@ -136,6 +139,7 @@ namespace AqlaSerializer.Serializers
                     source.SkipField();
                 }
             }
+            ProtoReader.EndSubItem(token, source);
             if (invokeCtor)
             {
                 var r = ctor.Invoke(values);
@@ -148,6 +152,8 @@ namespace AqlaSerializer.Serializers
         }
         public void Write(object value, ProtoWriter dest)
         {
+            // TODO emit
+            var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
             for (int i = 0; i < tails.Length; i++)
             {
                 object val = GetValue(value, i);
@@ -157,6 +163,7 @@ namespace AqlaSerializer.Serializers
                     tails[i].Write(val, dest);
                 }
             }
+            ProtoWriter.EndSubItem(token, dest);
         }
 #endif
         public bool RequiresOldValue

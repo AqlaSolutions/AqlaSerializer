@@ -368,6 +368,11 @@ namespace AqlaSerializer.Meta
                 model.TakeLock(ref opaqueToken);// check nobody is still adding this type
 
 
+                if (IsPacked && itemType != null && !RuntimeTypeModel.CheckTypeIsCollection(model, itemType)
+                    && !ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(itemType), BinaryDataFormat.Default)))
+                {
+                    throw new InvalidOperationException("Only simple data-types can use packed encoding");
+                }
                 object finalDefaultValue = null;
                 if (defaultValue != null && !IsRequired && getSpecified == null)
                 {   // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
@@ -777,7 +782,7 @@ namespace AqlaSerializer.Meta
                     if (meta.UseConstructor) options |= BclHelpers.NetObjectOptions.UseConstructor;
                 }
 
-                if (key >= 0)
+                if (key >= 0 || dynamicType)
                 {
                     if (tryAsReference || dynamicType || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.NonReference))
                         return new NetObjectSerializer(model, type, key, options);

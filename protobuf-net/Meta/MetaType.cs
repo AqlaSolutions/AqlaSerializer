@@ -621,7 +621,7 @@ namespace AqlaSerializer.Meta
                 MemberInfo[] mapping;
                 ConstructorInfo ctor = ResolveTupleConstructor(type, out mapping);
                 if(ctor == null) throw new InvalidOperationException();
-                return new TupleSerializer(model, ctor, mapping);
+                return new TupleSerializer(model, ctor, mapping, PrefixLength);
             }
             
 
