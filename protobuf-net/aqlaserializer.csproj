@@ -241,6 +241,8 @@
     <Compile Include="Meta\BasicList.cs" />
     <Compile Include="Meta\CallbackSet.cs" />
     <Compile Include="Meta\MetaType.cs" />
+    <Compile Include="Meta\NetObjectExtensionTypes.cs" />
+    <Compile Include="Meta\ProtoCompatibilitySettings.cs" />
     <Compile Include="Meta\RuntimeTypeModel.cs" />
     <Compile Include="Meta\RuntimeTypeModel.Schema.cs" />
     <Compile Include="Meta\SubType.cs" />
@@ -264,6 +266,7 @@
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BooleanSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ArrayDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\ByteSerializer.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\EnumTypeSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\WireTypeDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ImmutableCollectionDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ListHelpers.cs" />

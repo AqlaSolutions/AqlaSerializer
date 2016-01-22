@@ -167,7 +167,7 @@ namespace AqlaSerializer.Serializers
             }
 
             _packedWireTypeForRead = packedWireType;
-            _subtypeNumbers = subtypeNumbers;
+            _subtypeNumbers = subtypeNumbers ?? new KeyValuePair<Type, int>[0];
             _protoCompatibility = protoCompatibility;
 
             if (writePacked) options |= OPTIONS_WritePacked;

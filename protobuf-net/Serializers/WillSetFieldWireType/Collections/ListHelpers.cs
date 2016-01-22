@@ -208,3 +208,4 @@ namespace AqlaSerializer.Serializers
 #endif
     }
 }
+#endif

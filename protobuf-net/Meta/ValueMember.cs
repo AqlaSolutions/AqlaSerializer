@@ -1,10 +1,10 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
-
+using System.Collections.Generic;
 using AqlaSerializer.Serializers;
 using System.Globalization;
-
+using AltLinq;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -261,6 +261,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool IsStrict
         {
+            // TODO not used? remove
             get { return HasFlag(OPTIONS_IsStrict); }
             set { SetFlag(OPTIONS_IsStrict, value, true); }
         }
@@ -373,25 +374,23 @@ namespace AqlaSerializer.Meta
                     // as does "IsRequired"
                     finalDefaultValue = defaultValue;
                 }
-
-
+                
                 var ser = BuildValueFinalSerializer(
                     memberType,
-                    itemType,
-                    fieldNumber,
+                    new CollectionSettings(itemType)
+                    {
+                        Append = AppendCollection,
+                        DefaultType = DefaultType,
+                        IsPacked = IsPacked,
+                        ReturnList = member != null && Helpers.CanWrite(model, member)
+                    },
                     asReference,
-                    AppendCollection,
-                    member != null && Helpers.CanWrite(model, member),
                     DynamicType,
-                    IsPacked,
-                    IsStrict,
-                    DefaultType,
                     DataFormat,
-                    finalDefaultValue,
                     true,
-                    true, // real type members always handle references if applicable
+                    // real type members always handle references if applicable
+                    finalDefaultValue,
                     model);
-
                 
                 if (member != null)
                 {
@@ -425,64 +424,96 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        internal static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, bool handleNested, bool handleAsReference, RuntimeTypeModel model)
+        internal struct CollectionSettings
         {
-            WireType wireType;
-            return BuildValueFinalSerializer(objectType, objectItemType, fieldNumber, tryAsReference, appendCollection, returnList, dynamicType, isPacked, isStrict, defaultType, dataFormat, defaultValue, handleNested, handleAsReference, false, model, out wireType);
+            // Type objectItemType, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, Type defaultType, 
+            public Type DefaultType { get; set; }
+            public Type ItemType { get; set; }
+            public bool Append { get; set; }
+            public bool ReturnList { get; set; }
+            public bool IsPacked { get; set; }
+
+            public CollectionSettings Clone()
+            {
+                return this;
+            }
+
+            public CollectionSettings(Type itemType)
+                : this()
+            {
+                ItemType = itemType;
+            }
         }
 
-        static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, Type objectItemType, int fieldNumber, bool tryAsReference, bool appendCollection, bool returnList, bool dynamicType, bool isPacked, bool isStrict, Type defaultType, BinaryDataFormat dataFormat, object defaultValue, bool handleNested, bool handleAsReference, bool isNestedValue, RuntimeTypeModel model, out WireType wireType)
+        internal static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, RuntimeTypeModel model)
         {
+            WireType wireType;
+            return BuildValueFinalSerializer(objectType, collection, dynamicType, tryAsReference, dataFormat, isMemberOrNested, defaultValue, model, out wireType);
+        }
+
+        static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, RuntimeTypeModel model, out WireType wireType)
+        {
+            Type objectItemType = collection.ItemType;
             wireType = 0;
+            bool isPacked = collection.IsPacked;
             Type finalType = objectItemType ?? objectType;
 
             IProtoSerializerWithWireType ser = null;
             bool nestedCollection = false;
             
-            if (handleNested && objectItemType != null)
+            if (isMemberOrNested && objectItemType != null)
             {
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
                 MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
                 if (nestedItemType != null)
                 {
-                    isPacked = false;
                     bool originalAsReference = tryAsReference;
                     if (tryAsReference && !CheckCanBeAsReference(objectItemType, false))
                         tryAsReference = false;
 
                     //if (appendCollection) throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
+
                     if (nestedDefaultType == null)
                     {
                         MetaType metaType;
                         if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
                             nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
                     }
+
+                    
+                    var nestedColl = collection.Clone();
+                    nestedColl.Append = false;
+                    nestedColl.ReturnList = true;
+                    nestedColl.ItemType = nestedItemType;
+                    nestedColl.DefaultType = nestedDefaultType;
+
+                    WireType nestedWireType;
+                    bool nestedAsRef = false;
+
+                    nestedColl.IsPacked = isPacked
+                                          && TryGetCoreSerializer(model, dataFormat, nestedItemType, out nestedWireType, ref nestedAsRef, false, false, false) != null
+                                          && ListDecorator.CanPack(nestedWireType);
+                    
+
                     ser = BuildValueFinalSerializer(
                         finalType,
-                        nestedItemType,
-                        fieldNumber,
-                        originalAsReference,
-                        false,
-                        true,
+                        nestedColl, 
                         dynamicType,
-                        false,
-                        isStrict,
-                        nestedDefaultType,
+                        originalAsReference,
                         dataFormat,
+                        true,
                         null,
-                        true,
-                        true, // as reference is handled for recursive members
-                        true,
                         model,
                         out wireType);
 
+                    isPacked = false;
                     nestedCollection = true;
                 }
             }
-            if (!handleAsReference) tryAsReference = false; // handled outside
+            if (!isMemberOrNested) tryAsReference = false; // handled outside
             if (!nestedCollection)
-                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !appendCollection, true);
+                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, objectItemType != null || isMemberOrNested);
 
             if (ser == null)
             {
@@ -491,23 +522,14 @@ namespace AqlaSerializer.Meta
 
             bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
 
-            // apply tags
             if (objectItemType != null && supportNull)
             {
                 if (isPacked)
                 {
                     supportNull = false;
                 }
-                ser = new TagDecorator(NullDecorator.Tag, wireType, isStrict, ser);
-                ser = new NullDecorator(model, ser);
-                //if (!isNestedValue)
-                    ser = new TagDecorator(fieldNumber, WireType.StartGroup, false, ser);
             }
-            else
-            {
-                //if (!isNestedValue)
-                    ser = new TagDecorator(fieldNumber, wireType, isStrict, ser);
-            }
+
             // apply lists if appropriate
             if (objectItemType != null)
             {
@@ -517,25 +539,48 @@ namespace AqlaSerializer.Meta
                 Type underlyingItemType = supportNull ? objectItemType : Helpers.GetNullableUnderlyingType(objectItemType) ?? objectItemType;
 #endif
                 Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
-                IProtoSerializerWithWireType serW;
                 if (objectType.IsArray)
                 {
-                    ser = serW = new ArrayDecorator(model, ser, fieldNumber, isPacked, wireType, objectType, !appendCollection, supportNull);
+                    ser = new ArrayDecorator(
+                                     model,
+                                     ser,
+                                     isPacked,
+                                     wireType,
+                                     objectType,
+                                     !collection.Append,
+                                     !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
                 }
                 else
                 {
-                    ser = serW = ListDecorator.Create(model, objectType, defaultType, ser, fieldNumber, isPacked, wireType, returnList, !appendCollection, supportNull);
+                    // use subtypes if specified
+                    MetaType collectionTypeMeta;
+                    KeyValuePair<Type, int>[] subtypes = (model.FindOrAddAuto(objectType, false, true, false, out collectionTypeMeta) != -1)
+                                                         ? collectionTypeMeta.GetSubtypes()
+                                                               .Select(s => new KeyValuePair<Type, int>(s.DerivedType.Type, s.FieldNumber))
+                                                               .OrderBy(s => s.Key)
+                                                               .ToArray()
+                                                         : null;
+
+                    ser = ListDecorator.Create(
+                        model,
+                        objectType,
+                        collection.DefaultType,
+                        ser,
+                        isPacked,
+                        wireType,
+                        collection.ReturnList,
+                        !collection.Append,
+                        subtypes,
+                        !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
                 }
 
-                if (handleAsReference)
+                if (isMemberOrNested)
                 {
-                    ser = new NetObjectValueDecorator(objectType, serW, tryAsReference);
-                    wireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
-                    if (!isNestedValue)
-                    {
-                        ser = new TagDecorator(1, wireType, false, ser);
-                    }
+                    ser = new NetObjectValueDecorator(objectType, ser, tryAsReference);
+                    wireType = WireType.StartGroup;
                 }
+                else
+                    wireType = collection.IsPacked ? WireType.String : WireType.StartGroup;
             }
 
             if (defaultValue != null)
@@ -697,37 +742,39 @@ namespace AqlaSerializer.Meta
             if (allowComplexTypes && model != null)
             {
                 int key = model.GetKey(type, false, true);
-                if (tryAsReference || dynamicType)
-                {
-                    defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
-                    BclHelpers.NetObjectOptions options = BclHelpers.NetObjectOptions.None;
-                    if (tryAsReference) options |= BclHelpers.NetObjectOptions.AsReference;
-                    if (dynamicType) options |= BclHelpers.NetObjectOptions.DynamicType;
-                    if (key >= 0)
-                    { // exists
-                        if (tryAsReference && Helpers.IsValueType(type))
-                        {
-                            string message = "AsReference cannot be used with value-types";
 
-                            if (type.Name == "KeyValuePair`2")
-                            {
-                                message += "; please see http://stackoverflow.com/q/14436606/";
-                            }
-                            else
-                            {
-                                message += ": " + type.FullName;
-                            }
-                            throw new InvalidOperationException(message);
+                BclHelpers.NetObjectOptions options = BclHelpers.NetObjectOptions.None;
+                if (tryAsReference) options |= BclHelpers.NetObjectOptions.AsReference;
+                if (dynamicType) options |= BclHelpers.NetObjectOptions.DynamicType;
+
+                defaultWireType = WireType.StartGroup;
+                if (key >= 0)
+                { // exists
+                    if (tryAsReference && Helpers.IsValueType(type))
+                    {
+                        string message = "AsReference cannot be used with value-types";
+
+                        if (type.Name == "KeyValuePair`2")
+                        {
+                            message += "; please see http://stackoverflow.com/q/14436606/";
                         }
-                        MetaType meta = model[type];
-                        if (tryAsReference && meta.IsAutoTuple) options |= BclHelpers.NetObjectOptions.LateSet;                        
-                        if (meta.UseConstructor) options |= BclHelpers.NetObjectOptions.UseConstructor;
+                        else
+                        {
+                            message += ": " + type.FullName;
+                        }
+                        throw new InvalidOperationException(message);
                     }
+                    MetaType meta = model[type];
+                    if (tryAsReference && meta.IsAutoTuple) options |= BclHelpers.NetObjectOptions.LateSet;
+                    if (meta.UseConstructor) options |= BclHelpers.NetObjectOptions.UseConstructor;
+                }
+
+                if (tryAsReference || dynamicType || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.NonReference))
+                {
                     return new NetObjectSerializer(model, type, key, options);
                 }
                 if (key >= 0)
                 {
-                    defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     return new SubItemSerializer(type, key, model[type], true, defaultWireType == WireType.String);
                 }
             }

@@ -895,7 +895,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public static RuntimeTypeModel Create()
         {
-            return Create(false);
+            return Create(false, ProtoCompatibilitySettings.Default);
         }
 
         /// <summary>
@@ -905,9 +905,10 @@ namespace AqlaSerializer.Meta
         /// optimal performance.
         /// </summary>
         /// <param name="newestBehavior">If set to true the newest recommended defaults are enabled upon creation. Default: false</param>
-        public static RuntimeTypeModel Create(bool newestBehavior)
+        /// <param name="protoCompatibility">Protocol Buffers format compatibility</param>
+        public static RuntimeTypeModel Create(bool newestBehavior, ProtoCompatibilitySettings protoCompatibility)
         {
-            var r = new RuntimeTypeModel(false);
+            var r = new RuntimeTypeModel(false, protoCompatibility);
             if (newestBehavior)
             {
                 r.AlwaysUseTypeRegistrationForCollections = true;

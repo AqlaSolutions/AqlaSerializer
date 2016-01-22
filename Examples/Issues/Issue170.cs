@@ -21,7 +21,7 @@ namespace Examples.Issues
         [Test]
         public void ArrayWithNullContentShouldNotThrow()
         {
-            var tm = TypeModel.Create(true);
+            var tm = TypeModel.Create(true, ProtoCompatibilitySettings.Default);
             var arr = new[] { "aaa", null, "bbb" };
             Assert.That(tm.DeepClone(arr), Is.EqualTo(arr));
         }

@@ -50,6 +50,8 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed partial class RuntimeTypeModel : TypeModel
     {
+        internal ProtoCompatibilitySettings ProtoCompatibility { get; } = new ProtoCompatibilitySettings();
+
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
             if (type == null) throw new ArgumentNullException("type");
@@ -187,7 +189,7 @@ namespace AqlaSerializer.Meta
         private sealed class Singleton
         {
             private Singleton() { }
-            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true);
+            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true, ProtoCompatibilitySettings.Default);
         }
         /// <summary>
         /// The default model, used to support AqlaSerializer.Serializer
@@ -233,8 +235,9 @@ namespace AqlaSerializer.Meta
 #if FEAT_COMPILER
 #endif
 
-        internal RuntimeTypeModel(bool isDefault)
+        internal RuntimeTypeModel(bool isDefault, ProtoCompatibilitySettings protoCompatibility)
         {
+            ProtoCompatibility = protoCompatibility;
 #if FEAT_COMPILER
 #if FEAT_IKVM
             universe = new IKVM.Reflection.Universe();
