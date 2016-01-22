@@ -890,21 +890,6 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-#if !FX11
-        /// <summary>
-        /// Compiles the serializers individually; this is *not* a full
-        /// standalone compile, but can significantly boost performance
-        /// while allowing additional types to be added.
-        /// </summary>
-        /// <remarks>An in-place compile can access non-public types / members</remarks>
-        public void CompileInPlace()
-        {
-            foreach (MetaType type in types)
-            {
-                type.CompileInPlace();
-            }
-        }
-#endif
 #endif
         //internal override IProtoSerializer GetTypeSerializer(Type type)
         //{   // this list is thread-safe for reading

@@ -55,6 +55,23 @@ namespace AqlaSerializer.Meta
         internal ITypeMapper RunSharpTypeMapper { get; }
 
 
+#if !FX11
+        /// <summary>
+        /// Compiles the serializers individually; this is *not* a full
+        /// standalone compile, but can significantly boost performance
+        /// while allowing additional types to be added.
+        /// </summary>
+        /// <remarks>An in-place compile can access non-public types / members</remarks>
+        public void CompileInPlace()
+        {
+            return;  // TODO temporarily disabled
+            foreach (MetaType type in types)
+            {
+                type.CompileInPlace();
+            }
+        }
+#endif
+
 #if FEAT_IKVM
         readonly IKVM.Reflection.Universe universe;
         /// <summary>
@@ -336,6 +353,7 @@ namespace AqlaSerializer.Meta
         /// <returns>An instance of the newly created compiled type-model</returns>
         public TypeModel Compile(string name, string path)
         {
+            return this; // TODO temporarily disabled
             CompilerOptions options = new CompilerOptions();
             options.TypeName = name;
             options.OutputPath = path;
