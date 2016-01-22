@@ -303,7 +303,7 @@
     <Compile Include="Serializers\WillSetFieldWireType\Fields\PropertyDecorator.cs" />
     <Compile Include="Serializers\ProtoDecoratorBase.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\StringSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\SubItemSerializer.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\ModelTypeSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\TypeSerializer.cs" />
     <Compile Include="ServiceModel\BinarySerializationBehaviorAttribute.cs" />
     <Compile Include="ServiceModel\ProtoBehaviorExtensionElement.cs" />

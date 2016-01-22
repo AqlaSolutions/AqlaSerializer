@@ -50,7 +50,7 @@ namespace AqlaSerializer.Serializers
                             addMethod = v => list.Add(v);
                         }
                     },
-                addMethod,
+                el => addMethod(el),
                 source);
 
             if (result == null)
@@ -69,7 +69,7 @@ namespace AqlaSerializer.Serializers
             if (reservedTrap.HasValue)
                 ProtoReader.NoteReservedTrappedObject(reservedTrap.Value, result, source);
             else
-                ProtoReader.NoteObject(value, source);
+                ProtoReader.NoteObject(result, source);
             if (oldLen != 0) ((Array)value).CopyTo(result, 0);
             return result;
         }

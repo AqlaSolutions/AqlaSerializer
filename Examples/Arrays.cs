@@ -1,6 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
 using AqlaSerializer.Meta;
@@ -94,7 +95,7 @@ namespace Examples
     }
 
     [ProtoContract]
-    public class CustomString
+    public class CustomString : IEquatable<CustomString>
     {
         [ProtoMember(1)]
         public string Value { get; set; }
@@ -103,15 +104,17 @@ namespace Examples
         {
             return new CustomString() { Value = v };
         }
-
-        protected bool Equals(CustomString other)
-        {
-            return string.Equals(Value, other.Value);
-        }
-
+        
         public override string ToString()
         {
             return Value + "";
+        }
+
+        public bool Equals(CustomString other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return string.Equals(Value, other.Value);
         }
 
         public override bool Equals(object obj)
@@ -364,10 +367,11 @@ namespace Examples
         }
 
         [Test]
-        public void TestArrayListDirect([Values(false,true)] bool compile)
+        public void TestArrayListDirect([Values(false,true)] bool compile, [Values(false, true)] bool forceSerialization)
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
+            tm.ForceSerializationDuringClone = forceSerialization;
             var source = ArrayList.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
@@ -384,10 +388,11 @@ namespace Examples
         }
 
         [Test]
-        public void TestListArrayDirect([Values(false, true)] bool compile)
+        public void TestListArrayDirect([Values(false, true)] bool compile, [Values(false, true)] bool forceSerialization)
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
+            tm.ForceSerializationDuringClone = forceSerialization;
             var source = ListArray.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
@@ -424,10 +429,11 @@ namespace Examples
         }
 
         [Test]
-        public void TestListListDirect([Values(false,true)] bool compile)
+        public void TestListListDirect([Values(false,true)] bool compile, [Values(false, true)] bool forceSerialization)
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
+            tm.ForceSerializationDuringClone = forceSerialization;
             var source = ListList.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
@@ -459,6 +465,17 @@ namespace Examples
         }
 
         [Test]
+        public void TestEquals()
+        {
+            var a = new[] { new[] { 1, 2 }, new[] { 3, 4 } };
+            var b = new[] { new[] { 1, 2 }, new[] { 3, 4 } };
+            // if you comment these two lines the test passes
+            a[0] = a[1];
+            b[0] = b[1];
+            Assert.That(a, Is.EqualTo(b));
+        }
+
+        [Test]
         public void TestArrayArrayAsRef([Values(false, true)] bool compile, [Values(false, true)] bool asRef)
         {
             var tm = TypeModel.Create();
@@ -468,18 +485,32 @@ namespace Examples
                 f.AsReference = asRef;
 
             var source = ArrayArrayRef.CreateFilled();
-            var copy = tm.DeepClone(source);
-            Assert.That(copy.Values, Is.EqualTo(source.Values));
-            if (asRef)
+            source.Values[0] = source.Values[1];
+            try
             {
-                Assert.That(copy.Values2, Is.SameAs(copy.Values2));
-                Assert.That(copy.Values[0], Is.SameAs(copy.Values[1]));
-                Assert.That(copy.Self, Is.SameAs(copy));
+                var copy = tm.DeepClone(source);
+                Assert.That(copy.Values.Length, Is.EqualTo(source.Values.Length));
+                for (int i = 0; i < copy.Values.Length; i++)
+                {
+                    Assert.That(copy.Values[i], Is.EqualTo(source.Values[i]));
+                    Assert.That(copy.Values2[i], Is.EqualTo(source.Values2[i]));
+                }
+                if (asRef)
+                {
+                    Assert.That(copy.Values2, Is.SameAs(copy.Values));
+                    Assert.That(copy.Values[0], Is.SameAs(copy.Values[1]));
+                    Assert.That(copy.Self, Is.SameAs(copy));
+                }
+                else
+                {
+                    Assert.That(copy.Values2, Is.Not.SameAs(copy.Values));
+                    Assert.That(copy.Values[0], Is.Not.SameAs(copy.Values[1]));
+                }
             }
-            else
+            catch (AqlaSerializer.ProtoException e)
             {
-                Assert.That(copy.Values2, Is.Not.SameAs(copy.Values2));
-                Assert.That(copy.Values[0], Is.Not.SameAs(copy.Values[1]));
+                if (asRef || !e.Message.StartsWith("Possible recursion detected"))
+                    throw;
             }
             if (compile)
             {
@@ -489,10 +520,11 @@ namespace Examples
         }
 
         [Test]
-        public void TestArrayArrayDirect([Values(false,true)] bool compile)
+        public void TestArrayArrayDirect([Values(false,true)] bool compile, [Values(false, true)] bool forceSerialization)
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
+            tm.ForceSerializationDuringClone = forceSerialization;
             var source = ArrayArray.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
@@ -554,10 +586,11 @@ namespace Examples
         }
 
         [Test]
-        public void TestArrayArrayArrayDirect([Values(false, true)] bool compile)
+        public void TestArrayArrayArrayDirect([Values(false, true)] bool compile, [Values(false, true)] bool forceSerialization)
         {
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
+            tm.ForceSerializationDuringClone = forceSerialization;
             var source = ArrayArrayArray.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));

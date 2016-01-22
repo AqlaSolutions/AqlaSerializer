@@ -106,10 +106,10 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        public bool IsCollectionPacked { get; set; } = true;
+        public bool PrefixLength { get; set; } = true;
 
         public BinaryDataFormat CollectionDataFormat { get; set; }
-
+        
         private BasicList subTypes;
         private BasicList subTypesSimple;
 
@@ -517,7 +517,7 @@ namespace AqlaSerializer.Meta
             SetFlag(OPTIONS_Frozen, true, false);
             serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(type, AsReferenceDefault, s);
+            rootSerializer = new RootDecorator(type, !Helpers.IsValueType(type) && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Reference), s);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
 #endif
@@ -592,11 +592,11 @@ namespace AqlaSerializer.Meta
                 return (IProtoTypeSerializer)
                        ValueMember.BuildValueFinalSerializer(
                            type,
-                           new ValueMember.CollectionSettings(type.GetElementType())
+                           new ValueMember.CollectionSettings(itemType)
                            {
                                Append = false,
                                DefaultType = CollectionConcreteType,
-                               IsPacked = IsCollectionPacked,
+                               IsPacked = PrefixLength,
                                ReturnList = true
                            },
                            false,
@@ -676,7 +676,7 @@ namespace AqlaSerializer.Meta
                 baseCtorCallbacks.CopyTo(arr, 0);
                 Array.Reverse(arr);
             }
-            return new TypeSerializer(model, type, fieldNumbers, serializers, arr, baseType == null, UseConstructor, callbacks, constructType, factory, false);
+            return new TypeSerializer(model, type, fieldNumbers, serializers, arr, baseType == null, UseConstructor, callbacks, constructType, factory, PrefixLength);
         }
 
         [Flags]

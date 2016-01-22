@@ -623,7 +623,7 @@ namespace AqlaSerializer
         {
             if (reader == null) throw new ArgumentNullException("reader");
             int value = token.value;
-            if (value == int.MaxValue)
+            if (value == int.MinValue)
             {
                 reader.wireType = WireType.None;
                 return;
@@ -681,7 +681,7 @@ namespace AqlaSerializer
             if (reader.expectRoot)
             {
                 reader.expectRoot = false;
-                return new SubItemToken(int.MaxValue);
+                return new SubItemToken(int.MinValue);
             }
             switch (reader.wireType)
             {

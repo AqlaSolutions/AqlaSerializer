@@ -384,8 +384,8 @@ namespace AqlaSerializer.Meta
                         IsPacked = IsPacked,
                         ReturnList = member != null && Helpers.CanWrite(model, member)
                     },
-                    asReference,
                     DynamicType,
+                    asReference,
                     DataFormat,
                     true,
                     // real type members always handle references if applicable
@@ -459,16 +459,31 @@ namespace AqlaSerializer.Meta
             Type finalType = objectItemType ?? objectType;
 
             IProtoSerializerWithWireType ser = null;
-            bool nestedCollection = false;
             
-            if (isMemberOrNested && objectItemType != null)
+            bool originalAsReference = tryAsReference;
+            if (!isMemberOrNested) tryAsReference = false; // handled outside
+
+            if (objectItemType != null)
             {
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
                 MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
-                if (nestedItemType != null)
+
+                bool itemIsNestedCollection = nestedItemType != null;
+                bool tryHandleAsRegistered = !isMemberOrNested || !itemIsNestedCollection;
+                if (tryHandleAsRegistered)
+                    ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, true);
+
+                if (ser == null && itemIsNestedCollection)
                 {
-                    bool originalAsReference = tryAsReference;
+                    // if we already tried to lookup registered type no need to do it again
+                    if (!tryHandleAsRegistered && nestedDefaultType == null)
+                    {
+                        MetaType metaType;
+                        if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
+                            nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
+                    }
+
                     if (tryAsReference && !CheckCanBeAsReference(objectItemType, false))
                         tryAsReference = false;
 
@@ -481,24 +496,18 @@ namespace AqlaSerializer.Meta
                             nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
                     }
 
-                    
+
                     var nestedColl = collection.Clone();
                     nestedColl.Append = false;
                     nestedColl.ReturnList = true;
                     nestedColl.ItemType = nestedItemType;
                     nestedColl.DefaultType = nestedDefaultType;
 
-                    WireType nestedWireType;
-                    bool nestedAsRef = false;
-
-                    nestedColl.IsPacked = isPacked
-                                          && TryGetCoreSerializer(model, dataFormat, nestedItemType, out nestedWireType, ref nestedAsRef, false, false, false) != null
-                                          && ListDecorator.CanPack(nestedWireType);
-                    
+                    nestedColl.IsPacked = isPacked;
 
                     ser = BuildValueFinalSerializer(
                         finalType,
-                        nestedColl, 
+                        nestedColl,
                         dynamicType,
                         originalAsReference,
                         dataFormat,
@@ -508,18 +517,17 @@ namespace AqlaSerializer.Meta
                         out wireType);
 
                     isPacked = false;
-                    nestedCollection = true;
                 }
             }
-            if (!isMemberOrNested) tryAsReference = false; // handled outside
-            if (!nestedCollection)
-                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, objectItemType != null || isMemberOrNested);
-
+            else
+                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, true);
+            
             if (ser == null)
             {
                 throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
             }
 
+            isPacked = isPacked && ListDecorator.CanPack(wireType);
             bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
 
             if (objectItemType != null && supportNull)
@@ -769,13 +777,12 @@ namespace AqlaSerializer.Meta
                     if (meta.UseConstructor) options |= BclHelpers.NetObjectOptions.UseConstructor;
                 }
 
-                if (tryAsReference || dynamicType || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.NonReference))
-                {
-                    return new NetObjectSerializer(model, type, key, options);
-                }
                 if (key >= 0)
                 {
-                    return new SubItemSerializer(type, key, model[type], true, defaultWireType == WireType.String);
+                    if (tryAsReference || dynamicType || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.NonReference))
+                        return new NetObjectSerializer(model, type, key, options);
+                    
+                    return new ModelTypeSerializer(type, key, model[type], true, defaultWireType == WireType.String);
                 }
             }
             defaultWireType = WireType.None;

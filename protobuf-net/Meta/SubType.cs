@@ -77,7 +77,7 @@ namespace AqlaSerializer.Meta
             WireType wireType = WireType.String;
             if(dataFormat == BinaryDataFormat.Group) wireType = WireType.StartGroup; // only one exception
             
-            return new SubItemSerializer(derivedType.Type, derivedType.GetKey(false, false), derivedType, false, false);
+            return new ModelTypeSerializer(derivedType.Type, derivedType.GetKey(false, false), derivedType, false, false);
         }
     }
 }
