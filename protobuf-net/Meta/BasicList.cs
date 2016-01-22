@@ -222,6 +222,19 @@ namespace AqlaSerializer.Meta
                   // to be a reference check
                 return -1;
             }
+            internal bool HasReferences(object instance, int required)
+            {
+                int count = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    if ((object)instance == (object)data[i])
+                    {
+                        if (++count >= required) return true;
+                    }
+                } // ^^^ (object) above should be preserved, even if this was typed; needs
+                  // to be a reference check
+                return required <= 0;
+            }
             internal int IndexOf(MatchPredicate predicate, object ctx)
             {
                 for (int i = 0; i < length; i++)
@@ -271,6 +284,11 @@ namespace AqlaSerializer.Meta
         internal int IndexOfReference(object instance)
         {
             return head.IndexOfReference(instance);
+        }
+
+        internal bool HasReferences(object instance, int max)
+        {
+            return head.HasReferences(instance, max);
         }
 
         internal delegate bool MatchPredicate(object value, object ctx);
