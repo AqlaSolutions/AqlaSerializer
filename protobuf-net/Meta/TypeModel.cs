@@ -558,6 +558,22 @@ namespace AqlaSerializer.Meta
         /// <param name="style">How to encode the length prefix.</param>
         /// <param name="dest">The destination stream to write to.</param>
         /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        public void SerializeWithLengthPrefix<T>(Stream dest, T value, PrefixStyle style, int fieldNumber)
+        {
+            SerializeWithLengthPrefix(dest, value, MapType(typeof(T)), style, fieldNumber);
+        }
+
+        /// <summary>
+        /// Writes a protocol-buffer representation of the given instance to the supplied stream,
+        /// with a length-prefix. This is useful for socket programming,
+        /// as DeserializeWithLengthPrefix can be used to read the single object back
+        /// from an ongoing stream.
+        /// </summary>
+        /// <param name="type">The type being serialized.</param>
+        /// <param name="value">The existing instance to be serialized (cannot be null).</param>
+        /// <param name="style">How to encode the length prefix.</param>
+        /// <param name="dest">The destination stream to write to.</param>
+        /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
         public void SerializeWithLengthPrefix(Stream dest, object value, Type type, PrefixStyle style, int fieldNumber)
         {
             SerializeWithLengthPrefix(dest, value, type, style, fieldNumber, null);
@@ -1423,6 +1439,26 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
+        /// <summary>
+        /// Serializes a given instance and deserializes it as a different type;
+        /// this can be used to translate between wire-compatible objects (where
+        /// two .NET types represent the same data), or to promote/demote a type
+        /// through an inheritance hierarchy.
+        /// </summary>
+        /// <remarks>No assumption of compatibility is made between the types.</remarks>
+        /// <typeparam name="TFrom">The type of the object being copied.</typeparam>
+        /// <typeparam name="TTo">The type of the new object to be created.</typeparam>
+        /// <param name="instance">The existing instance to use as a template.</param>
+        /// <returns>A new instane of type TNewType, with the data from TOldType.</returns>
+        public TTo ChangeType<TFrom, TTo>(TFrom instance)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Serialize(ms, instance);
+                ms.Position = 0;
+                return Deserialize<TTo>(ms);
+            }
+        }
     }
 
 }

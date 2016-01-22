@@ -1,4 +1,6 @@
-﻿namespace AqlaSerializer.Meta
+﻿using System;
+
+namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Settings of a Protocol Buffers compatibility mode
@@ -33,6 +35,11 @@
             }
             set
             {
+                if (value.HasFlag(NetObjectExtensionTypes.AdvancedVersioning)
+                    && ((value & (NetObjectExtensionTypes.Reference | NetObjectExtensionTypes.Null)) != (NetObjectExtensionTypes.Reference | NetObjectExtensionTypes.Null)))
+                {
+                    throw new ArgumentException("No need for " + nameof(NetObjectExtensionTypes.AdvancedVersioning) + " when reference or null handling is disabled");
+                }
                 _allowExtensionDefinitions = value;
                 if (value != 0) EnableCompatibility = true;
             }
@@ -45,7 +52,7 @@
             EnableCompatibility = false
         };
 
-        public static ProtoCompatibilitySettings Full { get; } = new ProtoCompatibilitySettings()
+        public static ProtoCompatibilitySettings FullCompatibility { get; } = new ProtoCompatibilitySettings()
         {
             EnableCompatibility = true,
             AllowExtensionDefinitions = NetObjectExtensionTypes.None

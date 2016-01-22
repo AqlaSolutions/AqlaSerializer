@@ -148,12 +148,7 @@ namespace AqlaSerializer
         /// <returns>A new instane of type TNewType, with the data from TOldType.</returns>
         public static TTo ChangeType<TFrom,TTo>(TFrom instance)
         {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                Serialize<TFrom>(ms, instance);
-                ms.Position = 0;
-                return Deserialize<TTo>(ms);
-            }
+            return RuntimeTypeModel.Default.ChangeType<TFrom, TTo>(instance);
         }
 #if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
         /// <summary>
@@ -284,7 +279,7 @@ namespace AqlaSerializer
         { 
 #if FEAT_COMPILER
             RuntimeTypeModel model = RuntimeTypeModel.Default;
-            model[model.MapType(typeof(T))].CompileInPlace();
+            model.PrepareSerializer<T>();
 #endif
         }
 

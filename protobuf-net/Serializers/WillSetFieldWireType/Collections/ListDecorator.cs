@@ -38,7 +38,16 @@ namespace AqlaSerializer.Serializers
                                 subTypeNumber = kv.Value;
                         }
 
-                        if (!subTypeNumber.HasValue && !Helpers.IsAssignableFrom(concreteTypeDefault, type)) TypeModel.ThrowUnexpectedSubtype(ExpectedType, type);
+                        // no need to ensure this
+                        // we have default, right?
+                        // it will work ok!
+                        // if someone needs subtypes he will register them
+                        //if (!subTypeNumber.HasValue && !Helpers.IsAssignableFrom(concreteTypeDefault, type))
+                        //{
+                        //    // for arrays no need to register
+                        //    if (!type.IsArray || !Helpers.IsAssignableFrom(declaredType, type))
+                        //        TypeModel.ThrowUnexpectedSubtype(ExpectedType, type);
+                        //}
                     }
                 }
                 // we still write length in case it will be read as array
@@ -87,7 +96,7 @@ namespace AqlaSerializer.Serializers
                             value = Activator.CreateInstance(t);
                             ProtoReader.NoteObject(value, source);
                         }
-                        if (IsList)
+                        if (IsList && !SuppressIList)
                             list = (IList)value;
                         else
                             args = new object[1];

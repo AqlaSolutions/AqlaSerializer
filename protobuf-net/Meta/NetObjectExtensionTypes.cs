@@ -9,12 +9,12 @@ namespace AqlaSerializer.Meta
         Null = 1,
         Reference = 2,
         /// <summary>
-        /// This is required to allow versioning when switching between class and struct
+        /// This is required to allow versioning when switching between class, struct and nullable struct
         /// </summary>
-        NonReference = 4,
+        AdvancedVersioning = 4,
         Collection = 8,
 
-        All = Null | Reference | NonReference | Collection
+        All = Null | Reference | AdvancedVersioning | Collection
     }
 
     public static class NetObjectExtensionTypesExtensions

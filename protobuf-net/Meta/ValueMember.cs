@@ -461,22 +461,30 @@ namespace AqlaSerializer.Meta
             Type objectItemType = collection.ItemType;
             wireType = 0;
             bool isPacked = collection.IsPacked;
+            bool isPackedOriginal = isPacked;
             Type finalType = objectItemType ?? objectType;
 
             IProtoSerializerWithWireType ser = null;
             
             bool originalAsReference = tryAsReference;
+            bool nullable = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
 
             if (objectItemType != null)
             {
+                isPacked = isPacked && !nullable && ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(objectItemType), dataFormat)); // TODO warn?
+                
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
                 MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
 
                 bool itemIsNestedCollection = nestedItemType != null;
                 bool tryHandleAsRegistered = !isMemberOrNested || !itemIsNestedCollection;
+
+                
                 if (tryHandleAsRegistered)
-                    ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, true);
+                {
+                    ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true);
+                }
 
                 if (ser == null && itemIsNestedCollection)
                 {
@@ -507,7 +515,7 @@ namespace AqlaSerializer.Meta
                     nestedColl.ItemType = nestedItemType;
                     nestedColl.DefaultType = nestedDefaultType;
 
-                    nestedColl.IsPacked = isPacked;
+                    nestedColl.IsPacked = isPackedOriginal;
 
                     ser = BuildValueFinalSerializer(
                         finalType,
@@ -526,7 +534,8 @@ namespace AqlaSerializer.Meta
             else
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
-                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, true);
+                isPacked = false; // it's not even a collection
+                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true);
             }
 
             if (ser == null)
@@ -534,19 +543,13 @@ namespace AqlaSerializer.Meta
                 throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
             }
 
-            isPacked = isPacked && ListDecorator.CanPack(wireType);
-            bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
-            
             // apply lists if appropriate
             if (objectItemType != null)
             {
-                // TODO warn
-                if (supportNull)
-                    isPacked = false;
 #if NO_GENERICS
                 Type underlyingItemType = objectItemType;
 #else
-                Type underlyingItemType = supportNull ? objectItemType : Helpers.GetNullableUnderlyingType(objectItemType) ?? objectItemType;
+                Type underlyingItemType = nullable ? objectItemType : Helpers.GetNullableUnderlyingType(objectItemType) ?? objectItemType;
 #endif
                 Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
                 if (objectType.IsArray)
@@ -584,13 +587,10 @@ namespace AqlaSerializer.Meta
                         !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
                 }
 
-                if (isMemberOrNested)
+                if (isMemberOrNested && MetaType.IsNetObjectValueDecoratorNecessary(model, objectType, tryAsReference))
                 {
                     ser = new NetObjectValueDecorator(objectType, ser, tryAsReference);
-                    wireType = WireType.StartGroup;
                 }
-                else
-                    wireType = collection.IsPacked ? WireType.String : WireType.StartGroup;
             }
 
             if (defaultValue != null)
@@ -638,11 +638,11 @@ namespace AqlaSerializer.Meta
         internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
              bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
-            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, allowComplexTypes);
+            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes);
         }
 
         internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
+            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes)
         {
             Type originalType = type;
 #if !NO_GENERICS
@@ -684,7 +684,7 @@ namespace AqlaSerializer.Meta
             }
 
             if (ser != null)
-                return DecorateValueSerializer(model, originalType, tryAsReference, ser);
+                return isPackedCollection ? ser : DecorateValueSerializer(model, originalType, tryAsReference, ser);
 
             if (allowComplexTypes && model != null)
             {
@@ -718,7 +718,7 @@ namespace AqlaSerializer.Meta
 
                 if (key >= 0 || dynamicType)
                 {
-                    if (tryAsReference || dynamicType || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.NonReference))
+                    if (dynamicType || MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
                         return new NetObjectSerializer(model, type, key, options);
                     
                     return new ModelTypeSerializer(type, key, model[type], true, defaultWireType == WireType.String);
@@ -799,17 +799,11 @@ namespace AqlaSerializer.Meta
 
         static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, bool asReference, IProtoSerializerWithWireType ser)
         {
-            bool isRef = !Helpers.IsValueType(type);
-            if (!isRef) asReference = false;
-            Type nullableUnderlying = Helpers.GetNullableUnderlyingType(type);
-            bool isNullable = isRef || nullableUnderlying != null;
-            bool decorate = (isNullable && (model.ProtoCompatibility.AllowExtensionDefinitions & NetObjectExtensionTypes.Null) != 0)
-                            || (isRef && (model.ProtoCompatibility.AllowExtensionDefinitions & NetObjectExtensionTypes.Reference) != 0)
-                            || (model.ProtoCompatibility.AllowExtensionDefinitions & NetObjectExtensionTypes.NonReference) != 0;
+            if (Helpers.IsValueType(type)) asReference = false;
 
-            if (decorate)
+            if (MetaType.IsNetObjectValueDecoratorNecessary(model, type, asReference))
             {
-                switch (Helpers.GetTypeCode(nullableUnderlying ?? type))
+                switch (Helpers.GetTypeCode(Helpers.GetNullableUnderlyingType(type) ?? type))
                 {
                     case ProtoTypeCode.String:
                     case ProtoTypeCode.Uri:
