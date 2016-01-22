@@ -98,6 +98,7 @@ namespace AqlaSerializer.Serializers
             if (!ListDecorator.CanPack(packedWireTypeForRead))
             {
                 if (writePacked) throw new InvalidOperationException("Only simple data-types can use packed encoding");
+                _packedWireTypeForRead = WireType.None;
             }
             else
                 _packedWireTypeForRead = packedWireTypeForRead;

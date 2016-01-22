@@ -524,10 +524,21 @@ namespace AqlaSerializer.Meta
             SetFlag(OPTIONS_Frozen, true, false);
             serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(type, !Helpers.IsValueType(type) && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Reference), s);
+            rootSerializer = new RootDecorator(type, IsNetObjectValueDecoratorNecessary(model, type, true), s);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
 #endif
+        }
+
+        internal static bool IsNetObjectValueDecoratorNecessary(RuntimeTypeModel m, Type t, bool checkAsReference)
+        {
+
+            bool isRef = !Helpers.IsValueType(t);
+            bool isNullable = isRef || Helpers.GetNullableUnderlyingType(t) != null;
+            bool wrap = (isRef && checkAsReference && m.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Reference))
+                        || (isNullable && m.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Null)
+                            || m.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.AdvancedVersioning));
+            return wrap;
         }
 
         private IProtoTypeSerializer rootSerializer;
@@ -579,8 +590,8 @@ namespace AqlaSerializer.Meta
 
             if (Helpers.IsEnum(type))
                 return new WireTypeDecorator(WireType.Variant, new EnumSerializer(type, GetEnumMap()));
-            
-            Type itemType = IgnoreListHandling ? null : (type.IsArray?type.GetElementType(): TypeModel.GetListItemType(model, type));
+
+            Type itemType = IgnoreListHandling ? null : (type.IsArray ? type.GetElementType() : TypeModel.GetListItemType(model, type));
             if (itemType != null)
             {
 
@@ -599,13 +610,13 @@ namespace AqlaSerializer.Meta
                 if (fields.Count != 0)
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
-                return (IProtoTypeSerializer)
+                var ser =  (IProtoTypeSerializer)
                        ValueMember.BuildValueFinalSerializer(
                            type,
                            new ValueMember.CollectionSettings(itemType)
                            {
                                Append = false,
-                               DefaultType = CollectionConcreteType,
+                               DefaultType = CollectionConcreteType ?? defaultType,
                                IsPacked = PrefixLength,
                                ReturnList = true
                            },
@@ -616,6 +627,13 @@ namespace AqlaSerializer.Meta
                            null,
                            model);
 
+                // standard root decorator won't start any field
+                // in compatibility mode collections won't start subitems like normally
+                // so wrap with field
+                if (isRoot && !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection))
+                    ser = new CollectionRootFieldDecorator(ser);
+
+                return ser;
             }
 
             if (BaseType != null && !BaseType.IgnoreListHandling && RuntimeTypeModel.CheckTypeIsCollection(model, BaseType.Type))

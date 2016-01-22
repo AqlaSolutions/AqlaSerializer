@@ -1099,6 +1099,13 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        public void PrepareSerializer<T>()
+        {
+#if FEAT_COMPILER
+            this[MapType(typeof(T))].CompileInPlace();
+#endif
+        }
+
     }
     /// <summary>
     /// Contains the stack-trace of the owning code when a lock-contention scenario is detected
