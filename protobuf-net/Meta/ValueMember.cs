@@ -466,7 +466,6 @@ namespace AqlaSerializer.Meta
             IProtoSerializerWithWireType ser = null;
             
             bool originalAsReference = tryAsReference;
-            if (!isMemberOrNested) tryAsReference = false; // handled outside
 
             if (objectItemType != null)
             {
@@ -525,8 +524,11 @@ namespace AqlaSerializer.Meta
                 }
             }
             else
+            {
+                if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, true);
-            
+            }
+
             if (ser == null)
             {
                 throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
@@ -534,18 +536,13 @@ namespace AqlaSerializer.Meta
 
             isPacked = isPacked && ListDecorator.CanPack(wireType);
             bool supportNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
-
-            if (objectItemType != null && supportNull)
-            {
-                if (isPacked)
-                {
-                    supportNull = false;
-                }
-            }
-
+            
             // apply lists if appropriate
             if (objectItemType != null)
             {
+                // TODO warn
+                if (supportNull)
+                    isPacked = false;
 #if NO_GENERICS
                 Type underlyingItemType = objectItemType;
 #else
@@ -647,6 +644,7 @@ namespace AqlaSerializer.Meta
         internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             ref bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
+            Type originalType = type;
 #if !NO_GENERICS
             {
                 Type tmp = Helpers.GetNullableUnderlyingType( type);
@@ -656,13 +654,16 @@ namespace AqlaSerializer.Meta
             if (tryAsReference && !CheckCanBeAsReference(type, false))
                 tryAsReference = false;
 
+            defaultWireType = WireType.None;
+            IProtoSerializerWithWireType ser = null;
+
             if (Helpers.IsEnum(type))
             {
                 if (allowComplexTypes && model != null)
                 {
                     // need to do this before checking the typecode; an int enum will report Int32 etc
                     defaultWireType = WireType.Variant;
-                    return new WireTypeDecorator(defaultWireType, new EnumSerializer(type, model.GetEnumMap(type)));
+                    ser = new WireTypeDecorator(defaultWireType, new EnumSerializer(type, model.GetEnumMap(type)));
                 }
                 else
                 { // enum is fine for adding as a meta-type
@@ -670,88 +671,21 @@ namespace AqlaSerializer.Meta
                     return null;
                 }
             }
-            ProtoTypeCode code = Helpers.GetTypeCode(type);
-            switch (code)
+            if (ser == null)
+                ser = TryGetBasicTypeSerializer(model, dataFormat, type, out defaultWireType, overwriteList);
+            if (ser == null)
             {
-                case ProtoTypeCode.Int32:
-                    defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new Int32Serializer(model));
-                case ProtoTypeCode.UInt32:
-                    defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new UInt32Serializer(model));
-                case ProtoTypeCode.Int64:
-                    defaultWireType = GetIntWireType(dataFormat, 64);
-                    return new WireTypeDecorator(defaultWireType, new Int64Serializer(model));
-                case ProtoTypeCode.UInt64:
-                    defaultWireType = GetIntWireType(dataFormat, 64);
-                    return new WireTypeDecorator(defaultWireType, new UInt64Serializer(model));
-                case ProtoTypeCode.String:
+                var parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
+                if (parseable != null)
+                {
                     defaultWireType = WireType.String;
-                    if (tryAsReference)
-                    {
-                        return new NetObjectSerializer(model, model.MapType(typeof(string)), 0, BclHelpers.NetObjectOptions.AsReference);
-                    }
-                    return new WireTypeDecorator(defaultWireType, new StringSerializer(model));
-                case ProtoTypeCode.Single:
-                    defaultWireType = WireType.Fixed32;
-                    return new WireTypeDecorator(defaultWireType, new SingleSerializer(model));
-                case ProtoTypeCode.Double:
-                    defaultWireType = WireType.Fixed64;
-                    return new WireTypeDecorator(defaultWireType, new DoubleSerializer(model));
-                case ProtoTypeCode.Boolean:
-                    defaultWireType = WireType.Variant;
-                    return new WireTypeDecorator(defaultWireType, new BooleanSerializer(model));
-                case ProtoTypeCode.DateTime:
-                    defaultWireType = GetDateTimeWireType(dataFormat);
-                    return new WireTypeDecorator(defaultWireType, new DateTimeSerializer(model));
-                case ProtoTypeCode.Decimal:
-                    defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new DecimalSerializer(model));
-                case ProtoTypeCode.Byte:
-                    defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new ByteSerializer(model));
-                case ProtoTypeCode.SByte:
-                    defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new SByteSerializer(model));
-                case ProtoTypeCode.Char:
-                    defaultWireType = WireType.Variant;
-                    return new WireTypeDecorator(defaultWireType, new CharSerializer(model));
-                case ProtoTypeCode.Int16:
-                    defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new Int16Serializer(model));
-                case ProtoTypeCode.UInt16:
-                    defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new UInt16Serializer(model));
-                case ProtoTypeCode.TimeSpan:
-                    defaultWireType = GetDateTimeWireType(dataFormat);
-                    return new WireTypeDecorator(defaultWireType, new TimeSpanSerializer(model));
-                case ProtoTypeCode.Guid:
-                    defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new GuidSerializer(model));
-                case ProtoTypeCode.Uri:
-                    defaultWireType = WireType.String;
-                    if (tryAsReference)
-                    {
-                        return new NetObjectSerializer(model, model.MapType(typeof(Uri)), 0, BclHelpers.NetObjectOptions.AsReference);
-                    }
-                    return new WireTypeDecorator(defaultWireType, new StringSerializer(model)); // treat as string; wrapped in decorator later
-                case ProtoTypeCode.ByteArray:
-                    defaultWireType = WireType.String;
-                    return new NetObjectValueDecorator(model.MapType(typeof(byte[])), new WireTypeDecorator(defaultWireType, new BlobSerializer(model, overwriteList)), true);
-                case ProtoTypeCode.Type:
-                    defaultWireType = WireType.String;
-                    if (tryAsReference)
-                    {
-                        return new NetObjectSerializer(model, model.MapType(typeof(Type)), 0, BclHelpers.NetObjectOptions.AsReference);
-                    }
-                    return new WireTypeDecorator(defaultWireType, new SystemTypeSerializer(model));
+                    ser = new WireTypeDecorator(defaultWireType, parseable);
+                }
             }
-            var parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
-            if (parseable != null)
-            {
-                defaultWireType = WireType.String;
-                return new WireTypeDecorator(defaultWireType, parseable);
-            }
+
+            if (ser != null)
+                return DecorateValueSerializer(model, originalType, tryAsReference, ser);
+
             if (allowComplexTypes && model != null)
             {
                 int key = model.GetKey(type, false, true);
@@ -794,6 +728,102 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
+        static IProtoSerializerWithWireType TryGetBasicTypeSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)
+        {
+            ProtoTypeCode code = Helpers.GetTypeCode(type);
+            switch (code)
+            {
+                case ProtoTypeCode.Int32:
+                    defaultWireType = GetIntWireType(dataFormat, 32);
+                    return new WireTypeDecorator(defaultWireType, new Int32Serializer(model));
+                case ProtoTypeCode.UInt32:
+                    defaultWireType = GetIntWireType(dataFormat, 32);
+                    return new WireTypeDecorator(defaultWireType, new UInt32Serializer(model));
+                case ProtoTypeCode.Int64:
+                    defaultWireType = GetIntWireType(dataFormat, 64);
+                    return new WireTypeDecorator(defaultWireType, new Int64Serializer(model));
+                case ProtoTypeCode.UInt64:
+                    defaultWireType = GetIntWireType(dataFormat, 64);
+                    return new WireTypeDecorator(defaultWireType, new UInt64Serializer(model));
+                case ProtoTypeCode.Single:
+                    defaultWireType = WireType.Fixed32;
+                    return new WireTypeDecorator(defaultWireType, new SingleSerializer(model));
+                case ProtoTypeCode.Double:
+                    defaultWireType = WireType.Fixed64;
+                    return new WireTypeDecorator(defaultWireType, new DoubleSerializer(model));
+                case ProtoTypeCode.Boolean:
+                    defaultWireType = WireType.Variant;
+                    return new WireTypeDecorator(defaultWireType, new BooleanSerializer(model));
+                case ProtoTypeCode.DateTime:
+                    defaultWireType = GetDateTimeWireType(dataFormat);
+                    return new WireTypeDecorator(defaultWireType, new DateTimeSerializer(model));
+                case ProtoTypeCode.Decimal:
+                    defaultWireType = WireType.String;
+                    return new WireTypeDecorator(defaultWireType, new DecimalSerializer(model));
+                case ProtoTypeCode.Byte:
+                    defaultWireType = GetIntWireType(dataFormat, 32);
+                    return new WireTypeDecorator(defaultWireType, new ByteSerializer(model));
+                case ProtoTypeCode.SByte:
+                    defaultWireType = GetIntWireType(dataFormat, 32);
+                    return new WireTypeDecorator(defaultWireType, new SByteSerializer(model));
+                case ProtoTypeCode.Char:
+                    defaultWireType = WireType.Variant;
+                    return new WireTypeDecorator(defaultWireType, new CharSerializer(model));
+                case ProtoTypeCode.Int16:
+                    defaultWireType = GetIntWireType(dataFormat, 32);
+                    return new WireTypeDecorator(defaultWireType, new Int16Serializer(model));
+                case ProtoTypeCode.UInt16:
+                    defaultWireType = GetIntWireType(dataFormat, 32);
+                    return new WireTypeDecorator(defaultWireType, new UInt16Serializer(model));
+                case ProtoTypeCode.TimeSpan:
+                    defaultWireType = GetDateTimeWireType(dataFormat);
+                    return new WireTypeDecorator(defaultWireType, new TimeSpanSerializer(model));
+                case ProtoTypeCode.Guid:
+                    defaultWireType = WireType.String;
+                    return new WireTypeDecorator(defaultWireType, new GuidSerializer(model));
+                case ProtoTypeCode.ByteArray:
+                    defaultWireType = WireType.String;
+                    return new WireTypeDecorator(defaultWireType, new BlobSerializer(model, overwriteList));
+                case ProtoTypeCode.Uri: // treat uri as string; wrapped in decorator later
+                case ProtoTypeCode.String:
+                    defaultWireType = WireType.String;
+                    return new WireTypeDecorator(defaultWireType, new StringSerializer(model));
+                case ProtoTypeCode.Type:
+                    defaultWireType = WireType.String;
+                    return new WireTypeDecorator(defaultWireType, new SystemTypeSerializer(model));
+            }
+
+            defaultWireType = WireType.None;
+            return null;
+        }
+
+        static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, bool asReference, IProtoSerializerWithWireType ser)
+        {
+            bool isRef = !Helpers.IsValueType(type);
+            if (!isRef) asReference = false;
+            Type nullableUnderlying = Helpers.GetNullableUnderlyingType(type);
+            bool isNullable = isRef || nullableUnderlying != null;
+            bool decorate = (isNullable && (model.ProtoCompatibility.AllowExtensionDefinitions & NetObjectExtensionTypes.Null) != 0)
+                            || (isRef && (model.ProtoCompatibility.AllowExtensionDefinitions & NetObjectExtensionTypes.Reference) != 0)
+                            || (model.ProtoCompatibility.AllowExtensionDefinitions & NetObjectExtensionTypes.NonReference) != 0;
+
+            if (decorate)
+            {
+                switch (Helpers.GetTypeCode(nullableUnderlying ?? type))
+                {
+                    case ProtoTypeCode.String:
+                    case ProtoTypeCode.Uri:
+                    case ProtoTypeCode.Type: // replace completely
+                        ser = new NetObjectSerializer(model, type, 0, asReference ? BclHelpers.NetObjectOptions.AsReference : 0);
+                        break;
+                    default:
+                        ser = new NetObjectValueDecorator(type, ser, asReference);
+                        break;
+                }
+            }
+
+            return ser;
+        }
 
         private string name;
         internal void SetName(string name)

@@ -176,6 +176,13 @@ namespace AqlaSerializer.Meta
         {
             if (derivedType == null) throw new ArgumentNullException("derivedType");
             if (fieldNumber < 1) throw new ArgumentOutOfRangeException("fieldNumber");
+
+            if (type.IsArray)
+                throw new ArgumentException("An array has inbuilt behaviour and cannot be subclassed");
+
+            if (derivedType.IsArray)
+                throw new ArgumentException("An array has inbuilt behaviour and cannot be as used as a subclass");
+
 #if WINRT
             if (!CanHaveSubType(typeInfo)) {
 #else
@@ -589,6 +596,9 @@ namespace AqlaSerializer.Meta
                 //Type nestedDefaultType = null;
                 //MetaType.ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
 
+                if (fields.Count != 0)
+                    throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
+
                 return (IProtoTypeSerializer)
                        ValueMember.BuildValueFinalSerializer(
                            type,
@@ -607,6 +617,9 @@ namespace AqlaSerializer.Meta
                            model);
 
             }
+
+            if (BaseType != null && !BaseType.IgnoreListHandling && RuntimeTypeModel.CheckTypeIsCollection(model, BaseType.Type))
+                throw new ArgumentException("A subclass of a repeated data (an array, list, etc should be handled too as a collection");
 
             // #2
 
@@ -1276,6 +1289,8 @@ namespace AqlaSerializer.Meta
         public void CompileInPlace()
         {
             // TODO temporarily disabled
+            var s = Serializer;
+            var r = RootSerializer;
             return;
 #if FEAT_IKVM
             // just no nothing, quietely; don't want to break the API
