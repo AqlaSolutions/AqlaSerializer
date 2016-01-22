@@ -53,20 +53,27 @@ namespace AqlaSerializer
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
 
-            SubItemToken token = StartSubItem(value, prefixLength, writer);
             if (key >= 0)
             {
                 writer.model.Serialize(key, value, writer, false);
             }
-            else if (writer.model != null && writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), BinaryDataFormat.Default, Serializer.ListItemTag, value, false, false))
+            else if (writer.model != null)
             {
-                // all ok
+                SubItemToken token = StartSubItem(value, prefixLength, writer);
+                if (writer.model.TrySerializeAuxiliaryType(writer, value.GetType(), BinaryDataFormat.Default, Serializer.ListItemTag, value, false, false))
+                {
+                    // all ok
+                }
+                else
+                {
+                    TypeModel.ThrowUnexpectedType(value.GetType());
+                }
+                EndSubItem(token, writer);
             }
             else
             {
                 TypeModel.ThrowUnexpectedType(value.GetType());
             }
-            EndSubItem(token, writer);
 #endif 
         }
         /// <summary>
@@ -154,6 +161,16 @@ namespace AqlaSerializer
         internal WireType WireType => wireType;
         internal int FieldNumber => fieldNumber;
 
+        bool expectRoot;
+
+        /// <summary>
+        /// Next StartSubItem call will be ignored unless WriteFieldHeader is called
+        /// </summary>
+        public static void ExpectRoot(ProtoWriter writer)
+        {
+            writer.expectRoot = true;
+        }
+
         bool fieldStarted;
         bool ignoredFieldStarted;
 
@@ -180,6 +197,7 @@ namespace AqlaSerializer
                     + " until the " + writer.wireType.ToString() + " data has been written");
 
             if (writer.fieldStarted) throw new InvalidOperationException("Cannot write a field number until a wire type for field " + writer.fieldNumber + " has been written");
+            writer.expectRoot = false;
             writer.fieldNumber = fieldNumber;
             writer.fieldStarted = true;
         }
@@ -261,6 +279,7 @@ namespace AqlaSerializer
                     throw new ArgumentException("Invalid wire-type: " + wireType.ToString(), "wireType");                
             }
 #endif
+            writer.expectRoot = false;
             writer.fieldNumber = fieldNumber;
             writer.wireType = wireType;
             WriteHeaderCore(fieldNumber, wireType, writer);
@@ -381,18 +400,30 @@ namespace AqlaSerializer
         /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
         public static SubItemToken StartSubItem(object instance, bool prefixLength, ProtoWriter writer)
         {
+            if (writer.expectRoot)
+            {
+                writer.expectRoot = false;
+                return new SubItemToken(int.MaxValue);
+            }
+            if (writer.fieldStarted && writer.ignoredFieldStarted)
+            {
+                writer.ignoredFieldStarted = false;
+                writer.fieldStarted = false;
+                return new SubItemToken(int.MaxValue);
+            }
             WriteFieldHeaderCompleteAnyType(prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
         }
-        
+
         /// <summary>
-        /// Indicates the start of a nested record of specified type when fieldNumber has been written.
+        /// Indicates the start of a nested record of specified type when fieldNumber *AND* wireType has been written.
         /// </summary>
         /// <param name="instance">The instance to write.</param>
         /// <param name="writer">The destination.</param>
         /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
         public static SubItemToken StartSubItemWithoutWritingHeader(object instance, ProtoWriter writer)
         {
+            // "ignored" is not checked here because field header is already fully written
             return StartSubItem(instance, writer, false);
         }
         
@@ -406,6 +437,7 @@ namespace AqlaSerializer
         /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
         public static SubItemToken StartSubItem(int fieldNumber, object instance, bool prefixLength, ProtoWriter writer)
         {
+            // "ignored" is not checked here because field header is being written from scratch
             WriteFieldHeaderAnyType(fieldNumber, prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
         }
@@ -438,6 +470,7 @@ namespace AqlaSerializer
             {
                 writer.CheckRecursionStackAndPush(instance);
             }
+            writer.expectRoot = false;
             switch (writer.wireType)
             {
                 case WireType.StartGroup:
@@ -490,7 +523,13 @@ namespace AqlaSerializer
         private static void EndSubItem(SubItemToken token, ProtoWriter writer, PrefixStyle style)
         {
             if (writer == null) throw new ArgumentNullException("writer");
-            if (writer.wireType != WireType.None || writer.fieldStarted) { throw CreateException(writer); }
+            if (writer.fieldStarted) { throw CreateException(writer); }
+            if (token.value == int.MaxValue)
+            {
+                writer.wireType = WireType.None;
+                return;
+            }
+            if (writer.wireType != WireType.None) { throw CreateException(writer); }
             int value = token.value;
             if (writer.depth <= 0) throw CreateException(writer);
             if (writer.depth-- > RecursionCheckDepth)

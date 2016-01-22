@@ -579,20 +579,27 @@ namespace AqlaSerializer
             {
                 throw AddErrorData(new InvalidOperationException("Cannot deserialize sub-objects unless a model is provided"), reader);
             }
-            SubItemToken token = ProtoReader.StartSubItem(reader);
             if (key >= 0)
             {
                 value = reader.model.Deserialize(key, value, reader, false);
             }
-            else if (type != null && reader.model.TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
+            else if (type != null)
             {
-                // ok
+                SubItemToken token = ProtoReader.StartSubItem(reader);
+                if (reader.model.TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
+                {
+                    // ok
+                }
+                else
+                {
+                    TypeModel.ThrowUnexpectedType(type);
+                }
+                ProtoReader.EndSubItem(token, reader);
             }
             else
             {
                 TypeModel.ThrowUnexpectedType(type);
             }
-            ProtoReader.EndSubItem(token, reader);
             return value;
         }
 #endif
@@ -616,6 +623,11 @@ namespace AqlaSerializer
         {
             if (reader == null) throw new ArgumentNullException("reader");
             int value = token.value;
+            if (value == int.MaxValue)
+            {
+                reader.wireType = WireType.None;
+                return;
+            }
             if (skipToEnd)
                 while (reader.ReadFieldHeader() != 0) reader.SkipField(); // skip field will recursively go through nested objects
             
@@ -649,6 +661,16 @@ namespace AqlaSerializer
             }
         }
 
+        bool expectRoot;
+
+        /// <summary>
+        /// Next StartSubItem call will be ignored unless ReadFieldHeader is called
+        /// </summary>
+        public static void ExpectRoot(ProtoReader reader)
+        {
+            reader.expectRoot = true;
+        }
+
         /// <summary>
         /// Begins consuming a nested message in the stream; supported wire-types: StartGroup, String
         /// </summary>
@@ -656,6 +678,11 @@ namespace AqlaSerializer
         public static SubItemToken StartSubItem(ProtoReader reader)
         {
             if (reader == null) throw new ArgumentNullException("reader");
+            if (reader.expectRoot)
+            {
+                reader.expectRoot = false;
+                return new SubItemToken(int.MaxValue);
+            }
             switch (reader.wireType)
             {
                 case WireType.StartGroup:
@@ -680,6 +707,7 @@ namespace AqlaSerializer
         /// </summary>
         public int ReadFieldHeader()
         {
+            expectRoot = false;
             // at the end of a group the caller must call EndSubItem to release the
             // reader (which moves the status to Error, since ReadFieldHeader must
             // then be called)
@@ -709,6 +737,7 @@ namespace AqlaSerializer
         /// </summary>
         public bool TryReadFieldHeader(int field)
         {
+            expectRoot = false;
             // check for virtual end of stream
             if (blockEnd <= position || wireType == WireType.EndGroup) { return false; }
             uint tag;

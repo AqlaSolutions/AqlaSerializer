@@ -41,11 +41,12 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
+            ProtoReader.ExpectRoot(source);
             return _serializer.Read(value, source);
         }
         public void Write(object value, ProtoWriter dest)
         {
-            ProtoWriter.WriteFieldHeaderBeginIgnored(dest);
+            ProtoWriter.ExpectRoot(dest);
             _serializer.Write(value, dest);
         }
 #endif
