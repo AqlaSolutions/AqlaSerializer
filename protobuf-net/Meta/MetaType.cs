@@ -106,6 +106,10 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        public bool IsCollectionPacked { get; set; } = true;
+
+        public BinaryDataFormat CollectionDataFormat { get; set; }
+
         private BasicList subTypes;
         private BasicList subTypesSimple;
 
@@ -519,12 +523,14 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-    private IProtoTypeSerializer rootSerializer;
-    [DebuggerHidden]
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    internal IProtoTypeSerializer RootSerializer
-    {
-            get {
+        private IProtoTypeSerializer rootSerializer;
+
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal IProtoTypeSerializer RootSerializer
+        {
+            get
+            {
                 if (rootSerializer == null)
                 {
                     int opaqueToken = 0;
@@ -563,64 +569,43 @@ namespace AqlaSerializer.Meta
             // by VirtualMember which owns the value (so outside of this scope)
             // because the value is treated as single object
             // #2 For members: ordinal VirtualMembers are used and they will handle references when appropriate
-            if (type.IsArray)
-            {
-                return new ArrayDecorator(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[] {
-                    ValueMember.BuildValueFinalSerializer(
-                    type,
-                    type.GetElementType(),
-                    AqlaSerializer.Serializer.ListItemTag,
-                    AsReferenceDefault,
-                    false,
-                    true,
-                    false,
-                    false,
-                    false,
-                    type,
-                    BinaryDataFormat.Default,
-                    null,
-                    true, // still use settings from this meta type, not from nested (TODO may be add setting to toggle this per type?)
-                    false, // #1
-                    model)
-                }, null, true, true, null, constructType, factory); { CanCreateInstance = false, AllowInheritance = false };
-            }
+
             if (Helpers.IsEnum(type))
-            {
-                return new TagDecorator(AqlaSerializer.Serializer.ListItemTag, WireType.Variant, false, new EnumSerializer(type, GetEnumMap()));
-            }
-            Type itemType = IgnoreListHandling ? null : TypeModel.GetListItemType(model, type);
+                return new WireTypeDecorator(WireType.Variant, new EnumSerializer(type, GetEnumMap()));
+            
+            Type itemType = IgnoreListHandling ? null : (type.IsArray?type.GetElementType(): TypeModel.GetListItemType(model, type));
             if (itemType != null)
             {
-                if(surrogate != null)
+
+                if (surrogate != null)
                 {
                     throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate");
                 }
-                if(subTypes != null && subTypes.Count != 0)
-                {
-                    throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be subclassed");
-                }
+
                 Type defaultType = null;
                 ResolveListTypes(model, type, ref itemType, ref defaultType);
 
-                return new ListDecorator(model, type, new[] { AqlaSerializer.Serializer.ListItemTag }, new[]
-                {
-                    ValueMember.BuildValueFinalSerializer(
-                        type,
-                        itemType,
-                        AqlaSerializer.Serializer.ListItemTag,
-                        AsReferenceDefault,
-                        false,
-                        true,
-                        false,
-                        false,
-                        false,
-                        defaultType,
-                        BinaryDataFormat.Default,
-                        null,
-                        true,  // still use settings from this meta type, not from nested (TODO may be add setting to toggle this per type?)
-                        false, // #1
-                        model)
-                }, null, true, true, null, constructType, factory) { CanCreateInstance = false, AllowInheritance = false };
+                //    Type nestedItemType = null;
+                //Type nestedDefaultType = null;
+                //MetaType.ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
+
+                return (IProtoTypeSerializer)
+                       ValueMember.BuildValueFinalSerializer(
+                           type,
+                           new ValueMember.CollectionSettings(type.GetElementType())
+                           {
+                               Append = false,
+                               DefaultType = CollectionConcreteType,
+                               IsPacked = IsCollectionPacked,
+                               ReturnList = true
+                           },
+                           false,
+                           AsReferenceDefault,
+                           CollectionDataFormat,
+                           false, // #1
+                           null,
+                           model);
+
             }
 
             // #2
