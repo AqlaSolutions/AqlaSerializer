@@ -32,7 +32,10 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            return ProtoReader.AppendBytes(overwriteList ? null : (byte[])value, source);
+            var r = ProtoReader.AppendBytes(overwriteList ? null : (byte[])value, source);
+            if (overwriteList || value == null) // TODO emit
+                ProtoReader.NoteObject(r, source);
+            return r;
         }
         public void Write(object value, ProtoWriter dest)
         {

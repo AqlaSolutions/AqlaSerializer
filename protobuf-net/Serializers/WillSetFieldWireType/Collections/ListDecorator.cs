@@ -62,7 +62,7 @@ namespace AqlaSerializer.Serializers
                 addLocal = o =>
                     {
                         args[0] = o;
-                        this.add.Invoke(o, args);
+                        this.add.Invoke(value, args);
                     };
             }
 

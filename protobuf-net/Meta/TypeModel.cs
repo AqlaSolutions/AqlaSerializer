@@ -56,7 +56,8 @@ namespace AqlaSerializer.Meta
             return type;
 #endif
         }
-        private WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format, ref Type type, out int modelKey)
+        
+        internal WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format, ref Type type, out int modelKey)
         {
             modelKey = -1;
             if (Helpers.IsEnum(type))
@@ -64,11 +65,27 @@ namespace AqlaSerializer.Meta
                 modelKey = GetKey(ref type);
                 return WireType.Variant;
             }
+
+            WireType wireType = GetWireType(code, format);
+            if (wireType != WireType.None) return wireType;
+
+            if ((modelKey = GetKey(ref type)) >= 0)
+            {
+                return WireType.String;
+            }
+            return WireType.None;
+        }
+
+        internal static WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format)
+        {
             switch (code)
             {
                 case ProtoTypeCode.Int64:
                 case ProtoTypeCode.UInt64:
-                    return format == BinaryDataFormat.FixedSize ? WireType.Fixed64 : WireType.Variant;
+                    {
+                        return format == BinaryDataFormat.FixedSize ? WireType.Fixed64 : WireType.Variant;
+                        
+                    }
                 case ProtoTypeCode.Int16:
                 case ProtoTypeCode.Int32:
                 case ProtoTypeCode.UInt16:
@@ -77,11 +94,17 @@ namespace AqlaSerializer.Meta
                 case ProtoTypeCode.SByte:
                 case ProtoTypeCode.Byte:
                 case ProtoTypeCode.Char:
-                    return format == BinaryDataFormat.FixedSize ? WireType.Fixed32 : WireType.Variant;
+                    {
+                        return format == BinaryDataFormat.FixedSize ? WireType.Fixed32 : WireType.Variant;
+                    }
                 case ProtoTypeCode.Double:
-                    return WireType.Fixed64;
+                    {
+                        return WireType.Fixed64;
+                    }
                 case ProtoTypeCode.Single:
-                    return WireType.Fixed32;
+                    {
+                        return WireType.Fixed32;
+                    }
                 case ProtoTypeCode.String:
                 case ProtoTypeCode.DateTime:
                 case ProtoTypeCode.Decimal:
@@ -90,12 +113,9 @@ namespace AqlaSerializer.Meta
                 case ProtoTypeCode.Guid:
                 case ProtoTypeCode.Uri:
                 case ProtoTypeCode.Type:
-                    return WireType.String;
-            }
-
-            if ((modelKey = GetKey(ref type)) >= 0)
-            {
-                return WireType.String;
+                    {
+                        return WireType.String;
+                    }
             }
             return WireType.None;
         }

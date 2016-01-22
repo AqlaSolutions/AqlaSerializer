@@ -54,26 +54,20 @@ namespace AqlaSerializer
         };
 
 
+        
         /// <summary>
         /// Writes a TimeSpan to a protobuf stream
         /// </summary>
         public static void WriteTimeSpan(TimeSpan timeSpan, ProtoWriter dest)
         {
-            WriteTimeSpan(timeSpan, dest.WireType, dest);
+            WriteTimeSpanImpl(timeSpan, dest, DateTimeKind.Unspecified);
         }
 
-        /// <summary>
-        /// Writes a TimeSpan to a protobuf stream
-        /// </summary>
-        public static void WriteTimeSpan(TimeSpan timeSpan, WireType wireType, ProtoWriter dest)
-        {
-            WriteTimeSpanImpl(timeSpan, wireType, dest, DateTimeKind.Unspecified);
-        }
-        private static void WriteTimeSpanImpl(TimeSpan timeSpan, WireType wireType, ProtoWriter dest, DateTimeKind kind)
+        private static void WriteTimeSpanImpl(TimeSpan timeSpan, ProtoWriter dest, DateTimeKind kind)
         {
             if (dest == null) throw new ArgumentNullException("dest");
             long value;
-            switch(wireType)
+            switch(dest.WireType)
             {
                 case WireType.String:
                 case WireType.StartGroup:
@@ -208,7 +202,7 @@ namespace AqlaSerializer
                     delta = value - EpochOrigin[0];
                     break;
             }
-            WriteTimeSpanImpl(delta, dest.WireType, dest, includeKind ? value.Kind : DateTimeKind.Unspecified);
+            WriteTimeSpanImpl(delta, dest, includeKind ? value.Kind : DateTimeKind.Unspecified);
         }
 
         private static long ReadTimeSpanTicks(ProtoReader source, out DateTimeKind kind) {

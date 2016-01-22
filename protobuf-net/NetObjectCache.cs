@@ -44,7 +44,7 @@ namespace AqlaSerializer
             object tmp = list[key];
             if (tmp == null)
             {
-                throw new ProtoException("A deferred key does not have a value yet");
+                throw new ProtoException("A deferred key does not have a value yet (NoteObject call missed?)");
             }
             return tmp;
         }

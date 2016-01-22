@@ -100,7 +100,7 @@ namespace AqlaSerializer.Serializers
 
         bool WriteContent(object value, int fieldNumber, ProtoWriter dest, Action first = null)
         {
-            var list = (IList)value;
+            var list = value as IList;
             if (list == null) return WriteContent((IEnumerable)value, fieldNumber, dest, first);
             int len = list.Count;
             if (len > 0)
