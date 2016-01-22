@@ -1275,6 +1275,8 @@ namespace AqlaSerializer.Meta
         /// <remarks>An in-place compile can access non-public types / members</remarks>
         public void CompileInPlace()
         {
+            // TODO temporarily disabled
+            return;
 #if FEAT_IKVM
             // just no nothing, quietely; don't want to break the API
 #else
