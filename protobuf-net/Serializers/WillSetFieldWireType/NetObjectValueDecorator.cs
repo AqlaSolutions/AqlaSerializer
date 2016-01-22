@@ -36,12 +36,16 @@ namespace AqlaSerializer.Serializers
                 _options |= BclHelpers.NetObjectOptions.AsReference;
             if (serializer is TupleSerializer)
                 _options |= BclHelpers.NetObjectOptions.LateSet;
+            // if this type is nullable it's ok
+            // we'll unwrap it
+            // and for non emit it's already boxed as not nullable
+            // TODO unwrap nullable in emit
             this.type = type;
         }
 
         public Type ExpectedType
         {
-            get { return _serializer.ExpectedType; }
+            get { return type; }
         }
         public bool ReturnsValue
         {

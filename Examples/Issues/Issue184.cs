@@ -28,21 +28,6 @@ namespace Examples.Issues
             model.Add(typeof(decimal), false);
             model.CompileInPlace();
         }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be subclassed")]
-        public void CantSubclassLists()
-        {
-            var model = TypeModel.Create();
-            model.Add(typeof(IList<int>), false).AddSubType(5, typeof(List<int>));
-            model[typeof (IList<int>)].UseConstructor = false;
-            model.CompileInPlace();
-        }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a subclass")]
-        public void ListAsSubclass()
-        {
-            var m = TypeModel.Create();
-            m.Add(typeof(IMobileObject), false).AddSubType(1, typeof(A)).AddSubType(2, typeof(MobileList<int>));
-            m.CompileInPlace();
-        }
         [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate")]
         public void CantSurrogateLists()
         {

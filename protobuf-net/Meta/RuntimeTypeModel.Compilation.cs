@@ -64,7 +64,6 @@ namespace AqlaSerializer.Meta
         /// <remarks>An in-place compile can access non-public types / members</remarks>
         public void CompileInPlace()
         {
-            return;  // TODO temporarily disabled
             foreach (MetaType type in types)
             {
                 type.CompileInPlace();
