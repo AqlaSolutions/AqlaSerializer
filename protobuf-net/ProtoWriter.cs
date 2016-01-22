@@ -441,21 +441,28 @@ namespace AqlaSerializer
         }
 
         MutableList recursionStack;
+        int lastRecursionStackCheckSize;
         private void CheckRecursionStackAndPush(object instance)
         {
             int hitLevel;
             if (recursionStack == null) { recursionStack = new MutableList(); }
-            else if (instance != null && (hitLevel = recursionStack.IndexOfReference(instance)) >= 0)
+            else if (instance != null && recursionStack.Count > lastRecursionStackCheckSize)
             {
-#if DEBUG
-                Helpers.DebugWriteLine("Stack:");
-                foreach(object obj in recursionStack)
+                // don't count references each time
+                lastRecursionStackCheckSize = recursionStack.Count + 5;
+                if (recursionStack.HasReferences(instance, 5))
                 {
-                    Helpers.DebugWriteLine(obj == null ? "<null>" : obj.ToString());
-                }
-                Helpers.DebugWriteLine(instance == null ? "<null>" : instance.ToString());
+                    hitLevel = recursionStack.IndexOfReference(instance);
+#if DEBUG
+                    Helpers.DebugWriteLine("Stack:");
+                    foreach(object obj in recursionStack)
+                    {
+                        Helpers.DebugWriteLine(obj == null ? "<null>" : obj.ToString());
+                    }
+                    Helpers.DebugWriteLine(instance == null ? "<null>" : instance.ToString());
 #endif
-                throw new ProtoException("Possible recursion detected (offset: " + (recursionStack.Count - hitLevel).ToString() + " level(s)): " + instance.ToString());
+                    throw new ProtoException("Possible recursion detected (offset: " + (recursionStack.Count - hitLevel).ToString() + " level(s)): " + instance.ToString());
+                }
             }
             recursionStack.Add(instance);
         }
