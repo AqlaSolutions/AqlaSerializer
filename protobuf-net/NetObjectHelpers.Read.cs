@@ -69,6 +69,7 @@ namespace AqlaSerializer
             if ((fieldNumber = source.ReadFieldHeader()) == 0)
             {
                 // null handling
+                value = null;
                 return token;
             }
             int tmp;

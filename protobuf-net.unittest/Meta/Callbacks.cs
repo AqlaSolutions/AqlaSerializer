@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using NUnit.Framework;
 using AqlaSerializer.Meta;
 using System;
+using System.Diagnostics;
 
 namespace AqlaSerializer.unittest.Meta
 {
@@ -16,6 +17,8 @@ namespace AqlaSerializer.unittest.Meta
             public void ResetTraceData() { TraceData = null; }
             public string TraceData {get;protected set;}
             private int aValue;
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            [DebuggerHidden]
             [DataMember(Order=1)]public int AValue {
                 get { TraceData += "get;"; return aValue; }
                 set { TraceData += "set;"; aValue = value; }
@@ -28,6 +31,8 @@ namespace AqlaSerializer.unittest.Meta
         [DataContract, KnownType(typeof(C))]
         public class B : A {
             private int bValue;
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            [DebuggerHidden]
             [DataMember(Order = 1)]
             public int BValue {
                 get { TraceData += "get;"; return bValue; }
@@ -41,6 +46,8 @@ namespace AqlaSerializer.unittest.Meta
         [DataContract]
         public sealed class C : B {
             private int cValue;
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            [DebuggerHidden]
             [DataMember(Order = 1)]public int CValue {
                 get { TraceData += "get;"; return cValue; }
                 set { TraceData += "set;"; cValue = value; }
@@ -73,7 +80,8 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(dcsOrig.CValue, dcsClone.CValue);
 
             var model = BuildModel();
-            pbClone = (C) model.DeepClone((pbOrig = CreateC()));
+            C orig = CreateC();
+            pbClone = (C) model.DeepClone((pbOrig = orig));
             Assert.AreEqual(pbOrig.AValue, pbClone.AValue, "Runtime");
             Assert.AreEqual(pbOrig.BValue, pbClone.BValue, "Runtime");
             Assert.AreEqual(pbOrig.CValue, pbClone.CValue, "Runtime");
