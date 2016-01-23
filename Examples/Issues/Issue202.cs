@@ -155,22 +155,22 @@ namespace Examples.Issues
 
             //Deserialize
             StringWriter after = new StringWriter();
-            Deserialize(bpp, after);
+            Deserialize(tm, bpp, after);
 
             Assert.AreEqual(before.ToString(), after.ToString());
 
         }
 
-        public static void Deserialize(byte[] b, TextWriter dest)
+        public static void Deserialize(TypeModel model, byte[] b, TextWriter dest)
         {
             MemoryStream mspp = new MemoryStream(b);
             MemoryStream mspf = new MemoryStream(b);
             MemoryStream msfp = new MemoryStream(b);
             MemoryStream msff = new MemoryStream(b);
-            App app = Serializer.Deserialize<App>(mspp);
-            Apf apf = Serializer.Deserialize<Apf>(mspf);
-            Afp afp = Serializer.Deserialize<Afp>(msfp);
-            Aff aff = Serializer.Deserialize<Aff>(msff);
+            App app = model.Deserialize<App>(mspp);
+            Apf apf = model.Deserialize<Apf>(mspf);
+            Afp afp = model.Deserialize<Afp>(msfp);
+            Aff aff = model.Deserialize<Aff>(msff);
 
             dest.WriteLine(Format(app));
             dest.WriteLine(Format(apf));

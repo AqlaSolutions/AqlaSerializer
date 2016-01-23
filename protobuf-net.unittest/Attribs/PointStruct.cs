@@ -75,6 +75,9 @@ namespace AqlaSerializer.unittest.Attribs
             model.CompileInPlace();
             ClonePoint(model, point, "CompileInPlace");
         }
+#if FAKE_COMPILE
+        [Ignore]
+#endif
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x")]
         public void FullyCompileWithPrivateField_KnownToFail()
         {
@@ -109,6 +112,9 @@ namespace AqlaSerializer.unittest.Attribs
             PEVerify.Verify("PointWithSurrogate.dll");
         }
 
+#if FAKE_COMPILE
+        [Ignore]
+#endif
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x")]
         public void VerifyPointDirect()
         {

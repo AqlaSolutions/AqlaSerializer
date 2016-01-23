@@ -35,7 +35,7 @@ namespace Examples.SimpleStream
             Assert.IsTrue(Program.CheckBytes(ne, 0x1B, 0x08, 0x96, 0x01, 0x1C), "Round trip");
             var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             
-            Test1 t1 = Extensible.GetValue<Test1>(ne, 3);
+            Test1 t1 = Extensible.GetValue<Test1>(tm, ne, 3);
             Assert.IsNotNull(t1, "Got an object?");
             Assert.AreEqual(150, t1.A, "Value");
         }

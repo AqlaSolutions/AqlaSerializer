@@ -15,17 +15,14 @@ namespace AqlaSerializer
     /// API; can't put into Serializer&lt;T&gt; since we need to invoke
     /// accross classes, which isn't allowed in Silverlight)
     /// </summary>
-    internal
-#if FX11
-    sealed
-#else
-    static
-#endif
-        class ExtensibleUtil
+    internal class ExtensibleUtil
     {
-#if FX11
-        private ExtensibleUtil() { } // not a static class for C# 1.2 reasons
-#endif
+        readonly TypeModel _typeModel;
+
+        public ExtensibleUtil(TypeModel typeModel)
+        {
+            _typeModel = typeModel;
+        }
 
 #if !NO_RUNTIME && !NO_GENERICS
         /// <summary>
@@ -33,9 +30,9 @@ namespace AqlaSerializer
         /// this ensures that we don't get issues with subclasses declaring conflicting types -
         /// the caller must respect the fields defined for the type they pass in.
         /// </summary>
-        internal static IEnumerable<TValue> GetExtendedValues<TValue>(IExtensible instance, int tag, BinaryDataFormat format, bool singleton, bool allowDefinedTag)
+        public IEnumerable<TValue> GetExtendedValues<TValue>(IExtensible instance, int tag, BinaryDataFormat format, bool singleton, bool allowDefinedTag)
         {
-            foreach (TValue value in GetExtendedValues(RuntimeTypeModel.Default, typeof(TValue), instance, tag, format, singleton, allowDefinedTag))
+            foreach (TValue value in GetExtendedValues(_typeModel, typeof(TValue), instance, tag, format, singleton, allowDefinedTag))
             {
                 yield return value;
             }
@@ -46,7 +43,7 @@ namespace AqlaSerializer
         /// this ensures that we don't get issues with subclasses declaring conflicting types -
         /// the caller must respect the fields defined for the type they pass in.
         /// </summary>
-        internal static IEnumerable GetExtendedValues(TypeModel model, Type type, IExtensible instance, int tag, BinaryDataFormat format, bool singleton, bool allowDefinedTag)
+        public IEnumerable GetExtendedValues(TypeModel model, Type type, IExtensible instance, int tag, BinaryDataFormat format, bool singleton, bool allowDefinedTag)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -106,7 +103,7 @@ namespace AqlaSerializer
 #endif       
         }
 
-        internal static void AppendExtendValue(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format, object value)
+        public void AppendExtendValue(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format, object value)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -140,7 +137,7 @@ namespace AqlaSerializer
 //        /// is inferred from TValue and format.
 //        /// </summary>
 //        /// <remarks>Needs to be public to be callable thru reflection in Silverlight</remarks>
-//        public static void AppendExtendValueTyped<TSource, TValue>(
+//        public void AppendExtendValueTyped<TSource, TValue>(
 //            TypeModel model, TSource instance, int tag, DataFormat format, TValue value)
 //            where TSource : class, IExtensible
 //        {

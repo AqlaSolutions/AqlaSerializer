@@ -8,6 +8,9 @@ namespace Examples.Issues
     [TestFixture]
     public class SO8933251
     {
+#if FAKE_COMPILE
+        [Ignore]
+#endif
         [Test]
         public void CheckTypeSpecificCompileInPlaceCascadesToBaseAndChildTypes()
         {
@@ -21,6 +24,9 @@ namespace Examples.Issues
             Assert.IsFalse(model.IsPrepared(typeof(A)), "A"); // base-type
         }
 
+#if FAKE_COMPILE
+        [Ignore]
+#endif
         [Test]
         public void CheckGlobalCompileInPlaceCascadesToBaseAndChildTypes()
         {

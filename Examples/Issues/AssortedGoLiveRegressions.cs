@@ -19,12 +19,14 @@ namespace Examples.Issues
         {
             using (var ms = new MemoryStream())
             {
-                Assert.IsNotNull(Serializer.Deserialize<Foo>(ms), "Foo");
-                Assert.IsNull(Serializer.Deserialize<string>(ms), "string");
-                Assert.IsNotNull(Serializer.Deserialize<DateTime>(ms), "DateTime");
-                Assert.IsNull(Serializer.Deserialize<DateTime?>(ms), "DateTime?");
-                Assert.IsNotNull(Serializer.Deserialize<int>(ms), "int");
-                Assert.IsNull(Serializer.Deserialize<int?>(ms), "int?");
+                // in non compatible mode empty netobject group is considered null
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                Assert.IsNotNull(tm.Deserialize<Foo>(ms), "Foo");
+                Assert.IsNull(tm.Deserialize<string>(ms), "string");
+                Assert.IsNotNull(tm.Deserialize<DateTime>(ms), "DateTime");
+                Assert.IsNull(tm.Deserialize<DateTime?>(ms), "DateTime?");
+                Assert.IsNotNull(tm.Deserialize<int>(ms), "int");
+                Assert.IsNull(tm.Deserialize<int?>(ms), "int?");
             }
         }
 

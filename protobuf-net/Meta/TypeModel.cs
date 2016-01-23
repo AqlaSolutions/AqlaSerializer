@@ -17,20 +17,23 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public abstract partial class TypeModel
     {
+        internal ExtensibleUtil ExtensibleUtil { get; }
 #if WINRT
         internal TypeInfo MapType(TypeInfo type)
         {
             return type;
         }
 #endif
+
         /// <summary>
         /// When you pass stream which CanSeek and CanRead the serializer may use it as a buffer when its own buffer grows too big. Default: true.
         /// </summary>
-        public bool AllowStreamRewriting { get; set; }
+        public bool AllowStreamRewriting { get; set; } = true;
 
         protected TypeModel()
         {
             AllowStreamRewriting = true;
+            ExtensibleUtil = new ExtensibleUtil(this);
         }
 
         /// <summary>
