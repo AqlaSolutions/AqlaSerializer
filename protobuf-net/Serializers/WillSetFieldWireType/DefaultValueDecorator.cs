@@ -19,17 +19,25 @@ namespace AqlaSerializer.Serializers
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly object defaultValue;
+        bool expectNullable;
         public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {
             if (defaultValue == null) throw new ArgumentNullException("defaultValue");
             Type type = model.MapType(defaultValue.GetType());
+            // if the value is nullable we should check equality with nullable before writing
+            var underlying = Helpers.GetNullableUnderlyingType(tail.ExpectedType);
+            if (underlying != null)
+            {
+                expectNullable = true;
+                type = model.MapType(typeof(Nullable<>)).MakeGenericType(type);
+            }
             if (type != tail.ExpectedType
 #if FEAT_IKVM // in IKVM, we'll have the default value as an underlying type
                 && !(tail.ExpectedType.IsEnum && type == tail.ExpectedType.GetEnumUnderlyingType())
 #endif
                 )
             {
-                throw new ArgumentException("Default value is of incorrect type", "defaultValue");
+                throw new ArgumentException(string.Format("Default value is of incorrect type (expected {0}, actaul {1})", tail.ExpectedType, type), "defaultValue");
             }
             this.defaultValue = defaultValue;
         }
@@ -52,6 +60,7 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+            // TODO emit nullable check
             Compiler.CodeLabel done = ctx.DefineLabel();
             if (valueFrom == null)
             {

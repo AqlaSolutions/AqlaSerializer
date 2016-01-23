@@ -45,14 +45,14 @@ namespace AqlaSerializer.Meta
             }
         }
         
-        public static ProtoCompatibilitySettings Default { get; } = new ProtoCompatibilitySettings();
+        public static ProtoCompatibilitySettings Default => new ProtoCompatibilitySettings();
 
-        public static ProtoCompatibilitySettings None { get; } = new ProtoCompatibilitySettings()
+        public static ProtoCompatibilitySettings None => new ProtoCompatibilitySettings()
         {
             EnableCompatibility = false
         };
 
-        public static ProtoCompatibilitySettings FullCompatibility { get; } = new ProtoCompatibilitySettings()
+        public static ProtoCompatibilitySettings FullCompatibility => new ProtoCompatibilitySettings()
         {
             EnableCompatibility = true,
             AllowExtensionDefinitions = NetObjectExtensionTypes.None

@@ -63,7 +63,7 @@ namespace Examples
         public static bool CheckBytes<T>(T item, TypeModel model, params byte[] expected)
         {
             var m = TypeModel.Create(false, ProtoCompatibilitySettings.None);
-            //m.DeepClone(item);
+            m.DeepClone(item);
 
             if (model == null) model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             var rtm = model as RuntimeTypeModel;
