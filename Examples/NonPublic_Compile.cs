@@ -9,6 +9,10 @@ using System.Text;
 
 namespace Examples
 {
+
+#if FAKE_COMPILE
+    [Ignore]
+#endif
     [TestFixture]
     public class NonPublic_Compile
     {

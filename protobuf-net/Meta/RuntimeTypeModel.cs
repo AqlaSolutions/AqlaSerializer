@@ -213,6 +213,19 @@ namespace AqlaSerializer.Meta
             get { return Singleton.Value; }
         }
 
+        private sealed class SingletonCompatible
+        {
+            private SingletonCompatible() { }
+            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true, ProtoCompatibilitySettings.FullCompatibility);
+        }
+        /// <summary>
+        /// The default model, used to support AqlaSerializer.Serializer
+        /// </summary>
+        public static RuntimeTypeModel ProtoCompatible
+        {
+            get { return SingletonCompatible.Value; }
+        }
+
         public static DefaultAutoAddStrategy DefaultAutoAddStrategy { get { return (DefaultAutoAddStrategy) Default.AutoAddStrategy; } }
 
         /// <summary>

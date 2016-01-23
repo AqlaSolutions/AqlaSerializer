@@ -241,7 +241,7 @@ enum blah {
             using (MemoryStream ms = new MemoryStream())
             {
                 var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
-                Serializer.Serialize(ms, foo);
+                tm.Serialize(ms, foo);
                 ms.Position = 0;
                 byte[] buffer = ms.ToArray();
                 Assert.IsTrue(Program.ArraysEqual(buffer, expected), "Byte mismatch");

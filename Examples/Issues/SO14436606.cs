@@ -76,7 +76,7 @@ namespace Examples.Issues
         [Test]
         public void VerifyModelViaDefaultRef_AFirst()
         {
-            var model = CreateDefaultRefModel(true);
+            var model = CreateDefaultRefModel(true, false);
             Assert.IsTrue(model[typeof(A_WithDefaultRef)].AsReferenceDefault, "A:AsReferenceDefault - A first");
             Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].AsReference, "B.A:AsReference  - A first");
 
@@ -84,7 +84,7 @@ namespace Examples.Issues
         [Test]
         public void VerifyModelViaDefaultRef_BFirst()
         {
-            var model = CreateDefaultRefModel(false);
+            var model = CreateDefaultRefModel(false, false);
             Assert.IsTrue(model[typeof(A_WithDefaultRef)].AsReferenceDefault, "A:AsReferenceDefault - B first");
             Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].AsReference, "B.A:AsReference  - B first");
         }
@@ -95,23 +95,23 @@ namespace Examples.Issues
             string surrogate, fields, defaultRef_AFirst, defaultRef_BFirst;
             using (var ms = new MemoryStream())
             {
-                CreateDefaultRefModel(true).Serialize(ms, CreateB_WithDefaultRef());
+                CreateDefaultRefModel(true, true).Serialize(ms, CreateB_WithDefaultRef());
                 defaultRef_AFirst = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
             }
             using (var ms = new MemoryStream())
             {
-                CreateDefaultRefModel(false).Serialize(ms, CreateB_WithDefaultRef());
+                CreateDefaultRefModel(false, true).Serialize(ms, CreateB_WithDefaultRef());
                 defaultRef_BFirst = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
             }
             using (var ms = new MemoryStream())
             {
-                CreateSurrogateModel().Serialize(ms, CreateB());
+                CreateSurrogateModel(true).Serialize(ms, CreateB());
                 surrogate = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
             }
 
             using (var ms = new MemoryStream())
             {
-                CreateFieldsModel().Serialize(ms, CreateB());
+                CreateFieldsModel(true).Serialize(ms, CreateB());
                 fields = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
             }
             
@@ -123,19 +123,21 @@ namespace Examples.Issues
         [Test]
         public void ExecuteHackedViaDefaultRef()
         {
-            ExecuteAllModes_WithDefaultRef(CreateDefaultRefModel(true), "ExecuteHackedViaDefaultRef - A first");
-            ExecuteAllModes_WithDefaultRef(CreateDefaultRefModel(false), "ExecuteHackedViaDefaultRef - B first");
+            ExecuteAllModes_WithDefaultRef(CreateDefaultRefModel(true, false), "ExecuteHackedViaDefaultRef - A first");
+            ExecuteAllModes_WithDefaultRef(CreateDefaultRefModel(false, false), "ExecuteHackedViaDefaultRef - B first");
         }
 
         [Test]
         public void ExecuteHackedViaFields()
         {
-            ExecuteAllModes(CreateFieldsModel(), standalone: false);
+            ExecuteAllModes(CreateFieldsModel(false), standalone: false);
         }
 
-        static RuntimeTypeModel CreateDefaultRefModel(bool aFirst)
+        static RuntimeTypeModel CreateDefaultRefModel(bool aFirst, bool comp)
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            ProtoCompatibilitySettings fullComp = ProtoCompatibilitySettings.FullCompatibility;
+            fullComp.AllowExtensionDefinitions |= NetObjectExtensionTypes.Reference;
+            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
             if (aFirst)
             {
                 model.Add(typeof(A_WithDefaultRef), true);
@@ -150,9 +152,11 @@ namespace Examples.Issues
 
             return model;
         }
-        static RuntimeTypeModel CreateFieldsModel()
+        static RuntimeTypeModel CreateFieldsModel(bool comp)
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            ProtoCompatibilitySettings fullComp = ProtoCompatibilitySettings.FullCompatibility;
+            fullComp.AllowExtensionDefinitions |= NetObjectExtensionTypes.Reference;
+            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
             model.AutoCompile = false;
             var type = model.Add(typeof(KeyValuePair<int, A>), false);
             type.Add(1, "key");
@@ -161,9 +165,11 @@ namespace Examples.Issues
             model[typeof(B)][2].AsReference = false; // or just remove AsReference on Items
             return model;
         }
-        static RuntimeTypeModel CreateSurrogateModel()
+        static RuntimeTypeModel CreateSurrogateModel(bool comp)
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            ProtoCompatibilitySettings fullComp = ProtoCompatibilitySettings.FullCompatibility;
+            fullComp.AllowExtensionDefinitions |= NetObjectExtensionTypes.Reference;
+            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
             model.AutoCompile = false;
             model[typeof(B)][2].AsReference = false; // or just remove AsReference on Items
 
@@ -175,7 +181,7 @@ namespace Examples.Issues
         [Test]
         public void ExecuteHackedViaSurrogate()
         {
-            ExecuteAllModes(CreateSurrogateModel());
+            ExecuteAllModes(CreateSurrogateModel(true));
         }
 
         void ExecuteAllModes_WithDefaultRef(RuntimeTypeModel model, [CallerMemberName] string caller = null, bool standalone = false)

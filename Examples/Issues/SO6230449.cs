@@ -34,7 +34,6 @@ namespace Examples.Issues
                 Assert.AreEqual(9, ms.Length, "3 lengths, 3 headers, 3 values");
 
                 // read the length prefix and use that to limit each call
-                TypeModel model = RuntimeTypeModel.Default;
                 int len, fieldNumber, bytesRead;
                 List<Foo> foos = new List<Foo>();
                 do
@@ -42,7 +41,7 @@ namespace Examples.Issues
                     len = ProtoReader.ReadLengthPrefix(ms, false, PrefixStyle.Base128, out fieldNumber, out bytesRead);
                     if (bytesRead <= 0) continue;
 
-                    foos.Add((Foo)model.Deserialize(ms, null, typeof(Foo), len));
+                    foos.Add((Foo)tm.Deserialize(ms, null, typeof(Foo), len));
 
                     Assert.IsTrue(foos.Count <= 3, "too much data! (manual)");
                 } while (bytesRead > 0);
@@ -56,7 +55,7 @@ namespace Examples.Issues
                 ms.Position = 0;
 
                 foos.Clear();
-                foreach (var obj in model.DeserializeItems<Foo>(ms, PrefixStyle.Base128, 0))
+                foreach (var obj in tm.DeserializeItems<Foo>(ms, PrefixStyle.Base128, 0))
                 {
                     foos.Add(obj);
                     Assert.IsTrue(foos.Count <= 3, "too much data! (foreach)");

@@ -530,7 +530,8 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-        bool IsDecoratedByRootNetObject => IsNetObjectValueDecoratorNecessary(model, type, true);
+        // to be compatible with aux serializer and don't add overhead we don't decorate enums with netobject
+        bool IsDecoratedByRootNetObject => !Helpers.IsEnum(type) && IsNetObjectValueDecoratorNecessary(model, type, true);
 
         internal static bool IsNetObjectValueDecoratorNecessary(RuntimeTypeModel m, Type t, bool checkAsReference)
         {

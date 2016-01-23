@@ -79,6 +79,10 @@ namespace Examples.Issues
             var model = CreateModel(false);
             CheckModel(model.Compile());
         }
+
+#if FAKE_COMPILE
+        [Ignore]
+#endif
         [Test]
         public void TestCompile_PEVerify_DerivedFirst()
         {
@@ -115,6 +119,9 @@ namespace Examples.Issues
             var model = CreateModel(true);
             CheckModel(model.Compile());
         }
+#if FAKE_COMPILE
+        [Ignore]
+#endif
         [Test]
         public void TestCompile_PEVerify_BaseFirst()
         {
