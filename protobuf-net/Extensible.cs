@@ -208,6 +208,21 @@ namespace AqlaSerializer
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(IExtensible instance, int tag, out TValue value)
         {
+            return TryGetValue<TValue>(RuntimeTypeModel.Default, instance, tag, out value);
+        }
+
+        /// <summary>
+        /// Queries an extensible object for an additional (unexpected) data-field for the instance.
+        /// The value returned (in "value") is the composed value after merging any duplicated content;
+        /// if the value is "repeated" (a list), then use GetValues instead.
+        /// </summary>
+        /// <typeparam name="TValue">The data-type of the field.</typeparam>
+        /// <param name="value">The effective value of the field, or the default value if not found.</param>
+        /// <param name="instance">The extensible object to obtain the value from.</param>
+        /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
+        /// <returns>True if data for the field was present, false otherwise.</returns>
+        public static bool TryGetValue<TValue>(TypeModel model, IExtensible instance, int tag, out TValue value)
+        {
             return TryGetValue<TValue>(instance, tag, BinaryDataFormat.Default, out value);
         }
 
