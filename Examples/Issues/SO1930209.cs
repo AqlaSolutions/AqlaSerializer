@@ -44,7 +44,8 @@ namespace Examples.Issues
             tm.AutoCompile = compile;
             tm.AlwaysUseTypeRegistrationForCollections = reg;
             var obj = new A { Array1 = new[] { new B() } };
-            Assert.That(tm.DeepClone(obj).Array1.Length, Is.EqualTo(1));
+            A r = tm.DeepClone(obj);
+            Assert.That(r.Array1.Length, Is.EqualTo(1));
         }
 
         [Test]

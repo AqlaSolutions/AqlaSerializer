@@ -23,7 +23,7 @@ namespace AqlaSerializer.Serializers
         
         public RootDecorator(Type type, bool wrap, IProtoTypeSerializer serializer)
         {
-            _serializer = wrap ? new NetObjectValueDecorator(type, serializer, !type.IsValueType) : serializer;
+            _serializer = wrap ? new NetObjectValueDecorator(type, serializer, !Helpers.IsValueType(type)) : serializer;
         }
 
         public Type ExpectedType

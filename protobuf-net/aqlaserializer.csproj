@@ -260,7 +260,7 @@
     <Compile Include="ProtoWriter.cs" />
     <Compile Include="SerializationContext.cs" />
     <Compile Include="Serializer.cs" />
-    <Compile Include="Serializers\CollectionRootFieldDecorator.cs" />
+    <Compile Include="Serializers\RootFieldNumberDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BlobSerializer.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\CharSerializer.cs" />
     <Compile Include="Serializers\CompiledSerializer.cs" />

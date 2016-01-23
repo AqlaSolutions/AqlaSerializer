@@ -17,14 +17,12 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue176
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestOrderLineGetDeserializedAndAttachedToOrder()
         {
-
             byte[] fileBytes = File.ReadAllBytes(@"NWind\nwind.proto.bin");
 
-            RuntimeTypeModel ordersModel = TypeModel.Create();
+            RuntimeTypeModel ordersModel = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             ordersModel.AutoCompile = false;
 
             Database database = (Database)ordersModel.Deserialize(new MemoryStream(fileBytes), null, typeof(Database));

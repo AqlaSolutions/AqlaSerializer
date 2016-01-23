@@ -25,13 +25,13 @@ namespace Examples.Issues
             using (var ms = new MemoryStream())
             {
                 // write data with a length-prefix but no field number
-                Serializer.SerializeWithLengthPrefix(ms, new Foo { Bar = 1 }, PrefixStyle.Base128, 0);
-                Serializer.SerializeWithLengthPrefix(ms, new Foo { Bar = 2 }, PrefixStyle.Base128, 0);
-                Serializer.SerializeWithLengthPrefix(ms, new Foo { Bar = 3 }, PrefixStyle.Base128, 0);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.SerializeWithLengthPrefix(ms, new Foo { Bar = 1 }, typeof(Foo), PrefixStyle.Base128, 0);
+                tm.SerializeWithLengthPrefix(ms, new Foo { Bar = 2 }, typeof(Foo), PrefixStyle.Base128, 0);
+                tm.SerializeWithLengthPrefix(ms, new Foo { Bar = 3 }, typeof(Foo), PrefixStyle.Base128, 0);
 
                 ms.Position = 0;
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual(9, ms.Length, "3 lengths, 3 headers, 3 values");
+                Assert.AreEqual(9, ms.Length, "3 lengths, 3 headers, 3 values");
 
                 // read the length prefix and use that to limit each call
                 TypeModel model = RuntimeTypeModel.Default;

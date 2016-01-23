@@ -6,6 +6,7 @@ using AqlaSerializer;
 using System.Data.Linq.Mapping;
 using System.ComponentModel;
 using System.Diagnostics;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -48,77 +49,77 @@ namespace Examples
         {
             using (var ms = new MemoryStream())
             {
-                Serializer.Serialize<T>(ms, value);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, value);
                 return (int)ms.Length;
             }
         }
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestPartialWithGuid()
         {
             var user = new User();
-            var clone = Serializer.DeepClone(user);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(0, Measure(user));
 
             user = new User { GUID = new Guid("00112233445566778899AABBCCDDEEFF") };
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(21, Measure(user));
 
             Serializer.PrepareSerializer<User>();
 
             user = new User();
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(0, Measure(user));
 
             user = new User { GUID = new Guid("00112233445566778899AABBCCDDEEFF") };
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(21, Measure(user));
 
 
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestGuidWithCrazyDefault()
         {
             var user = new UserWithCrazyDefault();
-            var clone = Serializer.DeepClone(user);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(0, Measure(user));
 
             user = new UserWithCrazyDefault { GUID = new Guid("00112233445566778899AABBCCDDEEFF") };
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(21, Measure(user));
 
             user = new UserWithCrazyDefault { GUID = Guid.Empty };
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(3, Measure(user));
 
-            Serializer.PrepareSerializer<UserWithCrazyDefault>();
+            tm.PrepareSerializer<UserWithCrazyDefault>();
 
             user = new UserWithCrazyDefault();
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(0, Measure(user));
 
             user = new UserWithCrazyDefault { GUID = new Guid("00112233445566778899AABBCCDDEEFF") };
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(21, Measure(user));
 
             user = new UserWithCrazyDefault { GUID = Guid.Empty };
-            clone = Serializer.DeepClone(user);
+            clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(3, Measure(user));
         }
-
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void TestGuidLayout()
         {
@@ -130,7 +131,8 @@ namespace Examples
             var obj = new GuidLayout { Value = guid };
             using (var ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, obj);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, obj);
                 string hex = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
                 // 0A = 1010 = field 1, length delimited (sub-object)
                 // 12 = length 18
@@ -153,7 +155,6 @@ namespace Examples
             public Guid Value { get; set; }
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestDeserializeEmptyWide()
         {
@@ -164,7 +165,7 @@ namespace Examples
                 );
             Assert.AreEqual(Guid.Empty, data.Bar);
         }
-        [Ignore("AqlaSerializer changed format")]
+
         [Test]
         public void TestDeserializeEmptyShort()
         {
@@ -173,32 +174,33 @@ namespace Examples
                 );
             Assert.AreEqual(Guid.Empty, data.Bar);
         }
-        [Ignore("AqlaSerializer changed format")]
+
         [Test]
         public void TestEmptyGuid() {
             GuidData foo = new GuidData { Bar = Guid.Empty };
             using (MemoryStream ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, foo);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, foo);
                 Assert.AreEqual(0, ms.Length); // 1 tag, 1 length (0)
                 ms.Position = 0;
-                GuidData clone = Serializer.Deserialize<GuidData>(ms);
+                GuidData clone = tm.Deserialize<GuidData>(ms);
                 Assert.AreEqual(foo.Bar, clone.Bar);
             }
         }
 
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestNonEmptyGuid()
         {
             GuidData foo = new GuidData { Bar = Guid.NewGuid() };
             using (MemoryStream ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, foo);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, foo);
                 Assert.AreEqual(20, ms.Length); 
                 ms.Position = 0;
-                GuidData clone = Serializer.Deserialize<GuidData>(ms);
+                GuidData clone = tm.Deserialize<GuidData>(ms);
                 Assert.AreEqual(foo.Bar, clone.Bar);
             }
         }

@@ -77,7 +77,7 @@ namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
             string s = Convert.ToBase64String(ms.GetBuffer(), 0, (int)ms.Length);
             // written with r480
 
-            Debug.WriteLine("AqlaSerializer changed format");
+            Debug.WriteLine("AqlaSerializer format changed (not compatible)");
             //Assert.AreEqual("ChkgAUIEQmFzZVIPCg1CYXNlQ2xhc3NUZXh0CjEgAkIHRGVyaXZlZFIkogYSChBEZXJpdmVkQ2xhc3NUZXh0Cg1CYXNlQ2xhc3NUZXh0", s);
         }
         void model_DynamicTypeFormatting(object sender, TypeFormatEventArgs args)
@@ -122,7 +122,7 @@ namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
 
         RuntimeTypeModel CreateModel()
         {
-            RuntimeTypeModel model = TypeModel.Create();
+            RuntimeTypeModel model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
 
             model.Add(typeof(ObjectArrayContainerClass), true);
             model.Add(typeof(BaseClassArrayContainerClass), true);

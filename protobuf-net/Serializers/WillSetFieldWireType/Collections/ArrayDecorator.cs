@@ -91,9 +91,8 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(arrayType != null, "arrayType should be non-null");
             Helpers.DebugAssert(arrayType.IsArray && arrayType.GetArrayRank() == 1, "should be single-dimension array; " + arrayType.FullName);
-            _itemType = arrayType.GetElementType();
-
-            Helpers.DebugAssert(_itemType == Tail.ExpectedType, "invalid tail");
+            _itemType = tail.ExpectedType;
+            
             Helpers.DebugAssert(Tail.ExpectedType != model.MapType(typeof(byte)), "Should have used BlobSerializer");
             if (!ListDecorator.CanPack(packedWireTypeForRead))
             {

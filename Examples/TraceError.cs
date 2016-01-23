@@ -6,6 +6,7 @@ using System.Text;
 using NUnit.Framework;
 using AqlaSerializer;
 using System.IO;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -23,13 +24,16 @@ namespace Examples
     [TestFixture]
     public class TraceError
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestTrace()
         {
             TraceErrorData ed = new TraceErrorData {Foo = 12, Bar = "abcdefghijklmnopqrstuvwxyz"};
+            var tm0 = TypeModel.Create();
+            tm0.DeepClone(ed);
+
             MemoryStream ms = new MemoryStream();
-            Serializer.Serialize(ms, ed);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            tm.Serialize(ms, ed);
             byte[] buffer = ms.GetBuffer();
             Assert.AreEqual(30, ms.Length);
             MemoryStream ms2 = new MemoryStream();
@@ -37,7 +41,7 @@ namespace Examples
             ms2.Position = 0;
             try
             {
-                Serializer.Deserialize<TraceErrorData>(ms2);
+                tm.Deserialize<TraceErrorData>(ms2);
                 Assert.Fail("Should have errored");
             } catch(EndOfStreamException ex)
             {

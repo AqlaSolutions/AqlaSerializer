@@ -5,6 +5,7 @@ using NUnit.Framework;
 using AqlaSerializer;
 using System.ComponentModel;
 using System.IO;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -64,15 +65,15 @@ namespace Examples
 
         static void Test<T>(float value, int expectedSize) where T : class, IOptionalData, new()
         {
-            T orig = new T { Value = value }, clone = Serializer.DeepClone(orig);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            T orig = new T { Value = value }, clone = tm.DeepClone(orig);
             Assert.AreEqual(value, orig.Value, "Original");
             Assert.AreNotSame(orig, clone, "Different objects");
             Assert.AreEqual(value, clone.Value, "Clone");
 
             using(var ms = new MemoryStream()) {
-                Serializer.Serialize(ms, orig);
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual(expectedSize, ms.Length, "Length");
+                tm.Serialize(ms, orig);
+                Assert.AreEqual(expectedSize, ms.Length, "Length");
             }
         }
     }

@@ -524,11 +524,13 @@ namespace AqlaSerializer.Meta
             SetFlag(OPTIONS_Frozen, true, false);
             serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(type, IsNetObjectValueDecoratorNecessary(model, type, true), s);
+            rootSerializer = new RootDecorator(type, IsDecoratedByRootNetObject, s);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
 #endif
         }
+
+        bool IsDecoratedByRootNetObject => IsNetObjectValueDecoratorNecessary(model, type, true);
 
         internal static bool IsNetObjectValueDecoratorNecessary(RuntimeTypeModel m, Type t, bool checkAsReference)
         {
@@ -589,7 +591,12 @@ namespace AqlaSerializer.Meta
             // #2 For members: ordinal VirtualMembers are used and they will handle references when appropriate
 
             if (Helpers.IsEnum(type))
-                return new WireTypeDecorator(WireType.Variant, new EnumSerializer(type, GetEnumMap()));
+            {
+                IProtoTypeSerializer ser = new WireTypeDecorator(WireType.Variant, new EnumSerializer(type, GetEnumMap()));
+                if (isRoot && !IsDecoratedByRootNetObject)
+                    ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
+                return ser;
+            }
 
             Type itemType = IgnoreListHandling ? null : (type.IsArray ? type.GetElementType() : TypeModel.GetListItemType(model, type));
             if (itemType != null)
@@ -630,8 +637,8 @@ namespace AqlaSerializer.Meta
                 // standard root decorator won't start any field
                 // in compatibility mode collections won't start subitems like normally
                 // so wrap with field
-                if (isRoot && !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection))
-                    ser = new CollectionRootFieldDecorator(ser);
+                if (isRoot && !IsDecoratedByRootNetObject)
+                    ser = new RootFieldNumberDecorator(ser, TypeModel.EnumRootTag);
 
                 return ser;
             }

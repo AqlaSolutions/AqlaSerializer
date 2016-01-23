@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 using Examples.Ppt;
 
 namespace Examples.SimpleStream
@@ -19,28 +20,26 @@ namespace Examples.SimpleStream
     [TestFixture]
     public class GroupedData
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestGroup()
         {
             Test3 t3 = Program.Build<Test3>(0x1B, 0x08, 0x96, 0x01, 0x1C);// [start group 3] [test1] [end group 3]
             Assert.AreEqual(150, t3.C.A);
         }
-
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void TestGroupAsExtension()
         {
             NoddyExtends ne = Program.Build<NoddyExtends>(0x1B, 0x08, 0x96, 0x01, 0x1C);// [start group 3] [test1] [end group 3]
 
             Assert.IsTrue(Program.CheckBytes(ne, 0x1B, 0x08, 0x96, 0x01, 0x1C), "Round trip");
-
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            
             Test1 t1 = Extensible.GetValue<Test1>(ne, 3);
             Assert.IsNotNull(t1, "Got an object?");
             Assert.AreEqual(150, t1.A, "Value");
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestGroupIgnore()
         {
@@ -78,7 +77,7 @@ namespace Examples.SimpleStream
             [ProtoBuf.ProtoMember(1)]
             public List<int> A { get; set; }
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void TestEntityList()
         {

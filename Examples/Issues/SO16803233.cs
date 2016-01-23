@@ -23,7 +23,7 @@ namespace Examples.Issues
         [Test]
         public void Test_Vanilla()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             Execute_Vanilla(model, "Runtime");
             model.CompileInPlace();
@@ -33,9 +33,9 @@ namespace Examples.Issues
             PEVerify.AssertValid("SO16803233a.dll");
         }
         [Test]
-        public void Test_WithLengthPrefix()
+        public void Test_WithLengthPrefix([Values(false,true)] bool comp)
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
             model.AutoCompile = false;
             Execute_WithLengthPrefix(model, "Runtime");
             model.CompileInPlace();
@@ -54,8 +54,7 @@ namespace Examples.Issues
             {
                 model.Serialize(ms, original);
                 ms.Position = 0;
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual("08-01", BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length));
+                Assert.AreEqual("08-01", BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length));
                 Test obj;
                 obj = (Test)model.Deserialize(ms, null, typeof(Test));
 
@@ -69,7 +68,6 @@ namespace Examples.Issues
             {
                 model.SerializeWithLengthPrefix(ms, original, typeof(Test), PrefixStyle.Fixed32, 1);
                 ms.Position = 0;
-                Debug.WriteLine("AqlaSerializer changed format");
                 //Assert.AreEqual("02-00-00-00-08-01", BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length));
                 Test obj;
                 obj = (Test)model.DeserializeWithLengthPrefix(ms, null, typeof(Test), PrefixStyle.Fixed32, 1);

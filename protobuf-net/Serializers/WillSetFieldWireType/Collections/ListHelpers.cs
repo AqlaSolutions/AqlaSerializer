@@ -65,24 +65,22 @@ namespace AqlaSerializer.Serializers
             {
                 // empty arrays are nulls, no subitem or field
 
+                if (writePacked)
+                    token = ProtoWriter.StartSubItem(null, true, dest);
+                else // each element will begin its own header
+                    ProtoWriter.WriteFieldHeaderCancelBegin(dest);
+
                 bool any = WriteContent(
                     value,
                     fieldNumber,
                     dest,
-                    first: () =>
-                        {
-                            if (writePacked)
-                                token = ProtoWriter.StartSubItem(null, true, dest);
-                            else
-                                ProtoWriter.WriteFieldHeaderCancelBegin(dest);
-                            prepareInstance?.Invoke();
-                        });
+                    first: prepareInstance);
 
-                if (!any) // no elements - no field
-                    ProtoWriter.WriteFieldHeaderCancelBegin(dest);
-                else if (writePacked)
+                if (writePacked)
+                {
                     // last element - end subitem
                     ProtoWriter.EndSubItem(token, dest);
+                }
             }
             else
             {

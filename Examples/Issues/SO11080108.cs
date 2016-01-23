@@ -10,12 +10,11 @@ namespace Examples.Issues
     [TestFixture]
     public class SO11080108
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void Execute()
         {
             byte[] buffer = { 9, 8, 5, 26, 5, 24, 238, 98, 32, 1 };
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             using (var ms = new MemoryStream(buffer))
             {

@@ -46,7 +46,7 @@ namespace Examples.Issues
         [Test]
         public void TestExpectedResultFromGeneratedTypes()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             model.Add(typeof(A_generated), true);
             model.Add(typeof(B_generated), true);
@@ -62,19 +62,19 @@ namespace Examples.Issues
             using (var ms = new MemoryStream())
             {
                 model.Serialize(ms, a);
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.IsTrue(ms.ToArray().SequenceEqual(new byte[] { 08, 10, 82, 2, 16, 23 }), message);
+                Assert.IsTrue(ms.ToArray().SequenceEqual(new byte[] { 08, 10, 82, 2, 16, 23 }), message);
                 ms.Position = 0;
                 var clone = (A_generated)model.Deserialize(ms, null, typeof(A_generated));
                 Assert.AreEqual(10, clone.Age, message);
                 Assert.AreEqual(23, clone.b.Balls, message);
             }
         }
-        [Ignore("AqlaSerializer changed format")]
+        
+        [Ignore("Wrong order of subtypes, subtype should go before base type fields!")]
         [Test]
         public void TestSubclassDeserializes()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             model.Add(typeof (A), true);
             model.Add(typeof (B), true);

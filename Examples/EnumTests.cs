@@ -240,13 +240,13 @@ enum blah {
             EnumFoo foo = new EnumFoo { Bar = val };
             using (MemoryStream ms = new MemoryStream())
             {
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
                 Serializer.Serialize(ms, foo);
                 ms.Position = 0;
                 byte[] buffer = ms.ToArray();
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.IsTrue(Program.ArraysEqual(buffer, expected), "Byte mismatch");
+                Assert.IsTrue(Program.ArraysEqual(buffer, expected), "Byte mismatch");
 
-                EnumFoo clone = Serializer.Deserialize<EnumFoo>(ms);
+                EnumFoo clone = tm.Deserialize<EnumFoo>(ms);
                 Assert.AreEqual(val, clone.Bar);
             }
         }
@@ -312,7 +312,7 @@ enum blah {
         {
             EnumMarkedContract value = EnumMarkedContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, Serializer.DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
         }
 
         [Test]
@@ -320,7 +320,7 @@ enum blah {
         {
             EnumMarkedContract? value = EnumMarkedContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, Serializer.DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
         }
         [Test]
         public void RoundTripTopLevelNullableContractNull()
@@ -333,7 +333,7 @@ enum blah {
         {
             EnumNoContract value = EnumNoContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, Serializer.DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
         }
 
         [Test]
@@ -341,7 +341,7 @@ enum blah {
         {
             EnumNoContract? value = EnumNoContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, Serializer.DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
         }
         [Test]
         public void RoundTripTopLevelNullableNoContractNull()

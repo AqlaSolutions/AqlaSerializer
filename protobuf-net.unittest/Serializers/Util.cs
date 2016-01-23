@@ -53,7 +53,7 @@ namespace AqlaSerializer.unittest.Serializers
             }
         }
 
-        public static void TestModel(RuntimeTypeModel model, object value, string hex)
+        public static void TestModel(RuntimeTypeModel model, object value, string hex, [Values(false, true)] bool comp)
         {
             byte[] raw;
             using (MemoryStream ms = new MemoryStream())
@@ -62,8 +62,8 @@ namespace AqlaSerializer.unittest.Serializers
                 raw = ms.ToArray();
             }
 
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(hex, GetHex(raw));
+            if (comp)
+                Assert.AreEqual(hex, GetHex(raw));
 
             model.CompileInPlace();
             using (MemoryStream ms = new MemoryStream())
@@ -72,8 +72,8 @@ namespace AqlaSerializer.unittest.Serializers
                 raw = ms.ToArray();
             }
 
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(hex, GetHex(raw));
+            if (comp)
+                Assert.AreEqual(hex, GetHex(raw));
 
             TypeModel compiled = model.Compile("compiled", "compiled.dll");
             PEVerify.Verify("compiled.dll");
@@ -82,8 +82,8 @@ namespace AqlaSerializer.unittest.Serializers
                 compiled.Serialize(ms, value);
                 raw = ms.ToArray();
             }
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(hex, GetHex(raw));
+            if (comp)
+                Assert.AreEqual(hex, GetHex(raw));
 
         }
         

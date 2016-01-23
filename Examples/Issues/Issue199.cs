@@ -28,8 +28,8 @@ namespace Examples.Issues
         [Test]
         public void CompareWithWithoutImplicitDefaults()
         {
-            var with = TypeModel.Create();
-            var without = TypeModel.Create();
+            var with = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var without = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             without.AutoCompile = with.AutoCompile = false;
             with.UseImplicitZeroDefaults = true;
             without.UseImplicitZeroDefaults = false;
@@ -65,15 +65,13 @@ namespace Examples.Issues
             using (var ms = new MemoryStream())
             {
                 with.Serialize(ms, obj);
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual(0, ms.Length, message);
+                Assert.AreEqual(0, ms.Length, message);
             }
             using (var ms = new MemoryStream())
             {
                 without.Serialize(ms, obj);
 
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual(2, ms.Length, message);
+                Assert.AreEqual(2, ms.Length, message);
             }
         }
     }

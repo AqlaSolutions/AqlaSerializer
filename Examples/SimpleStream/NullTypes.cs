@@ -2,6 +2,7 @@
 using System.Runtime.Serialization;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.SimpleStream
 {
@@ -19,7 +20,7 @@ namespace Examples.SimpleStream
         public void TestNull()
         {
             TypeWithNulls twn = new TypeWithNulls { Foo = null },
-                clone = Serializer.DeepClone(twn);
+                clone = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(twn);
             Assert.IsNull(twn.Foo);
             Assert.IsTrue(Program.CheckBytes(twn, new byte[0]));
         }
@@ -28,7 +29,7 @@ namespace Examples.SimpleStream
         public void TestNotNull()
         {
             TypeWithNulls twn = new TypeWithNulls { Foo = 150 },
-                clone = Serializer.DeepClone(twn);
+                clone = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(twn);
             Assert.IsNotNull(twn.Foo);
             Assert.IsTrue(Program.CheckBytes(twn, 0x08, 0x96, 0x01));
         }

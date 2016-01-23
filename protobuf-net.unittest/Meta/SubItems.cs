@@ -12,9 +12,9 @@ namespace AqlaSerializer.unittest.Meta
     [TestFixture]
     public class SubItems
     {
-        static RuntimeTypeModel CreateModel()
+        static RuntimeTypeModel CreateModel(bool comp)
         {
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
             model.Add(typeof(OuterRef), false)
                 .Add(1, "Int32")
                 .Add(2, "String")
@@ -35,16 +35,15 @@ namespace AqlaSerializer.unittest.Meta
         }
 
         [Test]
-        public void BuildModel()
+        public void BuildModel([Values(false, true)] bool comp)
         {
-            Assert.IsNotNull(CreateModel());
+            Assert.IsNotNull(CreateModel(comp));
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestCanDeserialierAllFromEmptyStream()
         {
-            var model = CreateModel();
+            var model = CreateModel(true);
             Assert.IsInstanceOfType(typeof(OuterRef), model.Deserialize(Stream.Null, null, typeof(OuterRef)));
             Assert.IsInstanceOfType(typeof(OuterVal), model.Deserialize(Stream.Null, null, typeof(OuterVal)));
             Assert.IsInstanceOfType(typeof(InnerRef), model.Deserialize(Stream.Null, null, typeof(InnerRef)));
@@ -68,7 +67,7 @@ namespace AqlaSerializer.unittest.Meta
 
 
         [Test]
-        public void TestRoundTripOuterRef()
+        public void TestRoundTripOuterRef([Values(false, true)] bool comp)
         {
             OuterRef outer = new OuterRef
             {
@@ -76,7 +75,7 @@ namespace AqlaSerializer.unittest.Meta
                 InnerVal = new InnerVal { Int32 = 456, String = "def" }
             }, clone;
             
-            var model = CreateModel();
+            var model = CreateModel(comp);
             clone = (OuterRef)model.DeepClone(outer);
             Assert.AreNotSame(outer, clone);
             Assert.AreEqual(123, clone.InnerRef.Int32);
@@ -101,7 +100,7 @@ namespace AqlaSerializer.unittest.Meta
         }
 
         [Test]
-        public void TestRoundTripOuterVal()
+        public void TestRoundTripOuterVal([Values(false, true)] bool comp)
         {
             OuterVal outer = new OuterVal
             {
@@ -109,7 +108,7 @@ namespace AqlaSerializer.unittest.Meta
                 InnerVal = new InnerVal { Int32 = 456, String = "def" }
             }, clone;
 
-            var model = CreateModel();
+            var model = CreateModel(comp);
             clone = (OuterVal)model.DeepClone(outer);
             Assert.AreNotSame(outer, clone);
             Assert.AreEqual(123, clone.InnerRef.Int32);

@@ -14,11 +14,10 @@ namespace Examples
     [TestFixture]
     public class NonSeekableStreams
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void ShouldNotRequireSeeking()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             byte[] raw;
             const int EXPECTED = 830;
             using(var fs = new FakeStream())
@@ -35,7 +34,8 @@ namespace Examples
             }
             using (var fs = new FakeStream(raw))
             {
-                var db = Serializer.Deserialize<Database>(fs);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var db = tm.Deserialize<Database>(fs);
                 Assert.AreEqual(EXPECTED, db.Orders.Count);
             }
         }

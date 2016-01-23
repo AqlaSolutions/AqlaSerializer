@@ -42,7 +42,7 @@ namespace Examples.Issues
         public void AnonymousTypesAreEquivalent_Manual()
         {
             var obj = new { X = 123, Y = "abc" };
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             TestAnonTypeEquiv(model, obj, "Runtime");
             model.CompileInPlace();
@@ -57,9 +57,8 @@ namespace Examples.Issues
             using (var ms = new MemoryStream())
             {
                 model.Serialize(ms, obj);
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual(expected.Length, ms.Length);
-                //Assert.AreEqual(Program.GetByteString(expected), Program.GetByteString(ms.ToArray()), caption);
+                Assert.AreEqual(expected.Length, ms.Length);
+                Assert.AreEqual(Program.GetByteString(expected), Program.GetByteString(ms.ToArray()), caption);
                 ms.Position = 0;
                 clone = (AnonEquiv) model.Deserialize(ms, null, typeof (AnonEquiv));
             }

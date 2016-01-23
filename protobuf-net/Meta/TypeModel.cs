@@ -144,7 +144,9 @@ namespace AqlaSerializer.Meta
             {   // write the header, but defer to the model
                 if (Helpers.IsEnum(type))
                 { // no header
-                    Serialize(modelKey, value, writer, isRoot);
+                    if (isRoot)
+                        ProtoWriter.WriteFieldHeaderBegin(EnumRootTag, writer);
+                    Serialize(modelKey, value, writer, false);
                     return true;
                 }
                 else
@@ -298,6 +300,23 @@ namespace AqlaSerializer.Meta
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
+        public T DeserializeWithLengthPrefix<T>(Stream source, T value, PrefixStyle style, int fieldNumber)
+        {
+            return (T)DeserializeWithLengthPrefix(source, value, MapType(typeof(T)), style, fieldNumber);
+        }
+
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
+        /// data - useful with network IO.
+        /// </summary>
+        /// <param name="type">The type being merged.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="style">How to encode the length prefix.</param>
+        /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
         public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int fieldNumber)
         {
             int bytesRead;
@@ -396,7 +415,7 @@ namespace AqlaSerializer.Meta
             {
                 reader = ProtoReader.Create(source, this, context, len);
                 int key = GetKey(ref type);
-                if (key >= 0 && !Helpers.IsEnum(type))
+                if (key >= 0)// && !Helpers.IsEnum(type))
                 {
                     value = Deserialize(key, value, reader, true);
                 }
@@ -782,6 +801,7 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
+        internal const int EnumRootTag = 1;
 #if !FEAT_IKVM
         private object DeserializeCore(ProtoReader reader, Type type, object value, bool noAutoCreate, bool isRoot)
         {
@@ -794,7 +814,7 @@ namespace AqlaSerializer.Meta
             TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, noAutoCreate, false, isRoot);
             return value;
         }
-
+        
         /// <summary>
         /// This is the more "complete" version of Deserialize, which handles single instances of mapped types.
         /// The value is read as a complete field, including field-header and (for sub-objects) a
@@ -807,6 +827,7 @@ namespace AqlaSerializer.Meta
         internal bool TryDeserializeAuxiliaryType(ProtoReader reader, BinaryDataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, bool isRoot)
         {
             if (type == null) throw new ArgumentNullException("type");
+
             Type itemType = null;
             ProtoTypeCode typecode = Helpers.GetTypeCode(type);
             int modelKey;
@@ -839,7 +860,8 @@ namespace AqlaSerializer.Meta
 
             if (Helpers.IsEnum(type))
             {
-                value = Deserialize(modelKey, value, reader, isRoot);
+                if (isRoot && reader.ReadFieldHeader() != EnumRootTag) return false;
+                value = Deserialize(modelKey, value, reader, false);
                 return true;
             }
 

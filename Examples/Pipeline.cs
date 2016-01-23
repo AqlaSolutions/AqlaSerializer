@@ -112,11 +112,11 @@ message EnumWrapper {
             Assert.AreEqual(expected, proto);
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void NWindPipeline()
         {
-            DAL.Database masterDb = DAL.NWindTests.LoadDatabaseFromFile<DAL.Database>(RuntimeTypeModel.Default);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            DAL.Database masterDb = DAL.NWindTests.LoadDatabaseFromFile<DAL.Database>(tm);
             int orderCount = masterDb.Orders.Count,
                 lineCount = masterDb.Orders.Sum(o => o.Lines.Count),
                 unitCount = masterDb.Orders.SelectMany(o => o.Lines).Sum(l => (int)l.Quantity);
@@ -129,7 +129,7 @@ message EnumWrapper {
             Assert.AreEqual(51317, unitCount);
             Assert.AreEqual(1354458.59M, value);
 
-            DatabaseReader db = DAL.NWindTests.LoadDatabaseFromFile<DatabaseReader>(RuntimeTypeModel.Default);
+            DatabaseReader db = DAL.NWindTests.LoadDatabaseFromFile<DatabaseReader>(tm);
 
 
             Assert.AreEqual(orderCount, db.OrderReader.OrderCount);

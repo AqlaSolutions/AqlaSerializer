@@ -625,7 +625,9 @@ namespace AqlaSerializer
             int value = token.value;
             if (value == int.MinValue)
             {
-                reader.wireType = WireType.None;
+                // should not overwrite last read result
+                // what if we reached outer subitem end?
+                //reader.wireType = WireType.None;
                 return;
             }
             if (skipToEnd)
@@ -646,7 +648,7 @@ namespace AqlaSerializer
                     {
                         if (value < 0)
                         {
-                            if (reader.ReadFieldHeader() != 0 || reader.wireType != WireType.EndGroup) throw reader.CreateException("Group not read entirely");
+                            if (reader.ReadFieldHeader() != 0 || reader.wireType != WireType.EndGroup) throw reader.CreateException("Group not read entirely or other group end problem");
                             goto endGroup;
                         }
                         throw reader.CreateException("Sub-message not read entirely");

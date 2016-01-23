@@ -89,7 +89,7 @@ namespace Examples
             var canHaz = new CanHazData {
                 A = "abc", B = 456.7F, C = 123
             };
-            Assert.IsTrue(Program.CheckBytes(canHaz, RuntimeTypeModel.Default, new byte[] {
+            Assert.IsTrue(Program.CheckBytes(canHaz, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility), new byte[] {
                 0x0A, 0x03, 0x61, 0x62, 0x63, // abc
                 0x15, 0x9A, 0x59, 0xE4, 0x43, // 456.7F
                 0x1D, 0x7B, 0x00, 0x00, 0x00  // 123
@@ -99,7 +99,7 @@ namespace Examples
         [Test]
         public void MakeFromScratch()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.Add(typeof(Naked), true);
             model.Add(typeof(CanHazData), true)[3].IsStrict = true;
 
@@ -111,8 +111,8 @@ namespace Examples
         static void MakeFromScratch(TypeModel model, string caption)
         {
             var obj = new Naked();
-            try
-            {
+            //try
+            //{
                 Extensible.AppendValue(model, obj, 1, BinaryDataFormat.Default, "abc");
                 Extensible.AppendValue(model, obj, 2, BinaryDataFormat.Default, 456.7F);
                 Extensible.AppendValue(model, obj, 3, BinaryDataFormat.FixedSize, 123);
@@ -122,20 +122,19 @@ namespace Examples
                 {
                     model.Serialize(ms, obj);
                     string s = Program.GetByteString(ms.ToArray());
-                    Debug.WriteLine("AqlaSerializer changed format");
-                    //Assert.AreEqual("0A 03 61 62 63 15 9A 59 E4 43 1D 7B 00 00 00", s, caption);
+                    Assert.AreEqual("0A 03 61 62 63 15 9A 59 E4 43 1D 7B 00 00 00", s, caption);
                     ms.Position = 0;
                     clone = (CanHazData) model.Deserialize(ms, null, typeof(CanHazData));
                 }
                 Assert.AreEqual("abc", clone.A, caption);
                 Assert.AreEqual(456.7F, clone.B, caption);
                 Assert.AreEqual(123, clone.C, caption);
-            }
-            catch
-            {
-                Debug.WriteLine(caption);
-                throw;
-            }
+            //}
+            //catch
+            //{
+            //    Debug.WriteLine(caption);
+            //    throw;
+            //}
         }
         [ProtoBuf.ProtoContract]
         public class Naked : Extensible

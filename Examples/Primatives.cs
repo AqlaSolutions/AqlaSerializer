@@ -29,12 +29,11 @@ namespace Examples
             int len;
 
             Assert.AreEqual(origin, TestDateTime(origin, out len));
-            //Assert.AreEqual(2, len, "0 len");
+            Assert.AreEqual(2, len, "0 len");
             Assert.AreEqual(origin.AddDays(1), TestDateTime(origin.AddDays(1), out len));
-            //Assert.AreEqual(4, len, "+1 len");
+            Assert.AreEqual(4, len, "+1 len");
             Assert.AreEqual(origin.AddDays(-1), TestDateTime(origin.AddDays(-1), out len));
-            //Assert.AreEqual(4, len, "-1 len");
-            Debug.WriteLine("AqlaSerializer changed format");
+            Assert.AreEqual(4, len, "-1 len");
         }
 
         [Test]
@@ -43,8 +42,7 @@ namespace Examples
             int len;
             TimeSpan ts = TimeSpan.Zero;
             Assert.AreEqual(ts, TestTimeSpan(ts, out len));
-            //Assert.AreEqual(0, len, "0 len");
-            Debug.WriteLine("AqlaSerializer changed format");
+            Assert.AreEqual(0, len, "0 len");
         }
 
         [Test]
@@ -53,8 +51,7 @@ namespace Examples
             int len;
             TimeSpan ts = new TimeSpan(36,0,0);
             Assert.AreEqual(ts, TestTimeSpan(ts, out len));
-            //Assert.AreEqual(6, len, "+36 hour len");
-            Debug.WriteLine("AqlaSerializer changed format");
+            Assert.AreEqual(6, len, "+36 hour len");
         }
 
         [Test]
@@ -63,8 +60,7 @@ namespace Examples
             int len;
             TimeSpan ts = new TimeSpan(0,-3, 0);
             Assert.AreEqual(ts, TestTimeSpan(ts, out len));
-            //Assert.AreEqual(6, len, "-3 hour len");
-            Debug.WriteLine("AqlaSerializer changed format");
+            Assert.AreEqual(6, len, "-3 hour len");
         }
 
         [Test]
@@ -73,8 +69,7 @@ namespace Examples
             int len;
             TimeSpan ts = TimeSpan.MinValue;
             Assert.AreEqual(ts, TestTimeSpan(ts, out len));
-            //Assert.AreEqual(6, len, "min len");
-            Debug.WriteLine("AqlaSerializer changed format");
+            Assert.AreEqual(6, len, "min len");
         }
         
         [Test]
@@ -83,8 +78,7 @@ namespace Examples
             int len;
             TimeSpan ts = TimeSpan.MaxValue;
             Assert.AreEqual(ts, TestTimeSpan(ts, out len));
-            //Assert.AreEqual(6, len, "max len");
-            Debug.WriteLine("AqlaSerializer changed format");
+            Assert.AreEqual(6, len, "max len");
         }
         [ProtoBuf.ProtoContract]
         class DateTimeOnly
@@ -129,7 +123,7 @@ namespace Examples
             clone = Serializer.DeepClone(def);
             Assert.AreEqual(def.HowLong, clone.HowLong);
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void TestValueTimeUnit()
         {
@@ -139,14 +133,14 @@ namespace Examples
 
             Assert.AreEqual(new TimeSpan(4, 0, 0), ts.HowLong);
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestInvalidTimeUnit() {
             TimeSpanOnly ts = Program.Build<TimeSpanOnly>(0x0A, 0x04, // tag 1 string, 4 bytes
                     0x08, 0x08, // tag 1; value: 4 (zigzag)
                     0x10, 0x4A); // tag 2; unit: invalid
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void TestValidMinMax()
         {
@@ -162,7 +156,7 @@ namespace Examples
 
             Assert.AreEqual(TimeSpan.MinValue, ts.HowLong);
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestInvalidMinMax()
         {
@@ -174,9 +168,10 @@ namespace Examples
         static DateTime TestDateTime(DateTime value, out int len) {
             DateTimeOnly p = new DateTimeOnly { When = value };
             using(MemoryStream ms = new MemoryStream()) {
-                Serializer.Serialize(ms, p);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, p);
                 ms.Position = 0;
-                p = Serializer.Deserialize<DateTimeOnly>(ms);
+                p = tm.Deserialize<DateTimeOnly>(ms);
                 len = (int)ms.Length;
                 return p.When;
             }
@@ -186,9 +181,10 @@ namespace Examples
             TimeSpanOnly p = new TimeSpanOnly { HowLong = value };
             using (MemoryStream ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, p);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, p);
                 ms.Position = 0;
-                p = Serializer.Deserialize<TimeSpanOnly>(ms);
+                p = tm.Deserialize<TimeSpanOnly>(ms);
                 len = (int)ms.Length;
                 return p.HowLong;
             }
@@ -338,18 +334,18 @@ namespace Examples
             Assert.AreEqual(p.TestString, Serializer.DeepClone(p).TestString, "Null");
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestDecimalUnits()
         {
             Primatives p = new Primatives { TestDecimalDefault = decimal.Zero};
-            Assert.AreEqual(p.TestDecimalDefault, Serializer.DeepClone(p).TestDecimalDefault);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            Assert.AreEqual(p.TestDecimalDefault, tm.DeepClone(p).TestDecimalDefault);
 
             p.TestDecimalDefault = decimal.MinusOne;
-            Assert.AreEqual(p.TestDecimalDefault, Serializer.DeepClone(p).TestDecimalDefault);
+            Assert.AreEqual(p.TestDecimalDefault, tm.DeepClone(p).TestDecimalDefault);
 
             p.TestDecimalDefault = decimal.One;
-            Assert.AreEqual(p.TestDecimalDefault, Serializer.DeepClone(p).TestDecimalDefault);
+            Assert.AreEqual(p.TestDecimalDefault, tm.DeepClone(p).TestDecimalDefault);
 
             p = Program.Build<Primatives>(0x1A, 0x00);
             Assert.AreEqual(decimal.Zero, p.TestDecimalDefault);

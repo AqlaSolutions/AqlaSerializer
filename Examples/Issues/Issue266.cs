@@ -19,6 +19,7 @@ namespace Examples.Issues
             int? i = Serializer.Deserialize<int?>(Stream.Null);
             Assert.IsNull(i);
         }
+        [Ignore("Actually it's not correct if you read Protocol Buffers docs: just all fields of an object were optional")]
         [Test]
         public void TestWrappedNullableEnumDeserialize()
         {

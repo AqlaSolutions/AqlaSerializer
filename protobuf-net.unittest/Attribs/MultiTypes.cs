@@ -26,23 +26,25 @@ namespace AqlaSerializer.unittest
         public void TestStringSerialize()
         {
             var prop = PropertyValue.Create("abc", "def");
+            var tm0 = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            tm0.DeepClone(prop);
             string hex;
             using (MemoryStream ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, prop);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                tm.Serialize(ms, prop);
                 hex = Util.GetHex(ms.ToArray());
             }
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(
-            //    "32" // field 6, string
-            //  + "05" // 5 bytes
-            //    + "0A" // field 1, string
-            //    + "03" // 3 bytes
-            //      + "646566" // "def"
-            //  + "0A" // field 1, string
-            //  + "03" // 3 bytes
-            //    + "616263" // "abc"
-            //    ,hex);
+            Assert.AreEqual(
+                "32" // field 6, string
+              + "05" // 5 bytes
+                + "0A" // field 1, string
+                + "03" // 3 bytes
+                  + "646566" // "def"
+              + "0A" // field 1, string
+              + "03" // 3 bytes
+                + "616263" // "abc"
+                , hex);
         }
         [Test]
         public void TestStringRoundTrip()

@@ -404,29 +404,26 @@ namespace AqlaSerializer.unittest.Meta
         [Test]
         public void TestNullRoundTrip()
         {
-            var model = CreateModel();
+            var model = CreateModelCompatible();
 
             var orig = new PackedData {ListInt32 = null, ListSingle = null, ListDouble = null};
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(0, len, "Runtime");
+            Assert.AreEqual(0, len, "Runtime");
             Assert.IsNull(clone.ListDouble);
             Assert.IsNull(clone.ListInt32);
             Assert.IsNull(clone.ListSingle);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(0, len, "CompileInPlace");
+            Assert.AreEqual(0, len, "CompileInPlace");
             Assert.IsNull(clone.ListDouble);
             Assert.IsNull(clone.ListInt32);
             Assert.IsNull(clone.ListSingle);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(0, len, "Compile");
+            Assert.AreEqual(0, len, "Compile");
             Assert.IsNull(clone.ListDouble);
             Assert.IsNull(clone.ListInt32);
             Assert.IsNull(clone.ListSingle);
@@ -435,29 +432,26 @@ namespace AqlaSerializer.unittest.Meta
         [Test]
         public void TestEmptyRoundTrip()
         {
-            var model = CreateModel();
+            var model = CreateModelCompatible();
 
             var orig = new PackedData { ListInt32 = new List<int>(), ListSingle = new List<float>(), ListDouble = new List<double>()};
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(6, len, "Runtime");
+            Assert.AreEqual(6, len, "Runtime");
             Assert.AreEqual(0, clone.ListDouble.Count);
             Assert.AreEqual(0, clone.ListInt32.Count);
             Assert.AreEqual(0, clone.ListSingle.Count);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(6, len, "CompileInPlace");
+            Assert.AreEqual(6, len, "CompileInPlace");
             Assert.AreEqual(0, clone.ListDouble.Count);
             Assert.AreEqual(0, clone.ListInt32.Count);
             Assert.AreEqual(0, clone.ListSingle.Count);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(6, len, "Compile");
+            Assert.AreEqual(6, len, "Compile");
             Assert.AreEqual(0, clone.ListDouble.Count);
             Assert.AreEqual(0, clone.ListInt32.Count);
             Assert.AreEqual(0, clone.ListSingle.Count);
@@ -481,7 +475,7 @@ namespace AqlaSerializer.unittest.Meta
         [Test]
         public void TestThreeItemsRoundTrip()
         {
-            var model = CreateModel();
+            var model = CreateModelCompatible();
 
             var orig = new PackedData { ListInt32 = new List<int> {3,5,7}, ListSingle = new List<float> {3F,5F,7F}, ListDouble = new List<double> {3D,5D,7F} };
             CheckExpectedListContents(orig, "Original");
@@ -489,21 +483,18 @@ namespace AqlaSerializer.unittest.Meta
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
             const int expectedLen = (1 + 1 + 1 + 1 + 1) + (1 + 1 + 4 + 4 + 4) + (1 + 1 + 8 + 8 + 8);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(expectedLen, len, "Runtime");
+            Assert.AreEqual(expectedLen, len, "Runtime");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Runtime");
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(expectedLen, len, "CompileInPlace");
+            Assert.AreEqual(expectedLen, len, "CompileInPlace");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "CompileInPlace");
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(expectedLen, len, "Compile");
+            Assert.AreEqual(expectedLen, len, "Compile");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Compile");
         }
@@ -511,6 +502,10 @@ namespace AqlaSerializer.unittest.Meta
         {
             try
             {
+                // check default first
+                var tm = TypeModel.Create();
+                tm.DeepClone(orig);
+
                 using (MemoryStream ms = new MemoryStream())
                 {
                     model.Serialize(ms, orig);
@@ -527,6 +522,12 @@ namespace AqlaSerializer.unittest.Meta
         static RuntimeTypeModel CreateModel()
         {
             var model = TypeModel.Create();
+            model.Add(typeof (PackedData), true);
+            return model;
+        }
+        static RuntimeTypeModel CreateModelCompatible()
+        {
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.Add(typeof (PackedData), true);
             return model;
         }
@@ -557,29 +558,26 @@ namespace AqlaSerializer.unittest.Meta
         [Test]
         public void TestEmptyRoundTrip()
         {
-            var model = CreateModel();
+            var model = CreateModelCompatible();
 
             var orig = new PackedData { ArrayInt32 = new int[0], ArraySingle = new float[0], ArrayDouble = new double[0] };
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(6, len, "Runtime");
+            Assert.AreEqual(6, len, "Runtime");
             Assert.AreEqual(0, clone.ArrayDouble.Length);
             Assert.AreEqual(0, clone.ArrayInt32.Length);
             Assert.AreEqual(0, clone.ArraySingle.Length);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(6, len, "CompileInPlace");
+            Assert.AreEqual(6, len, "CompileInPlace");
             Assert.AreEqual(0, clone.ArrayDouble.Length);
             Assert.AreEqual(0, clone.ArrayInt32.Length);
             Assert.AreEqual(0, clone.ArraySingle.Length);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(6, len, "Compile");
+            Assert.AreEqual(6, len, "Compile");
             Assert.AreEqual(0, clone.ArrayDouble.Length);
             Assert.AreEqual(0, clone.ArrayInt32.Length);
             Assert.AreEqual(0, clone.ArraySingle.Length);
@@ -587,29 +585,26 @@ namespace AqlaSerializer.unittest.Meta
         [Test]
         public void TestNullRoundTrip()
         {
-            var model = CreateModel();
+            var model = CreateModelCompatible();
 
             var orig = new PackedData { ArrayInt32 = null, ArraySingle = null, ArrayDouble = null };
             int len;
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(0, len, "Runtime");
+            Assert.AreEqual(0, len, "Runtime");
             Assert.IsNull(clone.ArrayDouble);
             Assert.IsNull(clone.ArrayInt32);
             Assert.IsNull(clone.ArraySingle);
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(0, len, "CompileInPlace");
+            Assert.AreEqual(0, len, "CompileInPlace");
             Assert.IsNull(clone.ArrayDouble);
             Assert.IsNull(clone.ArrayInt32);
             Assert.IsNull(clone.ArraySingle);
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(0, len, "Compile");
+            Assert.AreEqual(0, len, "Compile");
             Assert.IsNull(clone.ArrayDouble);
             Assert.IsNull(clone.ArrayInt32);
             Assert.IsNull(clone.ArraySingle);
@@ -631,9 +626,9 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(7D, data.ArrayDouble[2], text);
         }
         [Test]
-        public void TestThreeItemsRoundTrip()
+        public void TestThreeItemsRoundTrip([Values(false, true)] bool comp)
         {
-            var model = CreateModel();
+            var model = comp ? CreateModelCompatible() : CreateModel();
 
             var orig = new PackedData { ArrayInt32 = new int[] { 3, 5, 7 }, ArraySingle = new float[] { 3F, 5F, 7F }, ArrayDouble = new double[] { 3D, 5D, 7F } };
             CheckExpectedListContents(orig, "Original");
@@ -641,21 +636,21 @@ namespace AqlaSerializer.unittest.Meta
 
             var clone = RoundTrip(model, orig, "Runtime", out len);
             const int expectedLen = (1 + 1 + 1 + 1 + 1) + (1 + 1 + 4 + 4 + 4) + (1 + 1 + 8 + 8 + 8);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(expectedLen, len, "Runtime");
+            if (comp)
+                Assert.AreEqual(expectedLen, len, "Runtime");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Runtime");
 
             model.CompileInPlace();
             clone = RoundTrip(model, orig, "CompileInPlace", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(expectedLen, len, "CompileInPlace");
+            if (comp)
+                Assert.AreEqual(expectedLen, len, "CompileInPlace");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "CompileInPlace");
 
             clone = RoundTrip(model.Compile(), orig, "Compile", out len);
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.AreEqual(expectedLen, len, "Compile");
+            if (comp)
+                Assert.AreEqual(expectedLen, len, "Compile");
             Assert.IsNotNull(clone);
             CheckExpectedListContents(clone, "Compile");
         }
@@ -663,6 +658,7 @@ namespace AqlaSerializer.unittest.Meta
         {
             try
             {
+                TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(orig);
                 using (MemoryStream ms = new MemoryStream())
                 {
                     model.Serialize(ms, orig);
@@ -679,6 +675,12 @@ namespace AqlaSerializer.unittest.Meta
         static RuntimeTypeModel CreateModel()
         {
             var model = TypeModel.Create();
+            model.Add(typeof(PackedData), true);
+            return model;
+        }
+        static RuntimeTypeModel CreateModelCompatible()
+        {
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.Add(typeof(PackedData), true);
             return model;
         }

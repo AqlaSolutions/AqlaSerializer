@@ -6,6 +6,7 @@ using AqlaSerializer;
 using System;
 using System.IO;
 using System.Text;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -121,9 +122,10 @@ namespace Examples
         {
             var parents = new List<IMLParent> { CreateChild() };
             Assert.AreEqual(1, parents.Count, "Original list (before)");
+            var serializer = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             using (var ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, parents);
+                serializer.Serialize(ms, parents);
                 StringBuilder sb = new StringBuilder();
                 foreach (byte b in ms.ToArray())
                 {
@@ -131,8 +133,7 @@ namespace Examples
                 }
                 string s = sb.ToString();
 
-                Debug.WriteLine("AqlaSerializer changed format");
-                //Assert.AreEqual("0a071202087b08c803", s);
+                Assert.AreEqual("0a071202087b08c803", s);
                 /* expected:
                  * field 1, WT string (instance in list)    0A
                  * length [x]                               07
@@ -144,7 +145,7 @@ namespace Examples
                  * value 456                                C8 03
                 */
             }
-            var clone = Serializer.DeepClone(parents);
+            var clone = serializer.DeepClone(parents);
             Assert.AreEqual(1, parents.Count, "Original list (after)");
             Assert.AreEqual(1, clone.Count, "Cloned list");
             CheckParent(parents[0], clone[0]);

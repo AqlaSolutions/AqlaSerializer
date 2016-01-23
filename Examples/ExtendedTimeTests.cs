@@ -7,6 +7,7 @@ using NUnit.Framework;
 using AqlaSerializer;
 using System.ComponentModel;
 using System.Runtime.Serialization;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -123,14 +124,15 @@ namespace Examples
             Int64Fixed i64 = new Int64Fixed { Value = ticks };
             Assert.IsTrue(Program.CheckBytes(i64, bits));
 
-            Int64Fixed i64Clone = Serializer.DeepClone(i64);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            Int64Fixed i64Clone = tm.DeepClone(i64);
             Assert.AreEqual(ticks, i64Clone.Value, "Int64 roundtrip:" + ticks.ToString() + " (" + when.ToString() + ")");
 
             DateTimeFixed val = new DateTimeFixed { When = when},
-                clone = AqlaSerializer.Serializer.DeepClone(val);
+                clone = tm.DeepClone(val);
             Assert.AreEqual(val.When, clone.When, "DateTime roundtrip:" + when.ToString());
 
-            i64 = Serializer.ChangeType<DateTimeFixed, Int64Fixed>(val);
+            i64 = tm.ChangeType<DateTimeFixed, Int64Fixed>(val);
             
             Assert.AreEqual(ticks, i64.Value, "Wire value:" + when.ToString());
 
