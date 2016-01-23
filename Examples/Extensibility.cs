@@ -212,14 +212,18 @@ namespace Examples
             
             T small = Serializer.ChangeType<BiggerObject, T>(obj);
 
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+
+            small = tm.ChangeType<BiggerObject, T>(obj);
+
             byte[] raw = GetExtensionBytes(small);
             
             float val;
-            bool hasValue = Extensible.TryGetValue<float>(small, 3, out val);
+            bool hasValue = Extensible.TryGetValue<float>(tm, small, 3, out val);
             Assert.IsTrue(hasValue, "has value");
             Assert.AreEqual(obj.SomeFloat, val, "float value");
 
-            hasValue = Extensible.TryGetValue<float>(small, 1000, out val);
+            hasValue = Extensible.TryGetValue<float>(tm, small, 1000, out val);
             Assert.IsFalse(hasValue, "no value");
             Assert.AreEqual(default(float), val);
         }
@@ -256,7 +260,8 @@ namespace Examples
         static void TestWriteExt<T>() where T : IExtTest, IExtensible, new() {
             const float SOME_VALUE = 987.65F;
             T obj = new T();
-            Extensible.AppendValue<float>(obj, 3, SOME_VALUE);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            Extensible.AppendValue<float>(tm, obj, 3, SOME_VALUE);
 
             byte[] raw = GetExtensionBytes(obj);
             Assert.AreEqual(5, raw.Length, "Extension Length");
@@ -271,7 +276,7 @@ namespace Examples
             float readBack = Extensible.GetValue<float>(obj, 3);
             Assert.AreEqual(SOME_VALUE, readBack, "read back");
 
-            BiggerObject big = Serializer.ChangeType<T, BiggerObject>(obj);
+            BiggerObject big = tm.ChangeType<T, BiggerObject>(obj);
 
             Assert.AreEqual(SOME_VALUE, big.SomeFloat, "deserialize");
         }

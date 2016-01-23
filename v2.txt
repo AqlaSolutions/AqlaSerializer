@@ -1,3 +1,27 @@
+
+we don't need novdec for null support! just not write if null
+really?
+default value and null is not the same. if we have null it should be explicitely stated.
+
+default value decorator should be inside value before null handler
+
+DVD расчитан что поля вообще нет и он ее вызывается при чтении
+
+NOVDEC требует OldValue только если внутри у него DefaultValue
+
+checkbytes:             //m.DeepClone(item);
+
+change compat settings
+
+compilation.
+
+может действительно ListHandling должно быть для членов только? это с точки зрения .NET они типы, 
+но каждое конкретное поле имеет отдельный смысл!
+
+asrefmask
+
+make work schema
+
 Goals:
 
 * No Version Mode:
