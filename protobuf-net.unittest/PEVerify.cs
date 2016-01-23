@@ -22,6 +22,9 @@ namespace AqlaSerializer.unittest
         }
         public static void Verify(string path, int exitCode, bool deleteOnSuccess)
         {
+#if FAKE_COMPILE
+            return;
+#endif
             // note; PEVerify can be found %ProgramFiles%\Microsoft SDKs\Windows\v6.0A\bin
             const string exePath = "PEVerify.exe";
             ProcessStartInfo startInfo = new ProcessStartInfo(exePath, path);

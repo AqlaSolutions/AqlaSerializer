@@ -10,6 +10,9 @@ namespace Examples
     {
         public static bool AssertValid(string path)
         {
+#if FAKE_COMPILE
+            return true;
+#endif
             // note; PEVerify can be found %ProgramFiles%\Microsoft SDKs\Windows\v6.0A\bin
             const string exePath = "PEVerify.exe";
             var startInfo = new ProcessStartInfo(exePath, path);
