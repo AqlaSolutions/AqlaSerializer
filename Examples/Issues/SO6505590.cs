@@ -6,6 +6,7 @@ using System.Text;
 using NUnit.Framework;
 using AqlaSerializer;
 using System.IO;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -48,11 +49,12 @@ namespace Examples.Issues
             var obj = new ParentA();
             Serializer.Serialize(Stream.Null, obj);
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void DeserializeParentWithUnmarkedChildShouldWork()
         {
-            Assert.AreEqual(typeof(ParentA), Serializer.Deserialize<ParentA>(Stream.Null).GetType());
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            Assert.AreEqual(typeof(ParentA), tm.Deserialize<ParentA>(Stream.Null).GetType());
         }
 
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Type is not expected, and no contract can be inferred: Examples.Issues.SO6505590+ChildA")]
@@ -74,11 +76,12 @@ namespace Examples.Issues
             var obj = new ParentB();
             Serializer.Serialize(Stream.Null, obj);
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void DeserializeParentWithUnexpectedChildShouldWork()
         {
-            Assert.AreEqual(typeof(ParentB), Serializer.Deserialize<ParentB>(Stream.Null).GetType());
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            Assert.AreEqual(typeof(ParentB), tm.Deserialize<ParentB>(Stream.Null).GetType());
         }
 
         [Test]
@@ -87,11 +90,12 @@ namespace Examples.Issues
             var obj = new ParentC();
             Serializer.Serialize(Stream.Null, obj);
         }
-        [Ignore("AqlaSerializer changed format")]
+        
         [Test]
         public void DeserializeParentWithExpectedChildShouldWork()
         {
-            Assert.AreEqual(typeof(ParentC), Serializer.Deserialize<ParentC>(Stream.Null).GetType());
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            Assert.AreEqual(typeof(ParentC), tm.Deserialize<ParentC>(Stream.Null).GetType());
         }
 
         [Test]

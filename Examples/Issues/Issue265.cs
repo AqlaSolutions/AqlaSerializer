@@ -29,7 +29,7 @@ namespace Examples.Issues
         [Test]
         public void ShouldSerializeEnumArrayMember()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             TestMember(model);
             model.Compile("ShouldSerializeEnumArrayMember", "ShouldSerializeEnumArrayMember.dll");
@@ -42,8 +42,7 @@ namespace Examples.Issues
         private static void TestMember(TypeModel model)
         {
             var value = new Foo {Bar = new E[] {E.V0, E.V1, E.V2}};
-            Debug.WriteLine("AqlaSerializer changed format");
-            //Assert.IsTrue(Program.CheckBytes(value, model, 0x18, 0x03, 0x18, 0x04, 0x18, 0x05));
+            Assert.IsTrue(Program.CheckBytes(value, model, 0x18, 0x03, 0x18, 0x04, 0x18, 0x05));
             var clone = (Foo) model.DeepClone(value);
             Assert.AreEqual("V0,V1,V2", string.Join(",", clone.Bar), "clone");
         }
@@ -62,7 +61,7 @@ namespace Examples.Issues
         [Test]
         public void ShouldSerializeIndividualEnum()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             TestIndividual(model);
             model.Compile("ShouldSerializeIndividualEnum", "ShouldSerializeIndividualEnum.dll");
@@ -80,11 +79,10 @@ namespace Examples.Issues
             Assert.AreEqual(value, clone);
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void ShouldSerializeArrayOfEnums()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             TestArray(model);
             model.Compile("ShouldSerializeArrayOfEnums", "ShouldSerializeArrayOfEnums.dll");

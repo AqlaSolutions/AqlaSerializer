@@ -57,20 +57,18 @@ namespace DAL
             }
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void LoadTestDefaultModel()
         {
-            Database db = LoadDatabaseFromFile<Database>(RuntimeTypeModel.Default);
+            Database db = LoadDatabaseFromFile<Database>(TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility));
             DbMetrics("Database", db);
 
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void LoadTestCustomModel()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             Database db;
             
             db = LoadDatabaseFromFile<Database>(model);
@@ -89,14 +87,13 @@ namespace DAL
             DbMetrics("Database", db);
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void PerfTestDb()
         {
             byte[] blob = File.ReadAllBytes(@"NWind\nwind.proto.bin");
             using (MemoryStream ms = new MemoryStream(blob))
             {
-                var model = TypeModel.Create();
+                var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
                 Type type = typeof(Database);
                 model.Deserialize(ms, null, type);
                 var compiled = model.Compile();

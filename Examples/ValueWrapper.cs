@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -110,7 +111,8 @@ namespace Examples
         static byte[] GetBytes<T>(T item)
         {
             MemoryStream ms = new MemoryStream();
-            Serializer.Serialize(ms, item);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            tm.Serialize(ms, item);
             return ms.ToArray();
         }
         [Test]
@@ -152,7 +154,8 @@ namespace Examples
         static byte[] GetBytes<T>(T item)
         {
             MemoryStream ms = new MemoryStream();
-            Serializer.Serialize(ms, item);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            tm.Serialize(ms, item);
             return ms.ToArray();
         }
         [Test]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using AqlaSerializer;
 using System.IO;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -86,7 +87,6 @@ namespace Examples.Issues
                 b = new List<string>();
             }
         }
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void Execute()
         {
@@ -127,10 +127,11 @@ namespace Examples.Issues
             MemoryStream mspf = new MemoryStream();
             MemoryStream msfp = new MemoryStream();
             MemoryStream msff = new MemoryStream();
-            Serializer.Serialize(mspp, app);
-            Serializer.Serialize(mspf, apf);
-            Serializer.Serialize(msfp, afp);
-            Serializer.Serialize(msff, aff);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            tm.Serialize(mspp, app);
+            tm.Serialize(mspf, apf);
+            tm.Serialize(msfp, afp);
+            tm.Serialize(msff, aff);
 
             //Compare binary data
             byte[] bpp = mspp.ToArray();

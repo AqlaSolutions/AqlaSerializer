@@ -136,39 +136,36 @@ namespace Examples.Issues
             Assert.AreEqual("def", innerPair.Name);
             Assert.AreEqual("ghi", innerPair.Value);
         }
-        static RuntimeTypeModel CreateModel()
+        static RuntimeTypeModel CreateModel(bool comp)
         {
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
             model.AutoCompile = false;
             return model;
         }
+
         [Test]
-        public void ExecuteSimple()
+        public void ExecuteSimple([Values(false, true)] bool comp)
         {
             using (var ms = new MemoryStream())
             {
-                var model = CreateModel();
+                var model = CreateModel(comp);
                 model.Serialize(ms, CreateSimpleObj());
-                Debug.WriteLine("AqlaSerializer changed format");
+                //Dictionary format changed
                 //Assert.AreEqual("1A-13-0A-11-0A-03-61-62-63-12-0A-0A-03-64-65-66-12-03-67-68-69-08-01-12-02-6F-6B", BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length));
                 ms.Position = 0;
                 var clone = (BaseResponse)model.Deserialize(ms, null, typeof(BaseResponse));
                 CheckObject(clone);
             }
         }
-
-        [Ignore("AqlaSerializer - see later, what purpose?")]
+        
         [Test]
-        public void ExecuteCustom()
+        public void ExecuteCustom([Values(false, true)] bool comp)
         {
             using (var ms = new MemoryStream())
             {
-                var model = CreateModel();
-#if DEBUG
-                model.ForwardsOnly = true;
-#endif
+                var model = CreateModel(comp);
                 model.Serialize(ms, CreateCustomObj());
-                Debug.WriteLine("AqlaSerializer changed format");
+                //Dictionary format changed
                 //Assert.AreEqual("1B-0B-0A-03-61-62-63-13-0A-03-64-65-66-12-03-67-68-69-14-0C-1C-08-01-12-02-6F-6B", BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length));
                 ms.Position = 0;
                 var clone = (CustomBaseResponse)model.Deserialize(ms, null, typeof(CustomBaseResponse));

@@ -5,6 +5,7 @@ using AqlaSerializer;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using AqlaSerializer.Meta;
 
 namespace Examples
 {
@@ -15,10 +16,11 @@ namespace Examples
         {
             MemoryStream ms = new MemoryStream();
             Foo foo = new Foo();
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             foreach (int value in values)
             {
                 foo.Value = value;
-                Serializer.SerializeWithLengthPrefix(ms, foo, style, tag);
+                tm.SerializeWithLengthPrefix(ms, foo, style, tag);
             }
             ms.Position = 0;
             return ms;
@@ -32,7 +34,8 @@ namespace Examples
                 {
                     Debugger.Break();
                 }
-                Foo foo = Serializer.DeserializeWithLengthPrefix<Foo>(source, style, tag);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility); ;
+                Foo foo = tm.DeserializeWithLengthPrefix<Foo>(source, null, style, tag);
                 Assert.AreEqual(value, foo.Value);
                 count++;
             }
@@ -83,21 +86,18 @@ namespace Examples
             Assert.AreEqual(8, CheckIndividually(2, PrefixStyle.Base128, -2, -1, 0, 1, 2, 3, 4, 5));
         }
 
-        [Ignore("AqlaSerializer changed format, you can't write Foo and while reading int[]")]
         [Test]
         public void ReadStreamingFixedLength()
         {
             Assert.AreEqual(8, CheckStreaming(0, PrefixStyle.Fixed32, -2, -1, 0, 1, 2, 3, 4, 5));
         }
 
-        [Ignore("AqlaSerializer changed format, you can't write Foo and while reading int[]")]
         [Test]
         public void ReadStreamingBase128NoTag()
         {
             Assert.AreEqual(8, CheckStreaming(0, PrefixStyle.Base128, -2, -1, 0, 1, 2, 3, 4, 5));
         }
 
-        [Ignore("AqlaSerializer changed format, you can't write Foo and while reading int[]")]
         [Test]
         public void ReadStreamingBase128Tag()
         {

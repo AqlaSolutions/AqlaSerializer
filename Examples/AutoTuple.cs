@@ -14,7 +14,7 @@ namespace Examples
         [Test]
         public void TestHasTuplesWrapped()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new HasTuples {Value = new BasicTuple(123, "abc")};
@@ -41,21 +41,23 @@ namespace Examples
         }
         void CheckBytes(TypeModel model, object obj, string expected, string message)
         {
+            var tm = TypeModel.Create();
+            tm.DeepClone(obj);
+
             model.ForceSerializationDuringClone = true;
             Assert.That(model.DeepClone(obj), Is.Not.Null);
-            //    using(var ms = new MemoryStream())
-            //    {
-            //        model.Serialize(ms, obj);
+            using (var ms = new MemoryStream())
+            {
+                model.Serialize(ms, obj);
 
-            //        Debug.WriteLine("AqlaSerializer changed format");
-            //        //Assert.AreEqual(expected, Program.GetByteString(ms.ToArray()), message);
-            //    }
+                Assert.AreEqual(expected, Program.GetByteString(ms.ToArray()), message);
+            }
         }
         
         [Test]
         public void TestHasTuplesNaked()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new BasicTuple(123, "abc");
@@ -83,7 +85,7 @@ namespace Examples
         [Test]
         public void TestHasTuplesReversedOrderNaked()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new BasicTupleReversedOrder("abc", 123);
@@ -113,7 +115,7 @@ namespace Examples
         [Test]
         public void TestInbuiltTupleNaked()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = Tuple.Create(123, "abc");
@@ -143,7 +145,7 @@ namespace Examples
         [Test]
         public void TestAnonTypeAsTuple()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new {Foo = 123, Bar = "abc"};

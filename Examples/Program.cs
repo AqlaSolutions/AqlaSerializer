@@ -62,7 +62,10 @@ namespace Examples
         }
         public static bool CheckBytes<T>(T item, TypeModel model, params byte[] expected)
         {
-            if (model == null) model = RuntimeTypeModel.Default;
+            var m = TypeModel.Create(false, ProtoCompatibilitySettings.None);
+            //m.DeepClone(item);
+
+            if (model == null) model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             var rtm = model as RuntimeTypeModel;
             if (rtm != null)
                 rtm.AddNotAsReferenceDefault = true;
@@ -70,15 +73,15 @@ namespace Examples
             using (MemoryStream ms = new MemoryStream())
             {
                 model.Serialize(ms, item);
+                ms.Position = 0;
                 byte[] actual = ms.ToArray();
                 bool equal = Program.ArraysEqual(actual, expected);
                 if (!equal)
                 {
-                    Debug.WriteLine("AqlaSerializer changed format");
-                    return true;
                     string exp = GetByteString(expected), act = GetByteString(actual);
                     Console.WriteLine("Expected: {0}", exp);
                     Console.WriteLine("Actual: {0}", act);
+                    var d = model.Deserialize<T>(ms);
                 }
                 return equal;
             }
@@ -91,7 +94,8 @@ namespace Examples
         {
             using (MemoryStream ms = new MemoryStream(raw))
             {
-                return Serializer.Deserialize<T>(ms);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                return tm.Deserialize<T>(ms);
             }
         }
         public static bool ArraysEqual(byte[] actual, byte[] expected)

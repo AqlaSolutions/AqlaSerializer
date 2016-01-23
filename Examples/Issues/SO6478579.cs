@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace test
 {
@@ -44,7 +45,6 @@ namespace test
     [TestFixture]
     public class SO6478579
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestMethod()
         {
@@ -53,7 +53,8 @@ namespace test
 
             // Serialize to memory stream
             MemoryStream mStream = new MemoryStream();
-            Serializer.Serialize(mStream, c);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            tm.Serialize(mStream, c);
 
             Assert.AreEqual(10960823, mStream.Length); 
         }

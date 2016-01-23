@@ -115,10 +115,9 @@ namespace Examples.Issues
                 fields = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
             }
             
-            // AqlaSerializer changed format
-            //Assert.AreEqual(surrogate, fields, "fields vs surrogate");
-            //Assert.AreEqual(surrogate, defaultRef_AFirst, "default-ref (A-first) vs surrogate");
-            //Assert.AreEqual(surrogate, defaultRef_BFirst, "default-ref (B-first) vs surrogate");
+            Assert.AreEqual(surrogate, fields, "fields vs surrogate");
+            Assert.AreEqual(surrogate, defaultRef_AFirst, "default-ref (A-first) vs surrogate");
+            Assert.AreEqual(surrogate, defaultRef_BFirst, "default-ref (B-first) vs surrogate");
         }
 
         [Test]
@@ -136,7 +135,7 @@ namespace Examples.Issues
 
         static RuntimeTypeModel CreateDefaultRefModel(bool aFirst)
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             if (aFirst)
             {
                 model.Add(typeof(A_WithDefaultRef), true);
@@ -153,7 +152,7 @@ namespace Examples.Issues
         }
         static RuntimeTypeModel CreateFieldsModel()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             var type = model.Add(typeof(KeyValuePair<int, A>), false);
             type.Add(1, "key");
@@ -164,7 +163,7 @@ namespace Examples.Issues
         }
         static RuntimeTypeModel CreateSurrogateModel()
         {
-            var model = TypeModel.Create();
+            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             model[typeof(B)][2].AsReference = false; // or just remove AsReference on Items
 

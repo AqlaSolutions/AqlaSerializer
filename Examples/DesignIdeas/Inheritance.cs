@@ -81,7 +81,6 @@ namespace Examples.DesignIdeas
             Assert.AreEqual(((Sub2)sb).Bar, ((Sub2)clone).Bar, "Foo");
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void InheritanceCheckBytesCorrectOrder()
         {
@@ -104,7 +103,7 @@ namespace Examples.DesignIdeas
             Assert.AreEqual(((Sub1)sb).Foo, ((Sub1)clone).Foo);
         }
 
-        [Ignore("AqlaSerializer changed format")]
+        [Ignore]
         [Test]
         public void InheritanceCheckBytesWrongOrder()
         {   // breaking change: not supported in v2; frankly, this is moot - the entire

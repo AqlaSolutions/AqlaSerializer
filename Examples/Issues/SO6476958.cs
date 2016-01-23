@@ -51,11 +51,11 @@ namespace Examples.Issues
 
             using (var ms = new MemoryStream())
             {
-                Serializer.Serialize(ms, foo);
-                Debug.WriteLine("AqlaSerializer changed format");
+                var tm = TypeModel.Create();
+                tm.Serialize(ms, foo);
                 //Assert.AreEqual(50, ms.Length);
                 ms.Position = 0;
-                clone = Serializer.Deserialize<BasicDuplicatedString>(ms);
+                clone = tm.Deserialize<BasicDuplicatedString>(ms);
             }
             Assert.AreEqual(foo.A, clone.A);
             Assert.AreEqual(foo.B, clone.B);

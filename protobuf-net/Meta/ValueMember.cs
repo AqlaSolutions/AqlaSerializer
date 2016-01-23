@@ -483,7 +483,8 @@ namespace AqlaSerializer.Meta
                 
                 if (tryHandleAsRegistered)
                 {
-                    ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true);
+                    object dummy = null;
+                    ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -535,13 +536,31 @@ namespace AqlaSerializer.Meta
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
-                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true);
+                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref defaultValue);
             }
-
+            
             if (ser == null)
             {
                 throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
             }
+
+            if (nullable && Helpers.GetNullableUnderlyingType(finalType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
+                nullable = false;
+
+            // Uri decorator is applied after default value
+            // because default value for Uri is treated as string
+
+            if (ser.ExpectedType == model.MapType(typeof(string)) && objectType == model.MapType(typeof(Uri)))
+            {
+                ser = new UriDecorator(model, ser);
+            }
+#if PORTABLE
+            else if (ser.ExpectedType == model.MapType(typeof(string)) && objectType.FullName == typeof(Uri).FullName)
+            {
+                // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
+                ser = new ReflectedUriDecorator(objectType, model, ser);
+            }
+#endif
 
             // apply lists if appropriate
             if (objectItemType != null)
@@ -596,20 +615,6 @@ namespace AqlaSerializer.Meta
             if (defaultValue != null)
                 ser = new DefaultValueDecorator(model, defaultValue, ser);
 
-            // Uri decorator is applied after default value
-            // because default value for Uri is treated as string
-
-            if (!tryAsReference && objectType == model.MapType(typeof(Uri)))
-            {
-                ser = new UriDecorator(model, ser);
-            }
-#if PORTABLE
-            else if(!tryAsReference && objectType.FullName == typeof(Uri).FullName)
-            {
-                // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
-                ser = new ReflectedUriDecorator(objectType, model, ser);
-            }
-#endif
             return ser;
         }
 
@@ -638,11 +643,12 @@ namespace AqlaSerializer.Meta
         internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
              bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
-            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes);
+            object dummy = null;
+            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes, ref dummy);
         }
 
         internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes)
+            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue)
         {
             Type originalType = type;
 #if !NO_GENERICS
@@ -672,7 +678,18 @@ namespace AqlaSerializer.Meta
                 }
             }
             if (ser == null)
+            {
                 ser = TryGetBasicTypeSerializer(model, dataFormat, type, out defaultWireType, overwriteList);
+                if (ser != null && Helpers.GetTypeCode(type) == ProtoTypeCode.Uri)
+                {
+                    // should be after uri but uri should always be before collection
+                    if (defaultValue != null)
+                    {
+                        ser = new DefaultValueDecorator(model, defaultValue, ser);
+                        defaultValue = null;
+                    }
+                }
+            }
             if (ser == null)
             {
                 var parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
@@ -684,7 +701,7 @@ namespace AqlaSerializer.Meta
             }
 
             if (ser != null)
-                return isPackedCollection ? ser : DecorateValueSerializer(model, originalType, tryAsReference, ser);
+                return isPackedCollection ? ser : DecorateValueSerializer(model, originalType, ref tryAsReference, ser);
 
             if (allowComplexTypes && model != null)
             {
@@ -797,7 +814,7 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
-        static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, bool asReference, IProtoSerializerWithWireType ser)
+        static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, ref bool asReference, IProtoSerializerWithWireType ser)
         {
             if (Helpers.IsValueType(type)) asReference = false;
 
@@ -815,6 +832,7 @@ namespace AqlaSerializer.Meta
                         break;
                 }
             }
+            else asReference = false;
 
             return ser;
         }

@@ -14,7 +14,6 @@ namespace Examples.Issues
     [TestFixture]
     public class AssortedGoLiveRegressions
     {
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestStringFromEmpty()
         {
@@ -43,14 +42,14 @@ namespace Examples.Issues
             Assert.IsTrue(Serializer.DeepClone(orig).SequenceEqual(orig));
         }
 
-        [Ignore("AqlaSerializer changed format")]
         [Test]
         public void TestByteArray()
         {
             // byte[] is a special case that compares most closely to 1:data
             // (rather than 1:item0 1:item1 1:item2 etc)
             var orig = new byte[] { 0, 1, 2, 4, 5 };
-            var clone = Serializer.ChangeType<byte[], HasBytes>(orig).Blob;
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var clone = tm.ChangeType<byte[], HasBytes>(orig).Blob;
             Assert.IsTrue(orig.SequenceEqual(clone));
         }
 

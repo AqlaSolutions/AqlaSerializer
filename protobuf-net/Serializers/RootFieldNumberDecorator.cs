@@ -1,16 +1,31 @@
-﻿using System;
+﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
+#if !NO_RUNTIME
+using System;
+#if FEAT_COMPILER
 using AqlaSerializer.Compiler;
+#endif
+using System.Diagnostics;
 using AqlaSerializer.Meta;
+
+#if FEAT_IKVM
+using Type = IKVM.Reflection.Type;
+using IKVM.Reflection;
+#else
+using System.Reflection;
+#endif
+
 
 namespace AqlaSerializer.Serializers
 {
-    sealed class CollectionRootFieldDecorator : IProtoTypeSerializer
+    sealed class RootFieldNumberDecorator : IProtoTypeSerializer
     {
         private readonly IProtoTypeSerializer _serializer;
-        
-        public CollectionRootFieldDecorator(IProtoTypeSerializer serializer)
+        readonly int _number;
+
+        public RootFieldNumberDecorator(IProtoTypeSerializer serializer, int number)
         {
             _serializer = serializer;
+            _number = number;
         }
 
         public Type ExpectedType
@@ -28,12 +43,12 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            if (source.ReadFieldHeader() != ListHelpers.FieldItem) throw new ProtoException("Expected list tag");
+            if (source.ReadFieldHeader() != _number) throw new ProtoException("Expected tag " + _number);
             return _serializer.Read(value, source);
         }
         public void Write(object value, ProtoWriter dest)
         {
-            ProtoWriter.WriteFieldHeaderBegin(ListHelpers.FieldItem, dest);
+            ProtoWriter.WriteFieldHeaderBegin(_number, dest);
             _serializer.Write(value, dest);
         }
 #endif
@@ -82,3 +97,4 @@ namespace AqlaSerializer.Serializers
 #endif
     }
 }
+#endif

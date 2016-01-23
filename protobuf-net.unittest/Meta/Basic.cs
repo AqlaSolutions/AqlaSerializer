@@ -15,9 +15,9 @@ namespace AqlaSerializer.unittest.Meta
         {
             public int Id { get; set; }
             public string Name { get; set; }
-            public static RuntimeTypeModel BuildMeta()
+            public static RuntimeTypeModel BuildMeta([Values(false, true)] bool comp)
             {
-                var model = TypeModel.Create();
+                var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
                 model.AddNotAsReferenceDefault = true;
                 var t=model.Add(typeof(Customer), false);
                 t.Add(1, "Id");
@@ -28,18 +28,18 @@ namespace AqlaSerializer.unittest.Meta
 
         
         [Test]
-        public void CanInitializeExplicitMeta()
+        public void CanInitializeExplicitMeta([Values(false, true)] bool comp)
         {
-            var meta = Customer.BuildMeta();
+            var meta = Customer.BuildMeta(comp);
             Assert.IsNotNull(meta);
             var types = meta.MetaTypes;
             Assert.AreEqual(typeof(Customer), types.Single().Type);
         }
 
         [Test]
-        public void WriteBasicRuntime()
+        public void WriteBasicRuntime([Values(false, true)] bool comp)
         {
-            var meta = Customer.BuildMeta();
+            var meta = Customer.BuildMeta(comp);
             Customer cust = new Customer { Id = 123, Name = "abc"};
 
             // Id: 1 * 8 + 0 = 0x08
@@ -47,13 +47,13 @@ namespace AqlaSerializer.unittest.Meta
             // Name: 2 * 8 + 2 = 0x12
             // "abc": 0x03616263
 
-            Util.TestModel(meta, cust, "087B1203616263");
+            Util.TestModel(meta, cust, "087B1203616263", comp);
         }
 
         [Test]
-        public void WriteRoundTripRuntime()
+        public void WriteRoundTripRuntime([Values(false, true)] bool comp)
         {
-            var meta = Customer.BuildMeta();
+            var meta = Customer.BuildMeta(comp);
             Customer cust = new Customer { Id = 123, Name = "abc" };
 
             using (var ms = new MemoryStream())
