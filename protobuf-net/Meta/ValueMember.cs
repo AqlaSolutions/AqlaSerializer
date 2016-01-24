@@ -459,24 +459,24 @@ namespace AqlaSerializer.Meta
 
         static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, RuntimeTypeModel model, out WireType wireType)
         {
-            Type objectItemType = collection.ItemType;
+            Type collectionItemType = collection.ItemType;
             wireType = 0;
             bool isPacked = collection.IsPacked;
             bool isPackedOriginal = isPacked;
-            Type finalType = objectItemType ?? objectType;
+            Type itemType = collectionItemType ?? objectType;
 
             IProtoSerializerWithWireType ser = null;
             
             bool originalAsReference = tryAsReference;
-            bool finalTypeCanBeNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
+            bool itemTypeCanBeNull = !Helpers.IsValueType(itemType) || Helpers.GetNullableUnderlyingType(itemType) != null;
 
-            if (objectItemType != null)
+            if (collectionItemType != null)
             {
-                isPacked = isPacked && !finalTypeCanBeNull && ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(objectItemType), dataFormat)); // TODO warn?
+                isPacked = isPacked && !itemTypeCanBeNull && ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(collectionItemType), dataFormat)); // TODO warn?
                 
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
-                MetaType.ResolveListTypes(model, finalType, ref nestedItemType, ref nestedDefaultType);
+                MetaType.ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
 
                 bool itemIsNestedCollection = nestedItemType != null;
                 bool tryHandleAsRegistered = !isMemberOrNested || !itemIsNestedCollection;
@@ -485,7 +485,7 @@ namespace AqlaSerializer.Meta
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
-                    ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref dummy);
+                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -494,11 +494,11 @@ namespace AqlaSerializer.Meta
                     if (!tryHandleAsRegistered && nestedDefaultType == null)
                     {
                         MetaType metaType;
-                        if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
+                        if (model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
                             nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
                     }
 
-                    if (tryAsReference && !CheckCanBeAsReference(objectItemType, false))
+                    if (tryAsReference && !CheckCanBeAsReference(collectionItemType, false))
                         tryAsReference = false;
 
                     //if (appendCollection) throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
@@ -506,7 +506,7 @@ namespace AqlaSerializer.Meta
                     if (nestedDefaultType == null)
                     {
                         MetaType metaType;
-                        if (model.FindOrAddAuto(finalType, false, true, false, out metaType) >= 0)
+                        if (model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
                             nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
                     }
 
@@ -520,7 +520,7 @@ namespace AqlaSerializer.Meta
                     nestedColl.IsPacked = isPackedOriginal;
 
                     ser = BuildValueFinalSerializer(
-                        finalType,
+                        itemType,
                         nestedColl,
                         dynamicType,
                         originalAsReference,
@@ -537,31 +537,31 @@ namespace AqlaSerializer.Meta
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
-                ser = TryGetCoreSerializer(model, dataFormat, finalType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref defaultValue);
+                ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref defaultValue);
             }
             
             if (ser == null)
             {
-                throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
+                throw new InvalidOperationException("No serializer defined for type: " + itemType.FullName);
             }
 
-            if (finalTypeCanBeNull && 
+            if (itemTypeCanBeNull && 
                 (
-                (Helpers.GetNullableUnderlyingType(finalType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
+                (Helpers.GetNullableUnderlyingType(itemType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
                 // TODO get rid of ugly casting, maybe use builder pattern
-                || (!Helpers.IsValueType(finalType) && !(ser is NetObjectValueDecorator) && !(ser is NetObjectSerializer))
+                || (!Helpers.IsValueType(itemType) && !(ser is NetObjectValueDecorator) && !(ser is NetObjectSerializer))
                 ))
             {
                 // if not wrapped with net obj - wrap with write-null check
-                ser = new NoNullDecorator(model, ser, objectItemType != null); // throw only for collection elements, otherwise don't write
+                ser = new NoNullDecorator(model, ser, collectionItemType != null); // throw only for collection elements, otherwise don't write
             }
 
-            if (ser.ExpectedType != model.MapType(typeof(object)) && finalType != ser.ExpectedType)
-                throw new ProtoException(string.Format("Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, finalType));
+            if (ser.ExpectedType != model.MapType(typeof(object)) && itemType != ser.ExpectedType)
+                throw new ProtoException(string.Format("Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, itemType));
             
 
             // apply lists if appropriate
-            if (objectItemType != null)
+            if (collectionItemType != null)
             {
                 if (objectType.IsArray)
                 {
