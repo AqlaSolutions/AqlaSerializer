@@ -51,7 +51,7 @@ namespace AqlaSerializer.Serializers
                                 ProtoWriter.WriteFieldHeader(FieldSubtype, WireType.Variant, dest);
                                 ProtoWriter.WriteInt32(subTypeNumber.Value, dest);
                             }
-                            if (length != null)
+                            if (length != null && length.Value > 0)
                             {
                                 ProtoWriter.WriteFieldHeader(FieldLength, WireType.Variant, dest);
                                 ProtoWriter.WriteInt32(length.Value, dest);
