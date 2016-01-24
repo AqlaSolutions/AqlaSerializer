@@ -659,7 +659,7 @@ namespace AqlaSerializer.Compiler
 
         public void EmitCall(MethodInfo method)
         {
-            Helpers.DebugAssert(method != null);
+            if (method == null) throw new ArgumentNullException(nameof(method));
             CheckAccessibility(method);
             OpCode opcode = (method.IsStatic || method.DeclaringType.IsValueType) ? OpCodes.Call : OpCodes.Callvirt;
             il.EmitCall(opcode, method, null);

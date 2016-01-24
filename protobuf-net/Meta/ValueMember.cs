@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using AqlaSerializer.Serializers;
 using System.Globalization;
 using AltLinq;
@@ -467,11 +468,11 @@ namespace AqlaSerializer.Meta
             IProtoSerializerWithWireType ser = null;
             
             bool originalAsReference = tryAsReference;
-            bool nullable = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
+            bool finalTypeCanBeNull = !Helpers.IsValueType(finalType) || Helpers.GetNullableUnderlyingType(finalType) != null;
 
             if (objectItemType != null)
             {
-                isPacked = isPacked && !nullable && ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(objectItemType), dataFormat)); // TODO warn?
+                isPacked = isPacked && !finalTypeCanBeNull && ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(objectItemType), dataFormat)); // TODO warn?
                 
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
@@ -544,33 +545,24 @@ namespace AqlaSerializer.Meta
                 throw new InvalidOperationException("No serializer defined for type: " + finalType.FullName);
             }
 
-            if (nullable && Helpers.GetNullableUnderlyingType(finalType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
-                nullable = false;
-
-            // Uri decorator is applied after default value
-            // because default value for Uri is treated as string
-
-            if (ser.ExpectedType == model.MapType(typeof(string)) && objectType == model.MapType(typeof(Uri)))
+            if (finalTypeCanBeNull && 
+                (
+                (Helpers.GetNullableUnderlyingType(finalType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
+                // TODO get rid of ugly casting, maybe use builder pattern
+                || (!Helpers.IsValueType(finalType) && !(ser is NetObjectValueDecorator) && !(ser is NetObjectSerializer))
+                ))
             {
-                ser = new UriDecorator(model, ser);
+                // if not wrapped with net obj - wrap with write-null check
+                ser = new NoNullDecorator(model, ser, objectItemType != null); // throw only for collection elements, otherwise don't write
             }
-#if PORTABLE
-            else if (ser.ExpectedType == model.MapType(typeof(string)) && objectType.FullName == typeof(Uri).FullName)
-            {
-                // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
-                ser = new ReflectedUriDecorator(objectType, model, ser);
-            }
-#endif
+
+            if (ser.ExpectedType != model.MapType(typeof(object)) && finalType != ser.ExpectedType)
+                throw new ProtoException(string.Format("Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, finalType));
+            
 
             // apply lists if appropriate
             if (objectItemType != null)
             {
-#if NO_GENERICS
-                Type underlyingItemType = objectItemType;
-#else
-                Type underlyingItemType = nullable ? objectItemType : Helpers.GetNullableUnderlyingType(objectItemType) ?? objectItemType;
-#endif
-                Helpers.DebugAssert(underlyingItemType == ser.ExpectedType, "Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, underlyingItemType);
                 if (objectType.IsArray)
                 {
                     ser = new ArrayDecorator(
@@ -606,9 +598,16 @@ namespace AqlaSerializer.Meta
                         !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
                 }
 
-                if (isMemberOrNested && MetaType.IsNetObjectValueDecoratorNecessary(model, objectType, tryAsReference))
+                if (isMemberOrNested)
                 {
-                    ser = new NetObjectValueDecorator(objectType, ser, tryAsReference);
+                    if (MetaType.IsNetObjectValueDecoratorNecessary(model, objectType, tryAsReference))
+                    {
+                        ser = new NetObjectValueDecorator(objectType, ser, tryAsReference);
+                    }
+                    else if (!Helpers.IsValueType(objectType) || Helpers.GetNullableUnderlyingType(objectType) != null)
+                    {
+                        ser = new NoNullDecorator(model, ser, false);
+                    }
                 }
             }
 
@@ -703,7 +702,7 @@ namespace AqlaSerializer.Meta
             if (ser != null)
                 return isPackedCollection ? ser : DecorateValueSerializer(model, originalType, ref tryAsReference, ser);
 
-            if (allowComplexTypes && model != null)
+            if (allowComplexTypes)
             {
                 int key = model.GetKey(type, false, true);
 
@@ -831,8 +830,27 @@ namespace AqlaSerializer.Meta
                         ser = new NetObjectValueDecorator(type, ser, asReference);
                         break;
                 }
+
             }
-            else asReference = false;
+            else
+            {
+                asReference = false;
+
+                // Uri decorator is applied after default value
+                // because default value for Uri is treated as string
+
+                if (ser.ExpectedType == model.MapType(typeof(string)) && type == model.MapType(typeof(Uri)))
+                {
+                    ser = new UriDecorator(model, ser);
+                }
+#if PORTABLE
+                else if (ser.ExpectedType == model.MapType(typeof(string)) && type.FullName == typeof(Uri).FullName)
+                {
+                    // In PCLs, the Uri type may not match (WinRT uses Internal/Uri, .Net uses System/Uri)
+                    ser = new ReflectedUriDecorator(type, model, ser);
+                }
+#endif
+            }
 
             return ser;
         }

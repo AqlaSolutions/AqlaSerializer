@@ -53,12 +53,8 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            Helpers.DebugAssert(value != null);
-            value = Helpers.GetPropertyValue(property, value);
-            if(value != null)
-                Tail.Write(value, dest);
-            else
-                ProtoWriter.WriteFieldHeaderCancelBegin(dest);
+            Helpers.DebugAssert(value != null); // TODO emit without null check
+            Tail.Write(Helpers.GetPropertyValue(property, value), dest);
         }
         public override object Read(object value, ProtoReader source)
         {
