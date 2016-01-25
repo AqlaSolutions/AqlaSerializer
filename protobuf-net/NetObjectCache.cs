@@ -48,8 +48,13 @@ namespace AqlaSerializer
             }
             return tmp;
         }
-        
+
         internal void SetKeyedObject(int key, object value)
+        {
+            SetKeyedObject(key, value, false);
+        }
+
+        internal void SetKeyedObject(int key, object value, bool lateSet)
         {
             if (key-- == Root)
             {
@@ -66,7 +71,7 @@ namespace AqlaSerializer
                 if (key < list.Count)
                 {
                     object oldVal = list[key];
-                    if (oldVal == null)
+                    if (oldVal == null || lateSet)
                     {
                         list[key] = value;
                     }

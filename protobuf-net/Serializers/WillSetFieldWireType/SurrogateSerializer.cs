@@ -115,14 +115,15 @@ namespace AqlaSerializer.Serializers
         }
         public object Read(object value, ProtoReader source)
         {
+            var reservedTrap = ProtoReader.ReserveNoteObject(source);
             // convert the incoming value
             object[] args = { value };
-            value = toTail.Invoke(null, args);
-            if (value != null) // it's our responsibility to note object if we created it
-                ProtoReader.NoteObject(value, source);
+            value = toTail.Invoke(null, args); // don't note, references are not to surrogate but to the final object
             // invoke the tail and convert the outgoing value
             args[0] = rootTail.Read(value, source);
-            return fromTail.Invoke(null, args);
+            var r = fromTail.Invoke(null, args);
+            ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source); // TODO emit
+            return r;
         }
 #endif
 

@@ -97,7 +97,6 @@ namespace AqlaSerializer.Serializers
             int typeKey = _key;
             var t = _type;
             bool isDynamic;
-            object oldValue = value;
             BclHelpers.NetObjectOptions options = _options;
             SubItemToken token = NetObjectHelpers.ReadNetObject_Start(
                 ref value,
@@ -109,9 +108,9 @@ namespace AqlaSerializer.Serializers
                 out newObjectKey,
                 out newTypeRefKey,
                 out shouldEnd);
-
             if (shouldEnd)
             {
+                object oldValue = value;
                 if (typeKey > 0)
                 {
                     value = ProtoReader.ReadObject(value, typeKey, source);
