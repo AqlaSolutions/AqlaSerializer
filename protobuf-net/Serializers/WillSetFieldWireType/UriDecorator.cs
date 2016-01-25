@@ -39,14 +39,7 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value == null); // not expecting incoming
             string s = (string)Tail.Read(null, source);
-            return s.Length == 0 ? null : CreateUri(s, source);
-        }
-
-        private Uri CreateUri(string s, ProtoReader source)
-        {
-            var u = new Uri(s);
-            ProtoReader.NoteObject(u, source);
-            return u;
+            return s.Length == 0 ? null : new Uri(s);
         }
 #endif
 
@@ -69,9 +62,6 @@ namespace AqlaSerializer.Serializers
             ctx.Branch(@end, true);
             ctx.MarkLabel(@nonEmpty);
             ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)));
-            ctx.CopyValue();
-            ctx.CastToObject(ctx.MapType(typeof(Uri)));
-            ctx.EmitCallNoteObject();
             ctx.MarkLabel(@end);
 
         }

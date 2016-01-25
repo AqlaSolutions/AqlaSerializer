@@ -21,9 +21,9 @@ namespace AqlaSerializer.Serializers
     {
         private readonly IProtoTypeSerializer _serializer;
         
-        public RootDecorator(Type type, bool wrap, IProtoTypeSerializer serializer)
+        public RootDecorator(Type type, bool wrap, IProtoTypeSerializer serializer, TypeModel model)
         {
-            _serializer = wrap ? new NetObjectValueDecorator(type, serializer, !Helpers.IsValueType(type)) : serializer;
+            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), model) : serializer;
         }
 
         public Type ExpectedType

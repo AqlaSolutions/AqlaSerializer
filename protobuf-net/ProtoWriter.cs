@@ -52,7 +52,7 @@ namespace AqlaSerializer
             {
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
-
+            
             if (key >= 0)
             {
                 writer.model.Serialize(key, value, writer, false);
@@ -1027,6 +1027,78 @@ namespace AqlaSerializer
             }
         }
 
+
+        internal static bool TryWriteBuiltinTypeValue(object value, ProtoTypeCode typecode, bool allowSystemType, ProtoWriter writer)
+        {
+            switch (typecode)
+            {
+                case ProtoTypeCode.Int16:
+                    ProtoWriter.WriteInt16((short)value, writer);
+                    return true;
+                case ProtoTypeCode.Int32:
+                    ProtoWriter.WriteInt32((int)value, writer);
+                    return true;
+                case ProtoTypeCode.Int64:
+                    ProtoWriter.WriteInt64((long)value, writer);
+                    return true;
+                case ProtoTypeCode.UInt16:
+                    ProtoWriter.WriteUInt16((ushort)value, writer);
+                    return true;
+                case ProtoTypeCode.UInt32:
+                    ProtoWriter.WriteUInt32((uint)value, writer);
+                    return true;
+                case ProtoTypeCode.UInt64:
+                    ProtoWriter.WriteUInt64((ulong)value, writer);
+                    return true;
+                case ProtoTypeCode.Boolean:
+                    ProtoWriter.WriteBoolean((bool)value, writer);
+                    return true;
+                case ProtoTypeCode.SByte:
+                    ProtoWriter.WriteSByte((sbyte)value, writer);
+                    return true;
+                case ProtoTypeCode.Byte:
+                    ProtoWriter.WriteByte((byte)value, writer);
+                    return true;
+                case ProtoTypeCode.Char:
+                    ProtoWriter.WriteUInt16((ushort)(char)value, writer);
+                    return true;
+                case ProtoTypeCode.Double:
+                    ProtoWriter.WriteDouble((double)value, writer);
+                    return true;
+                case ProtoTypeCode.Single:
+                    ProtoWriter.WriteSingle((float)value, writer);
+                    return true;
+                case ProtoTypeCode.DateTime:
+                    if (writer.Model != null && writer.Model.SerializeDateTimeKind())
+                        BclHelpers.WriteDateTimeWithKind((DateTime)value, writer);
+                    else
+                        BclHelpers.WriteDateTime((DateTime)value, writer);
+                    return true;
+                case ProtoTypeCode.Decimal:
+                    BclHelpers.WriteDecimal((decimal)value, writer);
+                    return true;
+                case ProtoTypeCode.String:
+                    ProtoWriter.WriteString((string)value, writer);
+                    return true;
+                case ProtoTypeCode.ByteArray:
+                    ProtoWriter.WriteBytes((byte[])value, writer);
+                    return true;
+                case ProtoTypeCode.TimeSpan:
+                    BclHelpers.WriteTimeSpan((TimeSpan)value, writer);
+                    return true;
+                case ProtoTypeCode.Guid:
+                    BclHelpers.WriteGuid((Guid)value, writer);
+                    return true;
+                case ProtoTypeCode.Uri:
+                    ProtoWriter.WriteString(((Uri)value).AbsoluteUri, writer);
+                    return true;
+                case ProtoTypeCode.Type:
+                    if (!allowSystemType) break;
+                    ProtoWriter.WriteType((System.Type)value, writer);
+                    return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Writes a signed 16-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
