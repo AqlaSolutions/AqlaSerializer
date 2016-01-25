@@ -12,7 +12,7 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue174cs
     {
-        [Test, ExpectedException(ExpectedMessage = "Dynamic type is not a contract-type: Boolean")]
+        [Test]
         public void TestDynamic()
         {
             var myVal = new TestProto { Value = true };
@@ -23,6 +23,7 @@ namespace Examples.Issues
                 serialized = ms.ToArray();
             }
             Assert.That(serialized, Is.Not.Null);
+            Assert.That(Serializer.DeepClone(myVal).Value, Is.True);
         }
 
         [ProtoBuf.ProtoContract]

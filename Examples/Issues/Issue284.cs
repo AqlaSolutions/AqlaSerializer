@@ -9,7 +9,7 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue284
     {
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Dynamic type is not a contract-type: Int32")]
+        [Test]
         public void Execute()
         {
             MyArgs test = new MyArgs
@@ -21,6 +21,8 @@ namespace Examples.Issues
             using (MemoryStream ms = new MemoryStream(buffer))
             {
                 Serializer.Serialize(ms, test);
+                ms.SetLength(ms.Position);
+                buffer = ms.ToArray();
             }
 
             using (MemoryStream ms = new MemoryStream(buffer))

@@ -1,4 +1,5 @@
 // Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 #if !NO_RUNTIME
 using System;
 #if FEAT_COMPILER
@@ -12,95 +13,175 @@ using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
-#endif
 
+#endif
 
 namespace AqlaSerializer.Serializers
 {
     sealed class NetObjectValueDecorator : IProtoTypeSerializer // type here is just for wrapping
     {
+        readonly int _key = -1;
         readonly IProtoSerializer _serializer;
-        readonly Type type;
+        readonly Type _type;
 
         readonly BclHelpers.NetObjectOptions _options;
+        readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
 
         // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
-        public NetObjectValueDecorator(Type type, IProtoSerializerWithWireType serializer, bool asReference)
+        NetObjectValueDecorator(Type type, bool asReference)
         {
-            _serializer = serializer;
-            //wrapping a type makes too much complexity for just one ReadFieldHeader call
-            //var typeSer = serializer as IProtoTypeSerializer;
+            if (type == null) throw new ArgumentNullException(nameof(type));
             _options = BclHelpers.NetObjectOptions.UseConstructor;
             if (asReference)
                 _options |= BclHelpers.NetObjectOptions.AsReference;
-            if (serializer is TupleSerializer)
+
+            ProtoTypeCode typeCode = Helpers.GetTypeCode(type);
+
+            // mind that this is set not for AsReference only
+            // because AsReference may be switched in another version
+            if (typeCode == ProtoTypeCode.String || typeCode == ProtoTypeCode.Type || typeCode == ProtoTypeCode.Uri)
                 _options |= BclHelpers.NetObjectOptions.LateSet;
+
             // if this type is nullable it's ok
             // we'll unwrap it
             // and for non emit it's already boxed as not nullable
             // TODO unwrap nullable in emit
-            this.type = type;
+            this._type = type;
         }
 
-        public Type ExpectedType
+        public NetObjectValueDecorator(IProtoSerializerWithWireType serializer, bool returnNullable, bool asReference, TypeModel model)
+            : this(type: MakeReturnNullable(serializer.ExpectedType, returnNullable, model), asReference: asReference)
         {
-            get { return type; }
+            _serializer = serializer;
+
+            RequiresOldValue = _serializer.RequiresOldValue;
         }
-        public bool ReturnsValue
+
+        static Type MakeReturnNullable(Type type, bool make, TypeModel model)
         {
-            get { return _serializer.ReturnsValue; }
+            if (!make || !Helpers.IsValueType(type) || Helpers.GetNullableUnderlyingType(type) != null) return type;
+            return model.MapType(typeof(Nullable<>)).MakeGenericType(type);
         }
-        public bool RequiresOldValue
+        
+        /// <summary>
+        /// Dynamic type
+        /// </summary>
+        /// <param name="asReference"></param>
+        /// <param name="dataFormatForDynamicBuiltins"></param>
+        public NetObjectValueDecorator(bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, TypeModel model)
+            : this(type: model.MapType(typeof(object)), asReference: asReference)
         {
-            get { return _serializer.RequiresOldValue; }
+            _dataFormatForDynamicBuiltins = dataFormatForDynamicBuiltins;
+            _options |= BclHelpers.NetObjectOptions.DynamicType;
         }
+
+        public NetObjectValueDecorator(Type type, int key, bool asReference)
+            : this(type: type, asReference: asReference)
+        {
+            if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
+            _key = key;
+        }
+
+        public Type ExpectedType => _type;
+        public bool ReturnsValue => _serializer?.ReturnsValue ?? true;
+        public bool RequiresOldValue { get; } = true;
+
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            SubItemToken token;
+            if (!RequiresOldValue) value = null;
             bool shouldEnd;
-            bool isType;
-            int newTypeKey;
+            int newTypeRefKey;
             int newObjectKey;
-            var t = type;
-            object newValue = NetObjectHelpers.ReadNetObject_StartInject(value, source, ref t, _options, out token, out shouldEnd, out newObjectKey, out newTypeKey, out isType);
+            int typeKey = _key;
+            var t = _type;
+            bool isDynamic;
+            object oldValue = value;
+            BclHelpers.NetObjectOptions options = _options;
+            SubItemToken token = NetObjectHelpers.ReadNetObject_Start(
+                ref value,
+                source,
+                ref t,
+                options,
+                out isDynamic,
+                ref typeKey,
+                out newObjectKey,
+                out newTypeRefKey,
+                out shouldEnd);
+
             if (shouldEnd)
             {
-                value = newValue;
-                newValue = DoRead(value, source);
-                NetObjectHelpers.ReadNetObject_EndInjectAndNoteNewObject(newValue, source, value, t, newObjectKey, newTypeKey, isType, _options, token);
+                if (typeKey > 0)
+                {
+                    value = ProtoReader.ReadObject(value, typeKey, source);
+                }
+                else
+                {
+                    if (isDynamic)
+                    {
+                        if (source.TryReadBuiltinType(ref value, Helpers.GetTypeCode(t), true))
+                            options |= BclHelpers.NetObjectOptions.LateSet;
+                        else
+                            throw new InvalidOperationException("Dynamic type is not a contract-type: " + value.GetType().Name);
+                    }
+                    else if (_serializer == null)
+                    {
+                        throw new InvalidOperationException("Dynamic type expected but no type info was read");
+                    }
+                    else
+                    {
+                        value = _serializer.Read(_serializer.RequiresOldValue ? value : null, source);
+                    }
+                }
+                NetObjectHelpers.ReadNetObject_EndWithNoteNewObject(value, source, oldValue, t, newObjectKey, newTypeRefKey, options, token);
             }
             else
             {
-                if (Helpers.IsValueType(type) && newValue == null)
-                    newValue = Activator.CreateInstance(type);
+                if (Helpers.IsValueType(_type) && value == null)
+                    value = Activator.CreateInstance(_type);
                 ProtoReader.EndSubItem(token, source);
             }
-            return newValue;
-        }
-
-        object DoRead(object value, ProtoReader source)
-        {
-            return _serializer.Read(value, source);
+            return value;
         }
 
         public void Write(object value, ProtoWriter dest)
         {
             bool write;
-            SubItemToken t = NetObjectHelpers.WriteNetObject_StartInject(value, dest, _options, out write);
+            int dynamicTypeKey;
+            SubItemToken t = NetObjectHelpers.WriteNetObject_Start(value, dest, _options, out dynamicTypeKey, out write);
+
+            // TODO emit
             if (write)
             {
                 // field header written!
-                DoWrite(value, dest);
+                if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0)
+                {
+                    if (dynamicTypeKey < 0)
+                    {
+                        var typeCode = Helpers.GetTypeCode(value.GetType());
+                        var wireType = TypeModel.GetWireType(typeCode, _dataFormatForDynamicBuiltins);
+                        if (wireType != WireType.None)
+                        {
+                            ProtoWriter.WriteFieldHeaderComplete(wireType, dest);
+                            if (ProtoWriter.TryWriteBuiltinTypeValue(value, typeCode, true, dest))
+                                write = false;
+                        }
+                        if (write)
+                            throw new InvalidOperationException("Dynamic type is not a contract-type: " + _type.Name);
+                    }
+                    else ProtoWriter.WriteRecursionSafeObject(value, dynamicTypeKey, dest);
+                }
+                else if (_serializer != null)
+                {
+                    _serializer.Write(value, dest);
+                }
+                else
+                    ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
             }
             ProtoWriter.EndSubItem(t, dest);
         }
 
-        void DoWrite(object value, ProtoWriter dest)
-        {
-            _serializer.Write(value, dest);
-        }
 #endif
 
 #if FEAT_COMPILER
@@ -109,7 +190,7 @@ namespace AqlaSerializer.Serializers
             var g = new CodeGen(ctx.RunSharpContext, false);
             var s = ctx.RunSharpContext.StaticFactory;
 
-            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(type, valueFrom) : new Local(ctx, type))
+            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(_type, valueFrom) : new Local(ctx, _type))
             {
                 using (Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
                 using (Local shouldEnd = new Local(ctx, ctx.MapType(typeof(bool))))
@@ -119,11 +200,11 @@ namespace AqlaSerializer.Serializers
                 using (Local t = new Local(ctx, ctx.MapType(typeof(System.Type))))
                 using (Local newValue = new Local(ctx, ctx.MapType(typeof(object))))
                 using (Local oldValue = new Local(ctx, ctx.MapType(typeof(object))))
-                using (Local resultCasted = new Local(ctx, ctx.MapType(type)))
+                using (Local resultCasted = new Local(ctx, ctx.MapType(_type)))
                 {
                     if (!RequiresOldValue)
                     {
-                        if (type.IsValueType)
+                        if (_type.IsValueType)
                             g.InitObj(value);
                         else
                         {
@@ -131,12 +212,12 @@ namespace AqlaSerializer.Serializers
                             ctx.StoreValue(value);
                         }
                     }
-                    g.Assign(t, ctx.MapType(type));
+                    g.Assign(t, ctx.MapType(_type));
                     g.Assign(
                         newValue,
                         s.Invoke(
                             typeof(NetObjectHelpers),
-                            nameof(NetObjectHelpers.ReadNetObject_StartInject),
+                            nameof(NetObjectHelpers.ReadNetObject_Start),
                             value,
                             g.Arg(ctx.ArgIndexReadWriter),
                             t,
@@ -151,11 +232,11 @@ namespace AqlaSerializer.Serializers
                     {
                         g.Assign(oldValue, newValue);
                         // valuetype: will never be null otherwise it would go to else
-                        g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+                        g.Assign(resultCasted, newValue.AsOperand.Cast(_type));
                         EmitDoRead(g, resultCasted, ctx);
                         g.Invoke(
                             typeof(NetObjectHelpers),
-                            nameof(NetObjectHelpers.ReadNetObject_EndInjectAndNoteNewObject),
+                            nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
                             newValue,
                             g.Arg(ctx.ArgIndexReadWriter),
                             oldValue,
@@ -169,7 +250,7 @@ namespace AqlaSerializer.Serializers
                     g.Else();
                     {
                         // nullable will just unbox how it should be from null or value
-                        if (type.IsValueType && _serializer.ReturnsValue && (Helpers.GetNullableUnderlyingType(type) == null))
+                        if (_type.IsValueType && ReturnsValue && (Helpers.GetNullableUnderlyingType(_type) == null))
                         {
                             // TODO do we need to ensure this? versioning - change between reference type/nullable and value type
                             g.If(newValue.AsOperand == null);
@@ -178,18 +259,18 @@ namespace AqlaSerializer.Serializers
                             }
                             g.Else();
                             {
-                                g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+                                g.Assign(resultCasted, newValue.AsOperand.Cast(_type));
                             }
                             g.End();
                         }
                         else
-                            g.Assign(resultCasted, newValue.AsOperand.Cast(type));
+                            g.Assign(resultCasted, newValue.AsOperand.Cast(_type));
 
                         g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
                     }
                     g.End();
 
-                    if (_serializer.ReturnsValue)
+                    if (ReturnsValue)
                     {
                         ctx.LoadValue(resultCasted);
                     }
@@ -205,7 +286,7 @@ namespace AqlaSerializer.Serializers
 
         public void EmitWrite(CompilerContext ctx, Local valueFrom)
         {
-            using (Local value = ctx.GetLocalWithValue(type, valueFrom))
+            using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
             {
                 var g = new CodeGen(ctx.RunSharpContext, false);
                 using (Local write = new Local(ctx, ctx.MapType(typeof(bool))))
@@ -215,7 +296,7 @@ namespace AqlaSerializer.Serializers
                     // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
                     g.Assign(
                         t,
-                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_StartInject), value, g.Arg(ctx.ArgIndexReadWriter), _options, write));
+                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.Arg(ctx.ArgIndexReadWriter), _options, write));
                     g.If(write);
                     {
                         // field header written!
@@ -251,11 +332,13 @@ namespace AqlaSerializer.Serializers
             IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
             return pts != null && pts.CanCreateInstance();
         }
+
 #if !FEAT_IKVM
         public object CreateInstance(ProtoReader source)
         {
             return ((IProtoTypeSerializer)_serializer).CreateInstance(source);
         }
+
         public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
             IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
@@ -269,6 +352,7 @@ namespace AqlaSerializer.Serializers
             // **must** be of the correct type
             ((IProtoTypeSerializer)_serializer).EmitCallback(ctx, valueFrom, callbackType);
         }
+
         public void EmitCreateInstance(Compiler.CompilerContext ctx)
         {
             ((IProtoTypeSerializer)_serializer).EmitCreateInstance(ctx);
@@ -276,4 +360,5 @@ namespace AqlaSerializer.Serializers
 #endif
     }
 }
+
 #endif

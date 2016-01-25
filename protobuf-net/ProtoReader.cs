@@ -1376,6 +1376,75 @@ namespace AqlaSerializer
             return TypeModel.DeserializeType(model, ReadString());
         }
 
+        internal bool TryReadBuiltinType(ref object value, ProtoTypeCode typecode, bool allowSystemType)
+        {
+            switch (typecode)
+            {
+                case ProtoTypeCode.Int16:
+                    value = this.ReadInt16();
+                    return true;
+                case ProtoTypeCode.Int32:
+                    value = this.ReadInt32();
+                    return true;
+                case ProtoTypeCode.Int64:
+                    value = this.ReadInt64();
+                    return true;
+                case ProtoTypeCode.UInt16:
+                    value = this.ReadUInt16();
+                    return true;
+                case ProtoTypeCode.UInt32:
+                    value = this.ReadUInt32();
+                    return true;
+                case ProtoTypeCode.UInt64:
+                    value = this.ReadUInt64();
+                    return true;
+                case ProtoTypeCode.Boolean:
+                    value = this.ReadBoolean();
+                    return true;
+                case ProtoTypeCode.SByte:
+                    value = this.ReadSByte();
+                    return true;
+                case ProtoTypeCode.Byte:
+                    value = this.ReadByte();
+                    return true;
+                case ProtoTypeCode.Char:
+                    value = (char)this.ReadUInt16();
+                    return true;
+                case ProtoTypeCode.Double:
+                    value = this.ReadDouble();
+                    return true;
+                case ProtoTypeCode.Single:
+                    value = this.ReadSingle();
+                    return true;
+                case ProtoTypeCode.DateTime:
+                    value = BclHelpers.ReadDateTime(this);
+                    return true;
+                case ProtoTypeCode.Decimal:
+                    value = BclHelpers.ReadDecimal(this);
+                    return true;
+                case ProtoTypeCode.String:
+                    value = this.ReadString();
+                    return true;
+                case ProtoTypeCode.ByteArray:
+                    value = AppendBytes((byte[])value, this);
+                    return true;
+                case ProtoTypeCode.TimeSpan:
+                    value = BclHelpers.ReadTimeSpan(this);
+                    return true;
+                case ProtoTypeCode.Guid:
+                    value = BclHelpers.ReadGuid(this);
+                    return true;
+                case ProtoTypeCode.Uri:
+                    value = new Uri(this.ReadString());
+                    return true;
+                case ProtoTypeCode.Type:
+                    if (!allowSystemType) return false;
+                    value = this.ReadType();
+                    return true;
+            }
+            return false;
+        }
+
 #if NO_GENERICS
         readonly Stack _trapNoteReserved = new Stack();
 #else

@@ -408,7 +408,7 @@ namespace AqlaSerializer
             /// </summary>
             UseConstructor = 4,
             /// <summary>
-            /// Should the object index be reserved, rather than creating an object promptly
+            /// Should not expect serializer to call NoteObject: usable for serializers of primitive immutable reference types (e.g. String, System.Type) 
             /// </summary>
             LateSet = 8
         }

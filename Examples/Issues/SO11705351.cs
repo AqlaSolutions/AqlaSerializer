@@ -102,8 +102,8 @@ namespace Examples.Issues
         }
         private static void Execute(TypeModel model, string caption)
         {
-            try
-            {
+            //try
+            //{
                 using (var stream = new MemoryStream())
                 {
                     {
@@ -122,10 +122,10 @@ namespace Examples.Issues
                         Assert.AreSame(assemblage.Parts[0], whole.Parts[0], "Part:" + caption);
                     }
                 }
-            } catch(Exception ex)
-            {
-                Assert.Fail(ex.Message + ":" + caption);
-            }
+            //} catch(Exception ex)
+            //{
+            //    Assert.Fail(ex.Message + ":" + caption);
+            //}
         }
 
         [Test]

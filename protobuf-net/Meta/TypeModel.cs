@@ -176,32 +176,7 @@ namespace AqlaSerializer.Meta
             if(wireType != WireType.None) {
                 ProtoWriter.WriteFieldHeader(tag, wireType, writer);
             }
-            switch(typecode) {
-                case ProtoTypeCode.Int16: ProtoWriter.WriteInt16((short)value, writer); return true;
-                case ProtoTypeCode.Int32: ProtoWriter.WriteInt32((int)value, writer); return true;
-                case ProtoTypeCode.Int64: ProtoWriter.WriteInt64((long)value, writer); return true;
-                case ProtoTypeCode.UInt16: ProtoWriter.WriteUInt16((ushort)value, writer); return true;
-                case ProtoTypeCode.UInt32: ProtoWriter.WriteUInt32((uint)value, writer); return true;
-                case ProtoTypeCode.UInt64: ProtoWriter.WriteUInt64((ulong)value, writer); return true;
-                case ProtoTypeCode.Boolean: ProtoWriter.WriteBoolean((bool)value, writer); return true;
-                case ProtoTypeCode.SByte: ProtoWriter.WriteSByte((sbyte)value, writer); return true;
-                case ProtoTypeCode.Byte: ProtoWriter.WriteByte((byte)value, writer); return true;
-                case ProtoTypeCode.Char: ProtoWriter.WriteUInt16((ushort)(char)value, writer); return true;
-                case ProtoTypeCode.Double: ProtoWriter.WriteDouble((double)value, writer); return true;
-                case ProtoTypeCode.Single: ProtoWriter.WriteSingle((float)value, writer); return true;
-                case ProtoTypeCode.DateTime:
-                    if (SerializeDateTimeKind())
-                        BclHelpers.WriteDateTimeWithKind((DateTime)value, writer);
-                    else
-                        BclHelpers.WriteDateTime((DateTime)value, writer);
-                    return true;
-                case ProtoTypeCode.Decimal: BclHelpers.WriteDecimal((decimal)value, writer); return true;
-                case ProtoTypeCode.String: ProtoWriter.WriteString((string)value, writer); return true;
-                case ProtoTypeCode.ByteArray: ProtoWriter.WriteBytes((byte[])value, writer); return true;
-                case ProtoTypeCode.TimeSpan: BclHelpers.WriteTimeSpan((TimeSpan)value, writer); return true;
-                case ProtoTypeCode.Guid: BclHelpers.WriteGuid((Guid)value, writer); return true;
-                case ProtoTypeCode.Uri: ProtoWriter.WriteString(((Uri)value).AbsoluteUri, writer); return true;
-            }
+            if (ProtoWriter.TryWriteBuiltinTypeValue(value, typecode, false, writer)) return true;
 
             if (typecode == ProtoTypeCode.Type && isRoot)
             {
@@ -229,6 +204,7 @@ namespace AqlaSerializer.Meta
             }
             return false;
         }
+
         private void SerializeCore(ProtoWriter writer, object value, bool isRoot)
         {
             if (value == null) throw new ArgumentNullException("value");
@@ -908,28 +884,7 @@ namespace AqlaSerializer.Meta
                             continue;
                     }
                 }
-                switch (typecode)
-                {
-                    case ProtoTypeCode.Int16: value = reader.ReadInt16(); continue;
-                    case ProtoTypeCode.Int32: value = reader.ReadInt32(); continue;
-                    case ProtoTypeCode.Int64: value = reader.ReadInt64(); continue;
-                    case ProtoTypeCode.UInt16: value = reader.ReadUInt16(); continue;
-                    case ProtoTypeCode.UInt32: value = reader.ReadUInt32(); continue;
-                    case ProtoTypeCode.UInt64: value = reader.ReadUInt64(); continue;
-                    case ProtoTypeCode.Boolean: value = reader.ReadBoolean(); continue;
-                    case ProtoTypeCode.SByte: value = reader.ReadSByte(); continue;
-                    case ProtoTypeCode.Byte: value = reader.ReadByte(); continue;
-                    case ProtoTypeCode.Char: value = (char)reader.ReadUInt16(); continue;
-                    case ProtoTypeCode.Double: value = reader.ReadDouble(); continue;
-                    case ProtoTypeCode.Single: value = reader.ReadSingle(); continue;
-                    case ProtoTypeCode.DateTime: value = BclHelpers.ReadDateTime(reader); continue;
-                    case ProtoTypeCode.Decimal: value = BclHelpers.ReadDecimal(reader); continue;
-                    case ProtoTypeCode.String: value = reader.ReadString(); continue;
-                    case ProtoTypeCode.ByteArray: value = ProtoReader.AppendBytes((byte[])value, reader); continue;
-                    case ProtoTypeCode.TimeSpan: value = BclHelpers.ReadTimeSpan(reader); continue;
-                    case ProtoTypeCode.Guid: value = BclHelpers.ReadGuid(reader); continue;
-                    case ProtoTypeCode.Uri: value = new Uri(reader.ReadString()); continue;
-                }
+                if (reader.TryReadBuiltinType(ref value, typecode, false)) continue;
                 if (typecode == ProtoTypeCode.Type && isRoot)
                 {
                     value = reader.ReadType();
@@ -1026,6 +981,13 @@ namespace AqlaSerializer.Meta
         protected internal int GetKey(ref Type type)
         {
             if (type == null) return -1;
+            switch (Helpers.GetTypeCode(type))
+            {
+                case ProtoTypeCode.Uri:
+                case ProtoTypeCode.String:
+                case ProtoTypeCode.Type:
+                    return -1;
+            }
             int key = GetKeyImpl(type);
             if (key < 0)
             {

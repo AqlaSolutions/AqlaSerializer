@@ -524,7 +524,7 @@ namespace AqlaSerializer.Meta
             SetFlag(OPTIONS_Frozen, true, false);
             serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(type, IsDecoratedByRootNetObject, s);
+            rootSerializer = new RootDecorator(type, IsDecoratedByRootNetObject, s, model);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
 #endif

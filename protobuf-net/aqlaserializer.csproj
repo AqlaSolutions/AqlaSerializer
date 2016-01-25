@@ -275,7 +275,6 @@
     <Compile Include="Serializers\WillSetFieldWireType\NetObjectValueDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\ParseableSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ListDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\NetObjectSerializer.cs" />
     <Compile Include="Serializers\RootDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\SByteSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Fields\MemberSpecifiedDecorator.cs" />
