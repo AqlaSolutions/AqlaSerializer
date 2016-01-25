@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace AqlaSerializer
 {
@@ -70,7 +71,6 @@ namespace AqlaSerializer
                         shouldEnd = true;
                         bool wasNull = value == null;
                         bool lateSet = wasNull && ((options & BclHelpers.NetObjectOptions.LateSet) != 0);
-
                         if (newObjectKey >= 0 && !lateSet)
                         {
                             if (value == null)
@@ -98,34 +98,28 @@ namespace AqlaSerializer
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
+            // late set may become here true e.g. for dynamic string
             bool wasNull = oldValue == null;
             bool lateSet = wasNull && ((options & BclHelpers.NetObjectOptions.LateSet) != 0);
-
+            
             if (newObjectKey >= 0)
             {
                 if (wasNull && !lateSet)
                 { // this both ensures (via exception) that it *was* set, and makes sure we don't shout
                   // about changed references
                     oldValue = source.NetCache.GetKeyedObject(newObjectKey);
+
+                    if (!ReferenceEquals(oldValue, value))
+                    {
+                        throw new ProtoException("A reference-tracked object changed reference during deserialization");
+                    }
                 }
                 if (lateSet)
                 {
-                    source.NetCache.SetKeyedObject(newObjectKey, value);
-                    if (newTypeRefKey >= 0) source.NetCache.SetKeyedObject(newTypeRefKey, type);
+                    source.NetCache.SetKeyedObject(newObjectKey, value, true);
                 }
             }
-            if (newObjectKey >= 0 && !lateSet && !ReferenceEquals(oldValue, value))
-            {
-                //throw new ProtoException("A reference-tracked object changed reference during deserialization");
-            }
-            if (newObjectKey < 0 && newTypeRefKey >= 0)
-            {  // have a new type, but not a new object
-                source.NetCache.SetKeyedObject(newTypeRefKey, type);
-            }
-            if (newObjectKey >= 0 && (options & BclHelpers.NetObjectOptions.AsReference) == 0)
-            {
-                throw new ProtoException("Object key in input stream, but reference-tracking was not expected");
-            }
+            if (newTypeRefKey >= 0) source.NetCache.SetKeyedObject(newTypeRefKey, type);
 #endif
         }
         
