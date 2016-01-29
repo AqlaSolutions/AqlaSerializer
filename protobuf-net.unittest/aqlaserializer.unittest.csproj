@@ -132,6 +132,7 @@
     <Compile Include="Aqla\Issue30SurrogateTest.cs" />
     <Compile Include="Aqla\Issue90ReadOnly.cs" />
     <Compile Include="Aqla\Issue91Converter.cs" />
+    <Compile Include="Aqla\LinkedListAsLateReference.cs" />
     <Compile Include="Aqla\MembersAddTypes.cs" />
     <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Aqla\CoreReferenceSerialization.cs" />
