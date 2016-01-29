@@ -1,6 +1,7 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using AltLinq;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
@@ -32,6 +33,12 @@ namespace AqlaSerializer.Serializers
         private readonly TypeInfo typeInfo;
 #endif
         public Type ExpectedType { get { return forType; } }
+
+        public IProtoTypeSerializer GetSubTypeSerializer(int number)
+        {
+            return (IProtoTypeSerializer)serializers[Array.IndexOf(fieldNumbers, number)];
+        }
+
         private readonly IProtoSerializerWithWireType[] serializers;
         private readonly int[] fieldNumbers;
         private readonly bool isRootType, useConstructor, isExtensible, hasConstructor;
@@ -147,12 +154,12 @@ namespace AqlaSerializer.Serializers
         }
         public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
-            if (callbacks != null) InvokeCallback(callbacks[callbackType], value, context);
+            if (callbacks != null) InvokeCallback(callbacks[callbackType], value, constructType, context);
             IProtoTypeSerializer ser = (IProtoTypeSerializer)GetMoreSpecificSerializer(value);
             if (ser != null) ser.Callback(value, callbackType, context);
         }
 
-        IProtoSerializerWithWireType GetMoreSpecificSerializer(object value)
+        public IProtoSerializerWithWireType GetMoreSpecificSerializer(object value)
         {
             int fieldNumber;
             IProtoSerializerWithWireType serializer;
@@ -160,7 +167,7 @@ namespace AqlaSerializer.Serializers
             return serializer;
         }
 
-        private bool GetMoreSpecificSerializer(object value, out IProtoSerializerWithWireType serializer, out int fieldNumber)
+        public bool GetMoreSpecificSerializer(object value, out IProtoSerializerWithWireType serializer, out int fieldNumber)
         {
             fieldNumber = 0;
             serializer = null;
@@ -278,7 +285,7 @@ namespace AqlaSerializer.Serializers
 
 
 
-        private object InvokeCallback(MethodInfo method, object obj, SerializationContext context)
+        internal static object InvokeCallback(MethodInfo method, object obj, Type constructType, SerializationContext context)
         {
             object result = null;
             object[] args;
@@ -325,13 +332,13 @@ namespace AqlaSerializer.Serializers
             }
             return result;
         }
-        object CreateInstance(ProtoReader source, bool includeLocalCallback)
+        public object CreateInstance(ProtoReader source, bool includeLocalCallback)
         {
             //Helpers.DebugWriteLine("* creating : " + forType.FullName);
             object obj;
             if (factory != null)
             {
-                obj = InvokeCallback(factory, null, source.Context);
+                obj = InvokeCallback(factory, null, constructType, source.Context);
             }
             else if (useConstructor && hasConstructor)
             {
@@ -350,10 +357,10 @@ namespace AqlaSerializer.Serializers
             {
                 for (int i = 0; i < baseCtorCallbacks.Length; i++)
                 {
-                    InvokeCallback(baseCtorCallbacks[i], obj, source.Context);
+                    InvokeCallback(baseCtorCallbacks[i], obj, constructType, source.Context);
                 }
             }
-            if (includeLocalCallback && callbacks != null) InvokeCallback(callbacks.BeforeDeserialize, obj, source.Context);
+            if (includeLocalCallback && callbacks != null) InvokeCallback(callbacks.BeforeDeserialize, obj, constructType, source.Context);
             return obj;
         }
 #endif

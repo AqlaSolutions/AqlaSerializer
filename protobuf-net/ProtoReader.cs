@@ -127,7 +127,23 @@ namespace AqlaSerializer
             BufferPool.ReleaseBufferToPool(ref ioBuffer);
             if(stringInterner != null) stringInterner.Clear();
             if(netCache != null) netCache.Clear();
+            _lateReferences.Reset();
         }
+
+
+
+        readonly LateReferencesCache _lateReferences = new LateReferencesCache();
+
+        public static void AddLateReference(int typeKey, object value, ProtoReader reader)
+        {
+            reader._lateReferences.AddLateReference(typeKey, value);
+        }
+
+        public static bool TryGetNextLateReference(out int typeKey, out object value, ProtoReader reader)
+        {
+            return reader._lateReferences.TryGetNextLateReference(out typeKey, out value);
+        }
+
         internal int TryReadUInt32VariantWithoutMoving(bool trimNegative, out uint value)
         {
             if (available < 10) Ensure(10, false);

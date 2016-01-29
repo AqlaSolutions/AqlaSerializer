@@ -222,6 +222,7 @@
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Compiler\MethodContext.cs" />
     <Compile Include="Compiler\StackValueOperand.cs" />
+    <Compile Include="LateReferencesCache.cs" />
     <Compile Include="LinqBridge.cs" />
     <Compile Include="Meta\Data\ModelTypeRelationsData.cs" />
     <Compile Include="Meta\Data\SubtypeData.cs" />
@@ -267,6 +268,7 @@
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BooleanSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ArrayDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\ByteSerializer.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\LateReferenceSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\NoNullDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\EnumTypeSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\WireTypeDecorator.cs" />
