@@ -161,7 +161,7 @@
       <Name>Phone8Dto</Name>
     </ProjectReference>
     <ProjectReference Include="..\protobuf-net_Phone8\aqlaserializer_Phone8.csproj">
-      <Project>{9FC67A0F-D5D7-4C23-83A2-E910B5BAFF6F}</Project>
+      <Project>{9fc67a0f-d5d7-4c23-83a2-e910b5baff6f}</Project>
       <Name>aqlaserializer_Phone8</Name>
     </ProjectReference>
   </ItemGroup>
