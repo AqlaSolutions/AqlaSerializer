@@ -13,7 +13,7 @@ namespace Examples.Issues
         public void Execute()
         {
             string aqn = typeof (ProtoBehaviorExtension).AssemblyQualifiedName;
-            Assert.IsTrue(Regex.IsMatch(aqn, @"AqlaSerializer\.ServiceModel\.ProtoBehaviorExtension, aqlaserializer, Version=[0-9.]+, Culture=neutral, PublicKeyToken=7fa5d10c26ef1210"));
+            Assert.IsTrue(Regex.IsMatch(aqn, @"AqlaSerializer\.ServiceModel\.ProtoBehaviorExtension, aqlaserializer, Version=[0-9.]+, Culture=neutral, PublicKeyToken=2f3289788dcdcc09"));
             Console.WriteLine("WCF AQN: " + aqn);
         }
     }
