@@ -581,7 +581,7 @@ namespace AqlaSerializer.Meta
                     KeyValuePair<Type, int>[] subtypes = (model.FindOrAddAuto(objectType, false, true, false, out collectionTypeMeta) != -1)
                                                          ? collectionTypeMeta.GetSubtypes()
                                                                .Select(s => new KeyValuePair<Type, int>(s.DerivedType.Type, s.FieldNumber))
-                                                               .OrderBy(s => s.Key)
+                                                               .OrderByDescending(s => s.Value)
                                                                .ToArray()
                                                          : null;
 
