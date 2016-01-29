@@ -92,7 +92,7 @@ namespace AqlaSerializer.Serializers
                 ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
                 ProtoWriter.WriteInt32(0, dest);
             }
-            ProtoWriter.AddLateReference(_typeKey, value, dest);
+            ProtoWriter.NoteLateReference(_typeKey, value, dest);
         }
 
         public object Read(object value, ProtoReader source)
@@ -123,7 +123,7 @@ namespace AqlaSerializer.Serializers
 
             if (value == null)
                 value = finalSerializer.CreateInstance(source);
-            ProtoReader.AddLateReference(_typeKey, value, source);
+            ProtoReader.NoteLateReference(_typeKey, value, source);
             return value;
         }
 #endif

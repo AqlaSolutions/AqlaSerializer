@@ -25,6 +25,8 @@ namespace AqlaSerializer
             }
         }
 
+        public int LastNewKey => List.Count > 0 ? List.Count + 1 : Root;
+        public object LastNewValue => List.Count > 0 ? List[List.Count - 1] : rootObject;
 
         internal object GetKeyedObject(int key)
         {
