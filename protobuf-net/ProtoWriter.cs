@@ -1,5 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -35,12 +36,24 @@ namespace AqlaSerializer
             return _tempBuffer;
         }
 
+        readonly LateReferencesCache _lateReferences = new LateReferencesCache();
+
+        public static void AddLateReference(int typeKey, object value, ProtoWriter writer)
+        {
+            writer._lateReferences.AddLateReference(typeKey, value);
+        }
+
+        public static bool TryGetNextLateReference(out int typeKey, out object value, ProtoWriter writer)
+        {
+            return writer._lateReferences.TryGetNextLateReference(out typeKey, out value);
+        }
+        
         /// <summary>
         /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type).
         /// </summary>
         /// <param name="value">The object to write.</param>
         /// <param name="key">The key that uniquely identifies the type within the model.</param>
-        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
+        /// <param name="prefixLength">See <see cref="string"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
         public static void WriteObject(object value, int key, bool prefixLength, ProtoWriter writer)
         {
@@ -238,6 +251,23 @@ namespace AqlaSerializer
         }
 
         /// <summary>
+        /// Starts field header without writing it
+        /// </summary>
+        public static void WriteFieldHeaderIgnored(WireType wireType, ProtoWriter writer)
+        {
+            if (writer.fieldStarted)
+                throw new InvalidOperationException("Cannot write a field header until a wire type of the field " + writer.fieldNumber + " has been written");
+            if (writer.wireType != WireType.None)
+                throw new InvalidOperationException("Cannot write a field header until the " + writer.wireType.ToString() + " data has been written");
+
+            Debug.Assert(wireType != WireType.None);
+
+            writer.expectRoot = false;
+            writer.wireType = wireType;
+            writer.fieldNumber = 0;
+        }
+
+        /// <summary>
         /// Writes a field-header, indicating the format of the next data we plan to write.
         /// </summary>
         public static void WriteFieldHeader(int fieldNumber, WireType wireType, ProtoWriter writer)
@@ -393,7 +423,7 @@ namespace AqlaSerializer
         /// Indicates the start of a nested record of specified type when fieldNumber has been written.
         /// </summary>
         /// <param name="instance">The instance to write.</param>
-        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
+        /// <param name="prefixLength">See <see cref="string"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
         /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
         public static SubItemToken StartSubItem(object instance, bool prefixLength, ProtoWriter writer)
@@ -430,7 +460,7 @@ namespace AqlaSerializer
         /// </summary>
         /// <param name="fieldNumber"></param>
         /// <param name="instance">The instance to write.</param>
-        /// <param name="prefixLength">See <see cref="WireType.String"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
+        /// <param name="prefixLength">See <see cref="string"/> (for true) and <see cref="WireType.StartGroup"/> (for false)</param>
         /// <param name="writer">The destination.</param>
         /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
         public static SubItemToken StartSubItem(int fieldNumber, object instance, bool prefixLength, ProtoWriter writer)
@@ -794,6 +824,7 @@ namespace AqlaSerializer
                 BufferPool.ReleaseBufferToPool(ref _tempBuffer);
             model = null;
             BufferPool.ReleaseBufferToPool(ref ioBuffer);
+            _lateReferences.Reset();
         }
 
         private byte[] ioBuffer;

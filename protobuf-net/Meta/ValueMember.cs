@@ -718,7 +718,11 @@ namespace AqlaSerializer.Meta
                     if (dynamicType)
                         return new NetObjectValueDecorator(tryAsReference, dataFormat, model);
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
+                    {
+                        if (tryAsReference && key >= 0) // experimental:
+                            return new NetObjectValueDecorator(new LateReferenceSerializer(type, model), false, true, model);
                         return new NetObjectValueDecorator(type, key, tryAsReference);
+                    }
                     else
                         return new ModelTypeSerializer(type, key, model[type], true, defaultWireType == WireType.String);
                 }
