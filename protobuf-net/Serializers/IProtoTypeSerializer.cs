@@ -8,6 +8,9 @@ namespace AqlaSerializer.Serializers
         bool HasCallbacks(TypeModel.CallbackType callbackType);
         bool CanCreateInstance();
 #if !FEAT_IKVM
+        /// <summary>
+        /// Should call ProtoReader.NoteObject!
+        /// </summary>
         object CreateInstance(ProtoReader source);
         void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context);
 #endif

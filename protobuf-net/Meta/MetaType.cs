@@ -524,14 +524,23 @@ namespace AqlaSerializer.Meta
             SetFlag(OPTIONS_Frozen, true, false);
             serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(type, IsDecoratedByRootNetObject, s, model);
+            rootSerializer = new RootDecorator(
+                type,
+                RootNetObjectMode,
+                !RootLateReferenceMode,
+                s,
+                model);
 #if FEAT_COMPILER && !FX11
             if (model.AutoCompile) CompileInPlace();
 #endif
         }
 
         // to be compatible with aux serializer and don't add overhead we don't decorate enums with netobject
-        bool IsDecoratedByRootNetObject => !Helpers.IsEnum(type) && IsNetObjectValueDecoratorNecessary(model, type, true);
+        bool RootStartsGroup => RootNetObjectMode || RootLateReferenceMode;
+        bool RootNetObjectMode => !IsSimpleValue && IsNetObjectValueDecoratorNecessary(model, type, true);
+        bool RootLateReferenceMode => !IsSimpleValue && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference);
+
+        bool IsSimpleValue => Helpers.IsEnum(type);
 
         internal static bool IsNetObjectValueDecoratorNecessary(RuntimeTypeModel m, Type t, bool checkAsReference)
         {
@@ -594,7 +603,7 @@ namespace AqlaSerializer.Meta
             if (Helpers.IsEnum(type))
             {
                 IProtoTypeSerializer ser = new WireTypeDecorator(WireType.Variant, new EnumSerializer(type, GetEnumMap()));
-                if (isRoot && !IsDecoratedByRootNetObject)
+                if (isRoot && !RootStartsGroup)
                     ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
                 return ser;
             }
@@ -638,7 +647,7 @@ namespace AqlaSerializer.Meta
                 // standard root decorator won't start any field
                 // in compatibility mode collections won't start subitems like normally
                 // so wrap with field
-                if (isRoot && !IsDecoratedByRootNetObject)
+                if (isRoot && !RootStartsGroup)
                     ser = new RootFieldNumberDecorator(ser, TypeModel.EnumRootTag);
 
                 return ser;

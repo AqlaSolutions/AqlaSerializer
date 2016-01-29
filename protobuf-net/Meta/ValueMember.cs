@@ -485,7 +485,7 @@ namespace AqlaSerializer.Meta
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
-                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref dummy);
+                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, !itemIsNestedCollection, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -537,7 +537,7 @@ namespace AqlaSerializer.Meta
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
-                ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, ref defaultValue);
+                ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, true, ref defaultValue);
             }
             
             if (ser == null)
@@ -648,11 +648,11 @@ namespace AqlaSerializer.Meta
              bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
             object dummy = null;
-            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes, ref dummy);
+            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes, false, ref dummy);
         }
 
         internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue)
+            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes, bool tryAsLateRef, ref object defaultValue)
         {
             Type originalType = type;
 #if !NO_GENERICS
@@ -717,12 +717,15 @@ namespace AqlaSerializer.Meta
                 {
                     if (dynamicType)
                         return new NetObjectValueDecorator(tryAsReference, dataFormat, model);
-                    else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
+                    else if (tryAsLateRef && tryAsReference && key >= 0 
+                             && model[key].GetSurrogateOrSelf() == model[key]
+                             && !model[key].IsAutoTuple
+                             && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference))
                     {
-                        if (tryAsReference && key >= 0) // experimental:
-                            return new NetObjectValueDecorator(new LateReferenceSerializer(type, model), false, true, model);
-                        return new NetObjectValueDecorator(type, key, tryAsReference);
+                        return new NetObjectValueDecorator(new LateReferenceSerializer(type, model), false, true, model);
                     }
+                    else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
+                        return new NetObjectValueDecorator(type, key, tryAsReference);
                     else
                         return new ModelTypeSerializer(type, key, model[type], true, defaultWireType == WireType.String);
                 }

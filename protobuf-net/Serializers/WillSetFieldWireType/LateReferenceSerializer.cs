@@ -4,6 +4,7 @@ using System;
 using AqlaSerializer.Compiler;
 #endif
 using System.Diagnostics;
+using AltLinq;
 using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -22,110 +23,110 @@ namespace AqlaSerializer.Serializers
     {
         readonly Type _type;
         readonly RuntimeTypeModel _model;
-        TypeSerializer _serializer;
         readonly int _typeKey;
-        public Type ExpectedType => _serializer?.ExpectedType ?? _type;
-        
+        public Type ExpectedType { get; }
+
         public LateReferenceSerializer(Type type, RuntimeTypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (model == null) throw new ArgumentNullException(nameof(model));
-            _type = type;
+            ExpectedType = type;
             _model = model;
             if (Helpers.IsValueType(type))
                 throw new ArgumentException("Can't create " + this.GetType().Name + " for non-reference type " + type.Name + "!");
-            _typeKey = _model.GetKey(type, true, false);
+            _typeKey = _model.GetKey(type, true, true);
         }
-
-        void InitSerializer()
-        {
-            // can't get it in ctor because recursion!
-            if (_serializer == null) // TODO cast exception
-                _serializer = (TypeSerializer)_model[_type].Serializer;
-        }
-
+        
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
         {
 #if DEBUG
             Debug.Assert(value != null);
 #endif
-            InitSerializer();
-            TypeSerializer serializer = _serializer;
-            IProtoSerializerWithWireType next;
-            int fn;
+            WriteSubTypeForMetaType(_model[_typeKey], value.GetType(), dest);
+            ProtoWriter.NoteLateReference(_typeKey, value, dest);
+        }
 
-            if (serializer.GetMoreSpecificSerializer(value, out next, out fn))
-            {
-                var s = next as TypeSerializer;
-                if (s != null)
+        public void WriteSubTypeForMetaType(MetaType metaType, Type actual, ProtoWriter dest, int recursionLevel = 0)
+        {
+            if (metaType.Type != actual)
+                foreach (var subType in metaType.GetSubtypes())
                 {
-                    serializer = s;
-                    IProtoSerializerWithWireType next2;
-                    int fn2;
-                    if (serializer.GetMoreSpecificSerializer(value, out next2, out fn2))
+                    MetaType derivedType = subType.DerivedType;
+                    if (derivedType.Type != metaType.Type && Helpers.IsAssignableFrom(derivedType.Type, actual))
                     {
-                        // 2+ subtypes - packed list
-                        var token = ProtoWriter.StartSubItem(value, true, dest);
-                        ProtoWriter.WriteFieldHeaderIgnored(WireType.Variant, dest);
-                        ProtoWriter.WriteInt32(fn + 1, dest);
-                        ProtoWriter.WriteFieldHeaderIgnored(WireType.Variant, dest);
-                        ProtoWriter.WriteInt32(fn2 + 1, dest);
-                        while (serializer != null && serializer.GetMoreSpecificSerializer(value, out next, out fn) && next != null)
+                        if (recursionLevel == 0)
+                        {
+                            if (derivedType.Type == actual)
+                            {
+                                ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
+                                ProtoWriter.WriteInt32(subType.FieldNumber + 1, dest);
+                                return;
+                            }
+
+                            var token = ProtoWriter.StartSubItem(null, true, dest);
+                            ProtoWriter.WriteFieldHeaderIgnored(WireType.Variant, dest);
+                            ProtoWriter.WriteInt32(subType.FieldNumber + 1, dest);
+                            WriteSubTypeForMetaType(derivedType, actual, dest, 1);
+                            ProtoWriter.EndSubItem(token, dest);
+                        }
+                        else
                         {
                             ProtoWriter.WriteFieldHeaderIgnored(WireType.Variant, dest);
-                            ProtoWriter.WriteInt32(fn + 1, dest);
-                            serializer = next as TypeSerializer;
+                            ProtoWriter.WriteInt32(subType.FieldNumber + 1, dest);
+                            WriteSubTypeForMetaType(derivedType, actual, dest, recursionLevel + 1);
                         }
-                        ProtoWriter.EndSubItem(token, dest);
+                        return;
                     }
                 }
-                else
-                {
-                    // 1 subtype, no group
-                    ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
-                    ProtoWriter.WriteInt32(fn + 1, dest);
-                }
-            }
-            else // no subtypes
+
+            if (recursionLevel == 0)
             {
                 ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
                 ProtoWriter.WriteInt32(0, dest);
             }
-            ProtoWriter.NoteLateReference(_typeKey, value, dest);
         }
 
         public object Read(object value, ProtoReader source)
         {
-            InitSerializer();
-            SubItemToken token = new SubItemToken();
-            bool isGroup = source.WireType == WireType.String;
-            if (isGroup)
-                token = ProtoReader.StartSubItem(source);
-            TypeSerializer subTypeSerializer = _serializer;
-            IProtoTypeSerializer finalSerializer = subTypeSerializer;
-            int subTypeNumber = source.ReadInt32();
-            while (subTypeNumber > 0)
-            {
-                if (value == null && subTypeSerializer != null)
-                {
-                    finalSerializer = subTypeSerializer.GetSubTypeSerializer(subTypeNumber - 1);
-                    // may be tuple serializer for an examle, it still can create instance!
-                    subTypeSerializer = finalSerializer as TypeSerializer;
-                }
-                if (!isGroup) break;
-                // packed, no headers
-                if (!ProtoReader.HasSubValue(WireType.Variant, source)) break;
-                subTypeNumber = source.ReadInt32();
-            }
-            if (isGroup)
-                ProtoReader.EndSubItem(token, source);
-
-            if (value == null)
-                value = finalSerializer.CreateInstance(source);
+            value = ReadNewInstance(_model[_typeKey], value, value?.GetType(), source);
+            // each CreateInstance notes object
             ProtoReader.NoteLateReference(_typeKey, value, source);
             return value;
         }
+
+
+        public object ReadNewInstance(MetaType metaType, object oldValue, Type oldValueType,  ProtoReader source, int recursionLevel = 0)
+        {
+            SubType[] subTypes = metaType.GetSubtypes();
+            int fieldNumber;
+            if (recursionLevel == 0 && source.WireType != WireType.String)
+            {
+                fieldNumber = source.ReadInt32() - 1;
+                if (fieldNumber == -1) return oldValue ?? metaType.Serializer.CreateInstance(source);
+                MetaType derivedType = subTypes.First(st => st.FieldNumber == fieldNumber).DerivedType;
+                if (derivedType.Type == oldValueType) return oldValue;
+                return derivedType.Serializer.CreateInstance(source);
+            }
+            SubItemToken? token = null;
+            if (recursionLevel == 0)
+                token = ProtoReader.StartSubItem(source);
+
+            if (!ProtoReader.HasSubValue(WireType.Variant, source))
+            {
+                if (metaType.Type == oldValueType) return oldValue;
+                return metaType.Serializer.CreateInstance(source);
+            }
+            fieldNumber = source.ReadInt32() - 1;
+            if (fieldNumber == -1) return metaType.Serializer.CreateInstance(source);
+
+            var r = ReadNewInstance(subTypes.First(st => st.FieldNumber == fieldNumber).DerivedType, oldValue, oldValueType, source, recursionLevel + 1);
+
+            if (token != null)
+                ProtoReader.EndSubItem(token.Value, source);
+            return r;
+        }
+
 #endif
 
         bool IProtoSerializer.RequiresOldValue => true;
@@ -133,13 +134,13 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            InitSerializer();
         }
-        
+
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            InitSerializer();
         }
 #endif
     }
 }
+
+#endif

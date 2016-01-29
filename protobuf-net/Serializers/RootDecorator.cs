@@ -19,12 +19,14 @@ namespace AqlaSerializer.Serializers
 {
     sealed class RootDecorator : IProtoTypeSerializer
     {
+        readonly bool _protoCompatibility;
         readonly TypeModel _model;
         private readonly IProtoTypeSerializer _serializer;
 
-        public RootDecorator(Type type, bool wrap, IProtoTypeSerializer serializer, TypeModel model)
+        public RootDecorator(Type type, bool wrap, bool protoCompatibility, IProtoTypeSerializer serializer, TypeModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
+            _protoCompatibility = protoCompatibility;
             _model = model;
             _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), model) : serializer;
         }
@@ -35,8 +37,13 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
         {
-            // TODO compatibility mode
             ProtoWriter.ExpectRoot(dest);
+            if (_protoCompatibility)
+            {
+                _serializer.Write(value, dest);
+                return;
+            }
+
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
             ProtoWriter.WriteFieldHeaderBegin(ListHelpers.FieldItem, dest);
             _serializer.Write(value, dest);
@@ -54,6 +61,9 @@ namespace AqlaSerializer.Serializers
         public object Read(object value, ProtoReader source)
         {
             ProtoReader.ExpectRoot(source);
+            if (_protoCompatibility)
+                return _serializer.Read(value, source);
+            
             var rootToken = ProtoReader.StartSubItem(source);
             if (source.ReadFieldHeader() != ListHelpers.FieldItem) throw new ProtoException("Expected field for root object");
             var r = _serializer.Read(value, source);
