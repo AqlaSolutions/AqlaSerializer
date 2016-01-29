@@ -303,7 +303,9 @@ Type listType;
 #if !FEAT_IKVM
         public object CreateInstance(ProtoReader source)
         {
-            return Array.CreateInstance(_itemType, 0);
+            Array r = Array.CreateInstance(_itemType, 0);
+            ProtoReader.NoteObject(r, source);
+            return r;
         }
 
         public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)

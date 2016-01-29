@@ -616,7 +616,9 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public virtual object CreateInstance(ProtoReader source)
         {
-            return Activator.CreateInstance(concreteTypeDefault);
+            var r = Activator.CreateInstance(concreteTypeDefault);
+            ProtoReader.NoteObject(r, source);
+            return r;
         }
 
         public virtual void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)

@@ -62,7 +62,7 @@ namespace Examples
         }
 
         [Test]
-        public void Execute([Values(1 * 1024 * 1024)] int count)
+        public void Execute([Values(400 * 1024 * 1024)] int count)
         {
             var m = TypeModel.Create();
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));

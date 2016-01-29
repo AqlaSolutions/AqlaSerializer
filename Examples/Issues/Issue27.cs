@@ -6,14 +6,6 @@ using AqlaSerializer;
 
 namespace Examples.Issues
 {
-    /// <summary>
-    /// Relates to wanting to serialize structs; issue here is that:
-    /// a: structs are generally immutable, and protobuf-net wants to mutate
-    /// b: would require lots of "ref" additions
-    /// 
-    /// This is a workaround, simply intended to show an alternative construction, i.e.
-    /// wrapping the structs with a class during serialization.
-    /// </summary>
     [TestFixture]
     public class Issue27
     {
@@ -28,6 +20,16 @@ namespace Examples.Issues
         }
 
         [Test]
+        public void RoundtripStruct()
+        {
+            KeyPair<int, string> pair = new KeyPair<int, string>(1, "abc");
+
+            KeyPair<int,string> clone = Serializer.DeepClone<KeyPair<int,string>>(pair);
+            Assert.AreEqual(pair.Key1, clone.Key1);
+            Assert.AreEqual(pair.Key2, clone.Key2);
+        }
+
+        [Test]
         public void TestWrapped()
         {
             Foo foo = new Foo { Pair = new KeyPair<int, string>(1, "abc") };
@@ -37,18 +39,24 @@ namespace Examples.Issues
             Assert.AreEqual(1, clone.Pair.Key1, "Key1 - clone");
             Assert.AreEqual("abc", clone.Pair.Key2, "Key2 - clone");
         }
+
     }
     [DataContract]
     class Foo
     {
+        [DataMember(Name = "Pair", Order = 1)]
         public KeyPair<int, string> Pair { get; set; }
 
-        [DataMember(Name="Pair", Order = 1)]
-        private KeyPairProxy<int, string> PairProxy {
-            get { return Pair; }
-            set { Pair = value; }
-        }
-
+        // AqlaSerializer: don't do it!
+        //[DataMember(Name = "Pair", Order = 1)]
+        //private KeyPairProxy<int, string> PairProxy
+        //{
+        //    get { return Pair; }
+        //    set { Pair = value; }
+        //}
+        // 1. deprecated, structs should work
+        // 2. as reference (default for DataMember) will read property value and deserialize on it
+        // 3. late ref will assign instance to property first and only then deserialize on existing ref
     }
 
     [DataContract]

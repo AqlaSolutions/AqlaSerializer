@@ -34,7 +34,7 @@ namespace AqlaSerializer
             {
                 return null;
             }
-            return _lateReferences[_lateReferenceCurrentIndex];
+            return _lateReferences[_lateReferenceCurrentIndex++];
         }
 
         public void Reset()

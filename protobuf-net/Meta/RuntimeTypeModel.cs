@@ -296,6 +296,8 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MetaType this[Type type] { get { return (MetaType)types[FindOrAddAuto(type, true, false, false)]; } }
 
+        internal MetaType this[int key] { get { return (MetaType)types[key]; } }
+
         internal MetaType FindWithoutAdd(Type type)
         {
             // this list is thread-safe for reading

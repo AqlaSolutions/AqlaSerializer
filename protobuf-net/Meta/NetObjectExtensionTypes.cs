@@ -13,8 +13,12 @@ namespace AqlaSerializer.Meta
         /// </summary>
         AdvancedVersioning = 4,
         Collection = 8,
+        /// <summary>
+        /// For this feature main object should be written in field 1 as a group
+        /// </summary>
+        LateReference = 16,
 
-        All = Null | Reference | AdvancedVersioning | Collection
+        All = Null | Reference | AdvancedVersioning | Collection | LateReference
     }
 
     public static class NetObjectExtensionTypesExtensions

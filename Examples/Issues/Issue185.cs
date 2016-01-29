@@ -7,6 +7,7 @@ using AqlaSerializer;
 using NUnit.Framework;
 using AqlaSerializer.Meta;
 using System.IO;
+using NUnit.Framework.Constraints;
 
 namespace Examples.Issues
 {
@@ -48,9 +49,7 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue185
     {
-        [Ignore("Parameter name - localization")]
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = @"The supplied default implementation cannot be created: Examples.Issues.O
-Parameter name: constructType")]
+        [Test]
         public void ExecuteWithConstructType()
         {
             var m = RuntimeTypeModel.Create();
@@ -62,10 +61,11 @@ Parameter name: constructType")]
             var c = new C();
             c.PopulateRun();
 
-            Test(m, c, "Runtime");
-            m.CompileInPlace();
-            Test(m, c, "CompileInPlace");
-            Test(m.Compile(), c, "Compile");
+            Func<IResolveConstraint> check = () => Throws.ArgumentException.With.Message.StartsWith("The supplied default implementation cannot be created: Examples.Issues.O");
+            Assert.That(() => Test(m, c, "Runtime"), check());
+            Assert.That(() => m.CompileInPlace(), check());
+            Assert.That(() => Test(m, c, "CompileInPlace"), check());
+            Assert.That(() => Test(m.Compile(), c, "Compile"), check());
 
         }
         static void Test(TypeModel model, C c, string caption)
@@ -84,7 +84,11 @@ Parameter name: constructType")]
         [Test]
         public void ExecuteWithSubType()
         {
-            var m = RuntimeTypeModel.Create();
+            ProtoCompatibilitySettings comp=ProtoCompatibilitySettings.Default;
+            // late reference mode is not allowed on surrogates
+            // TODO move LateReference mode to attributes
+            comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
+            var m = TypeModel.Create(false, comp);
             m.AutoCompile = false;
             m.Add(typeof(C), false).SetSurrogate(typeof(CS));
             m.Add(typeof(O), false).SetSurrogate(typeof(OS));
