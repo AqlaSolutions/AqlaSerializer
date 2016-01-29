@@ -596,9 +596,9 @@ namespace AqlaSerializer.Meta
             // reference tracking decorators (RootDecorator, NetObjectDecorator, NetObjectValueDecorator)
             // should always be applied only one time (otherwise will consider new objects as already written):
             // #1 For collection types references are handled either by RootDecorator or 
-            // by VirtualMember which owns the value (so outside of this scope)
+            // by ValueMember which owns the value (so outside of this scope)
             // because the value is treated as single object
-            // #2 For members: ordinal VirtualMembers are used and they will handle references when appropriate
+            // #2 For members: ordinal ValueMembers are used and they will handle references when appropriate
 
             if (Helpers.IsEnum(type))
             {
