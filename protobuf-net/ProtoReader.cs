@@ -1,6 +1,7 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections;
+using System.Diagnostics;
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
@@ -129,19 +130,33 @@ namespace AqlaSerializer
             if(netCache != null) netCache.Clear();
             _lateReferences.Reset();
         }
-
-
+        
 
         readonly LateReferencesCache _lateReferences = new LateReferencesCache();
 
-        public static void AddLateReference(int typeKey, object value, ProtoReader reader)
+        public static void NoteLateReference(int typeKey, object value, ProtoReader reader)
         {
-            reader._lateReferences.AddLateReference(typeKey, value);
+#if DEBUG
+            Debug.Assert(value != null);
+            Debug.Assert(ReferenceEquals(value, reader.netCache.LastNewValue));
+#endif
+            reader._lateReferences.AddLateReference(new LateReferencesCache.LateReference(typeKey, value, reader.netCache.LastNewKey));
         }
 
-        public static bool TryGetNextLateReference(out int typeKey, out object value, ProtoReader reader)
+        public static bool TryGetNextLateReference(out int typeKey, out object value, out int referenceKey, ProtoReader reader)
         {
-            return reader._lateReferences.TryGetNextLateReference(out typeKey, out value);
+            var r = reader._lateReferences.TryGetNextLateReference();
+            if (r == null)
+            {
+                typeKey = 0;
+                value = null;
+                referenceKey = 0;
+                return false;
+            }
+            typeKey = r.Value.TypeKey;
+            value = r.Value.Value;
+            referenceKey = r.Value.ReferenceKey;
+            return true;
         }
 
         internal int TryReadUInt32VariantWithoutMoving(bool trimNegative, out uint value)

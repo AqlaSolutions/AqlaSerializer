@@ -38,16 +38,31 @@ namespace AqlaSerializer
 
         readonly LateReferencesCache _lateReferences = new LateReferencesCache();
 
-        public static void AddLateReference(int typeKey, object value, ProtoWriter writer)
+        public static void NoteLateReference(int typeKey, object value, ProtoWriter writer)
         {
-            writer._lateReferences.AddLateReference(typeKey, value);
+#if DEBUG
+            Debug.Assert(value != null);
+            Debug.Assert(ReferenceEquals(value, writer.netCache.LastNewValue));
+#endif
+            writer._lateReferences.AddLateReference(new LateReferencesCache.LateReference(typeKey, value, writer.netCache.LastNewKey));
         }
 
-        public static bool TryGetNextLateReference(out int typeKey, out object value, ProtoWriter writer)
+        public static bool TryGetNextLateReference(out int typeKey, out object value, out int referenceKey, ProtoWriter writer)
         {
-            return writer._lateReferences.TryGetNextLateReference(out typeKey, out value);
+            var r = writer._lateReferences.TryGetNextLateReference();
+            if (r == null)
+            {
+                typeKey = 0;
+                value = null;
+                referenceKey = 0;
+                return false;
+            }
+            typeKey = r.Value.TypeKey;
+            value = r.Value.Value;
+            referenceKey = r.Value.ReferenceKey;
+            return true;
         }
-        
+
         /// <summary>
         /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type).
         /// </summary>

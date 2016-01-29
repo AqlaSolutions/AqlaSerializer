@@ -42,9 +42,10 @@ namespace AqlaSerializer.Serializers
             _serializer.Write(value, dest);
             int typeKey;
             object v;
-            while (ProtoWriter.TryGetNextLateReference(out typeKey, out v, dest))
+            int refKey;
+            while (ProtoWriter.TryGetNextLateReference(out typeKey, out v, out refKey, dest))
             {
-                ProtoWriter.WriteFieldHeaderBegin(ListHelpers.FieldItem, dest);
+                ProtoWriter.WriteFieldHeaderBegin(refKey + 1, dest);
                 _model.Serialize(typeKey, v, dest, false);
             }
             ProtoWriter.EndSubItem(rootToken, dest);
@@ -58,9 +59,21 @@ namespace AqlaSerializer.Serializers
             var r = _serializer.Read(value, source);
             int typeKey;
             object v;
-            while (ProtoReader.TryGetNextLateReference(out typeKey, out v, source))
+            int expectedRefKey;
+            while (ProtoReader.TryGetNextLateReference(out typeKey, out v, out expectedRefKey, source))
             {
-                if (source.ReadFieldHeader() != ListHelpers.FieldItem) throw new ProtoException("Expected field for late reference");
+                int actualRefKey;
+                do
+                {
+                    actualRefKey = source.ReadFieldHeader() - 1;
+                    if (actualRefKey != expectedRefKey)
+                    {
+                        if (actualRefKey <= -1) throw new ProtoException("Expected field for late reference");
+                        // should go only up
+                        if (actualRefKey > expectedRefKey) throw new ProtoException("Mismatched order of late reference objects");
+                        source.SkipField(); // refKey < num
+                    }
+                } while (actualRefKey < expectedRefKey);
                 if (!ReferenceEquals(_model.Deserialize(typeKey, v, source, false), v)) throw new ProtoException("Late reference changed during deserializing");
             }
             ProtoReader.EndSubItem(rootToken, true, source);
