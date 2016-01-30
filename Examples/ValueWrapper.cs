@@ -69,19 +69,25 @@ namespace Examples
         private int? ValueInt32
         {
             get { return Get<int>(); }
-            set { Value = value; }
+            // you should not cause side effects in setters:
+            // null *will* be assigned here if null support is enabled
+            // so check previousValue (null) != newValue (null)
+            // deserializer can't each time get old value and check property -
+            // it's both ineffficient and may have even worse side effects
+            // like breaking compatibility with datacontract
+            set { if (ValueInt32 != value) Value = value; }
         }
         [ProtoBuf.ProtoMember(2)]
         private float? ValueSingle
         {
             get { return Get<float>(); }
-            set { Value = value; }
+            set { if (ValueSingle != value) Value = value; }
         }
         [ProtoBuf.ProtoMember(3)]
         private double? ValueDouble
         {
             get { return Get<double>(); ; }
-            set { Value = value; }
+            set { if (ValueDouble != value) Value = value; }
         }
         // etc for expected types
     }
@@ -170,9 +176,10 @@ namespace Examples
         public void TestInt32()
         {
 
-            Assert.IsTrue(Program.CheckBytes(new FieldDataViaNullable {Value = 123},
-                                             GetBytes(new Int32Simple {Value = 123})), "Int32");
-            Assert.AreEqual(123, Serializer.DeepClone(new FieldDataViaNullable(123)).Value);
+            Assert.IsTrue(Program.CheckBytes(new FieldDataViaNullable { Value = 123 },
+                                             GetBytes(new Int32Simple { Value = 123 })), "Int32");
+            FieldDataViaNullable copy = Serializer.DeepClone(new FieldDataViaNullable(123));
+            Assert.AreEqual(123, copy.Value);
         }
         [Test]
         public void TestSingle()

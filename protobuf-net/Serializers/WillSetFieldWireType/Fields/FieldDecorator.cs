@@ -40,8 +40,9 @@ namespace AqlaSerializer.Serializers
         public override object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value != null);
-            object newValue = Tail.Read((Tail.RequiresOldValue ? field.GetValue(value) : null), source);
-            field.SetValue(value,newValue);
+            object newVal = Tail.Read(Tail.RequiresOldValue ? field.GetValue(value) : null, source);
+            if (Tail.ReturnsValue) // no need to check it's not the same as old value because field set is basically "free" operation
+                field.SetValue(value, newVal);
             return null;
         }
 #endif
