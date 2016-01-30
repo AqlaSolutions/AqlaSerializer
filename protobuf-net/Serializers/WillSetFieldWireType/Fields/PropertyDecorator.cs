@@ -1,7 +1,7 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
-
+using System.Diagnostics;
 using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
@@ -62,7 +62,14 @@ namespace AqlaSerializer.Serializers
 
             object oldVal = Tail.RequiresOldValue ? Helpers.GetPropertyValue(property, value) : null;
             object newVal = Tail.Read(oldVal, source);
-            if (readOptionsWriteValue)
+            if (readOptionsWriteValue
+                // set only if it's returned from tail 
+                && Tail.ReturnsValue
+                && (!Tail.RequiresOldValue // always set where can't check oldVal
+                    // and if it's value type or nullable with changed null/not null or ref
+                    || (property.PropertyType.IsValueType && oldVal != null && newVal != null)
+                    || !ReferenceEquals(oldVal, newVal)
+                   ))
             {
                 if (shadowSetter == null)
                 {
@@ -75,6 +82,8 @@ namespace AqlaSerializer.Serializers
             }
             return null;
         }
+
+
 #endif
 
 #if FEAT_COMPILER

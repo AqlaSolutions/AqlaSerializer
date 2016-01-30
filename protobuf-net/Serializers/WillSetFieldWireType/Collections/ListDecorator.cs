@@ -42,7 +42,6 @@ namespace AqlaSerializer.Serializers
 
         public override object Read(object value, ProtoReader source)
         {
-            object origValue = value;
             IList list = null;
             object[] args = null;
 
@@ -75,8 +74,8 @@ namespace AqlaSerializer.Serializers
                     },
                 addLocal,
                 source);
-
-            return origValue == value ? null : value;
+            
+            return value;
         }
 
 #endif
