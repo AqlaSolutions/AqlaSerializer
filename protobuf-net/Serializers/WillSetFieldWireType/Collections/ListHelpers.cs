@@ -49,6 +49,7 @@ namespace AqlaSerializer.Serializers
                             if (subTypeWriter != null)
                             {
                                 ProtoWriter.WriteFieldHeaderBegin(FieldSubtype, dest);
+                                subTypeWriter?.Invoke();
                             }
                             if (length != null && length.Value > 0)
                             {

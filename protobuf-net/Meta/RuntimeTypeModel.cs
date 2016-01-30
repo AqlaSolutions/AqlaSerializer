@@ -74,7 +74,10 @@ namespace AqlaSerializer.Meta
             Type defaultType = null;
             Type itemType = null;
             model.ResolveListTypes(type, ref itemType, ref defaultType);
-            if (itemType == null) return false;
+            // ArrayList can't be added without contract
+            // because it's item type can't be serialized normally
+            // should be dynamic?
+            if (itemType == null || itemType == model.MapType(typeof(object))) return false;
             if (model.AlwaysUseTypeRegistrationForCollections)
                 return true;
 
@@ -295,7 +298,7 @@ namespace AqlaSerializer.Meta
         /// allowing additional configuration.
         /// </summary>
         public MetaType this[Type type] { get { return (MetaType)types[FindOrAddAuto(type, true, false, false)]; } }
-
+        
         internal MetaType this[int key] { get { return (MetaType)types[key]; } }
 
         internal MetaType FindWithoutAdd(Type type)

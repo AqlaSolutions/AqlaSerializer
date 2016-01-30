@@ -58,8 +58,13 @@ namespace AqlaSerializer.Serializers
                     };
             }
 
+            Action subTypeHandler = () => value = _subTypeHelpers.TryRead(_metaType, value?.GetType(), source)?.Serializer.CreateInstance(source) ?? value;
+
+            if (_metaType == null)
+                subTypeHandler = null;
+
             ListHelpers.Read(
-                () => value = _subTypeHelpers.TryRead(_metaType, value?.GetType(), source)?.Serializer.CreateInstance(source) ?? value,
+                subTypeHandler,
                 length =>
                     {
                         if (value == null)
@@ -191,7 +196,13 @@ namespace AqlaSerializer.Serializers
             ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
 
             if (!protoCompatibility)
-                _metaType = model[declaredType];
+            {
+                int key = model.GetKey(ref declaredType);
+                if (key >= 0)
+                    _metaType = model[key];
+                else
+                    _writeSubType = false; // warn?
+            }
         }
         
         protected virtual bool RequireAdd => true;
