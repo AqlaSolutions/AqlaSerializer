@@ -64,6 +64,12 @@ namespace AqlaSerializer.Meta
         /// <remarks>An in-place compile can access non-public types / members</remarks>
         public void CompileInPlace()
         {
+            // should prepare all serializers (not one) before compiling any
+            int code = 0;
+            foreach (MetaType type in types)
+            {
+                code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
+            }
             foreach (MetaType type in types)
             {
                 type.CompileInPlace();
@@ -352,6 +358,12 @@ namespace AqlaSerializer.Meta
         /// <returns>An instance of the newly created compiled type-model</returns>
         public TypeModel Compile(string name, string path)
         {
+            // should prepare all serializers (not one) before compiling any
+            int code = 0;
+            foreach (MetaType type in types)
+            {
+                code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
+            }
             return this; // TODO temporarily disabled
             CompilerOptions options = new CompilerOptions();
             options.TypeName = name;

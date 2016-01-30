@@ -9,6 +9,13 @@ namespace AqlaSerializer.Serializers
 {
     sealed class CompiledSerializer : IProtoTypeSerializer
     {
+        readonly bool _isStableWireType;
+
+        public bool DemandWireTypeStabilityStatus()
+        {
+            return _isStableWireType;
+        }
+
         bool IProtoTypeSerializer.HasCallbacks(TypeModel.CallbackType callbackType)
         {
             return head.HasCallbacks(callbackType); // these routes only used when bits of the model not compiled
@@ -41,6 +48,7 @@ namespace AqlaSerializer.Serializers
         private CompiledSerializer(IProtoTypeSerializer head, RuntimeTypeModel model)
         {
             this.head = head;
+            _isStableWireType = head.DemandWireTypeStabilityStatus();
             serializer = Compiler.CompilerContext.BuildSerializer(head, model);
             deserializer = Compiler.CompilerContext.BuildDeserializer(head, model);
         }

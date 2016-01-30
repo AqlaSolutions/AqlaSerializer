@@ -21,8 +21,10 @@ namespace AqlaSerializer.Serializers
 {
     sealed class PropertyDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
         public override Type ExpectedType { get { return forType; } }
         private readonly PropertyInfo property;
+        readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
         public override bool ReturnsValue { get { return false; } }
@@ -37,6 +39,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(property != null);
             this.forType = forType;
             this.property = property;
+            _tail = tail;
             SanityCheck(model, property, tail, out readOptionsWriteValue, true, true);
             shadowSetter = Helpers.GetShadowSetter(model, property);
 #if FEAT_COMPILER && !FEAT_IKVM

@@ -5,6 +5,7 @@ namespace AqlaSerializer.Serializers
 {
     interface ISerializerProxy
     {
+        bool IsSerializerReady { get; }
         IProtoSerializerWithWireType Serializer { get; }
     }
 }

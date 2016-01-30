@@ -19,6 +19,8 @@ namespace AqlaSerializer.Serializers
 {
     sealed class ArrayDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+        // will be always group or string and won't change between group and string in same session
+        public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || _writePacked;
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
@@ -106,7 +108,7 @@ namespace AqlaSerializer.Serializers
             _arrayType = arrayType;
             _overwriteList = overwriteList;
             _protoCompatibility = protoCompatibility;
-            _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
+            _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _protoCompatibility, tail);
         }
 
         public override Type ExpectedType { get { return _arrayType; } }

@@ -16,34 +16,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class ModelTypeSerializer : IProtoTypeSerializer
     {
-        bool IProtoTypeSerializer.HasCallbacks(TypeModel.CallbackType callbackType)
-        {
-            return ((IProtoTypeSerializer)proxy.Serializer).HasCallbacks(callbackType);
-        }
-        bool IProtoTypeSerializer.CanCreateInstance()
-        {
-            return ((IProtoTypeSerializer)proxy.Serializer).CanCreateInstance();
-        }
-#if FEAT_COMPILER
-        void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
-        {
-            ((IProtoTypeSerializer)proxy.Serializer).EmitCallback(ctx, valueFrom, callbackType);
-        }
-        void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx)
-        {
-            ((IProtoTypeSerializer)proxy.Serializer).EmitCreateInstance(ctx);
-        }
-#endif
-#if !FEAT_IKVM
-        void IProtoTypeSerializer.Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
-        {
-            ((IProtoTypeSerializer)proxy.Serializer).Callback(value, callbackType, context);
-        }
-        object IProtoTypeSerializer.CreateInstance(ProtoReader source)
-        {
-            return ((IProtoTypeSerializer)proxy.Serializer).CreateInstance(source);
-        }
-#endif
+        public bool DemandWireTypeStabilityStatus() => proxy.Serializer.DemandWireTypeStabilityStatus();
 
         private readonly int key;
         private readonly Type type;
@@ -145,6 +118,37 @@ namespace AqlaSerializer.Serializers
             }
         }
 #endif
+
+
+        bool IProtoTypeSerializer.HasCallbacks(TypeModel.CallbackType callbackType)
+        {
+            return ((IProtoTypeSerializer)proxy.Serializer).HasCallbacks(callbackType);
+        }
+        bool IProtoTypeSerializer.CanCreateInstance()
+        {
+            return ((IProtoTypeSerializer)proxy.Serializer).CanCreateInstance();
+        }
+#if FEAT_COMPILER
+        void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
+        {
+            ((IProtoTypeSerializer)proxy.Serializer).EmitCallback(ctx, valueFrom, callbackType);
+        }
+        void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx)
+        {
+            ((IProtoTypeSerializer)proxy.Serializer).EmitCreateInstance(ctx);
+        }
+#endif
+#if !FEAT_IKVM
+        void IProtoTypeSerializer.Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
+        {
+            ((IProtoTypeSerializer)proxy.Serializer).Callback(value, callbackType, context);
+        }
+        object IProtoTypeSerializer.CreateInstance(ProtoReader source)
+        {
+            return ((IProtoTypeSerializer)proxy.Serializer).CreateInstance(source);
+        }
+#endif
+
     }
 }
 #endif

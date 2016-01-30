@@ -16,17 +16,21 @@ namespace AqlaSerializer.Serializers
 {
     sealed class MemberSpecifiedDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
-
+        public bool DemandWireTypeStabilityStatus() => false;
+// may be not specified, right?
         public override Type ExpectedType { get { return Tail.ExpectedType; } }
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly MethodInfo getSpecified, setSpecified;
+        readonly IProtoSerializerWithWireType _tail;
+
         public MemberSpecifiedDecorator(MethodInfo getSpecified, MethodInfo setSpecified, IProtoSerializerWithWireType tail)
             : base(tail)
         {
             if (getSpecified == null && setSpecified == null) throw new InvalidOperationException();
             this.getSpecified = getSpecified;
             this.setSpecified = setSpecified;
+            _tail = tail;
         }
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)

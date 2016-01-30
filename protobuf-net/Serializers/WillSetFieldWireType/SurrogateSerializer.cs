@@ -14,6 +14,8 @@ namespace AqlaSerializer.Serializers
 {
     sealed class SurrogateSerializer : IProtoTypeSerializer
     {
+        public bool DemandWireTypeStabilityStatus() => rootTail.DemandWireTypeStabilityStatus();
+
         bool IProtoTypeSerializer.HasCallbacks(AqlaSerializer.Meta.TypeModel.CallbackType callbackType) { return false; }
 #if FEAT_COMPILER
         void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, AqlaSerializer.Meta.TypeModel.CallbackType callbackType) { }

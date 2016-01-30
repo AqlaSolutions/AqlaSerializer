@@ -15,9 +15,10 @@ namespace AqlaSerializer.Serializers
 {
     sealed class FieldDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
-
+        public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
         public override Type ExpectedType { get { return forType; } }
         private readonly FieldInfo field;
+        readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
         public override bool ReturnsValue { get { return false; } }
@@ -31,6 +32,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(field != null);
             this.forType = forType;
             this.field = field;
+            _tail = tail;
 #if FEAT_COMPILER && !FEAT_IKVM
             _accessors = AccessorsCache.GetAccessors(field);
 #endif

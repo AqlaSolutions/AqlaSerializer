@@ -77,12 +77,6 @@
     <None Include="app.config" />
     <None Include="precompile.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
-      <Project>{7d09cd88-098b-499b-95d2-7394dfbc9b5d}</Project>
-      <Name>aqlaserializer_IKVM</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

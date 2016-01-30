@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using AqlaSerializer;
 using AqlaSerializer.Serializers;
 
@@ -59,6 +60,20 @@ namespace AqlaSerializer.Meta
         {
             return type.ToString();
         }
+
+        public bool IsSerializerReady
+        {
+            get
+            {
+#if !WINRT
+                Thread.MemoryBarrier();
+#else
+                Interlocked.MemoryBarrier();
+#endif
+                return serializer != null;
+            }
+        }
+
         [DebuggerHidden]
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IProtoSerializerWithWireType ISerializerProxy.Serializer { get { return Serializer; } }
@@ -126,7 +141,7 @@ namespace AqlaSerializer.Meta
             return type.IsAssignableFrom(subType);
 #endif
         }
-#if WINRT       
+#if WINRT
         public static bool CanHaveSubType(Type type)
         {
             return CanHaveSubType(type.GetTypeInfo());
@@ -359,7 +374,7 @@ namespace AqlaSerializer.Meta
             if (type
 #if WINRT
                 .GetTypeInfo()
-#endif       
+#endif
                 .IsGenericType)
             {
                 StringBuilder sb = new StringBuilder(typeName);
@@ -368,7 +383,7 @@ namespace AqlaSerializer.Meta
                 foreach (Type arg in type
 #if WINRT
                     .GetTypeInfo().GenericTypeArguments
-#else               
+#else
                     .GetGenericArguments()
 #endif
                     )
@@ -1015,7 +1030,7 @@ namespace AqlaSerializer.Meta
             {
                 miType = pi.PropertyType;
             }
-#else   
+#else
             switch (mi.MemberType)
             {
                 case MemberTypes.Field:
@@ -1449,11 +1464,11 @@ namespace AqlaSerializer.Meta
 
         internal bool IsPrepared()
         {
-            #if FEAT_COMPILER && !FEAT_IKVM && !FX11
+#if FEAT_COMPILER && !FEAT_IKVM && !FX11
             return serializer is CompiledSerializer;
-            #else
+#else
             return false;
-            #endif
+#endif
         }
 
         internal System.Collections.IEnumerable Fields { get { return this.fields; } }

@@ -22,7 +22,10 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     interface IProtoSerializerWithWireType : IProtoSerializer
     {
-        
+        /// <summary>
+        /// Indicates that during one serialization cycle the same wire type will be used AND that the wiretype actually *will* be set (so no field cancellation); allows collection packing; may NOT be requested during serializer build
+        /// </summary>
+        bool DemandWireTypeStabilityStatus();
     }
 
     /// <summary>

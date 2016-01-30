@@ -21,6 +21,7 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     sealed class LateReferenceSerializer : IProtoSerializerWithWireType
     {
+        public bool DemandWireTypeStabilityStatus() => false;
         readonly RuntimeTypeModel _model;
         readonly int _typeKey;
         readonly SubTypeHelpers _subTypeHelpers = new SubTypeHelpers();

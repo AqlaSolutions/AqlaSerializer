@@ -19,6 +19,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class RootFieldNumberDecorator : IProtoTypeSerializer
     {
+        public bool DemandWireTypeStabilityStatus() => _serializer.DemandWireTypeStabilityStatus();
         private readonly IProtoTypeSerializer _serializer;
         readonly int _number;
 
