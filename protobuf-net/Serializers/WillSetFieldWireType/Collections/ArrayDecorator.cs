@@ -34,7 +34,8 @@ namespace AqlaSerializer.Serializers
             Action<object> addMethod = null;
             
             _listHelpers.Read(
-                (subtypeNumber, length) =>
+                null,
+                length =>
                     {
                         if (length >= 0)
                         {

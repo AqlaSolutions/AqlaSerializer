@@ -6,6 +6,7 @@ using System.Diagnostics;
 using AqlaSerializer.Serializers;
 using System.Globalization;
 using AltLinq;
+using AqlaSerializer.Internal;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -576,15 +577,6 @@ namespace AqlaSerializer.Meta
                 }
                 else
                 {
-                    // use subtypes if specified
-                    MetaType collectionTypeMeta;
-                    KeyValuePair<Type, int>[] subtypes = (model.FindOrAddAuto(objectType, false, true, false, out collectionTypeMeta) != -1)
-                                                         ? collectionTypeMeta.GetSubtypes()
-                                                               .Select(s => new KeyValuePair<Type, int>(s.DerivedType.Type, s.FieldNumber))
-                                                               .OrderByDescending(s => s.Value)
-                                                               .ToArray()
-                                                         : null;
-
                     ser = ListDecorator.Create(
                         model,
                         objectType,
@@ -594,8 +586,8 @@ namespace AqlaSerializer.Meta
                         wireType,
                         collection.ReturnList,
                         !collection.Append,
-                        subtypes,
-                        !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
+                        !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection),
+                        true);
                 }
 
                 if (isMemberOrNested)

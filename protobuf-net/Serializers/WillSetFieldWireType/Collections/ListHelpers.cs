@@ -16,8 +16,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Serializers
 {
-    // struct to avoid callvirt
-    struct ListHelpers
+    class ListHelpers
     {
         readonly WireType _packedWireTypeForRead;
         readonly IProtoSerializer _tail;
@@ -27,6 +26,7 @@ namespace AqlaSerializer.Serializers
         public const int FieldItem = 1;
         public const int FieldSubtype = 2;
         public const int FieldLength = 3;
+        public const int FieldPackType = 4; // TODO write first field header always and pack everything!!!
 
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializer tail)
         {
@@ -36,7 +36,7 @@ namespace AqlaSerializer.Serializers
             _writePacked = writePacked;
         }
 #if !FEAT_IKVM
-        public void Write(object value, int? subTypeNumber, int? length, Action prepareInstance, ProtoWriter dest)
+        public void Write(object value, Action subTypeWriter, int? length, Action prepareInstance, ProtoWriter dest)
         {
             SubItemToken token = new SubItemToken();
             int fieldNumber = dest.FieldNumber;
@@ -46,10 +46,9 @@ namespace AqlaSerializer.Serializers
                 Action additional =
                     () =>
                         {
-                            if (subTypeNumber != null)
+                            if (subTypeWriter != null)
                             {
-                                ProtoWriter.WriteFieldHeader(FieldSubtype, WireType.Variant, dest);
-                                ProtoWriter.WriteInt32(subTypeNumber.Value, dest);
+                                ProtoWriter.WriteFieldHeaderBegin(FieldSubtype, dest);
                             }
                             if (length != null && length.Value > 0)
                             {
@@ -139,9 +138,9 @@ namespace AqlaSerializer.Serializers
             return !isFirst;
         }
 
-        public delegate void ReadPrepareInstanceDelegate(int? subTypeNumber, int? length);
+        public delegate void ReadPrepareInstanceDelegate(int? length);
 
-        public void Read(ReadPrepareInstanceDelegate prepareInstance, Action<object> add, ProtoReader source)
+        public void Read(Action subTypeHandler, ReadPrepareInstanceDelegate prepareInstance, Action<object> add, ProtoReader source)
         {
             bool packed = _packedWireTypeForRead != WireType.None && source.WireType == WireType.String;
             int fieldNumber = source.FieldNumber;
@@ -151,7 +150,6 @@ namespace AqlaSerializer.Serializers
             SubItemToken token = subItemNeeded ? ProtoReader.StartSubItem(source) : new SubItemToken();
 
             int? length = null;
-            int? subTypeNumber = null;
             if (!_protoCompatibility)
             {
                 bool read;
@@ -159,11 +157,6 @@ namespace AqlaSerializer.Serializers
                 do
                 {
                     read = false;
-                    if (source.TryReadFieldHeader(FieldSubtype))
-                    {
-                        subTypeNumber = source.ReadInt32();
-                        read = true;
-                    }
 
                     if (source.TryReadFieldHeader(FieldLength))
                     {
@@ -173,13 +166,23 @@ namespace AqlaSerializer.Serializers
                         length = source.ReadInt32();
                         read = true;
                     }
+
+                    if (source.TryReadFieldHeader(FieldSubtype))
+                    {
+                        if (subTypeHandler == null)
+                            source.SkipField();
+                        else
+                            subTypeHandler();
+                        read = true;
+                    }
+
                 } while (read);
             }
 
             // this is not an error that we don't wait for the first item
             // if we are here it's either not compatible mode (so should call anyway)
             // or there is at least one element
-            prepareInstance?.Invoke(subTypeNumber, length);
+            prepareInstance?.Invoke(length);
 
             if (packed)
             {
