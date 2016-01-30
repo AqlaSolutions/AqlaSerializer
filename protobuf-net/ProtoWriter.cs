@@ -1072,9 +1072,8 @@ namespace AqlaSerializer
                     throw CreateException(writer);
             }
         }
-
-
-        internal static bool TryWriteBuiltinTypeValue(object value, ProtoTypeCode typecode, bool allowSystemType, ProtoWriter writer)
+        
+        public static bool TryWriteBuiltinTypeValue(object value, ProtoTypeCode typecode, bool allowSystemType, ProtoWriter writer)
         {
             switch (typecode)
             {

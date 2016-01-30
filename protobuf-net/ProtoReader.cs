@@ -597,15 +597,13 @@ namespace AqlaSerializer
         /// </summary>
         public static object ReadObject(object value, int key, ProtoReader reader)
         {
+            return ReadTypedObject(value, key, reader, null);
+        }
+        public static object ReadTypedObject(object value, int key, ProtoReader reader, Type type)
+        {
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            return ReadTypedObject(value, key, reader, null);
-#endif
-        }
-#if !FEAT_IKVM
-        internal static object ReadTypedObject(object value, int key, ProtoReader reader, Type type)
-        {
             if (reader.model == null)
             {
                 throw AddErrorData(new InvalidOperationException("Cannot deserialize sub-objects unless a model is provided"), reader);
@@ -632,8 +630,8 @@ namespace AqlaSerializer
                 TypeModel.ThrowUnexpectedType(type);
             }
             return value;
-        }
 #endif
+        }
 
         /// <summary>
         /// Makes the end of consuming a nested message in the stream; the stream must be either at the correct EndGroup
@@ -1407,7 +1405,7 @@ namespace AqlaSerializer
             return TypeModel.DeserializeType(model, ReadString());
         }
 
-        internal bool TryReadBuiltinType(ref object value, ProtoTypeCode typecode, bool allowSystemType)
+        public bool TryReadBuiltinType(ref object value, ProtoTypeCode typecode, bool allowSystemType)
         {
             switch (typecode)
             {

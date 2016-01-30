@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections;
-
+using System.ComponentModel;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -767,12 +767,90 @@ namespace AqlaSerializer
         }
     }
 
+    namespace Internal
+    {
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public sealed class HelpersInternal
+        {
+            [EditorBrowsable(EditorBrowsableState.Never)]
+            public static ProtoTypeCode GetTypeCode(System.Type type)
+            {
+                return Helpers.GetTypeCode(type);
+            }
+
+#if FEAT_IKVM
+            [EditorBrowsable(EditorBrowsableState.Never)]
+            public static ProtoTypeCode GetTypeCode(IKVM.Reflection.Type type)
+            {
+                return Helpers.GetTypeCode(type);
+            }
+#endif
+
+            [EditorBrowsable(EditorBrowsableState.Never)]
+            public static WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format)
+            {
+                switch (code)
+                {
+                    case ProtoTypeCode.Int64:
+                    case ProtoTypeCode.UInt64:
+                        {
+                            return format == BinaryDataFormat.FixedSize ? WireType.Fixed64 : WireType.Variant;
+
+                        }
+                    case ProtoTypeCode.Int16:
+                    case ProtoTypeCode.Int32:
+                    case ProtoTypeCode.UInt16:
+                    case ProtoTypeCode.UInt32:
+                    case ProtoTypeCode.Boolean:
+                    case ProtoTypeCode.SByte:
+                    case ProtoTypeCode.Byte:
+                    case ProtoTypeCode.Char:
+                        {
+                            return format == BinaryDataFormat.FixedSize ? WireType.Fixed32 : WireType.Variant;
+                        }
+                    case ProtoTypeCode.Double:
+                        {
+                            return WireType.Fixed64;
+                        }
+                    case ProtoTypeCode.Single:
+                        {
+                            return WireType.Fixed32;
+                        }
+                    case ProtoTypeCode.String:
+                    case ProtoTypeCode.DateTime:
+                    case ProtoTypeCode.Decimal:
+                    case ProtoTypeCode.ByteArray:
+                    case ProtoTypeCode.TimeSpan:
+                    case ProtoTypeCode.Guid:
+                    case ProtoTypeCode.Uri:
+                    case ProtoTypeCode.Type:
+                        {
+                            return WireType.String;
+                        }
+                }
+                return WireType.None;
+            }
+
+            public static bool IsAssignableFrom(Type target, Type type)
+            {
+                return Helpers.IsAssignableFrom(target, type);
+            }
+
+#if FEAT_IKVM
+            public static bool IsAssignableFrom(System.Type target, System.Type type)
+            {
+                return Helpers.IsAssignableFrom(target, type);
+            }
+#endif
+        }
+    }
+
     /// <summary>
     /// Intended to be a direct map to regular TypeCode, but:
     /// - with missing types
     /// - existing on WinRT
     /// </summary>
-    internal enum ProtoTypeCode
+    public enum ProtoTypeCode
     {
         Empty = 0,
         Unknown = 1, // maps to TypeCode.Object
