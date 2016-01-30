@@ -18,6 +18,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class TupleSerializer : IProtoTypeSerializer
     {
+        public bool DemandWireTypeStabilityStatus() => true;
         private readonly MemberInfo[] members;
         readonly bool _prefixLength;
         private readonly ConstructorInfo ctor;

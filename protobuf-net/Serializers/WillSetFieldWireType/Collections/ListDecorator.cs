@@ -21,6 +21,8 @@ namespace AqlaSerializer.Serializers
 {
     internal class ListDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+        // will be always group or string and won't change between group and string in same session
+        public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || WritePacked;
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
@@ -193,7 +195,7 @@ namespace AqlaSerializer.Serializers
                 if (add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
+            ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, tail);
 
             if (!protoCompatibility)
             {

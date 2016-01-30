@@ -11,7 +11,9 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     sealed class ReflectedUriDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
         private readonly Type expectedType;
+        readonly IProtoSerializerWithWireType _tail;
 
         private readonly PropertyInfo absoluteUriProperty;
 
@@ -20,6 +22,7 @@ namespace AqlaSerializer.Serializers
         public ReflectedUriDecorator(Type type, Meta.TypeModel model, IProtoSerializerWithWireType tail) : base(tail)
         {
             expectedType = type;
+            _tail = tail;
 
             absoluteUriProperty = expectedType.GetProperty("AbsoluteUri");
             typeConstructor = expectedType.GetConstructor(new Type[] { typeof(string) });

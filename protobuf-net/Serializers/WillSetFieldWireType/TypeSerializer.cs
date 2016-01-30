@@ -19,6 +19,8 @@ namespace AqlaSerializer.Serializers
     // TODO go in wide instead, all deep objects add to queue and process in wide
     sealed class TypeSerializer : IProtoTypeSerializer
     {
+        public bool DemandWireTypeStabilityStatus() => true;
+
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
             if (callbacks != null && callbacks[callbackType] != null) return true;

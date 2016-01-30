@@ -14,7 +14,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class DefaultValueDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
-
+        public bool DemandWireTypeStabilityStatus() => false;
         public override Type ExpectedType { get { return Tail.ExpectedType; } }
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }

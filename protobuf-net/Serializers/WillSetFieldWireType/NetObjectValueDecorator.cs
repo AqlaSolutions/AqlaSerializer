@@ -21,16 +21,24 @@ namespace AqlaSerializer.Serializers
 {
     sealed class NetObjectValueDecorator : IProtoTypeSerializer // type here is just for wrapping
     {
+        public bool DemandWireTypeStabilityStatus()
+        {
+            if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0) return false;
+            if (_key >= 0) return _model[_key].Serializer.DemandWireTypeStabilityStatus();
+            return _serializer.DemandWireTypeStabilityStatus();
+        }
+
         readonly int _key = -1;
-        readonly IProtoSerializer _serializer;
+        readonly IProtoSerializerWithWireType _serializer;
         readonly Type _type;
+        readonly RuntimeTypeModel _model;
 
         readonly BclHelpers.NetObjectOptions _options;
         readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
 
         // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
-        NetObjectValueDecorator(Type type, bool asReference)
+        NetObjectValueDecorator(Type type, bool asReference, RuntimeTypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             _options = BclHelpers.NetObjectOptions.UseConstructor;
@@ -49,10 +57,11 @@ namespace AqlaSerializer.Serializers
             // and for non emit it's already boxed as not nullable
             // TODO unwrap nullable in emit
             this._type = type;
+            _model = model;
         }
 
-        public NetObjectValueDecorator(IProtoSerializerWithWireType serializer, bool returnNullable, bool asReference, TypeModel model)
-            : this(type: MakeReturnNullable(serializer.ExpectedType, returnNullable, model), asReference: asReference)
+        public NetObjectValueDecorator(IProtoSerializerWithWireType serializer, bool returnNullable, bool asReference, RuntimeTypeModel model)
+            : this(type: MakeReturnNullable(serializer.ExpectedType, returnNullable, model), asReference: asReference, model: model)
         {
             _serializer = serializer;
 
@@ -70,15 +79,15 @@ namespace AqlaSerializer.Serializers
         /// </summary>
         /// <param name="asReference"></param>
         /// <param name="dataFormatForDynamicBuiltins"></param>
-        public NetObjectValueDecorator(bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, TypeModel model)
-            : this(type: model.MapType(typeof(object)), asReference: asReference)
+        public NetObjectValueDecorator(bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, RuntimeTypeModel model)
+            : this(type: model.MapType(typeof(object)), asReference: asReference, model: model)
         {
             _dataFormatForDynamicBuiltins = dataFormatForDynamicBuiltins;
             _options |= BclHelpers.NetObjectOptions.DynamicType;
         }
 
-        public NetObjectValueDecorator(Type type, int key, bool asReference)
-            : this(type: type, asReference: asReference)
+        public NetObjectValueDecorator(Type type, int key, bool asReference, RuntimeTypeModel model)
+            : this(type: type, asReference: asReference, model: model)
         {
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
             _key = key;

@@ -13,6 +13,8 @@ namespace AqlaSerializer.Serializers
 {
     sealed class UriDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        readonly IProtoSerializerWithWireType _tail;
+        public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
 #if FEAT_IKVM
         readonly Type expectedType;
 #else
@@ -21,10 +23,12 @@ namespace AqlaSerializer.Serializers
         public UriDecorator(AqlaSerializer.Meta.TypeModel model, IProtoSerializerWithWireType tail)
             : base(tail)
         {
+            _tail = tail;
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(Uri));
 #endif
         }
+
         public override Type ExpectedType { get { return expectedType; } }
         public override bool RequiresOldValue { get { return false; } }
         public override bool ReturnsValue { get { return true; } }

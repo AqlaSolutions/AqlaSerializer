@@ -18,6 +18,7 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     sealed class NoNullDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        public bool DemandWireTypeStabilityStatus() => false;
         readonly bool _throwIfNull;
         private readonly Type expectedType;
         

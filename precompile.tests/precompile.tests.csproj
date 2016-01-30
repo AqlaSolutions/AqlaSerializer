@@ -76,10 +76,6 @@
       <Project>{2ea60052-319b-4079-8da1-4d65853a9a76}</Project>
       <Name>precompile</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
-      <Project>{7D09CD88-098B-499B-95D2-7394DFBC9B5D}</Project>
-      <Name>aqlaserializer_IKVM</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\Tools\PEVerify.exe">

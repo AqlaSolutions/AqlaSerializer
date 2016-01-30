@@ -18,6 +18,8 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     sealed class WireTypeDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+        public bool DemandWireTypeStabilityStatus() => true;
+
         public WireTypeDecorator(WireType wireType, IProtoSerializerWithAutoType tail, bool strict = false)
             : base(tail)
         {
