@@ -3,7 +3,7 @@
 #if FEAT_COMPILER
 using System;
 using TriAxis.RunSharp;
-using TryAxis.RunSharp;
+using TriAxis.RunSharp;
 #if FEAT_IKVM
 using IKVM.Reflection.Emit;
 using Type  = IKVM.Reflection.Type;
@@ -29,6 +29,13 @@ namespace AqlaSerializer.Compiler
             _ctx = ctx;
             _fromPool = false;
         }
+
+#if FEAT_IKVM
+        internal Local(CompilerContext ctx, System.Type type, bool fromPool = true)
+            : this(ctx, ctx.MapType(type), fromPool)
+        {
+        }
+#endif
 
         internal Local(CompilerContext ctx, Type type, bool fromPool = true)
         {

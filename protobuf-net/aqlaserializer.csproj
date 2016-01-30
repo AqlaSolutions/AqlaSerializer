@@ -217,6 +217,7 @@
     <Compile Include="Compiler\CompilerContext.cs" />
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Compiler\MethodContext.cs" />
+    <Compile Include="Compiler\SerializerCodeGen.cs" />
     <Compile Include="Compiler\StackValueOperand.cs" />
     <Compile Include="LateReferencesCache.cs" />
     <Compile Include="LinqBridge.cs" />
