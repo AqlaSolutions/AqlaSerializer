@@ -31,11 +31,10 @@ namespace test
         [DataMember(Order = 1)]
         public List<CoOrd> Coords = new List<CoOrd>();
 
-        public void SetupTestArray()
+        public void SetupTestArray(int max)
         {
             Random r = new Random(123456);
-            List<CoOrd> coordinates = new List<CoOrd>();
-            for (int i = 0; i < 1000000; i++)
+            for (int i = 0; i < max; i++)
             {
                 Coords.Add(new CoOrd(r.Next(10000), r.Next(10000), r.Next(10000)));
             }
@@ -45,18 +44,26 @@ namespace test
     [TestFixture]
     public class SO6478579
     {
+#if DEBUG
+        public const int Size = 1092;
+        public const int Max = 100;
+#else
+        public const int Size = 10960823;
+        public const int Max = 1000000;
+#endif
+
         [Test]
         public void TestMethod()
         {
             Coordinates c = new Coordinates();
-            c.SetupTestArray();
+            c.SetupTestArray(Max);
 
             // Serialize to memory stream
             MemoryStream mStream = new MemoryStream();
             var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             tm.Serialize(mStream, c);
 
-            Assert.AreEqual(10960823, mStream.Length); 
+            Assert.AreEqual(Size, mStream.Length); 
         }
     }
 }

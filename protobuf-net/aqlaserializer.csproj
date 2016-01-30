@@ -219,6 +219,8 @@
     <Compile Include="Compiler\MethodContext.cs" />
     <Compile Include="Compiler\SerializerCodeGen.cs" />
     <Compile Include="Compiler\StackValueOperand.cs" />
+    <Compile Include="Serializers\DynamicMethodAccessors\AccessorsCache.cs" />
+    <Compile Include="Serializers\DynamicMethodAccessors\DynamicMethodCompiler.cs" />
     <Compile Include="LateReferencesCache.cs" />
     <Compile Include="LinqBridge.cs" />
     <Compile Include="Meta\Data\ModelTypeRelationsData.cs" />

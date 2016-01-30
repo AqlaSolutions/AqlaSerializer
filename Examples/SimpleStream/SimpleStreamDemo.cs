@@ -80,7 +80,13 @@ namespace Examples.SimpleStream
             char mb = 'ä';
             Assert.AreEqual(2, Encoding.UTF8.GetByteCount(new char[] { mb }), "is multibyte");
 
-            for (int i = 0; i < 1024 * 8; i+=3)
+            for (int i = 0; i < 1024 * 8;
+#if DEBUG
+                i+=100
+#else
+                i+=3
+#endif
+                )
             {
                 try
                 {

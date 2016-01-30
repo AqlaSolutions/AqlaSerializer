@@ -16,7 +16,12 @@ namespace Examples
             // just make up some gibberish
             var rand = new Random(12345);
             List<BasicDto> list = new List<BasicDto>(300000);
-            for(int i = 0 ; i < 300000 ; i++)
+#if DEBUG
+            const int max = 100;
+#else
+            const int max = 300000;
+#endif
+            for (int i = 0 ; i < max ; i++)
             {
                 var basicDto = new BasicDto();
                 basicDto.Foo = new DateTime(rand.Next(1980, 2020), rand.Next(1, 13),

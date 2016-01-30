@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
-
+using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
@@ -10,8 +10,6 @@ using IKVM.Reflection;
 #else
 using System.Reflection;
 #endif
-
-
 
 namespace AqlaSerializer.Serializers
 {
@@ -23,12 +21,20 @@ namespace AqlaSerializer.Serializers
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
         public override bool ReturnsValue { get { return false; } }
+
+        AccessorsCache.Accessors _accessors;
+
+
         public FieldDecorator(Type forType, FieldInfo field, IProtoSerializerWithWireType tail) : base(tail)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(field != null);
             this.forType = forType;
             this.field = field;
+#if FEAT_COMPILER && !FEAT_IKVM
+            _accessors = AccessorsCache.GetAccessors(field);
+#endif
+
         }
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
@@ -42,7 +48,12 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(value != null);
             object newVal = Tail.Read(Tail.RequiresOldValue ? field.GetValue(value) : null, source);
             if (Tail.ReturnsValue) // no need to check it's not the same as old value because field set is basically "free" operation
-                field.SetValue(value, newVal);
+            {
+                if (_accessors.Set != null)
+                    _accessors.Set(value, newVal);
+                else
+                    field.SetValue(value, newVal);
+            }
             return null;
         }
 #endif

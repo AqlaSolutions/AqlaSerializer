@@ -12,14 +12,18 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue367
     {
+#if DEBUG
+        const int Max = 50;
+#else
+        const int Max = 50000;
+#endif
         [ProtoBuf.ProtoContract]
         public class TestClass
         {
             [ProtoBuf.ProtoMember(1)]
             public string Id { get; set; }
         }
-
-#if DEBUG
+        
         [Test]
         public void LockContention_DTO()
         {
@@ -32,8 +36,8 @@ namespace Examples.Issues
                     return ms.ToArray();
                 }
             };
-            var tasks = new List<Task>(50000);
-            for (var i = 0; i < 50000; i++)
+            var tasks = new List<Task>(Max);
+            for (var i = 0; i < Max; i++)
             {
                 tasks.Add(Task.Factory.StartNew(() => serialize(new TestClass { Id = Guid.NewGuid().ToString() })));
             }
@@ -54,8 +58,8 @@ namespace Examples.Issues
                     return ms.ToArray();
                 }
             };
-            var tasks = new List<Task>(50000);
-            for (var i = 0; i < 50000; i++)
+            var tasks = new List<Task>(Max);
+            for (var i = 0; i < Max; i++)
             {
                 tasks.Add(Task.Factory.StartNew(() => serialize(Guid.NewGuid().ToString())));
             }
@@ -76,12 +80,12 @@ namespace Examples.Issues
                     return ms.ToArray();
                 }
             };
-            var tasks = new List<Task>(50000);
+            var tasks = new List<Task>(Max);
             Dictionary<string, int> d = new Dictionary<string, int>
             {
                 { "abc", 123}, {"def", 456}
             };
-            for (var i = 0; i < 50000; i++)
+            for (var i = 0; i < Max; i++)
             {
                 tasks.Add(Task.Factory.StartNew(state => serialize(state.ToString()), d));
             }
@@ -89,6 +93,5 @@ namespace Examples.Issues
             Assert.LessOrEqual(1, 2, "because I always get this backwards");
             Assert.LessOrEqual(model.LockCount, 50);
         }
-#endif
     }
 }

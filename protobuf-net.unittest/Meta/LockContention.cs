@@ -18,7 +18,11 @@ namespace AqlaSerializer.unittest.Meta
         public void DeliberatelyCausedContentionShouldShow()
         {
             var model = RuntimeTypeModel.Create();
+#if DEBUG
+            model.MetadataTimeoutMilliseconds = 50;
+#else
             model.MetadataTimeoutMilliseconds = 400;
+#endif
             string eek = null;
             model.LockContended += (s, a) => eek = a.OwnerStackTrace;
             ManualResetEvent workerReady = new ManualResetEvent(false), workerComplete = new ManualResetEvent(false), mainComplete = new ManualResetEvent(false);
@@ -78,10 +82,11 @@ namespace AqlaSerializer.unittest.Meta
                 Assert.That(raw.Length, Is.GreaterThan(0));
             }
 
-            const int threads = 10;
-#if DEBUG    
-            const int loop = 200;
+#if DEBUG
+            const int threads = 5;
+            const int loop = 5;
 #else
+            const int threads = 10;
             const int loop = 500;
 #endif
 

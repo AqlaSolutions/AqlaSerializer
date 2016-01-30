@@ -100,7 +100,12 @@ namespace DAL
                 /*erializer.PrepareSerializer<Database>();
                 Serializer.Deserialize<Database>(ms);*/
                 Stopwatch watch = Stopwatch.StartNew();
-                for (int i = 0; i < 1000; i++)
+#if DEBUG
+                const int max = 3;
+#else
+                const int max = 1000;
+#endif
+                for (int i = 0; i < max; i++)
                 {
                     ms.Position = 0;
                     //Serializer.Deserialize<Database>(ms);

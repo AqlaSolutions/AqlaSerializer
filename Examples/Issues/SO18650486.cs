@@ -34,7 +34,11 @@ namespace Examples.Issues
         }
         private static void Execute(int count, TypeModel model, string caption)
         {
+#if DEBUG
+            const int InnerLoop = 5;
+#else
             const int InnerLoop = 1000;
+#endif
             object lockObj = new object();
             var average = 0d;
             var min = double.MaxValue;

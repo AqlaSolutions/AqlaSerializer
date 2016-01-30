@@ -52,7 +52,7 @@ namespace Examples.SimpleStream
             }
             
 #if DEBUG
-            const int LOOP = 50000;
+            const int LOOP = 1000;
 #else
             const int LOOP = 500000;
 #endif
