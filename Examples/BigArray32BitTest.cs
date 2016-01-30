@@ -61,8 +61,12 @@ namespace Examples
             }
         }
 
-        [Test]
-        public void Execute([Values(400 * 1024 * 1024)] int count)
+#if !DEBUG
+        [TestCase(400 * 1024 * 1024)]
+#else
+        [TestCase(1 * 1024 * 1024)]
+#endif
+        public void Execute(int count)
         {
             var m = TypeModel.Create();
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));

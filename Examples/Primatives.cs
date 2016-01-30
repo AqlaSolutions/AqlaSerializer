@@ -447,7 +447,7 @@ namespace Examples
                     now.Hour, now.Minute, now.Second, 0);
             }
         }
-
+        
         [Test]
         public void TestChars()
         {

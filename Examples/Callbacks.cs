@@ -217,8 +217,8 @@ namespace Examples
             where TCreate : T, new()
             where T : ICallbackTest
         {
-            try
-            {
+            //try
+            //{
                 mode = ":" + mode;
                 TCreate cs = new TCreate();
                 cs.Bar = "abc";
@@ -251,11 +251,11 @@ namespace Examples
                 Assert.AreNotSame(cs, clone2, "clone2" + mode);
                 Assert.AreEqual(ctorExpected + ";OnDeserializing;OnDeserialized", clone2.History, "clone2 after" + mode);
                 Assert.AreEqual("abc", clone2.Bar, "clone2 after" + mode);
-            } catch(Exception ex)
-            {
-                Console.Error.WriteLine(ex.StackTrace);
-                Assert.Fail(ex.Message + mode);
-            }
+            //} catch(Exception ex)
+            //{
+            //    Console.Error.WriteLine(ex.StackTrace);
+            //    Assert.Fail(ex.Message + mode);
+            //}
         }
 
         [ProtoBuf.ProtoContract]

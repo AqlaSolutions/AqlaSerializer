@@ -1,7 +1,11 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using System.CodeDom;
+using System.Collections.Generic;
 using System.Diagnostics;
+using AltLinq;
+using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
 
 #if FEAT_IKVM
@@ -24,6 +28,9 @@ namespace AqlaSerializer.Serializers
         public override bool ReturnsValue { get { return false; } }
         private readonly bool readOptionsWriteValue;
         private readonly MethodInfo shadowSetter;
+
+        AccessorsCache.Accessors _accessors;
+        
         public PropertyDecorator(TypeModel model, Type forType, PropertyInfo property, IProtoSerializerWithWireType tail) : base(tail)
         {
             Helpers.DebugAssert(forType != null);
@@ -32,6 +39,11 @@ namespace AqlaSerializer.Serializers
             this.property = property;
             SanityCheck(model, property, tail, out readOptionsWriteValue, true, true);
             shadowSetter = Helpers.GetShadowSetter(model, property);
+#if FEAT_COMPILER && !FEAT_IKVM
+            _accessors = AccessorsCache.GetAccessors(property);
+            if (shadowSetter != null)
+                _accessors.Set = AccessorsCache.GetShadowSetter(shadowSetter);
+#endif
         }
         private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal) {
             if(property == null) throw new ArgumentNullException("property");
@@ -60,7 +72,9 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value != null);
 
-            object oldVal = Tail.RequiresOldValue ? Helpers.GetPropertyValue(property, value) : null;
+            object oldVal = Tail.RequiresOldValue
+                                ? _accessors.Get != null ? _accessors.Get(value) : Helpers.GetPropertyValue(property, value)
+                                : null;
             object newVal = Tail.Read(oldVal, source);
             if (readOptionsWriteValue
                 // set only if it's returned from tail 
@@ -71,18 +85,25 @@ namespace AqlaSerializer.Serializers
                     || !ReferenceEquals(oldVal, newVal)
                    ))
             {
-                if (shadowSetter == null)
+                if (_accessors.Set != null)
                 {
-                    property.SetValue(value, newVal, null);
+                    _accessors.Set(value, newVal);
                 }
                 else
                 {
-                    shadowSetter.Invoke(value, new object[] { newVal });
+
+                    if (shadowSetter == null)
+                    {
+                        property.SetValue(value, newVal, null);
+                    }
+                    else
+                    {
+                        shadowSetter.Invoke(value, new object[] { newVal });
+                    }
                 }
             }
             return null;
         }
-
 
 #endif
 

@@ -159,3 +159,7 @@ Permission is hereby granted, free of charge, to any person obtaining
 
   Jeroen Frijters
   jeroen@frijters.net
+
+  DynamicMethodCompiler.cs is from http://www.codeproject.com/Articles/14973/Dynamic-Code-Generation-vs-Reflection
+  The Code Project Open License (CPOL) 1.02
+  http://www.codeproject.com/info/cpol10.aspx

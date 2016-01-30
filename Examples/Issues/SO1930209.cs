@@ -57,7 +57,12 @@ namespace Examples.Issues
             var arr = new B[5];
             for (int i = 0; i < arr.Length; i++)
             {
-                var arr2 = new C[20000];
+#if DEBUG
+                const int max = 200;
+#else
+                const int max = 20000;
+#endif
+                var arr2 = new C[max];
                 arr[i] = new B {Array2 = arr2, Field1 = GetString(), Field2 = GetString()};
                 for (int j = 0; j < arr2.Length; j++)
                 {

@@ -92,8 +92,11 @@ namespace FX11
             prod.CreationDate = new DateTime(2009, 1, 3);
 
             DumpObject("Original", props, prod);
-
+#if DEBUG
+            const int loop = 1000;
+#else
             const int loop = 100000;
+#endif
             Console.WriteLine("Iterations: " + loop);
             Stopwatch watch;
             MemoryStream reuseDump = new MemoryStream(100 * 1024);

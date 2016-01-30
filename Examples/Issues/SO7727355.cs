@@ -41,7 +41,7 @@ namespace Examples.Issues
         public void Execute()
         {
 #if DEBUG
-            const int LOOP = 100;
+            const int LOOP = 2;
 #else
             const int LOOP = 1000;
 #endif

@@ -123,6 +123,7 @@
     <Compile Include="..\Examples\LeakDetection.cs">
       <Link>LeakDetection.cs</Link>
     </Compile>
+    <Compile Include="Aqla\AccessorsEmitTest.cs" />
     <Compile Include="Aqla\DerivedDerivedOnField.cs" />
     <Compile Include="Aqla\ExportImportTypes.cs" />
     <Compile Include="AqlaAttributes\ImplicitFallback.cs" />

@@ -300,7 +300,7 @@ namespace Examples.Dictionary
             
         }
 #if DEBUG
-        const int LOOP = 50000;
+        const int LOOP = 3;
 #else
         const int LOOP = 500000;
 #endif

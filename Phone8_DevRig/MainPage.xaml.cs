@@ -53,7 +53,7 @@ namespace Phone8_DevRig
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
             var ser = new MySerializer();
-            using (var source = LoadWithoutDiskIO())
+            using (MemoryStream source = LoadWithoutDiskIO())
             {
                 var watch = Stopwatch.StartNew();
                 var obj = (DatabaseCompat)ser.Deserialize(source, null, typeof(DatabaseCompat));

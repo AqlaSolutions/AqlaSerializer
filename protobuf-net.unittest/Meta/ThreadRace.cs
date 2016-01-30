@@ -53,7 +53,13 @@ namespace AqlaSerializer.unittest.Meta
                 I = new AnotherType { B = "def" }
             };
             var b = new AnotherType() { A = 123 };
-            for (int i = 0; i < 100; i++)
+
+#if DEBUG
+            const int max = 2;
+#else
+            const int max = 100;
+#endif
+            for (int i = 0; i < max; i++)
             {
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
@@ -118,7 +124,12 @@ namespace AqlaSerializer.unittest.Meta
                 raw = ms.ToArray();
             }
 
-            for (int i = 0; i < 100; i++)
+#if DEBUG
+            const int max = 2;
+#else
+            const int max = 100;
+#endif
+            for (int i = 0; i < max; i++)
             {
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
@@ -211,7 +222,7 @@ namespace AqlaSerializer.unittest.Meta
             }
 
 #if DEBUG
-            const int LOOP = 30;
+            const int LOOP = 5;
 #else
             const int LOOP = 100;
 #endif
@@ -268,7 +279,7 @@ namespace AqlaSerializer.unittest.Meta
                 raw = ms.ToArray();
             }
 #if DEBUG
-            const int LOOP = 30;
+            const int LOOP = 3;
 #else
             const int LOOP = 100;
 #endif
@@ -278,11 +289,16 @@ namespace AqlaSerializer.unittest.Meta
                 var model = TypeModel.Create();
                 model.AutoCompile = true;
                 object starter = new object();
-                int waiting = 20;
+#if DEBUG
+                const int threadsCount = 5;
+#else
+                const int threadsCount = 20;
+#endif
+                int waiting = threadsCount;
                 int failures = 0;
                 Exception firstException = null;
-                Thread[] threads = new Thread[20];
-                for (int j = 0; j < 20; j++)
+                Thread[] threads = new Thread[threadsCount];
+                for (int j = 0; j < threadsCount; j++)
                 {
                     threads[j] = new Thread(() =>
                     {
@@ -339,7 +355,7 @@ namespace AqlaSerializer.unittest.Meta
                 }
             }
 #if DEBUG
-            const int LOOP = 25;
+            const int LOOP = 3;
 #else
             const int LOOP = 250;
 #endif

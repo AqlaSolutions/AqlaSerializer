@@ -196,7 +196,7 @@ namespace Examples.Remoting
             model.AutoAddMissingTypes = false;
             model.Add(typeof(ProtoFragment), true);
 #if DEBUG
-            const int LOOP = 1000;
+            const int LOOP = 5;
 #else
             const int LOOP = 10000;
 #endif
