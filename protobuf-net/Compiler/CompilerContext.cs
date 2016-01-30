@@ -7,6 +7,7 @@ using AltLinq;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;
 using TriAxis.RunSharp;
+using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -479,6 +480,9 @@ namespace AqlaSerializer.Compiler
             Emit(isStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
         }
 
+        SerializerCodeGen _codeGen;
+        public SerializerCodeGen G => _codeGen ?? (_codeGen = new SerializerCodeGen(this, RunSharpContext, false));
+        
         public int ArgIndexReadWriter => 1;
 
         public void StoreValue(Local local)
