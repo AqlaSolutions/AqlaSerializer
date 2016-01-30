@@ -3,6 +3,7 @@ using System;
 using System.IO;
 
 using System.Collections;
+using AqlaSerializer.Internal;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -69,7 +70,7 @@ namespace AqlaSerializer.Meta
                 return WireType.Variant;
             }
 
-            WireType wireType = GetWireType(code, format);
+            WireType wireType = HelpersInternal.GetWireType(code, format);
             if (wireType != WireType.None) return wireType;
 
             if ((modelKey = GetKey(ref type)) >= 0)
@@ -78,51 +79,7 @@ namespace AqlaSerializer.Meta
             }
             return WireType.None;
         }
-
-        internal static WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format)
-        {
-            switch (code)
-            {
-                case ProtoTypeCode.Int64:
-                case ProtoTypeCode.UInt64:
-                    {
-                        return format == BinaryDataFormat.FixedSize ? WireType.Fixed64 : WireType.Variant;
-                        
-                    }
-                case ProtoTypeCode.Int16:
-                case ProtoTypeCode.Int32:
-                case ProtoTypeCode.UInt16:
-                case ProtoTypeCode.UInt32:
-                case ProtoTypeCode.Boolean:
-                case ProtoTypeCode.SByte:
-                case ProtoTypeCode.Byte:
-                case ProtoTypeCode.Char:
-                    {
-                        return format == BinaryDataFormat.FixedSize ? WireType.Fixed32 : WireType.Variant;
-                    }
-                case ProtoTypeCode.Double:
-                    {
-                        return WireType.Fixed64;
-                    }
-                case ProtoTypeCode.Single:
-                    {
-                        return WireType.Fixed32;
-                    }
-                case ProtoTypeCode.String:
-                case ProtoTypeCode.DateTime:
-                case ProtoTypeCode.Decimal:
-                case ProtoTypeCode.ByteArray:
-                case ProtoTypeCode.TimeSpan:
-                case ProtoTypeCode.Guid:
-                case ProtoTypeCode.Uri:
-                case ProtoTypeCode.Type:
-                    {
-                        return WireType.String;
-                    }
-            }
-            return WireType.None;
-        }
-
+        
 #if !FEAT_IKVM
         /// <summary>
         /// This is the more "complete" version of Serialize, which handles single instances of mapped types.

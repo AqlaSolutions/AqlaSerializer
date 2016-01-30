@@ -7,6 +7,7 @@ using AqlaSerializer.Compiler;
 using TriAxis.RunSharp;
 #endif
 using System.Diagnostics;
+using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -158,8 +159,8 @@ namespace AqlaSerializer.Serializers
                 {
                     if (dynamicTypeKey < 0)
                     {
-                        var typeCode = Helpers.GetTypeCode(value.GetType());
-                        var wireType = TypeModel.GetWireType(typeCode, _dataFormatForDynamicBuiltins);
+                        var typeCode = HelpersInternal.GetTypeCode(value.GetType());
+                        var wireType = HelpersInternal.GetWireType(typeCode, _dataFormatForDynamicBuiltins);
                         if (wireType != WireType.None)
                         {
                             ProtoWriter.WriteFieldHeaderComplete(wireType, dest);
