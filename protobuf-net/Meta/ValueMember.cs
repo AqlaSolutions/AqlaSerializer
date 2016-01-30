@@ -370,7 +370,7 @@ namespace AqlaSerializer.Meta
 
 
                 if (IsPacked && itemType != null && !RuntimeTypeModel.CheckTypeIsCollection(model, itemType)
-                    && !ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(itemType), BinaryDataFormat.Default)))
+                    && !ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(itemType), BinaryDataFormat.Default)))
                 {
                     throw new InvalidOperationException("Only simple data-types can use packed encoding");
                 }
@@ -472,7 +472,7 @@ namespace AqlaSerializer.Meta
 
             if (collectionItemType != null)
             {
-                isPacked = isPacked && !itemTypeCanBeNull && ListDecorator.CanPack(TypeModel.GetWireType(Helpers.GetTypeCode(collectionItemType), dataFormat)); // TODO warn?
+                isPacked = isPacked && !itemTypeCanBeNull && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(collectionItemType), dataFormat)); // TODO warn?
                 
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
@@ -718,11 +718,11 @@ namespace AqlaSerializer.Meta
                     if (dynamicType)
                         return new NetObjectValueDecorator(tryAsReference, dataFormat, model);
                     else if (tryAsLateRef && tryAsReference && key >= 0 
-                             && model[key].GetSurrogateOrSelf() == model[key]
+                             && model[key].GetSurrogateOrSelf() == model[key] // TODO subtype surrogate check
                              && !model[key].IsAutoTuple
                              && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference))
                     {
-                        return new NetObjectValueDecorator(new LateReferenceSerializer(type, model), false, true, model);
+                        return LateReferenceSerializer.CreateInsideNetObject(type, model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
                         return new NetObjectValueDecorator(type, key, tryAsReference);
