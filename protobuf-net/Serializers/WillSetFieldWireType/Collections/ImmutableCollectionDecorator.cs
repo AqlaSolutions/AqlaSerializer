@@ -150,19 +150,16 @@ namespace AqlaSerializer.Serializers
 #endif
 
         private readonly MethodInfo builderFactory, add, addRange, finish;
-        internal ImmutableCollectionDecorator(TypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList,
-            MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
-            : base(model, declaredType, concreteType, tail, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility)
+        internal ImmutableCollectionDecorator(RuntimeTypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList,
+            MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish, bool protoCompatibility)
+            : base(model, declaredType, concreteType, tail, writePacked, packedWireType, returnList, overwriteList, protoCompatibility, false)
         {
             this.builderFactory = builderFactory;
             this.add = add;
             this.addRange = addRange;
             this.finish = finish;
-            _listHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
         }
-
-        readonly ListHelpers _listHelpers;
-
+        
 #if !FEAT_IKVM
 
 
@@ -194,7 +191,7 @@ namespace AqlaSerializer.Serializers
                 }
             }
 
-            _listHelpers.Read(null,
+            ListHelpers.Read(null, null,
                 o =>
                     {
                         args[0] = o;
@@ -204,8 +201,6 @@ namespace AqlaSerializer.Serializers
             
             return finish.Invoke(builderInstance, null);
         }
-
-        protected override bool WriteSubtypeInfo => false;
 #endif
 
 #if FEAT_COMPILER

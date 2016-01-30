@@ -66,7 +66,7 @@ namespace AqlaSerializer.Serializers
                     }
                     else
                     {
-                        serializer = ListDecorator.Create(model, finalType, defaultType, tail, false, wireType, true, false, new KeyValuePair<Type, int>[0], false);
+                        serializer = ListDecorator.Create(model, finalType, defaultType, tail, false, wireType, true, false, false, true);
                     }
                 }
                 tails[i] = serializer;

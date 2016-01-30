@@ -1,18 +1,20 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 #if !NO_RUNTIME
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using AltLinq;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
 #endif
 using AqlaSerializer.Meta;
-
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
+
 #endif
 
 namespace AqlaSerializer.Serializers
@@ -22,40 +24,22 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            int? subTypeNumber = null;
-            int? length = null;
-            if (!_protoCompatibility)
+            Action subTypeWriter = null;
+            if (_writeSubType)
             {
-                if (WriteSubtypeInfo)
-                {
-                    var type = value.GetType();
-                    if (type != ExpectedType)
+                subTypeWriter = () =>
                     {
-                        for (int i = 0; i < _subtypeNumbers.Length; i++)
-                        {
-                            var kv = _subtypeNumbers[i];
-                            if (Helpers.IsAssignableFrom(type, kv.Key))
-                                subTypeNumber = kv.Value;
-                        }
-
-                        // no need to ensure this
-                        // we have default, right?
-                        // it will work ok!
-                        // if someone needs subtypes he will register them
-                        //if (!subTypeNumber.HasValue && !Helpers.IsAssignableFrom(concreteTypeDefault, type))
-                        //{
-                        //    // for arrays no need to register
-                        //    if (!type.IsArray || !Helpers.IsAssignableFrom(declaredType, type))
-                        //        TypeModel.ThrowUnexpectedSubtype(ExpectedType, type);
-                        //}
-                    }
-                }
-                // we still write length in case it will be read as array
-                length = (value as ICollection)?.Count;
+                        Type t = value.GetType();
+                        if (concreteTypeDefault != t)
+                            _subTypeHelpers.Write(_metaType, t, dest);
+                        else
+                            ProtoWriter.WriteFieldHeaderCancelBegin(dest);
+                    };
             }
-            _listHelpers.Write(value, subTypeNumber, length, null, dest);
+            // we still write length in case it will be read as array
+            ListHelpers.Write(value, subTypeWriter, !_protoCompatibility ? (value as ICollection)?.Count : null, null, dest);
         }
-        
+
         public override object Read(object value, ProtoReader source)
         {
             object origValue = value;
@@ -75,25 +59,13 @@ namespace AqlaSerializer.Serializers
                     };
             }
 
-            _listHelpers.Read(
-                (subTypeNumber, length) =>
+            ListHelpers.Read(
+                () => value = _subTypeHelpers.TryRead(_metaType, value?.GetType(), source)?.Serializer.CreateInstance(source) ?? value,
+                length =>
                     {
                         if (value == null)
                         {
-                            Type t = concreteTypeDefault ?? declaredType;
-                            if (subTypeNumber.HasValue)
-                            {
-                                foreach (var kv in _subtypeNumbers)
-                                {
-                                    if (kv.Value == subTypeNumber)
-                                    {
-                                        t = kv.Key;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            value = Activator.CreateInstance(t);
+                            value = Activator.CreateInstance(concreteTypeDefault);
                             ProtoReader.NoteObject(value, source);
                         }
                         if (IsList && !SuppressIList)
@@ -103,7 +75,7 @@ namespace AqlaSerializer.Serializers
                     },
                 addLocal,
                 source);
-            
+
             return origValue == value ? null : value;
         }
 
@@ -140,30 +112,45 @@ namespace AqlaSerializer.Serializers
         protected bool WritePacked => (options & OPTIONS_WritePacked) != 0;
         bool ReturnList => (options & OPTIONS_ReturnList) != 0;
         protected readonly WireType _packedWireTypeForRead;
-        readonly KeyValuePair<Type,int>[] _subtypeNumbers;
 
         readonly Type _itemType;
-        protected readonly bool _protoCompatibility;
+        readonly bool _protoCompatibility;
+        readonly bool _writeSubType;
 
-        readonly ListHelpers _listHelpers;
-
-        protected virtual bool WriteSubtypeInfo => true;
-
-        internal static ListDecorator Create(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+        protected readonly ListHelpers ListHelpers;
+        readonly SubTypeHelpers _subTypeHelpers = new SubTypeHelpers();
+        readonly MetaType _metaType;
+        
+        internal static ListDecorator Create(
+            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList,
+            bool overwriteList, bool protoCompatibility, bool writeSubType)
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
             if (returnList && ImmutableCollectionDecorator.IdentifyImmutable(model, declaredType, out builderFactory, out add, out addRange, out finish))
             {
                 return new ImmutableCollectionDecorator(
-                    model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, returnList, overwriteList,
-                    builderFactory, add, addRange, finish, subtypeNumbers, protoCompatibility);
+                    model,
+                    declaredType,
+                    concreteTypeDefault,
+                    tail,
+                    writePacked,
+                    packedWireType,
+                    returnList,
+                    overwriteList,
+                    builderFactory,
+                    add,
+                    addRange,
+                    finish,
+                    protoCompatibility);
             }
 #endif
-            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, returnList, overwriteList, subtypeNumbers, protoCompatibility);
+            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, returnList, overwriteList, protoCompatibility, writeSubType);
         }
 
-        protected ListDecorator(TypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList, bool overwriteList, KeyValuePair<Type, int>[] subtypeNumbers, bool protoCompatibility)
+        protected ListDecorator(
+            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList,
+            bool overwriteList, bool protoCompatibility, bool writeSubType)
             : base(tail)
         {
             _itemType = tail.ExpectedType;
@@ -176,15 +163,15 @@ namespace AqlaSerializer.Serializers
             }
 
             _packedWireTypeForRead = packedWireType;
-            _subtypeNumbers = subtypeNumbers ?? new KeyValuePair<Type, int>[0];
             _protoCompatibility = protoCompatibility;
+            _writeSubType = writeSubType && !protoCompatibility;
 
             if (writePacked) options |= OPTIONS_WritePacked;
             if (declaredType == null) throw new ArgumentNullException("declaredType");
             if (declaredType.IsArray) throw new ArgumentException("Cannot treat arrays as lists", "declaredType");
             this.declaredType = declaredType;
-            this.concreteTypeDefault = concreteTypeDefault;
-            
+            this.concreteTypeDefault = concreteTypeDefault ?? declaredType;
+
             // look for a public list.Add(typedObject) method
             if (RequireAdd)
             {
@@ -202,8 +189,12 @@ namespace AqlaSerializer.Serializers
                 if (add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            _listHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
+            ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, Tail);
+
+            if (!protoCompatibility)
+                _metaType = model[declaredType];
         }
+        
         protected virtual bool RequireAdd => true;
 
         public override Type ExpectedType => declaredType;
@@ -449,12 +440,13 @@ namespace AqlaSerializer.Serializers
 #if WINRT
         private static readonly TypeInfo ienumeratorType = typeof(IEnumerator).GetTypeInfo(), ienumerableType = typeof (IEnumerable).GetTypeInfo();
 #else
-        static readonly System.Type ienumeratorType = typeof (IEnumerator);
-        static readonly System.Type ienumerableType = typeof (IEnumerable);
+        static readonly System.Type ienumeratorType = typeof(IEnumerator);
+        static readonly System.Type ienumerableType = typeof(IEnumerable);
 #endif
+
         protected MethodInfo GetEnumeratorInfo(TypeModel model, out MethodInfo moveNext, out MethodInfo current)
         {
-            
+
 #if WINRT
             TypeInfo enumeratorType = null, iteratorType, expectedType = ExpectedType.GetTypeInfo();
 #else
@@ -489,11 +481,11 @@ namespace AqlaSerializer.Serializers
                 }
                 moveNext = current = getEnumerator = null;
             }
-            
+
 #if !NO_GENERICS
             // try IEnumerable<T>
             Type tmp = model.MapType(typeof(System.Collections.Generic.IEnumerable<>), false);
-            
+
             if (tmp != null)
             {
                 tmp = tmp.MakeGenericType(itemType);
@@ -504,12 +496,12 @@ namespace AqlaSerializer.Serializers
                 enumeratorType = tmp;
 #endif
             }
-;
+            ;
             if (enumeratorType != null && enumeratorType.IsAssignableFrom(expectedType))
             {
                 getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
                 getReturnType = getEnumerator.ReturnType;
-                
+
 #if WINRT
                 iteratorType = getReturnType.GetTypeInfo();
 #else
@@ -531,14 +523,15 @@ namespace AqlaSerializer.Serializers
 #endif
                 ;
             moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext");
-            current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType,"Current", false), false, false);
+            current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
             return getEnumerator;
         }
+
 #if FEAT_COMPILER
-        
+
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
-            #if false
+#if false
             using (Compiler.Local list = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             {
                 MethodInfo moveNext, current, getEnumerator = GetEnumeratorInfo(ctx.Model, out moveNext, out current);
@@ -604,6 +597,7 @@ namespace AqlaSerializer.Serializers
 
         }
 #endif
+
         public virtual bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
             return false;
@@ -613,6 +607,7 @@ namespace AqlaSerializer.Serializers
         {
             return true;
         }
+
 #if !FEAT_IKVM
         public virtual object CreateInstance(ProtoReader source)
         {
@@ -623,13 +618,13 @@ namespace AqlaSerializer.Serializers
 
         public virtual void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
-        
+
         }
 #endif
 #if FEAT_COMPILER
         public virtual void EmitCallback(CompilerContext ctx, Local valueFrom, TypeModel.CallbackType callbackType)
         {
-        
+
         }
 
         public virtual void EmitCreateInstance(CompilerContext ctx)
@@ -639,4 +634,5 @@ namespace AqlaSerializer.Serializers
 #endif
     }
 }
+
 #endif
