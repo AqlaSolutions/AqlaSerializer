@@ -67,7 +67,7 @@ namespace AqlaSerializer.Serializers
                 && Tail.ReturnsValue
                 && (!Tail.RequiresOldValue // always set where can't check oldVal
                     // and if it's value type or nullable with changed null/not null or ref
-                    || (property.PropertyType.IsValueType && oldVal != null && newVal != null)
+                    || (Helpers.IsValueType(property.PropertyType) && oldVal != null && newVal != null)
                     || !ReferenceEquals(oldVal, newVal)
                    ))
             {
