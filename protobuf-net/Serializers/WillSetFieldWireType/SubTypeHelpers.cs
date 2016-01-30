@@ -33,7 +33,7 @@ namespace AqlaSerializer.Serializers
         void Write(MetaType metaType, Type actual, ProtoWriter dest, int recursionLevel)
         {
             if (metaType.Type != actual)
-                foreach (var subType in metaType.GetSubtypes())
+                foreach (var subType in metaType.GetSubtypes().OrderBy(st => st.FieldNumber))
                 {
                     MetaType derivedType = subType.DerivedType;
                     if (derivedType.Type == metaType.Type) continue;
@@ -135,7 +135,7 @@ namespace AqlaSerializer.Serializers
             WriterGen dest = g.Writer;
             g.If(metaType.Type != actualType.AsOperand);
             {
-                foreach (var subType in metaType.GetSubtypes())
+                foreach (var subType in metaType.GetSubtypes().OrderBy(st => st.FieldNumber))
                 {
                     MetaType derivedType = subType.DerivedType;
                     if (derivedType.Type == metaType.Type) continue;
