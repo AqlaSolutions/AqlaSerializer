@@ -62,7 +62,7 @@ namespace AqlaSerializer.Serializers
 
             object oldVal = Tail.RequiresOldValue ? Helpers.GetPropertyValue(property, value) : null;
             object newVal = Tail.Read(oldVal, source);
-            if (readOptionsWriteValue && newVal != null) // if the tail returns a null, intepret that as *no assign*
+            if (readOptionsWriteValue)
             {
                 if (shadowSetter == null)
                 {

@@ -41,8 +41,7 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value != null);
             object newValue = Tail.Read((Tail.RequiresOldValue ? field.GetValue(value) : null), source);
-            if(newValue != null)
-                field.SetValue(value,newValue);
+            field.SetValue(value,newValue);
             return null;
         }
 #endif
