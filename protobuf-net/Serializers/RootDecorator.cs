@@ -19,7 +19,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class RootDecorator : IProtoTypeSerializer
     {
-        public bool DemandWireTypeStabilityStatus() => true;
+        public bool DemandWireTypeStabilityStatus() => !_protoCompatibility;
         readonly bool _protoCompatibility;
         readonly TypeModel _model;
         private readonly IProtoTypeSerializer _serializer;
