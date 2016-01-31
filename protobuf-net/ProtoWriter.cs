@@ -200,14 +200,14 @@ namespace AqlaSerializer
         bool ignoredFieldStarted;
 
         // TODO compiler optimization to merge two consequence calls start-complete
-
+        
         /// <summary>
         /// Indicates that the next WriteFieldHeaderComplete call should be ignored
         /// </summary>
         /// <param name="writer"></param>
         public static void WriteFieldHeaderBeginIgnored(ProtoWriter writer)
         {
-            WriteFieldHeaderBegin(0, writer);
+            WriteFieldHeaderBegin(ProtoReader.GroupNumberForIgnoredFields, writer);
             writer.ignoredFieldStarted = true;
         }
 
@@ -279,7 +279,7 @@ namespace AqlaSerializer
 
             writer.expectRoot = false;
             writer.wireType = wireType;
-            writer.fieldNumber = 0;
+            writer.fieldNumber = ProtoReader.GroupNumberForIgnoredFields;
         }
 
         /// <summary>
@@ -448,12 +448,9 @@ namespace AqlaSerializer
                 writer.expectRoot = false;
                 return new SubItemToken(int.MinValue);
             }
-            if (writer.fieldStarted && writer.ignoredFieldStarted)
-            {
-                writer.ignoredFieldStarted = false;
-                writer.fieldStarted = false;
-                return new SubItemToken(int.MinValue);
-            }
+            // ignored field does affect only field header
+            // but subitem information is considered content
+            // it should be started properly
             WriteFieldHeaderCompleteAnyType(prefixLength ? WireType.String : WireType.StartGroup, writer);
             return StartSubItem(instance, writer, false);
         }
