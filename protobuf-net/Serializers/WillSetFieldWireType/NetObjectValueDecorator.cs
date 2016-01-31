@@ -23,9 +23,7 @@ namespace AqlaSerializer.Serializers
     {
         public bool DemandWireTypeStabilityStatus()
         {
-            if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0) return false;
-            if (_key >= 0) return _model[_key].Serializer.DemandWireTypeStabilityStatus();
-            return _serializer.DemandWireTypeStabilityStatus();
+            return true; // always subitem
         }
 
         readonly int _key = -1;
