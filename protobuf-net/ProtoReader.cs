@@ -1334,6 +1334,7 @@ namespace AqlaSerializer
                     throw CreateWireTypeException();
             }
         }
+        
         /// <summary>
         /// Indicates whether the reader still has data remaining in the current sub-item,
         /// additionally setting the wire-type for the next field if there is more data.
@@ -1345,8 +1346,14 @@ namespace AqlaSerializer
             // check for virtual end of stream
             if (source.blockEnd <= source.position || wireType == WireType.EndGroup) { return false; }
             source.wireType = wireType;
+            source.fieldNumber = GroupNumberForIgnoredFields;
             return true;
         }
+
+        /// <summary>
+        /// Field Number is not written for ignored fields but when group is ended the group number is written (equal to specified field number)
+        /// </summary>
+        internal const int GroupNumberForIgnoredFields = 1;
 
         internal int GetTypeKey(ref Type type)
         {
