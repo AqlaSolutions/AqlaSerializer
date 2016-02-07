@@ -35,6 +35,9 @@ namespace AqlaSerializer.Meta
             }
             set
             {
+                if (value.HasFlag(NetObjectExtensionTypes.LateReference) && !UseOwnFormat)
+                    throw new ArgumentException("LateReference mode can't be enabled when UseOwnFormat is disabled");
+
                 if (value.HasFlag(NetObjectExtensionTypes.AdvancedVersioning)
                     && ((value & (NetObjectExtensionTypes.Reference | NetObjectExtensionTypes.Null)) != (NetObjectExtensionTypes.Reference | NetObjectExtensionTypes.Null)))
                 {
@@ -44,7 +47,9 @@ namespace AqlaSerializer.Meta
                 if (value != 0) EnableCompatibility = true;
             }
         }
-        
+
+        public bool UseOwnFormat { get; set; } = true;
+
         public static ProtoCompatibilitySettings Default => new ProtoCompatibilitySettings();
 
         public static ProtoCompatibilitySettings None => new ProtoCompatibilitySettings()
@@ -55,7 +60,8 @@ namespace AqlaSerializer.Meta
         public static ProtoCompatibilitySettings FullCompatibility => new ProtoCompatibilitySettings()
         {
             EnableCompatibility = true,
-            AllowExtensionDefinitions = NetObjectExtensionTypes.None
+            AllowExtensionDefinitions = NetObjectExtensionTypes.None,
+            UseOwnFormat = false
         };
     }
 }
