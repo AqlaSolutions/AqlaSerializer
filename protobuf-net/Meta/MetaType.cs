@@ -553,7 +553,7 @@ namespace AqlaSerializer.Meta
         // to be compatible with aux serializer and don't add overhead we don't decorate enums with netobject
         bool RootStartsGroup => RootNetObjectMode || RootLateReferenceMode;
         bool RootNetObjectMode => !IsSimpleValue && IsNetObjectValueDecoratorNecessary(model, type, true);
-        bool RootLateReferenceMode => !IsSimpleValue && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference);
+        bool RootLateReferenceMode => !IsSimpleValue && model.ProtoCompatibility.UseOwnFormat;
 
         bool IsSimpleValue => Helpers.IsEnum(type);
 

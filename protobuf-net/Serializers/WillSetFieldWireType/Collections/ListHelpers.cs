@@ -26,8 +26,7 @@ namespace AqlaSerializer.Serializers
         public const int FieldItem = 1;
         public const int FieldSubtype = 2;
         public const int FieldLength = 3;
-        public const int FieldPackType = 4;
-
+        
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail)
         {
             _packedWireTypeForRead = packedWireTypeForRead;
