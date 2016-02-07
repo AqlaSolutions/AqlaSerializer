@@ -50,7 +50,7 @@ namespace test
     [TestFixture]
     public class TestIncorrectStream
     {
-        [Test, ExpectedException(typeof(ProtoException), ExpectedMessage = "Unexpected end-group in source data; this usually means the source data is corrupt")]
+        [Test]
         public void TestDeserializationFromXml()
         {
             SimpleObject original = new SimpleObject();
@@ -75,7 +75,10 @@ namespace test
 
             // rewind the stream and deserialize using AqlaSerializer
             ms.Seek(0L, SeekOrigin.Begin);
-            SimpleObject fromProtobuf = Serializer.Deserialize<SimpleObject>(ms);
+            SimpleObject fromProtobuf = null;
+            Assert.That(
+                () => fromProtobuf = Serializer.Deserialize<SimpleObject>(ms),
+                Throws.TypeOf<AqlaSerializer.ProtoException>().With.Message.StartsWith("Wrong format version"));
 
             // either deserialization from XML works or
             // it should not give an object instance (either return null or throw Exception)

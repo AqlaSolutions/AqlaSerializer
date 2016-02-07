@@ -35,6 +35,9 @@ namespace AqlaSerializer.Serializers
         public Type ExpectedType => _serializer.ExpectedType;
         public bool ReturnsValue => _serializer.ReturnsValue;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
+
+        const int CurrentFormatVersion = 1;
+        
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
         {
@@ -46,6 +49,8 @@ namespace AqlaSerializer.Serializers
             }
 
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
+            ProtoWriter.WriteFieldHeaderIgnored(WireType.Variant, dest);
+            ProtoWriter.WriteInt32(CurrentFormatVersion, dest);
             ProtoWriter.WriteFieldHeaderBegin(ListHelpers.FieldItem, dest);
             _serializer.Write(value, dest);
             int typeKey;
@@ -66,6 +71,9 @@ namespace AqlaSerializer.Serializers
                 return _serializer.Read(value, source);
             
             var rootToken = ProtoReader.StartSubItem(source);
+            if (!ProtoReader.HasSubValue(WireType.Variant, source)) throw new ProtoException("Expected format version field");
+            int formatVersion = source.ReadInt32();
+            if (formatVersion != CurrentFormatVersion) throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
             if (source.ReadFieldHeader() != ListHelpers.FieldItem) throw new ProtoException("Expected field for root object");
             var r = _serializer.Read(value, source);
             int typeKey;
