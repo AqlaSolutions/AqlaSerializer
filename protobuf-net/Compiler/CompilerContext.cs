@@ -1551,6 +1551,17 @@ namespace AqlaSerializer.Compiler
 
         private readonly TypeModel model;
 
+        public Local Local(Type type)
+        {
+            return new Local(this, type);
+        }
+
+#if FEAT_IKVM
+        public Local Local(System.Type type)
+        {
+            return new Local(this, type);
+        }
+#endif
         internal Type MapType(System.Type type)
         {
             return model.MapType(type);

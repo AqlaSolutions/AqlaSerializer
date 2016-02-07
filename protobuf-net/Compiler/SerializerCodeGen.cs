@@ -43,7 +43,7 @@ namespace AqlaSerializer.Compiler
 
         public SerializerTypeOfHelpers TypeOf { get; }
 
-        public void ThrowProtoException(string message)
+        public void ThrowProtoException(Operand message)
         {
             Throw(ExpressionFactory.New(typeof(ProtoException), message));
         }
@@ -51,6 +51,18 @@ namespace AqlaSerializer.Compiler
         public void ThrowNullReferenceException()
         {
             Throw(ExpressionFactory.New(typeof(NullReferenceException)));
+        }
+
+#if FEAT_IKVM
+        public ContextualOperand GetStackValueOperand(System.Type type)
+        {
+            return GetStackValueOperand(TypeMapper.MapType(type));
+        }
+#endif
+
+        public ContextualOperand GetStackValueOperand(Type type)
+        {
+            return new ContextualOperand(new StackValueOperand(type), TypeMapper);
         }
 
         public ContextualOperand ArgReaderWriter()

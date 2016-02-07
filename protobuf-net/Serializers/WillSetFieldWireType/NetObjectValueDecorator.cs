@@ -103,13 +103,14 @@ namespace AqlaSerializer.Serializers
             int newTypeRefKey;
             int newObjectKey;
             int typeKey = _key;
-            var t = _type;
+            var type = _type;
             bool isDynamic;
+            bool isDynamicLateSet = false;
             BclHelpers.NetObjectOptions options = _options;
             SubItemToken token = NetObjectHelpers.ReadNetObject_Start(
                 ref value,
                 source,
-                ref t,
+                ref type,
                 options,
                 out isDynamic,
                 ref typeKey,
@@ -127,21 +128,25 @@ namespace AqlaSerializer.Serializers
                 {
                     if (isDynamic)
                     {
-                        if (source.TryReadBuiltinType(ref value, Helpers.GetTypeCode(t), true))
-                            options |= BclHelpers.NetObjectOptions.LateSet;
+                        if (source.TryReadBuiltinType(ref value, Helpers.GetTypeCode(type), true))
+                            isDynamicLateSet = true;
                         else
-                            throw new InvalidOperationException("Dynamic type is not a contract-type: " + value.GetType().Name);
-                    }
-                    else if (_serializer == null)
-                    {
-                        throw new InvalidOperationException("Dynamic type expected but no type info was read");
+                            throw new ProtoException("Dynamic type is not a contract-type: " + type.Name);
                     }
                     else
                     {
-                        value = _serializer.Read(_serializer.RequiresOldValue ? value : null, source);
+                        if (_serializer == null)
+                            throw new ProtoException("Dynamic type expected but no type info was read");
+                        else
+                        {
+                            // ensure consistent behavior with emit version
+                            var v = _serializer.Read(_serializer.RequiresOldValue ? value : null, source);
+                            if (_serializer.ReturnsValue) value = v;
+                        }
                     }
                 }
-                NetObjectHelpers.ReadNetObject_EndWithNoteNewObject(value, source, oldValue, t, newObjectKey, newTypeRefKey, options, token);
+                if (isDynamicLateSet) options |= BclHelpers.NetObjectOptions.LateSet;
+                NetObjectHelpers.ReadNetObject_EndWithNoteNewObject(value, source, oldValue, type, newObjectKey, newTypeRefKey, options, token);
             }
             else
             {
@@ -194,123 +199,156 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitRead(CompilerContext ctx, Local valueFrom)
         {
-            var g = new CodeGen(ctx.RunSharpContext, false);
-            var s = ctx.RunSharpContext.StaticFactory;
+            var g = ctx.G;
+            var s = g.StaticFactory;
 
-            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(_type, valueFrom) : new Local(ctx, _type))
+            //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
+
+            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(_type, valueFrom) : ctx.Local(_type))
+            using (Local shouldEnd = ctx.Local(typeof(bool)))
+            using (Local newTypeRefKey = ctx.Local(typeof(int)))
+            using (Local typeKey = ctx.Local(typeof(int)))
+            using (Local type = ctx.Local(typeof(System.Type)))
+            using (Local newObjectKey = ctx.Local(typeof(int)))
+            using (Local isDynamic = ctx.Local(typeof(bool)))
+            using (Local isDynamicLateSet = ctx.Local(typeof(bool)))
+            using (Local token = ctx.Local(typeof(SubItemToken)))
+            using (Local oldValueBoxed = ctx.Local(typeof(object)))
+            using (Local valueBoxed = ctx.Local(typeof(object)))
             {
-                using (Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
-                using (Local shouldEnd = new Local(ctx, ctx.MapType(typeof(bool))))
-                using (Local isType = new Local(ctx, ctx.MapType(typeof(bool))))
-                using (Local newTypeKey = new Local(ctx, ctx.MapType(typeof(int))))
-                using (Local newObjectKey = new Local(ctx, ctx.MapType(typeof(int))))
-                using (Local t = new Local(ctx, ctx.MapType(typeof(System.Type))))
-                using (Local newValue = new Local(ctx, ctx.MapType(typeof(object))))
-                using (Local oldValue = new Local(ctx, ctx.MapType(typeof(object))))
-                using (Local resultCasted = new Local(ctx, ctx.MapType(_type)))
-                {
-                    if (!RequiresOldValue)
-                    {
-                        if (_type.IsValueType)
-                            g.InitObj(value);
-                        else
-                        {
-                            ctx.LoadNullRef();
-                            ctx.StoreValue(value);
-                        }
-                    }
-                    g.Assign(t, ctx.MapType(_type));
-                    g.Assign(
-                        newValue,
-                        s.Invoke(
-                            typeof(NetObjectHelpers),
-                            nameof(NetObjectHelpers.ReadNetObject_Start),
-                            value,
-                            g.Arg(ctx.ArgIndexReadWriter),
-                            t,
-                            _options,
-                            token,
-                            shouldEnd,
-                            newObjectKey,
-                            newTypeKey,
-                            isType));
+                if (!RequiresOldValue)
+                    g.Assign(valueBoxed, null);
+                else
+                    g.Assign(valueBoxed, value); // box
 
-                    g.If(shouldEnd);
+                g.Assign(typeKey, _key);
+                g.Assign(type, _type);
+                g.Assign(
+                    token,
+                    s.Invoke(
+                        typeof(NetObjectHelpers),
+                        nameof(NetObjectHelpers.ReadNetObject_Start),
+                        valueBoxed,
+                        g.ArgReaderWriter(),
+                        type,
+                        _options,
+                        isDynamic,
+                        typeKey,
+                        newObjectKey,
+                        newTypeRefKey,
+                        shouldEnd));
+
+                g.If(shouldEnd);
+                {
+                    g.Assign(oldValueBoxed, valueBoxed);
+                    
+                    // now valueBoxed is not null otherwise it would go to else
+
+                    g.If(typeKey.AsOperand > 0);
                     {
-                        g.Assign(oldValue, newValue);
-                        // valuetype: will never be null otherwise it would go to else
-                        g.Assign(resultCasted, newValue.AsOperand.Cast(_type));
-                        EmitDoRead(g, resultCasted, ctx);
-                        g.Invoke(
-                            typeof(NetObjectHelpers),
-                            nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
-                            newValue,
-                            g.Arg(ctx.ArgIndexReadWriter),
-                            oldValue,
-                            t,
-                            newObjectKey,
-                            newTypeKey,
-                            isType,
-                            _options,
-                            token);
+                        g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
+                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
                     }
                     g.Else();
                     {
-                        // nullable will just unbox how it should be from null or value
-                        if (_type.IsValueType && ReturnsValue && (Helpers.GetNullableUnderlyingType(_type) == null))
+                        g.If(isDynamic);
                         {
-                            // TODO do we need to ensure this? versioning - change between reference type/nullable and value type
-                            g.If(newValue.AsOperand == null);
+                            g.If(g.ReaderFunc.TryReadBuiltinType_bool(valueBoxed, g.HelpersFunc.GetTypeCode(type), true));
                             {
-                                g.InitObj(resultCasted);
+                                g.Assign(isDynamicLateSet, true);
+                                g.Assign(value, valueBoxed.AsOperand.Cast(_type));
                             }
                             g.Else();
                             {
-                                g.Assign(resultCasted, newValue.AsOperand.Cast(_type));
+                                g.Assign(isDynamicLateSet, false);
+                                g.ThrowProtoException("Dynamic type is not a contract-type: " + type.AsOperand.Property(nameof(Type.Name)));
                             }
                             g.End();
                         }
-                        else
-                            g.Assign(resultCasted, newValue.AsOperand.Cast(_type));
-
-                        g.Invoke(typeof(ProtoReader), nameof(ProtoReader.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
+                        g.Else();
+                        {
+                            if (_serializer == null)
+                                g.ThrowProtoException("Dynamic type expected but no type info was read");
+                            else
+                            {
+                                _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
+                                if (_serializer.ReturnsValue)
+                                {
+                                    g.Assign(value, g.GetStackValueOperand(_serializer.ExpectedType));
+                                    g.Assign(valueBoxed, value);
+                                }
+                            }
+                        }
+                        g.End();
                     }
                     g.End();
-
-                    if (ReturnsValue)
-                    {
-                        ctx.LoadValue(resultCasted);
-                    }
+                    
+                    g.Invoke(
+                        typeof(NetObjectHelpers),
+                        nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
+                        valueBoxed,
+                        g.ArgReaderWriter(),
+                        oldValueBoxed,
+                        type,
+                        newObjectKey,
+                        newTypeRefKey,
+                        (isDynamic.AsOperand && isDynamicLateSet.AsOperand).Conditional(_options | BclHelpers.NetObjectOptions.LateSet, _options),
+                        token);
                 }
+                g.Else();
+                {
+                    if (Helpers.IsValueType(_type) && (ReturnsValue || RequiresOldValue))
+                    {
+                        g.If(valueBoxed.AsOperand == null);
+                        {
+                            // also nullable can just unbox from null or value
+                            // but anyway
+                            g.InitObj(value);
+                        }
+                        g.Else();
+                        {
+                            g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                        }
+                        g.End();
+                    }
+                    else
+                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+
+                    g.Reader.EndSubItem(token);
+                }
+                g.End();
+
+                if (ReturnsValue)
+                    ctx.LoadValue(value);
             }
         }
-
-        void EmitDoRead(CodeGen g, Local value, CompilerContext ctx)
-        {
-            _serializer.EmitRead(ctx, value);
-            ctx.StoreValue(value);
-        }
-
+        
         public void EmitWrite(CompilerContext ctx, Local valueFrom)
         {
             using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
             {
-                var g = new CodeGen(ctx.RunSharpContext, false);
-                using (Local write = new Local(ctx, ctx.MapType(typeof(bool))))
-                using (Local t = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
+                var g = ctx.G;
+                using (Local shouldEnd = ctx.Local(typeof(bool)))
+                using (Local newTypeRefKey = ctx.Local(typeof(int)))
+                using (Local typeKey = ctx.Local(typeof(int)))
+                using (Local type = ctx.Local(typeof(System.Type)))
+                using (Local newObjectKey = ctx.Local(typeof(int)))
+                using (Local isDynamic = ctx.Local(typeof(bool)))
+                using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
+                using (Local token = ctx.Local(typeof(SubItemToken)))
                 {
                     var s = ctx.RunSharpContext.StaticFactory;
                     // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
                     g.Assign(
-                        t,
-                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.Arg(ctx.ArgIndexReadWriter), _options, write));
-                    g.If(write);
+                        token,
+                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.Arg(ctx.ArgIndexReadWriter), _options, shouldEnd));
+                    g.If(shouldEnd);
                     {
                         // field header written!
                         EmitDoWrite(g, value, ctx);
                     }
                     g.End();
-                    g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t, g.Arg(ctx.ArgIndexReadWriter));
+                    g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
                 }
             }
 
