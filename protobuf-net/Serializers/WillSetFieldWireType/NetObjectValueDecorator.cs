@@ -71,7 +71,7 @@ namespace AqlaSerializer.Serializers
             if (!make || !Helpers.IsValueType(type) || Helpers.GetNullableUnderlyingType(type) != null) return type;
             return model.MapType(typeof(Nullable<>)).MakeGenericType(type);
         }
-        
+
         /// <summary>
         /// Dynamic type
         /// </summary>
@@ -140,8 +140,7 @@ namespace AqlaSerializer.Serializers
                         else
                         {
                             // ensure consistent behavior with emit version
-                            var v = _serializer.Read(_serializer.RequiresOldValue ? value : null, source);
-                            if (_serializer.ReturnsValue) value = v;
+                            value = _serializer.Read(_serializer.RequiresOldValue ? value : null, source);
                         }
                     }
                 }
@@ -241,7 +240,7 @@ namespace AqlaSerializer.Serializers
                 g.If(shouldEnd);
                 {
                     g.Assign(oldValueBoxed, valueBoxed);
-                    
+
                     // now valueBoxed is not null otherwise it would go to else
 
                     g.If(typeKey.AsOperand > 0);
@@ -273,16 +272,14 @@ namespace AqlaSerializer.Serializers
                             {
                                 _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
                                 if (_serializer.ReturnsValue)
-                                {
                                     g.Assign(value, g.GetStackValueOperand(_serializer.ExpectedType));
-                                    g.Assign(valueBoxed, value);
-                                }
+                                g.Assign(valueBoxed, value);
                             }
                         }
                         g.End();
                     }
                     g.End();
-                    
+
                     g.Invoke(
                         typeof(NetObjectHelpers),
                         nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
@@ -322,7 +319,7 @@ namespace AqlaSerializer.Serializers
                     ctx.LoadValue(value);
             }
         }
-        
+
         public void EmitWrite(CompilerContext ctx, Local valueFrom)
         {
             using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
