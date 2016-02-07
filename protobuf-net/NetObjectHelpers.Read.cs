@@ -43,7 +43,6 @@ namespace AqlaSerializer
                 {
                     case FieldExistingObjectKey:
                         tmp = source.ReadInt32();
-                        // null handling
                         value = source.NetCache.GetKeyedObject(tmp);
                         break;
                     case FieldNewObjectKey:
