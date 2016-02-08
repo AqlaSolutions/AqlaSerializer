@@ -160,9 +160,8 @@ namespace AqlaSerializer.Serializers
         {
             bool write;
             int dynamicTypeKey;
-            SubItemToken t = NetObjectHelpers.WriteNetObject_Start(value, dest, _options, out dynamicTypeKey, out write);
-
-            // TODO emit
+            SubItemToken token = NetObjectHelpers.WriteNetObject_Start(value, dest, _options, out dynamicTypeKey, out write);
+            
             if (write)
             {
                 // field header written!
@@ -170,27 +169,31 @@ namespace AqlaSerializer.Serializers
                 {
                     if (dynamicTypeKey < 0)
                     {
-                        var typeCode = HelpersInternal.GetTypeCode(value.GetType());
-                        var wireType = HelpersInternal.GetWireType(typeCode, _dataFormatForDynamicBuiltins);
+                        ProtoTypeCode typeCode = HelpersInternal.GetTypeCode(value.GetType());
+                        WireType wireType = HelpersInternal.GetWireType(typeCode, _dataFormatForDynamicBuiltins);
                         if (wireType != WireType.None)
                         {
                             ProtoWriter.WriteFieldHeaderComplete(wireType, dest);
-                            if (ProtoWriter.TryWriteBuiltinTypeValue(value, typeCode, true, dest))
-                                write = false;
+                            if (!ProtoWriter.TryWriteBuiltinTypeValue(value, typeCode, true, dest))
+                                throw new ProtoException("Dynamic type is not a contract-type: " + value.GetType().Name);
                         }
-                        if (write)
-                            throw new InvalidOperationException("Dynamic type is not a contract-type: " + _type.Name);
+                        else
+                            throw new ProtoException("Dynamic type is not a contract-type: " + value.GetType().Name);
                     }
                     else ProtoWriter.WriteRecursionSafeObject(value, dynamicTypeKey, dest);
                 }
-                else if (_serializer != null)
-                {
-                    _serializer.Write(value, dest);
-                }
                 else
-                    ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
+                {
+                    if (_serializer != null)
+                        _serializer.Write(value, dest);
+                    else
+                    {
+                        Debug.Assert(_key >= 0);
+                        ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
+                    }
+                }
             }
-            ProtoWriter.EndSubItem(t, dest);
+            ProtoWriter.EndSubItem(token, dest);
         }
 
 #endif
@@ -220,7 +223,7 @@ namespace AqlaSerializer.Serializers
                 else
                     g.Assign(valueBoxed, value); // box
 
-                g.Assign(typeKey, _key);
+                g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_key));
                 g.Assign(type, _type);
                 g.Assign(
                     token,
@@ -325,40 +328,64 @@ namespace AqlaSerializer.Serializers
             using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
             {
                 var g = ctx.G;
-                using (Local shouldEnd = ctx.Local(typeof(bool)))
-                using (Local newTypeRefKey = ctx.Local(typeof(int)))
-                using (Local typeKey = ctx.Local(typeof(int)))
-                using (Local type = ctx.Local(typeof(System.Type)))
-                using (Local newObjectKey = ctx.Local(typeof(int)))
-                using (Local isDynamic = ctx.Local(typeof(bool)))
-                using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
+                using (Local write = ctx.Local(typeof(bool)))
+                using (Local dynamicTypeKey = ctx.Local(typeof(int)))
                 using (Local token = ctx.Local(typeof(SubItemToken)))
                 {
-                    var s = ctx.RunSharpContext.StaticFactory;
+                    var s = g.StaticFactory;
                     // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
                     g.Assign(
                         token,
-                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.Arg(ctx.ArgIndexReadWriter), _options, shouldEnd));
-                    g.If(shouldEnd);
+                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.ArgReaderWriter(), _options, dynamicTypeKey, write));
+                    g.If(write);
                     {
                         // field header written!
-                        EmitDoWrite(g, value, ctx);
+                        if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0)
+                        {
+                            g.If(dynamicTypeKey.AsOperand < 0);
+                            {
+                                using (Local typeCode = ctx.Local(typeof(ProtoTypeCode)))
+                                using (Local wireType = ctx.Local(typeof(WireType)))
+                                {
+                                    g.Assign(typeCode, g.HelpersFunc.GetTypeCode(value.AsOperand.InvokeGetType()));
+                                    g.Assign(wireType, g.HelpersFunc.GetWireType(typeCode, _dataFormatForDynamicBuiltins));
+                                    g.If(wireType.AsOperand != WireType.None);
+                                    {
+                                        g.Writer.WriteFieldHeaderComplete(wireType);
+                                        g.If(!g.WriterFunc.TryWriteBuiltinTypeValue_bool(value, typeCode, true));
+                                        {
+                                            g.ThrowProtoException("Dynamic type is not a contract-type: " + value.AsOperand.InvokeGetType().Property("Name"));
+                                        }
+                                        g.End();
+                                    }
+                                    g.Else();
+                                    {
+                                        g.ThrowProtoException("Dynamic type is not a contract-type: " + value.AsOperand.InvokeGetType().Property("Name"));
+                                    }
+                                    g.End();
+                                }
+                            }
+                            g.Else();
+                            {
+                                g.Writer.WriteRecursionSafeObject(value, dynamicTypeKey);
+                            }
+                            g.End();
+                        }
+                        g.Else();
+                        {
+                            if (_serializer != null)
+                                _serializer.EmitWrite(ctx, value);
+                            else
+                            {
+                                Debug.Assert(_key >= 0);
+                                g.Writer.WriteRecursionSafeObject(value, ctx.MapMetaKeyToCompiledKey(_key));
+                            }
+                        }
+                        g.End();
                     }
                     g.End();
-                    g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), token, g.Arg(ctx.ArgIndexReadWriter));
+                    g.Writer.EndSubItem(token);
                 }
-            }
-
-        }
-
-        void EmitDoWrite(CodeGen g, Local value, CompilerContext ctx)
-        {
-            var s = ctx.RunSharpContext.StaticFactory;
-            using (Local t2 = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
-            {
-                g.Assign(t2, s.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.StartSubItem), null, g.Arg(ctx.ArgIndexReadWriter)));
-                _serializer.EmitWrite(ctx, value);
-                g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), t2, g.Arg(ctx.ArgIndexReadWriter));
             }
         }
 #endif
