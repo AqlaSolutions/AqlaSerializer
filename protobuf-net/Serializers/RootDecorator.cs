@@ -149,7 +149,7 @@ namespace AqlaSerializer.Serializers
             using (var formatVersion = ctx.Local(typeof(int)))
             using (var expectedRefKey = ctx.Local(typeof(int)))
             using (var actualRefKey = ctx.Local(typeof(int)))
-            using (var value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             {
                 g.Assign(rootToken, g.ReaderFunc.StartSubItem());
                 g.If(!g.ReaderFunc.HasSubValue_bool(WireType.Variant));
@@ -202,6 +202,7 @@ namespace AqlaSerializer.Serializers
                 }
                 g.End();
                 g.Reader.EndSubItem(rootToken);
+                
                 if (ReturnsValue)
                     ctx.LoadValue(value);
             }

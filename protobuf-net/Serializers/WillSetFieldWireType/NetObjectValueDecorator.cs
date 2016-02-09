@@ -206,7 +206,7 @@ namespace AqlaSerializer.Serializers
 
             //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
 
-            using (Local value = RequiresOldValue ? ctx.GetLocalWithValue(_type, valueFrom) : ctx.Local(_type))
+            using (Local value = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(_type))
             using (Local shouldEnd = ctx.Local(typeof(bool)))
             using (Local newTypeRefKey = ctx.Local(typeof(int)))
             using (Local typeKey = ctx.Local(typeof(int)))
@@ -317,7 +317,7 @@ namespace AqlaSerializer.Serializers
                     g.Reader.EndSubItem(token);
                 }
                 g.End();
-
+                
                 if (ReturnsValue)
                     ctx.LoadValue(value);
             }

@@ -546,7 +546,19 @@ namespace AqlaSerializer.Compiler
 #endif
             }
         }
+
+        // TODO ensure valueFrom is reassigned everywhere
+        public Local GetLocalWithValueForEmitRead(IProtoSerializer ser, Compiler.Local fromValue)
+        {
+            return GetLocalWithValue(ser.ExpectedType, fromValue, !ser.ReturnsValue);
+        }
+
         public Local GetLocalWithValue(Type type, Compiler.Local fromValue)
+        {
+            return GetLocalWithValue(type, fromValue, false);
+        }
+
+        Local GetLocalWithValue(Type type, Compiler.Local fromValue, bool reassignBack)
         {
             if (!fromValue.IsNullRef())
             {
@@ -561,6 +573,16 @@ namespace AqlaSerializer.Compiler
             // need to store the value from the stack
             Local result = new Local(this, type);
             StoreValue(result);
+            if (reassignBack && !fromValue.IsNullRef())
+            {
+                // should reassign temporary local to the original
+                result.Disposing += (s, a) =>
+                    {
+                        LoadValue(result);
+                        Cast(fromValue.Type);
+                        StoreValue(fromValue);
+                    };
+            }
             return result;
         }
         internal void EmitBasicRead(string methodName, Type expectedType)

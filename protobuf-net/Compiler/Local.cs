@@ -101,8 +101,12 @@ namespace AqlaSerializer.Compiler
             return new Local(_ctx, _value, _type);
         }
 
+        public event EventHandler Disposing;
+
         public void Dispose()
         {
+            Disposing?.Invoke(this, EventArgs.Empty);
+            Disposing = null;
             if (_fromPool)
             {
                 // only *actually* dispose if this is context-bound; note that non-bound
