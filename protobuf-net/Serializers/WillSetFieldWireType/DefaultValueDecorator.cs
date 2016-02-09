@@ -62,7 +62,7 @@ namespace AqlaSerializer.Serializers
         {
             // TODO emit nullable check
             Compiler.CodeLabel done = ctx.DefineLabel();
-            if (valueFrom == null)
+            if (valueFrom.IsNullRef())
             {
                 ctx.CopyValue(); // on the stack
                 Compiler.CodeLabel needToPop = ctx.DefineLabel();

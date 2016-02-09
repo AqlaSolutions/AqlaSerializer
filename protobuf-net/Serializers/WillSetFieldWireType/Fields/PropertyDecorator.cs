@@ -126,7 +126,7 @@ namespace AqlaSerializer.Serializers
 
             bool writeValue;
             SanityCheck(ctx.Model, property, Tail, out writeValue, ctx.NonPublic, ctx.AllowInternal(property));
-            if (ExpectedType.IsValueType && valueFrom == null)
+            if (ExpectedType.IsValueType && valueFrom.IsNullRef())
             {
                 throw new InvalidOperationException("Attempt to mutate struct on the head of the stack; changes would be lost");
             }

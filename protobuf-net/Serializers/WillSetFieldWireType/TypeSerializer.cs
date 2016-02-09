@@ -515,7 +515,7 @@ namespace AqlaSerializer.Serializers
         }
         private void EmitCallbackIfNeeded(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
         {
-            Helpers.DebugAssert(valueFrom != null);
+            Helpers.DebugAssert(!valueFrom.IsNullRef());
             if (isRootType && ((IProtoTypeSerializer)this).HasCallbacks(callbackType))
             {
                 ((IProtoTypeSerializer)this).EmitCallback(ctx, valueFrom, callbackType);
@@ -578,7 +578,7 @@ namespace AqlaSerializer.Serializers
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             Type expected = ExpectedType;
-            Helpers.DebugAssert(valueFrom != null);
+            Helpers.DebugAssert(!valueFrom.IsNullRef());
 
             using (Compiler.Local loc = ctx.GetLocalWithValue(expected, valueFrom))
             using (Compiler.Local fieldNumber = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
@@ -662,7 +662,7 @@ namespace AqlaSerializer.Serializers
                 // post-callbacks
                 EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.AfterDeserialize);
 
-                if (valueFrom != null && !loc.IsSame(valueFrom))
+                if (!valueFrom.IsNullRef() && !loc.IsSame(valueFrom))
                 {
                     ctx.LoadValue(loc);
                     ctx.Cast(valueFrom.Type);
@@ -680,7 +680,7 @@ namespace AqlaSerializer.Serializers
             if (serType == forType)
             {
                 // emit create if null
-                Helpers.DebugAssert(loc != null);
+                Helpers.DebugAssert(!loc.IsNullRef());
                 if (!ExpectedType.IsValueType && CanCreateInstance)
                 {
                     Compiler.CodeLabel afterIf = ctx.DefineLabel();
@@ -767,7 +767,7 @@ namespace AqlaSerializer.Serializers
         }
         private void EmitCreateIfNull(Compiler.CompilerContext ctx, Compiler.Local storage)
         {
-            Helpers.DebugAssert(storage != null);
+            Helpers.DebugAssert(!storage.IsNullRef());
             if (!ExpectedType.IsValueType && CanCreateInstance)
             {
                 Compiler.CodeLabel afterNullCheck = ctx.DefineLabel();

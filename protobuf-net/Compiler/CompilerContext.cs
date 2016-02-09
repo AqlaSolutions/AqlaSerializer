@@ -128,8 +128,8 @@ namespace AqlaSerializer.Compiler
 
         public void StoreValueOrDefaultFromObject(Local storeFrom, Local storeTo)
         {
-            if (storeFrom == null) throw new ArgumentNullException(nameof(storeFrom));
-            if (storeTo == null) throw new ArgumentNullException(nameof(storeTo));
+            if (storeFrom.IsNullRef()) throw new ArgumentNullException(nameof(storeFrom));
+            if (storeTo.IsNullRef()) throw new ArgumentNullException(nameof(storeTo));
             var ctx = this;
             ctx.LoadValue(storeFrom);
             if (storeTo.Type.IsValueType)
@@ -487,7 +487,7 @@ namespace AqlaSerializer.Compiler
 
         public void StoreValue(Local local)
         {
-            if (local == this.InputValue)
+            if (ReferenceEquals(local, this.InputValue))
             {
                 byte b = isStatic ? (byte) 0 : (byte)1;
                 il.Emit(OpCodes.Starg_S, b);
@@ -519,8 +519,8 @@ namespace AqlaSerializer.Compiler
         }
         public void LoadValue(Local local)
         {
-            if (local == null) { /* nothing to do; top of stack */}
-            else if (local == this.InputValue)
+            if (local.IsNullRef()) { /* nothing to do; top of stack */}
+            else if (ReferenceEquals(local, this.InputValue))
             {
                 Emit(isStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
             }
@@ -548,7 +548,7 @@ namespace AqlaSerializer.Compiler
         }
         public Local GetLocalWithValue(Type type, Compiler.Local fromValue)
         {
-            if (fromValue != null)
+            if (!fromValue.IsNullRef())
             {
                 if (fromValue.Type == type) return fromValue.AsCopy();
                 // otherwise, load onto the stack and let the default handling (below) deal with it
@@ -593,7 +593,7 @@ namespace AqlaSerializer.Compiler
         {
             if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException("methodName");
 
-            if (fromValue != null)
+            if (!fromValue.IsNullRef())
             {
                 var g = new CodeGen(RunSharpContext, false);
                 g.LeaveNextReturnOnStack();
@@ -626,7 +626,7 @@ namespace AqlaSerializer.Compiler
                 methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             if (method == null || method.ReturnType != MapType(typeof(void))) throw new ArgumentException("methodName");
-            if (valueFrom != null)
+            if (!valueFrom.IsNullRef())
             {
                 var g = new CodeGen(RunSharpContext, false);
                 g.LeaveNextReturnOnStack();
@@ -747,7 +747,7 @@ namespace AqlaSerializer.Compiler
                 }
                 else
                 {
-                    Helpers.DebugAssert(valueFrom == null); // not expecting a valueFrom in this case
+                    Helpers.DebugAssert(valueFrom.IsNullRef()); // not expecting a valueFrom in this case
                 }
                 tail.EmitRead(this, null); // either unwrapped on the stack or not provided
                 if (tail.ReturnsValue)
@@ -1031,12 +1031,12 @@ namespace AqlaSerializer.Compiler
 
         internal void LoadRefArg(Local local, Type type)
         {
-            if (local == null)
+            if (local.IsNullRef())
             {
                 throw new InvalidOperationException("Cannot load the address of a struct at the head of the stack");
             }
 
-            if (local == this.InputValue)
+            if (ReferenceEquals(local, this.InputValue))
             {
                 il.Emit(OpCodes.Ldarga_S, (isStatic ? (byte)0 : (byte)1));
 #if DEBUG_COMPILE
@@ -1283,7 +1283,7 @@ namespace AqlaSerializer.Compiler
             public UsingBlock(CompilerContext ctx, Local local)
             {
                 if (ctx == null) throw new ArgumentNullException("ctx");
-                if (local == null) throw new ArgumentNullException("local");
+                if (local.IsNullRef()) throw new ArgumentNullException("local");
 
                 Type type = local.Type;
                 // check if **never** disposable
@@ -1301,7 +1301,7 @@ namespace AqlaSerializer.Compiler
             }
             public void Dispose()
             {
-                if (local == null || ctx == null) return;
+                if (local.IsNullRef() || ctx == null) return;
 
                 ctx.EndTry(label, false);
                 ctx.BeginFinally();
