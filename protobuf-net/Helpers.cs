@@ -18,6 +18,14 @@ using AqlaSerializer.Meta;
 
 namespace AqlaSerializer
 {
+    static class NullRefExtensions
+    {
+        public static bool IsNullRef(this object obj)
+        {
+            return ReferenceEquals(obj, null);
+        }
+    }
+
     /// <summary>
     /// Not all frameworks are created equal (fx1.1 vs fx2.0,
     /// micro-framework, compact-framework,

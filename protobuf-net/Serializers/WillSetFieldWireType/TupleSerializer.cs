@@ -383,7 +383,7 @@ namespace AqlaSerializer.Serializers
                 {
                     for (int i = 0; i < locals.Length; i++)
                     {
-                        if (locals[i] != null)
+                        if (!locals[i].IsNullRef())
                             locals[i].Dispose(); // release for re-use
                     }
                 }

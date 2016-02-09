@@ -132,7 +132,7 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            Helpers.DebugAssert(valueFrom != null); // don't support stack-head for this
+            Helpers.DebugAssert(!valueFrom.IsNullRef()); // don't support stack-head for this
             using (Compiler.Local converted = new Compiler.Local(ctx, declaredType)) // declare/re-use local
             {
                 ctx.LoadValue(valueFrom); // load primary onto stack

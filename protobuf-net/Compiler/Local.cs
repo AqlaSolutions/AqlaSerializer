@@ -49,6 +49,30 @@ namespace AqlaSerializer.Compiler
             AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
         }
 
+        [Obsolete("Don't use == on Local", true)]
+        public static bool operator ==(Local a, object b)
+        {
+            return false;
+        }
+
+        [Obsolete("Don't use != on local", true)]
+        public static bool operator !=(Local a, object b)
+        {
+            return false;
+        }
+        
+        [Obsolete("Don't use == on Local", true)]
+        public static bool operator ==(object b, Local a)
+        {
+            return false;
+        }
+
+        [Obsolete("Don't use != on local", true)]
+        public static bool operator !=(object b, Local a)
+        {
+            return false;
+        }
+        
         public Type Type => _type;
 
         internal LocalBuilder Value
@@ -68,7 +92,7 @@ namespace AqlaSerializer.Compiler
             if ((object)this == (object)other) return true;
 
             object ourVal = _value; // use prop to ensure obj-disposed etc
-            return other != null && ourVal == (object)(other._value);
+            return !other.IsNullRef() && ourVal == (object)(other._value);
         }
 
         public Local AsCopy()
@@ -92,7 +116,7 @@ namespace AqlaSerializer.Compiler
 
         public static implicit operator Operand(Local local)
         {
-            if (local == null) throw new InvalidCastException("Local is null, use " + nameof(StackValueOperand) + " with type specified");
+            if (local.IsNullRef()) throw new InvalidCastException("Local is null, use " + nameof(StackValueOperand) + " with type specified");
             return local.AsOperand;
         }
         

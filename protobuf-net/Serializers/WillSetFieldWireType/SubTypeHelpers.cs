@@ -200,7 +200,7 @@ namespace AqlaSerializer.Serializers
                             {
                                 returnGen(null);
                             }
-                            else if (oldValue != null) // check local exists
+                            else if (!oldValue.IsNullRef()) // check local exists
                             {
                                 g.If(oldValue.AsOperand.Is(r.Type));
                                 {
