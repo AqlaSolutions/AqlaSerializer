@@ -24,6 +24,7 @@ namespace AqlaSerializer
 
         public void AddLateReference(LateReference v)
         {
+            // TODO ensure typekey is mapped to compiled
             Debug.Assert(v.Value != null);
             _lateReferences.Add(v);
         }

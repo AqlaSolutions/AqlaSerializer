@@ -197,7 +197,6 @@ namespace AqlaSerializer.Serializers
             var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
             if (isRootType) Callback(value, TypeModel.CallbackType.BeforeSerialize, dest.Context);
             // write inheritance first
-            // TODO add WriteFieldHeaderBegin to emit for subtypes AND members
             IProtoSerializerWithWireType next;
             int fn;
             if (GetMoreSpecificSerializer(value, out next, out fn))
@@ -366,14 +365,18 @@ namespace AqlaSerializer.Serializers
             return obj;
         }
 #endif
-        bool IProtoSerializer.RequiresOldValue { get { return true; } }
-        bool IProtoSerializer.ReturnsValue { get { return false; } } // updates field directly
+        public bool RequiresOldValue => true;
+        public bool ReturnsValue { get; } = false; // updates field directly
+
 #if FEAT_COMPILER
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+            var g = ctx.G;
             Type expected = ExpectedType;
             using (Compiler.Local loc = ctx.GetLocalWithValue(expected, valueFrom))
+            using (Compiler.Local token = ctx.Local(typeof(SubItemToken)))
             {
+                g.Assign(token, g.WriterFunc.StartSubItem(loc, _prefixLength));
                 // pre-callbacks
                 EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.BeforeSerialize);
 
@@ -395,6 +398,7 @@ namespace AqlaSerializer.Serializers
                             ctx.DiscardValue();
                             ctx.Branch(nextTest, true);
                             ctx.MarkLabel(ifMatch);
+                            ctx.G.Writer.WriteFieldHeaderBegin(fieldNumbers[i]);
                             ser.EmitWrite(ctx, null);
                             ctx.Branch(startFields, false);
                             ctx.MarkLabel(nextTest);
@@ -444,7 +448,11 @@ namespace AqlaSerializer.Serializers
                 for (int i = 0; i < serializers.Length; i++)
                 {
                     IProtoSerializer ser = serializers[i];
-                    if (ser.ExpectedType == forType) ser.EmitWrite(ctx, loc);
+                    if (ser.ExpectedType == forType)
+                    {
+                        ctx.G.Writer.WriteFieldHeaderBegin(fieldNumbers[i]);
+                        ser.EmitWrite(ctx, loc);
+                    }
                 }
 
                 // extension data
@@ -456,6 +464,7 @@ namespace AqlaSerializer.Serializers
                 }
                 // post-callbacks
                 EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.AfterSerialize);
+                g.Writer.EndSubItem(token);
             }
         }
         static void EmitInvokeCallback(Compiler.CompilerContext ctx, MethodInfo method, bool copyValue, Type constructType, Type type)
@@ -578,11 +587,14 @@ namespace AqlaSerializer.Serializers
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             Type expected = ExpectedType;
+            var g = ctx.G;
             Helpers.DebugAssert(!valueFrom.IsNullRef());
 
-            using (Compiler.Local loc = ctx.GetLocalWithValue(expected, valueFrom))
+            using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+            using (Compiler.Local token = ctx.Local(typeof(SubItemToken)))
             using (Compiler.Local fieldNumber = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
             {
+                g.Assign(token, g.ReaderFunc.StartSubItem());
                 // pre-callbacks
                 if (HasCallbacks(TypeModel.CallbackType.BeforeDeserialize))
                 {
@@ -662,12 +674,10 @@ namespace AqlaSerializer.Serializers
                 // post-callbacks
                 EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.AfterDeserialize);
 
-                if (!valueFrom.IsNullRef() && !loc.IsSame(valueFrom))
-                {
+                g.Reader.EndSubItem(token);
+
+                if (ReturnsValue)
                     ctx.LoadValue(loc);
-                    ctx.Cast(valueFrom.Type);
-                    ctx.StoreValue(valueFrom);
-                }
             }
         }
 
