@@ -27,16 +27,19 @@ namespace AqlaSerializer.Serializers
         }
 
         readonly int _key = -1;
-        readonly IProtoSerializerWithWireType _serializer;
+        readonly IProtoSerializerWithWireType _tail;
+        readonly IProtoSerializerWithWireType _keySerializer;
+
+        IProtoSerializerWithWireType DelegationHandler => _tail ?? _keySerializer;
+
         readonly Type _type;
-        readonly RuntimeTypeModel _model;
 
         readonly BclHelpers.NetObjectOptions _options;
         readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
 
         // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
-        NetObjectValueDecorator(Type type, bool asReference, RuntimeTypeModel model)
+        NetObjectValueDecorator(Type type, bool asReference)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             _options = BclHelpers.NetObjectOptions.UseConstructor;
@@ -53,17 +56,15 @@ namespace AqlaSerializer.Serializers
             // if this type is nullable it's ok
             // we'll unwrap it
             // and for non emit it's already boxed as not nullable
-            // TODO unwrap nullable in emit
             this._type = type;
-            _model = model;
         }
 
-        public NetObjectValueDecorator(IProtoSerializerWithWireType serializer, bool returnNullable, bool asReference, RuntimeTypeModel model)
-            : this(type: MakeReturnNullable(serializer.ExpectedType, returnNullable, model), asReference: asReference, model: model)
+        public NetObjectValueDecorator(IProtoSerializerWithWireType tail, bool returnNullable, bool asReference, TypeModel model)
+            : this(type: MakeReturnNullable(tail.ExpectedType, returnNullable, model), asReference: asReference)
         {
-            _serializer = serializer;
+            _tail = tail;
 
-            RequiresOldValue = _serializer.RequiresOldValue;
+            RequiresOldValue = _tail.RequiresOldValue;
         }
 
         static Type MakeReturnNullable(Type type, bool make, TypeModel model)
@@ -77,22 +78,23 @@ namespace AqlaSerializer.Serializers
         /// </summary>
         /// <param name="asReference"></param>
         /// <param name="dataFormatForDynamicBuiltins"></param>
-        public NetObjectValueDecorator(bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, RuntimeTypeModel model)
-            : this(type: model.MapType(typeof(object)), asReference: asReference, model: model)
+        public NetObjectValueDecorator(bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, TypeModel model)
+            : this(type: model.MapType(typeof(object)), asReference: asReference)
         {
             _dataFormatForDynamicBuiltins = dataFormatForDynamicBuiltins;
             _options |= BclHelpers.NetObjectOptions.DynamicType;
         }
 
-        public NetObjectValueDecorator(Type type, int key, bool asReference, RuntimeTypeModel model)
-            : this(type: type, asReference: asReference, model: model)
+        public NetObjectValueDecorator(Type type, int key, bool asReference, ISerializerProxy serializerProxy)
+            : this(type: type, asReference: asReference)
         {
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
             _key = key;
+            _keySerializer = new ModelTypeSerializer(type, key, serializerProxy);
         }
 
         public Type ExpectedType => _type;
-        public bool ReturnsValue => _serializer?.ReturnsValue ?? true;
+        public bool ReturnsValue => _tail?.ReturnsValue ?? true;
         public bool RequiresOldValue { get; } = true;
 
 #if !FEAT_IKVM
@@ -120,9 +122,12 @@ namespace AqlaSerializer.Serializers
             if (shouldEnd)
             {
                 object oldValue = value;
-                if (typeKey > 0)
+                if (typeKey >= 0)
                 {
-                    value = ProtoReader.ReadObject(value, typeKey, source);
+                    if (typeKey == _key && _keySerializer != null)
+                        value = _keySerializer.Read(value, source);
+                    else
+                        value = ProtoReader.ReadObject(value, typeKey, source);
                 }
                 else
                 {
@@ -135,12 +140,12 @@ namespace AqlaSerializer.Serializers
                     }
                     else
                     {
-                        if (_serializer == null)
+                        if (_tail == null)
                             throw new ProtoException("Dynamic type expected but no type info was read");
                         else
                         {
                             // ensure consistent behavior with emit version
-                            value = _serializer.Read(_serializer.RequiresOldValue ? value : null, source);
+                            value = _tail.Read(_tail.RequiresOldValue ? value : null, source);
                         }
                     }
                 }
@@ -161,7 +166,7 @@ namespace AqlaSerializer.Serializers
             bool write;
             int dynamicTypeKey;
             SubItemToken token = NetObjectHelpers.WriteNetObject_Start(value, dest, _options, out dynamicTypeKey, out write);
-            
+
             if (write)
             {
                 // field header written!
@@ -184,12 +189,16 @@ namespace AqlaSerializer.Serializers
                 }
                 else
                 {
-                    if (_serializer != null)
-                        _serializer.Write(value, dest);
+                    if (_tail != null)
+                        _tail.Write(value, dest);
                     else
                     {
                         Debug.Assert(_key >= 0);
-                        ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
+
+                        if (_keySerializer != null)
+                            _keySerializer.Write(value, dest);
+                        else
+                            ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
                     }
                 }
             }
@@ -246,10 +255,29 @@ namespace AqlaSerializer.Serializers
 
                     // now valueBoxed is not null otherwise it would go to else
 
-                    g.If(typeKey.AsOperand > 0);
+                    g.If(typeKey.AsOperand >= 0);
                     {
-                        g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
-                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                        if (_keySerializer != null)
+                        {
+                            g.If(typeKey.AsOperand == _key);
+                            {
+                                _keySerializer.EmitRead(ctx, _keySerializer.RequiresOldValue ? value : null);
+                                if (_keySerializer.ReturnsValue)
+                                    g.Assign(value, g.GetStackValueOperand(_keySerializer.ExpectedType));
+                                g.Assign(valueBoxed, value);
+                            }
+                            g.Else();
+                            {
+                                g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
+                                g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                            }
+                            g.End();
+                        }
+                        else
+                        {
+                            g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
+                            g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                        }
                     }
                     g.Else();
                     {
@@ -269,13 +297,13 @@ namespace AqlaSerializer.Serializers
                         }
                         g.Else();
                         {
-                            if (_serializer == null)
+                            if (_tail == null)
                                 g.ThrowProtoException("Dynamic type expected but no type info was read");
                             else
                             {
-                                _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
-                                if (_serializer.ReturnsValue)
-                                    g.Assign(value, g.GetStackValueOperand(_serializer.ExpectedType));
+                                _tail.EmitRead(ctx, _tail.RequiresOldValue ? value : null);
+                                if (_tail.ReturnsValue)
+                                    g.Assign(value, g.GetStackValueOperand(_tail.ExpectedType));
                                 g.Assign(valueBoxed, value);
                             }
                         }
@@ -317,7 +345,7 @@ namespace AqlaSerializer.Serializers
                     g.Reader.EndSubItem(token);
                 }
                 g.End();
-                
+
                 if (ReturnsValue)
                     ctx.LoadValue(value);
             }
@@ -373,8 +401,13 @@ namespace AqlaSerializer.Serializers
                         }
                         g.Else();
                         {
-                            if (_serializer != null)
-                                _serializer.EmitWrite(ctx, value);
+                            if (_tail != null)
+                                _tail.EmitWrite(ctx, value);
+                            else if (_keySerializer != null)
+                            {
+                                Debug.Assert(_key >= 0);
+                                _keySerializer.EmitWrite(ctx, value);
+                            }
                             else
                             {
                                 Debug.Assert(_key >= 0);
@@ -392,25 +425,25 @@ namespace AqlaSerializer.Serializers
 
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
-            IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
+            IProtoTypeSerializer pts = DelegationHandler as IProtoTypeSerializer;
             return pts != null && pts.HasCallbacks(callbackType);
         }
 
         public bool CanCreateInstance()
         {
-            IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
+            IProtoTypeSerializer pts = DelegationHandler as IProtoTypeSerializer;
             return pts != null && pts.CanCreateInstance();
         }
 
 #if !FEAT_IKVM
         public object CreateInstance(ProtoReader source)
         {
-            return ((IProtoTypeSerializer)_serializer).CreateInstance(source);
+            return ((IProtoTypeSerializer)DelegationHandler).CreateInstance(source);
         }
 
         public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
-            IProtoTypeSerializer pts = _serializer as IProtoTypeSerializer;
+            IProtoTypeSerializer pts = DelegationHandler as IProtoTypeSerializer;
             if (pts != null) pts.Callback(value, callbackType, context);
         }
 #endif
@@ -419,12 +452,12 @@ namespace AqlaSerializer.Serializers
         {
             // we only expect this to be invoked if HasCallbacks returned true, so implicitly _serializer
             // **must** be of the correct type
-            ((IProtoTypeSerializer)_serializer).EmitCallback(ctx, valueFrom, callbackType);
+            ((IProtoTypeSerializer)DelegationHandler).EmitCallback(ctx, valueFrom, callbackType);
         }
 
         public void EmitCreateInstance(Compiler.CompilerContext ctx)
         {
-            ((IProtoTypeSerializer)_serializer).EmitCreateInstance(ctx);
+            ((IProtoTypeSerializer)DelegationHandler).EmitCreateInstance(ctx);
         }
 #endif
     }
