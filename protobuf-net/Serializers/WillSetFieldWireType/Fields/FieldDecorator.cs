@@ -1,14 +1,15 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 #if !NO_RUNTIME
 using System;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
-
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
+
 #endif
 
 namespace AqlaSerializer.Serializers
@@ -26,7 +27,8 @@ namespace AqlaSerializer.Serializers
         AccessorsCache.Accessors _accessors;
 
 
-        public FieldDecorator(Type forType, FieldInfo field, IProtoSerializerWithWireType tail) : base(tail)
+        public FieldDecorator(Type forType, FieldInfo field, IProtoSerializerWithWireType tail)
+            : base(tail)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(field != null);
@@ -38,17 +40,24 @@ namespace AqlaSerializer.Serializers
 #endif
 
         }
+
 #if !FEAT_IKVM
+        object GetValue(object instance)
+        {
+            return _accessors.Get != null ? _accessors.Get(instance) : field.GetValue(instance);
+        }
+
         public override void Write(object value, ProtoWriter dest)
         {
-            Helpers.DebugAssert(value != null);  // TODO emit without null check
-            Tail.Write(field.GetValue(value), dest);
-            
+            Helpers.DebugAssert(value != null);
+            Tail.Write(GetValue(value), dest);
+
         }
+
         public override object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value != null);
-            object newVal = Tail.Read(Tail.RequiresOldValue ? field.GetValue(value) : null, source);
+            object newVal = Tail.Read(Tail.RequiresOldValue ? GetValue(value) : null, source);
             if (Tail.ReturnsValue) // no need to check it's not the same as old value because field set is basically "free" operation
             {
                 if (_accessors.Set != null)
@@ -65,48 +74,43 @@ namespace AqlaSerializer.Serializers
         {
             ctx.LoadAddress(valueFrom, ExpectedType);
             ctx.LoadValue(field);
-            ctx.WriteNullCheckedTail(field.FieldType, Tail, null, true);
+            Tail.EmitWrite(ctx, null);
         }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+            using (Compiler.Local newVal = new Compiler.Local(ctx, field.FieldType))
             {
+                Compiler.Local valueForTail;
                 if (Tail.RequiresOldValue)
                 {
                     ctx.LoadAddress(loc, ExpectedType);
-                    ctx.LoadValue(field);  
-                }
-                // value is either now on the stack or not needed
-                ctx.ReadNullCheckedTail(field.FieldType, Tail, null);
-
-                if (Tail.ReturnsValue)
-                {
-                    using (Compiler.Local newVal = new Compiler.Local(ctx, field.FieldType))
+                    ctx.LoadValue(field);
+                    if (!Tail.ReturnsValue)
                     {
                         ctx.StoreValue(newVal);
-                        if (field.FieldType.IsValueType)
-                        {
-                            ctx.LoadAddress(loc, ExpectedType);
-                            ctx.LoadValue(newVal);
-                            ctx.StoreValue(field);
-                        }
-                        else
-                        {
-                            Compiler.CodeLabel allDone = ctx.DefineLabel();
-                            ctx.LoadValue(newVal);
-                            ctx.BranchIfFalse(allDone, true); // interpret null as "don't assign"
-
-                            ctx.LoadAddress(loc, ExpectedType);
-                            ctx.LoadValue(newVal);
-                            ctx.StoreValue(field);
-
-                            ctx.MarkLabel(allDone);
-                        }
+                        valueForTail = newVal;
                     }
+                    else valueForTail = null; // on stack
                 }
+                else valueForTail = null;
+
+                Tail.EmitRead(ctx, valueForTail);
+
+                if (Tail.ReturnsValue)
+                    ctx.StoreValue(newVal);
+
+                ctx.LoadAddress(loc, ExpectedType);
+                ctx.LoadValue(newVal);
+                ctx.StoreValue(field);
+
+                if (ReturnsValue)
+                    ctx.LoadValue(newVal);
             }
         }
 #endif
     }
 }
+
 #endif
