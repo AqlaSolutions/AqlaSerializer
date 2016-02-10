@@ -124,6 +124,8 @@ namespace AqlaSerializer.Serializers
                 object oldValue = value;
                 if (typeKey >= 0)
                 {
+                    // can be only for builtins
+                    options &= ~BclHelpers.NetObjectOptions.LateSet;
                     if (typeKey == _key && _keySerializer != null)
                         value = _keySerializer.Read(value, source);
                     else
@@ -134,7 +136,7 @@ namespace AqlaSerializer.Serializers
                     if (isDynamic)
                     {
                         if (source.TryReadBuiltinType(ref value, Helpers.GetTypeCode(type), true))
-                            isDynamicLateSet = true;
+                            options |= BclHelpers.NetObjectOptions.LateSet;
                         else
                             throw new ProtoException("Dynamic type is not a contract-type: " + type.Name);
                     }
@@ -149,7 +151,6 @@ namespace AqlaSerializer.Serializers
                         }
                     }
                 }
-                if (isDynamicLateSet) options |= BclHelpers.NetObjectOptions.LateSet;
                 NetObjectHelpers.ReadNetObject_EndWithNoteNewObject(value, source, oldValue, type, newObjectKey, newTypeRefKey, options, token);
             }
             else
@@ -222,11 +223,12 @@ namespace AqlaSerializer.Serializers
             using (Local type = ctx.Local(typeof(System.Type)))
             using (Local newObjectKey = ctx.Local(typeof(int)))
             using (Local isDynamic = ctx.Local(typeof(bool)))
-            using (Local isDynamicLateSet = ctx.Local(typeof(bool)))
+            using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
             using (Local token = ctx.Local(typeof(SubItemToken)))
             using (Local oldValueBoxed = ctx.Local(typeof(object)))
             using (Local valueBoxed = ctx.Local(typeof(object)))
             {
+                g.Assign(options, _options);
                 if (!RequiresOldValue)
                     g.Assign(valueBoxed, null);
                 else
@@ -242,7 +244,7 @@ namespace AqlaSerializer.Serializers
                         valueBoxed,
                         g.ArgReaderWriter(),
                         type,
-                        _options,
+                        options,
                         isDynamic,
                         typeKey,
                         newObjectKey,
@@ -257,6 +259,9 @@ namespace AqlaSerializer.Serializers
 
                     g.If(typeKey.AsOperand >= 0);
                     {
+                        var optionsWithoutLateSet = _options & ~BclHelpers.NetObjectOptions.LateSet;
+                        if (optionsWithoutLateSet != _options)
+                            g.Assign(options, optionsWithoutLateSet);
                         if (_keySerializer != null)
                         {
                             g.If(typeKey.AsOperand == _key);
@@ -285,12 +290,11 @@ namespace AqlaSerializer.Serializers
                         {
                             g.If(g.ReaderFunc.TryReadBuiltinType_bool(valueBoxed, g.HelpersFunc.GetTypeCode(type), true));
                             {
-                                g.Assign(isDynamicLateSet, true);
+                                g.Assign(options, _options | BclHelpers.NetObjectOptions.LateSet);
                                 g.Assign(value, valueBoxed.AsOperand.Cast(_type));
                             }
                             g.Else();
                             {
-                                g.Assign(isDynamicLateSet, false);
                                 g.ThrowProtoException("Dynamic type is not a contract-type: " + type.AsOperand.Property(nameof(Type.Name)));
                             }
                             g.End();
@@ -320,7 +324,7 @@ namespace AqlaSerializer.Serializers
                         type,
                         newObjectKey,
                         newTypeRefKey,
-                        (isDynamic.AsOperand && isDynamicLateSet.AsOperand).Conditional(_options | BclHelpers.NetObjectOptions.LateSet, _options),
+                        options,
                         token);
                 }
                 g.Else();
