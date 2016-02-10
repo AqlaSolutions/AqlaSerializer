@@ -22,7 +22,7 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
-        public override bool ReturnsValue { get { return false; } }
+        public override bool ReturnsValue { get { return true; } }
 
         AccessorsCache.Accessors _accessors;
 
@@ -65,7 +65,7 @@ namespace AqlaSerializer.Serializers
                 else
                     field.SetValue(value, newVal);
             }
-            return null;
+            return value;
         }
 #endif
 
@@ -106,7 +106,7 @@ namespace AqlaSerializer.Serializers
                 ctx.StoreValue(field);
 
                 if (ReturnsValue)
-                    ctx.LoadValue(newVal);
+                    ctx.LoadValue(loc);
             }
         }
 #endif
