@@ -269,7 +269,6 @@
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\ByteSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\LateReferenceSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\NoNullDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\EnumTypeSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\SubTypeHelpers.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\WireTypeDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ImmutableCollectionDecorator.cs" />
