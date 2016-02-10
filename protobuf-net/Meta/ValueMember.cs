@@ -496,7 +496,7 @@ namespace AqlaSerializer.Meta
                     {
                         MetaType metaType;
                         if (model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
-                            nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
+                            nestedDefaultType = metaType.ConstructType ?? metaType.Type;
                     }
 
                     if (tryAsReference && !CheckCanBeAsReference(collectionItemType, false))
@@ -508,7 +508,7 @@ namespace AqlaSerializer.Meta
                     {
                         MetaType metaType;
                         if (model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
-                            nestedDefaultType = metaType.CollectionConcreteType ?? metaType.Type;
+                            nestedDefaultType = metaType.ConstructType ?? metaType.Type;
                     }
 
 
