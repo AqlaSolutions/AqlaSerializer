@@ -36,7 +36,7 @@ namespace AqlaSerializer.Serializers
         public bool ReturnsValue => _serializer.ReturnsValue;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 
-        const int CurrentFormatVersion = 1;
+        const int CurrentFormatVersion = 18;
 
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
@@ -52,9 +52,7 @@ namespace AqlaSerializer.Serializers
             object obj;
             int refKey;
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
-            ProtoWriter.WriteFieldHeaderIgnored(WireType.Variant, dest);
-            ProtoWriter.WriteInt32(CurrentFormatVersion, dest);
-            ProtoWriter.WriteFieldHeaderBegin(ListHelpers.FieldItem, dest);
+            ProtoWriter.WriteFieldHeaderBegin(CurrentFormatVersion, dest);
             _serializer.Write(value, dest);
             while (ProtoWriter.TryGetNextLateReference(out typeKey, out obj, out refKey, dest))
             {
@@ -74,10 +72,8 @@ namespace AqlaSerializer.Serializers
             object obj;
             int expectedRefKey;
             var rootToken = ProtoReader.StartSubItem(source);
-            if (!ProtoReader.HasSubValue(WireType.Variant, source)) throw new ProtoException("Expected format version field");
-            int formatVersion = source.ReadInt32();
+            int formatVersion = source.ReadFieldHeader();
             if (formatVersion != CurrentFormatVersion) throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
-            if (source.ReadFieldHeader() != ListHelpers.FieldItem) throw new ProtoException("Expected field for root object");
             var r = _serializer.Read(value, source);
             while (ProtoReader.TryGetNextLateReference(out typeKey, out obj, out expectedRefKey, source))
             {
@@ -118,9 +114,7 @@ namespace AqlaSerializer.Serializers
             using (var refKey = ctx.Local(typeof(int)))
             {
                 g.Assign(rootToken, g.WriterFunc.StartSubItem(null, false));
-                g.Writer.WriteFieldHeaderIgnored(WireType.Variant);
-                g.Writer.WriteInt32(CurrentFormatVersion);
-                g.Writer.WriteFieldHeaderBegin(ListHelpers.FieldItem);
+                g.Writer.WriteFieldHeaderBegin(CurrentFormatVersion);
                 _serializer.EmitWrite(ctx, valueFrom);
                 g.While(g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.TryGetNextLateReference), typeKey, obj, refKey, g.ArgReaderWriter()));
                 {
@@ -152,20 +146,10 @@ namespace AqlaSerializer.Serializers
             using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             {
                 g.Assign(rootToken, g.ReaderFunc.StartSubItem());
-                g.If(!g.ReaderFunc.HasSubValue_bool(WireType.Variant));
-                {
-                    g.ThrowProtoException("Expected format version field");
-                }
-                g.End();
-                g.Assign(formatVersion, g.ReaderFunc.ReadInt32());
+                g.Assign(formatVersion, g.ReaderFunc.ReadFieldHeader_int());
                 g.If(formatVersion.AsOperand != CurrentFormatVersion);
                 {
                     g.ThrowProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
-                }
-                g.End();
-                g.If(g.ReaderFunc.ReadFieldHeader_int() != ListHelpers.FieldItem);
-                {
-                    g.ThrowProtoException("Expected field for root object");
                 }
                 g.End();
                 _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
