@@ -78,7 +78,7 @@ namespace test
             SimpleObject fromProtobuf = null;
             Assert.That(
                 () => fromProtobuf = Serializer.Deserialize<SimpleObject>(ms),
-                Throws.TypeOf<AqlaSerializer.ProtoException>().With.Message.StartsWith("Wrong format version"));
+                Throws.TypeOf<AqlaSerializer.ProtoException>().With.Message.StartsWith("Unexpected end-group in source data; this usually means the source data is corrupt"));
 
             // either deserialization from XML works or
             // it should not give an object instance (either return null or throw Exception)
