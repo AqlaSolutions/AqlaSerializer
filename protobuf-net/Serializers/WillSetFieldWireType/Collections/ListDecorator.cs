@@ -195,7 +195,7 @@ namespace AqlaSerializer.Serializers
                 if (add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, tail);
+            ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _itemType, _protoCompatibility, tail);
 
             if (!protoCompatibility)
             {

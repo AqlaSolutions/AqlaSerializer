@@ -6,12 +6,16 @@ using System.Collections;
 using System.Collections.Generic;
 using AltLinq;
 using AqlaSerializer.Meta;
+using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
 
+#endif
+#if FEAT_COMPILER
+using AqlaSerializer.Compiler;
 #endif
 
 namespace AqlaSerializer.Serializers
@@ -22,18 +26,164 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         readonly bool _protoCompatibility;
         readonly bool _writePacked;
-
+        readonly Type _itemType;
         public const int FieldItem = 1;
         public const int FieldSubtype = 2;
         public const int FieldLength = 3;
         
-        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail)
+        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, Type itemType, bool protoCompatibility, IProtoSerializerWithWireType tail)
         {
             _packedWireTypeForRead = packedWireTypeForRead;
             _tail = tail;
+            _itemType = itemType;
             _protoCompatibility = protoCompatibility;
             _writePacked = writePacked;
         }
+#if FEAT_COMPILER
+        public void EmitWrite(SerializerCodeGen g, Local value, Action subTypeWriter, Func<Operand> getLength, Action prepareInstance)
+        {
+            using (var token = g.ctx.Local(typeof(SubItemToken)))
+            using (var length = getLength != null ? g.ctx.Local(typeof(int)) : null)
+            {
+                bool writePacked = _writePacked;
+                if (_protoCompatibility)
+                {
+                    // empty arrays are nulls, no subitem or field
+
+                    if (writePacked)
+                        g.Assign(token, g.WriterFunc.StartSubItem(null, true));
+                    else // each element will begin its own header
+                        g.Writer.WriteFieldHeaderCancelBegin();
+
+                    using (var fieldNumber = g.ctx.Local(typeof(int)))
+                    {
+                        g.Assign(fieldNumber, g.WriterFunc.FieldNumber());
+                        EmitWriteContent(
+                            g,
+                            value,
+                            fieldNumber.AsOperand,
+                            _writePacked,
+                            first: prepareInstance);
+                    }
+                    if (writePacked)
+                    {
+                        // last element - end subitem
+                        g.Writer.EndSubItem(token);
+                    }
+                }
+                else
+                {
+                    bool pack = _tail.DemandWireTypeStabilityStatus();
+                    g.Assign(token, g.WriterFunc.StartSubItem(null, pack));
+
+                    if (subTypeWriter != null)
+                    {
+                        g.Writer.WriteFieldHeaderBegin(FieldSubtype);
+                        subTypeWriter?.Invoke();
+                    }
+                    if (!getLength.IsNullRef())
+                    {
+                        g.Assign(length, getLength());
+                        g.If(length.AsOperand > 0);
+                        {
+                            g.Writer.WriteFieldHeader(FieldLength, WireType.Variant);
+                            g.Writer.WriteInt32(length);
+                        }
+                        g.End();
+                    }
+
+                    prepareInstance?.Invoke();
+
+                    EmitWriteContent(g, value, FieldItem, pack);
+                    g.Writer.EndSubItem(token);
+                }
+            }
+        }
+        
+        void EmitWriteContent(SerializerCodeGen g, Local enumerable, Operand fieldNumber, bool pack, Action first = null)
+        {
+            Type listType = g.ctx.MapType(typeof(IList<>)).MakeGenericType(_itemType);
+            if (!enumerable.Type.IsArray && !Helpers.IsAssignableFrom(listType, enumerable.Type))
+            {
+                EmitWriteContentEnumerable(g, enumerable, fieldNumber, pack, first);
+                return;
+            }
+            using (var list = g.ctx.Local(listType))
+            using (var len = g.ctx.Local(typeof(int)))
+            using (var i = g.ctx.Local(typeof(int)))
+            {
+                g.Assign(list, enumerable.AsOperand.Cast(listType));
+                g.Assign(len, list.AsOperand.Property("Count"));
+                g.If(len.AsOperand>0);
+                {
+                    first?.Invoke();
+
+                    g.For(i.AsOperand.Assign(0), i.AsOperand < len.AsOperand, i.AsOperand.Increment());
+                    {
+                        EmitWriteElement(g, list.AsOperand[i], fieldNumber, pack, i.AsOperand == 0);
+                    }
+                    g.End();
+                }
+                g.End();
+                if (enumerable.Type.IsValueType)
+                    g.Assign(enumerable, list);
+            }
+        }
+
+        void EmitWriteContentEnumerable(SerializerCodeGen g, Local enumerable, Operand fieldNumber, bool pack, Action first = null)
+        {
+            Type enumerableGenericType = g.ctx.MapType(typeof(IEnumerable<>)).MakeGenericType(_itemType);
+
+            bool castNeeded = !Helpers.IsAssignableFrom(enumerableGenericType, enumerable.Type);
+
+            using (var isFirst = g.ctx.Local(typeof(bool)))
+            using (var obj = g.ctx.Local(castNeeded ? typeof(object) : _itemType))
+            {
+                g.Assign(isFirst, true);
+
+                g.ForEach(castNeeded ? typeof(object) : _itemType, enumerable);
+                {
+                    g.If(isFirst);
+                    {
+                        first?.Invoke();
+                    }
+                    g.End();
+
+                    EmitWriteElement(g, castNeeded ? obj.AsOperand.Cast(_itemType) : obj.AsOperand, fieldNumber, pack, isFirst);
+
+                    g.Assign(isFirst, false);
+                    
+                }
+                g.End();
+            }
+        }
+
+        void EmitWriteElement(SerializerCodeGen g, Operand obj, Operand fieldNumber, bool pack, Operand isFirst)
+        {
+            if (_protoCompatibility)
+            {
+                if (!pack)
+                    g.Writer.WriteFieldHeaderBegin(fieldNumber);
+                else
+                    g.Writer.WriteFieldHeaderBeginIgnored();
+            }
+            else
+            {
+                // this can only be supported when wire type of elements will be the same each time and no field cancellations
+                // we write only first header to get wire type
+                // the difference between standard pack and this
+                // is that we write wiretype here at the first time
+                if (!pack || isFirst)
+                    g.Writer.WriteFieldHeaderBegin(fieldNumber);
+                else
+                    g.Writer.WriteFieldHeaderBeginIgnored();
+            }
+            g.LeaveNextReturnOnStack();
+            g.Eval(obj);
+            _tail.EmitWrite(g.ctx, null);
+        }
+
+#endif
 #if !FEAT_IKVM
         public void Write(object value, Action subTypeWriter, int? length, Action prepareInstance, ProtoWriter dest)
         {
@@ -50,7 +200,7 @@ namespace AqlaSerializer.Serializers
                 else // each element will begin its own header
                     ProtoWriter.WriteFieldHeaderCancelBegin(dest);
 
-                bool any = WriteContent(
+                WriteContent(
                     value,
                     fieldNumber,
                     _writePacked,
@@ -86,10 +236,14 @@ namespace AqlaSerializer.Serializers
             }
         }
 
-        bool WriteContent(object value, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
+        void WriteContent(object value, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
         {
             var list = value as IList;
-            if (list == null) return WriteContent((IEnumerable)value, fieldNumber, pack, dest, first);
+            if (list == null)
+            {
+                WriteContent((IEnumerable)value, fieldNumber, pack, dest, first);
+                return;
+            }
             int len = list.Count;
             if (len > 0)
             {
@@ -99,10 +253,9 @@ namespace AqlaSerializer.Serializers
                     WriteElement(list[i], fieldNumber, pack, dest, i == 0);
                 }
             }
-            return len > 0;
         }
 
-        bool WriteContent(IEnumerable enumerable, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
+        void WriteContent(IEnumerable enumerable, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
         {
             bool isFirst = true;
             foreach (var obj in enumerable)
@@ -114,7 +267,6 @@ namespace AqlaSerializer.Serializers
 
                 isFirst = false;
             }
-            return !isFirst;
         }
 
         void WriteElement(object obj, int fieldNumber, bool pack, ProtoWriter dest, bool isFirst)
