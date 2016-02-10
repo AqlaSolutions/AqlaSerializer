@@ -26,8 +26,8 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
-        public override bool ReturnsValue { get { return false; } }
-        private readonly bool readOptionsWriteValue;
+        public override bool ReturnsValue { get { return forType.IsValueType; } }
+        private readonly bool canSetInRuntime;
         private readonly MethodInfo shadowSetter;
 
         AccessorsCache.Accessors _accessors;
@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
             this.forType = forType;
             this.property = property;
             _tail = tail;
-            SanityCheck(model, property, tail, out readOptionsWriteValue, true, true);
+            SanityCheck(model, property, tail, out canSetInRuntime, true, true);
             shadowSetter = Helpers.GetShadowSetter(model, property);
 #if FEAT_COMPILER && !FEAT_IKVM
             _accessors = AccessorsCache.GetAccessors(property);
@@ -70,7 +70,7 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            Helpers.DebugAssert(value != null); // TODO emit without null check
+            Helpers.DebugAssert(value != null);
             Tail.Write(Helpers.GetPropertyValue(property, value), dest);
         }
 
@@ -82,9 +82,7 @@ namespace AqlaSerializer.Serializers
                                 ? _accessors.Get != null ? _accessors.Get(value) : Helpers.GetPropertyValue(property, value)
                                 : null;
             object newVal = Tail.Read(oldVal, source);
-            if (readOptionsWriteValue
-                // set only if it's returned from tail 
-                && Tail.ReturnsValue
+            if (canSetInRuntime
                 && (!Tail.RequiresOldValue // always set where can't check oldVal
                     // and if it's value type or nullable with changed null/not null or ref
                     || (Helpers.IsValueType(property.PropertyType) && oldVal != null && newVal != null)
@@ -108,7 +106,7 @@ namespace AqlaSerializer.Serializers
                     }
                 }
             }
-            return null;
+            return value;
         }
 
 #endif
@@ -123,63 +121,78 @@ namespace AqlaSerializer.Serializers
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+            var g = ctx.G;
+            bool canSet;
+            SanityCheck(ctx.Model, property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(property));
 
-            bool writeValue;
-            SanityCheck(ctx.Model, property, Tail, out writeValue, ctx.NonPublic, ctx.AllowInternal(property));
-            if (ExpectedType.IsValueType && valueFrom.IsNullRef())
+            using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+            using (Compiler.Local oldVal = canSet ? new Compiler.Local(ctx, property.PropertyType) : null)
+            using (Compiler.Local newVal = new Compiler.Local(ctx, property.PropertyType))
             {
-                throw new InvalidOperationException("Attempt to mutate struct on the head of the stack; changes would be lost");
-            }
-
-            using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
-            {
-                if (Tail.RequiresOldValue)
+                Compiler.Local valueForTail = null;
+                if (Tail.RequiresOldValue || canSet)
                 {
-                    ctx.LoadAddress(loc, ExpectedType); // stack is: old-addr
-                    ctx.LoadValue(property); // stack is: old-value
-                }
-                Type propertyType = property.PropertyType;
-                ctx.ReadNullCheckedTail(propertyType, Tail, null); // stack is [new-value]
-
-                if (writeValue)
-                {
-                    using (Compiler.Local newVal = new Compiler.Local(ctx, property.PropertyType))
+                    ctx.LoadAddress(loc, ExpectedType);
+                    ctx.LoadValue(property);
+                    if (!oldVal.IsNullRef())
                     {
-                        ctx.StoreValue(newVal); // stack is empty
-
-                        Compiler.CodeLabel allDone = new Compiler.CodeLabel(); // <=== default structs
-                        if (!propertyType.IsValueType)
-                        { // if the tail returns a null, intepret that as *no assign*
-                            allDone = ctx.DefineLabel();
-                            ctx.LoadValue(newVal); // stack is: new-value
-                            ctx.BranchIfFalse(@allDone, true); // stack is empty
-                        }
-                        // assign the value
-                        ctx.LoadAddress(loc, ExpectedType); // parent-addr
-                        ctx.LoadValue(newVal); // parent-obj|new-value
-                        if (shadowSetter == null)
-                        {
-                            ctx.StoreValue(property); // empty
-                        }
-                        else
-                        {
-                            ctx.EmitCall(shadowSetter); // empty
-                        }
-                        if (!propertyType.IsValueType)
-                        {
-                            ctx.MarkLabel(allDone);
-                        }
-                    }
-
-                }
-                else
-                { // don't want return value; drop it if anything there
-                    // stack is [new-value]
-                    if (Tail.ReturnsValue)
-                    {
-                        ctx.DiscardValue();
+                        if (Tail.RequiresOldValue) // we need it later
+                            ctx.CopyValue();
+                        ctx.StoreValue(oldVal);
                     }
                 }
+
+                if (Tail.RequiresOldValue) // !here! <-- we need value again
+                {
+                    if (!Tail.ReturnsValue)
+                    {
+                        ctx.StoreValue(newVal);
+                        valueForTail = newVal;
+                    } // otherwise valueForTail = null (leave value on stack)
+                }
+                
+                Tail.EmitRead(ctx, valueForTail);
+
+                // otherwise newVal was passed to EmitRead so already has necessary data
+                if (Tail.ReturnsValue)
+                    ctx.StoreValue(newVal);
+                
+                // check-condition:
+                //(!Tail.RequiresOldValue // always set where can't check oldVal
+                //                        // and if it's value type or nullable with changed null/not null or ref
+                //    || (Helpers.IsValueType(property.PropertyType) && oldVal != null && newVal != null)
+                //    || !ReferenceEquals(oldVal, newVal)
+                //   ))
+                if (canSet)
+                {
+                    bool check = Tail.RequiresOldValue;
+                    if (check)
+                    {
+                        var condition = !g.StaticFactory.InvokeReferenceEquals(oldVal, newVal);
+
+                        if (Helpers.IsValueType(property.PropertyType))
+                            condition = (oldVal.AsOperand != null && newVal.AsOperand != null) || condition;
+
+                        g.If(condition);
+                    }
+
+                    ctx.LoadAddress(loc, ExpectedType);
+                    ctx.LoadValue(newVal);
+                    if (shadowSetter == null)
+                    {
+                        ctx.StoreValue(property);
+                    }
+                    else
+                    {
+                        ctx.EmitCall(shadowSetter);
+                    }
+
+                    if (check)
+                        g.End();
+                }
+
+                if (ReturnsValue)
+                    ctx.LoadValue(loc);
             }
         }
 #endif
