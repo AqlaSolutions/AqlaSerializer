@@ -43,7 +43,9 @@ namespace Examples.Issues
             }
             Task.WaitAll(tasks.ToArray());
             Assert.LessOrEqual(1, 2, "because I always get this backwards");
+#if DEBUG
             Assert.LessOrEqual(model.LockCount, 50);
+#endif
         }
 
         [Test]
@@ -65,7 +67,9 @@ namespace Examples.Issues
             }
             Task.WaitAll(tasks.ToArray());
             Assert.LessOrEqual(1, 2, "because I always get this backwards");
+#if DEBUG
             Assert.LessOrEqual(model.LockCount, 50);
+#endif
         }
 
         [Test]
@@ -91,7 +95,9 @@ namespace Examples.Issues
             }
             Task.WaitAll(tasks.ToArray());
             Assert.LessOrEqual(1, 2, "because I always get this backwards");
+#if DEBUG
             Assert.LessOrEqual(model.LockCount, 50);
+#endif
         }
     }
 }
