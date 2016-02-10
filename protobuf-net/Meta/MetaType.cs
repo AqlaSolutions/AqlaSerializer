@@ -104,23 +104,7 @@ namespace AqlaSerializer.Meta
             get { return HasFlag(OPTIONS_AsReferenceDefault); }
             set { SetFlag(OPTIONS_AsReferenceDefault, value, true); }
         }
-
-        Type _collectionConcreteType;
-
-        public Type CollectionConcreteType
-        {
-            get
-            {
-                return _collectionConcreteType;
-            }
-            set
-            {
-                if (value != null && !Helpers.IsAssignableFrom(this.Type, value))
-                    throw new ArgumentException("Specified collection concrete type " + value.Name + " is not assignable to " + this.Type.Name);
-                _collectionConcreteType = value;
-            }
-        }
-
+        
         public bool PrefixLength { get; set; } = true;
 
         public BinaryDataFormat CollectionDataFormat { get; set; }
@@ -648,7 +632,7 @@ namespace AqlaSerializer.Meta
                            new ValueMember.CollectionSettings(itemType)
                            {
                                Append = false,
-                               DefaultType = CollectionConcreteType ?? defaultType,
+                               DefaultType = ConstructType ?? defaultType,
                                IsPacked = PrefixLength,
                                ReturnList = true
                            },
@@ -873,7 +857,7 @@ namespace AqlaSerializer.Meta
         }
         /// <summary>
         /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
-        /// with dynamic proxies, or with interface-based APIs
+        /// with dynamic proxies, or with interface-based APIs; for collections this is a default collection type.
         /// </summary>
         public Type ConstructType
         {
@@ -881,6 +865,9 @@ namespace AqlaSerializer.Meta
             set
             {
                 ThrowIfFrozen();
+
+                if (value != null && !Helpers.IsAssignableFrom(this.Type, value))
+                    throw new ArgumentException("Specified type " + value.Name + " is not assignable to " + this.Type.Name);
                 constructType = value;
             }
         }

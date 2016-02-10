@@ -251,7 +251,7 @@ namespace AqlaSerializer
                             if (item.TryGet("IgnoreListHandling", out tmp)) metaType.IgnoreListHandling = (bool)tmp;
                             if (item.TryGet("NotAsReferenceDefault", out tmp)) metaType.AsReferenceDefault = !(bool)tmp;
                             if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) implicitFirstTag = (int)tmp;
-                            if (item.TryGet("CollectionConcreteType", out tmp)) metaType.CollectionConcreteType = (Type)tmp;
+                            if (item.TryGet("ConstructType", out tmp)) metaType.ConstructType = (Type)tmp;
                         }
                     }
 
@@ -330,7 +330,7 @@ namespace AqlaSerializer
                         effectiveType = property.PropertyType;
                         isPublic = Helpers.GetGetMethod(property, false, false) != null;
                         isField = false;
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, explicitPropertiesContract, metaType.CollectionConcreteType);
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, explicitPropertiesContract, metaType.ConstructType);
                     }
                     else if ((field = member as FieldInfo) != null)
                     {
@@ -341,7 +341,7 @@ namespace AqlaSerializer
                         { // only care about static things on enums; WinRT has a __value instance field!
                             continue;
                         }
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, false, metaType.CollectionConcreteType);
+                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, false, metaType.ConstructType);
                     }
                     else if ((method = member as MethodInfo) != null)
                     {
