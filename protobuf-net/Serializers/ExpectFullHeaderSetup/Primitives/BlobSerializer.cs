@@ -1,14 +1,16 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 #if !NO_RUNTIME
 using System;
+using AqlaSerializer.Compiler;
 #if FEAT_COMPILER
 using System.Reflection.Emit;
+
 #endif
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 #endif
-
 
 namespace AqlaSerializer.Serializers
 {
@@ -21,6 +23,7 @@ namespace AqlaSerializer.Serializers
 #else
         static readonly Type expectedType = typeof(byte[]);
 #endif
+
         public BlobSerializer(AqlaSerializer.Meta.TypeModel model, bool overwriteList)
         {
 #if FEAT_IKVM
@@ -28,15 +31,17 @@ namespace AqlaSerializer.Serializers
 #endif
             this.overwriteList = overwriteList;
         }
+
         private readonly bool overwriteList;
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            var r = ProtoReader.AppendBytes(overwriteList ? null : (byte[])value, source);
-            if (overwriteList || value == null) // TODO emit
-                ProtoReader.NoteObject(r, source);
-            return r;
+            var result = ProtoReader.AppendBytes(overwriteList ? null : (byte[])value, source);
+            if (overwriteList || value == null)
+                ProtoReader.NoteObject(result, source);
+            return result;
         }
+
         public void Write(object value, ProtoWriter dest)
         {
             ProtoWriter.WriteBytes((byte[])value, dest);
@@ -49,20 +54,27 @@ namespace AqlaSerializer.Serializers
         {
             ctx.EmitBasicWrite("WriteBytes", valueFrom);
         }
+
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (overwriteList)
+            var g = ctx.G;
+            using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom)) // overwriteList ? null : value
+            using (var result = value?.AsCopy() ?? ctx.Local(ExpectedType))
             {
-                ctx.LoadNullRef();
+                g.Assign(result, g.ReaderFunc.AppendBytes(value));
+                if (!value.IsNullRef()) g.If(value.AsOperand == null);
+                {
+                    //if (overwriteList || value == null)
+                    g.Reader.NoteObject(result);
+                }
+                if (!value.IsNullRef()) g.End();
+
+                if (overwriteList)
+                    ctx.LoadValue(result);
             }
-            else
-            {
-                ctx.LoadValue(valueFrom);
-            }
-            ctx.LoadReaderWriter();
-            ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("AppendBytes"));
         }
 #endif
     }
 }
+
 #endif

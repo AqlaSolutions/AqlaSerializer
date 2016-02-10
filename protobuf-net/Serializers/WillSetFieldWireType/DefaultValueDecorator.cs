@@ -19,7 +19,6 @@ namespace AqlaSerializer.Serializers
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
         public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly object defaultValue;
-        bool expectNullable;
         public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {
             if (defaultValue == null) throw new ArgumentNullException("defaultValue");
@@ -28,7 +27,6 @@ namespace AqlaSerializer.Serializers
             var underlying = Helpers.GetNullableUnderlyingType(tail.ExpectedType);
             if (underlying != null)
             {
-                expectNullable = true;
                 type = model.MapType(typeof(Nullable<>)).MakeGenericType(type);
             }
             if (type != tail.ExpectedType
@@ -60,30 +58,42 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            // TODO emit nullable check
             Compiler.CodeLabel done = ctx.DefineLabel();
+            Compiler.CodeLabel onCancel = ctx.DefineLabel();
             if (valueFrom.IsNullRef())
             {
                 ctx.CopyValue(); // on the stack
                 Compiler.CodeLabel needToPop = ctx.DefineLabel();
-                EmitBranchIfDefaultValue(ctx, needToPop);
-                Tail.EmitWrite(ctx, null);
-                ctx.Branch(done, true);
-                ctx.MarkLabel(needToPop);
-                ctx.DiscardValue();
 
-                ctx.LoadReaderWriter();
-                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                EmitBranchIfDefaultValue(ctx, needToPop);
+                // if != defaultValue
+                {
+                    Tail.EmitWrite(ctx, null);
+                    ctx.Branch(done, true);
+                }
+                // else
+                {
+                    ctx.MarkLabel(needToPop);
+                    ctx.DiscardValue();
+                    // onCancel
+                }
             }
             else
             {
                 ctx.LoadValue(valueFrom); // variable/parameter
-                EmitBranchIfDefaultValue(ctx, done);
-                Tail.EmitWrite(ctx, valueFrom);
 
-                ctx.LoadReaderWriter();
-                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                EmitBranchIfDefaultValue(ctx, onCancel);
+                // if != defaultValue
+                {
+                    Tail.EmitWrite(ctx, valueFrom);
+                    ctx.Branch(done, true);
+                }
+                // else
+                // onCancel
             }
+            ctx.MarkLabel(onCancel);
+            ctx.LoadReaderWriter();
+            ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
             ctx.MarkLabel(done);
         }
         private void EmitBeq(Compiler.CompilerContext ctx, Compiler.CodeLabel label, Type type)
@@ -117,9 +127,38 @@ namespace AqlaSerializer.Serializers
 
             }
         }
+
         private void EmitBranchIfDefaultValue(Compiler.CompilerContext ctx, Compiler.CodeLabel label)
         {
-            Type expected = ExpectedType;
+            var g = ctx.G;
+            Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
+
+            if (nullableUnderlying != null)
+            {
+                // we another for null check
+                ctx.CopyValue();
+                g.If(g.GetStackValueOperand(ExpectedType).Property("HasValue"));
+
+                // unwrap value
+                g.LeaveNextReturnOnStack();
+                g.Eval(g.GetStackValueOperand(ExpectedType).Property("Value"));
+            }
+
+            EmitBranchIfDefaultValue_Switch(ctx, label);
+
+            if (nullableUnderlying != null)
+            {
+                g.Else();
+                {
+                    ctx.DiscardValue();
+                }
+                g.End();
+            }
+        }
+
+        private void EmitBranchIfDefaultValue_Switch(Compiler.CompilerContext ctx, Compiler.CodeLabel label)
+        {
+            Type expected = Helpers.GetNullableUnderlyingType(ExpectedType) ?? ExpectedType;
             switch (Helpers.GetTypeCode(expected))
             {
                 case ProtoTypeCode.Boolean:

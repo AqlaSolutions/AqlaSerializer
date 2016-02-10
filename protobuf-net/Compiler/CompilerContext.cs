@@ -550,6 +550,7 @@ namespace AqlaSerializer.Compiler
         // TODO ensure valueFrom is reassigned everywhere
         public Local GetLocalWithValueForEmitRead(IProtoSerializer ser, Compiler.Local fromValue)
         {
+            if (!ser.RequiresOldValue) return null;
             return GetLocalWithValue(ser.ExpectedType, fromValue, !ser.ReturnsValue);
         }
 

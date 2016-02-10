@@ -310,6 +310,11 @@ namespace AqlaSerializer.Compiler
             return g.ArgReaderWriter().Invoke("Read" + name);
         }
 
+        public ContextualOperand AppendBytes(Operand value)
+        {
+            return g.StaticFactory.Invoke(typeof(ProtoReader), nameof(ProtoReader.AppendBytes), value, g.ArgReaderWriter());
+        }
+
         public ContextualOperand ReadInt32()
         {
             return Read("Int32");
