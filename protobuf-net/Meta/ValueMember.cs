@@ -717,9 +717,9 @@ namespace AqlaSerializer.Meta
                         return LateReferenceSerializer.CreateInsideNetObject(type, model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
-                        return new NetObjectValueDecorator(type, key, tryAsReference, model);
+                        return new NetObjectValueDecorator(type, key, tryAsReference, model[type]);
                     else
-                        return new ModelTypeSerializer(type, key, model[type], true, defaultWireType == WireType.String);
+                        return new ModelTypeSerializer(type, key, model[type]);
                 }
             }
             defaultWireType = WireType.None;
