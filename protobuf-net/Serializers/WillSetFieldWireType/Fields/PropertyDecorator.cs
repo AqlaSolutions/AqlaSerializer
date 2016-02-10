@@ -1,4 +1,5 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 #if !NO_RUNTIME
 using System;
 using System.CodeDom;
@@ -7,15 +8,13 @@ using System.Diagnostics;
 using AltLinq;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
-
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
+
 #endif
-
-
 
 namespace AqlaSerializer.Serializers
 {
@@ -32,8 +31,9 @@ namespace AqlaSerializer.Serializers
         private readonly MethodInfo shadowSetter;
 
         AccessorsCache.Accessors _accessors;
-        
-        public PropertyDecorator(TypeModel model, Type forType, PropertyInfo property, IProtoSerializerWithWireType tail) : base(tail)
+
+        public PropertyDecorator(TypeModel model, Type forType, PropertyInfo property, IProtoSerializerWithWireType tail)
+            : base(tail)
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(property != null);
@@ -48,9 +48,11 @@ namespace AqlaSerializer.Serializers
                 _accessors.Set = AccessorsCache.GetShadowSetter(shadowSetter);
 #endif
         }
-        private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal) {
-            if(property == null) throw new ArgumentNullException("property");
-            
+
+        private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal)
+        {
+            if (property == null) throw new ArgumentNullException("property");
+
             writeValue = tail.ReturnsValue && (Helpers.CheckIfPropertyWritable(model, property, nonPublic, allowInternal));
 
             if (!property.CanRead || Helpers.GetGetMethod(property, nonPublic, allowInternal) == null)
@@ -71,6 +73,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(value != null); // TODO emit without null check
             Tail.Write(Helpers.GetPropertyValue(property, value), dest);
         }
+
         public override object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value != null);
@@ -110,17 +113,14 @@ namespace AqlaSerializer.Serializers
 
 #endif
 
-#if FEAT_COMPILER
+#if FEAT_COMPILER 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.LoadAddress(valueFrom, ExpectedType);
             ctx.LoadValue(property);
-
-
-            //ctx.LoadReaderWriter();
-            //ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCancelBegin"));
-            ctx.WriteNullCheckedTail(property.PropertyType, Tail, null, true);
+            Tail.EmitWrite(ctx, null);
         }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
 
@@ -175,11 +175,15 @@ namespace AqlaSerializer.Serializers
                 else
                 { // don't want return value; drop it if anything there
                     // stack is [new-value]
-                    if (Tail.ReturnsValue) { ctx.DiscardValue(); }
+                    if (Tail.ReturnsValue)
+                    {
+                        ctx.DiscardValue();
+                    }
                 }
             }
         }
 #endif
     }
 }
+
 #endif
