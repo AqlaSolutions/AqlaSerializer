@@ -17,25 +17,25 @@ namespace AqlaSerializer.Serializers
     sealed class MemberSpecifiedDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
         public bool DemandWireTypeStabilityStatus() => false;
-// may be not specified, right?
-        public override Type ExpectedType { get { return Tail.ExpectedType; } }
-        public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
-        public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
-        private readonly MethodInfo getSpecified, setSpecified;
+        // may be not specified, right?
+        public override Type ExpectedType => Tail.ExpectedType;
+        public override bool RequiresOldValue => true;
+        public override bool ReturnsValue => Tail.ReturnsValue;
+        private readonly MethodInfo _getSpecified, _setSpecified;
         readonly IProtoSerializerWithWireType _tail;
 
         public MemberSpecifiedDecorator(MethodInfo getSpecified, MethodInfo setSpecified, IProtoSerializerWithWireType tail)
             : base(tail)
         {
             if (getSpecified == null && setSpecified == null) throw new InvalidOperationException();
-            this.getSpecified = getSpecified;
-            this.setSpecified = setSpecified;
+            this._getSpecified = getSpecified;
+            this._setSpecified = setSpecified;
             _tail = tail;
         }
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            if(getSpecified == null || (bool)getSpecified.Invoke(value, null))
+            if(_getSpecified == null || (bool)_getSpecified.Invoke(value, null))
             {
                 Tail.Write(value, dest);
             }
@@ -45,7 +45,7 @@ namespace AqlaSerializer.Serializers
         public override object Read(object value, ProtoReader source)
         {
             object result = Tail.Read(value, source);
-            if (setSpecified != null) setSpecified.Invoke(value, new object[] { true });
+            if (_setSpecified != null) _setSpecified.Invoke(value, new object[] { true });
             return result;
         }
 #endif
@@ -53,7 +53,7 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (getSpecified == null)
+            if (_getSpecified == null)
             {
                 Tail.EmitWrite(ctx, valueFrom);
                 return;
@@ -61,7 +61,7 @@ namespace AqlaSerializer.Serializers
             using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             {
                 ctx.LoadAddress(loc, ExpectedType);
-                ctx.EmitCall(getSpecified);
+                ctx.EmitCall(_getSpecified);
                 Compiler.CodeLabel done = ctx.DefineLabel();
                 Compiler.CodeLabel notSpecified = ctx.DefineLabel();
                 ctx.BranchIfFalse(notSpecified, false);
@@ -71,8 +71,7 @@ namespace AqlaSerializer.Serializers
                 ctx.Branch(done, true);
                 ctx.MarkLabel(notSpecified);
                 {
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                    ctx.G.Writer.WriteFieldHeaderCancelBegin();
                 }
                 ctx.MarkLabel(done);
             }
@@ -80,7 +79,7 @@ namespace AqlaSerializer.Serializers
         }
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (setSpecified == null)
+            if (_setSpecified == null)
             {
                 Tail.EmitRead(ctx, valueFrom);
                 return;
@@ -90,7 +89,7 @@ namespace AqlaSerializer.Serializers
                 Tail.EmitRead(ctx, loc);
                 ctx.LoadAddress(loc, ExpectedType);
                 ctx.LoadValue(1); // true
-                ctx.EmitCall(setSpecified);
+                ctx.EmitCall(_setSpecified);
             }
         }
 #endif
