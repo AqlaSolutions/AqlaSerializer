@@ -22,7 +22,7 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
-        public override bool ReturnsValue { get { return true; } }
+        public override bool ReturnsValue { get { return forType.IsValueType; } }
 
         AccessorsCache.Accessors _accessors;
 
