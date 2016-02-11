@@ -2,8 +2,8 @@
 
 #if !NO_RUNTIME
 using System;
-using AqlaSerializer.Compiler;
 #if FEAT_COMPILER
+using AqlaSerializer.Compiler;
 using System.Reflection.Emit;
 
 #endif

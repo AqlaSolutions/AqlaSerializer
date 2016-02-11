@@ -2728,7 +2728,7 @@ namespace AltLinq
 }
 
 // $Id: ExtensionAttribute.cs 898b3d493ed6 2012/04/17 20:09:57 azizatif $
-
+#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !SILVERLIGHT && !PHONE8 && !WINRT && !MONODROID
 namespace System.Runtime.CompilerServices
 {
     /// <remarks>
@@ -2739,10 +2739,10 @@ namespace System.Runtime.CompilerServices
     /// column in <a href="http://msdn.microsoft.com/msdnmag/">MSDN Magazine</a>, 
     /// issue <a href="http://msdn.microsoft.com/en-us/magazine/cc135410.aspx">Nov 2007</a>.
     /// </remarks>
-
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly)]
     sealed partial class ExtensionAttribute : Attribute { }
 }
+#endif
 
 // $Id: Func.cs 71137f497bf2 2012/04/16 20:01:27 azizatif $
 

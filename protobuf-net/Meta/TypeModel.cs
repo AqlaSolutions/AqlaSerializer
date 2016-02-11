@@ -1382,7 +1382,7 @@ namespace AqlaSerializer.Meta
             catch { }
             return null;
         }
-
+#if !IOS
         /// <summary>
         /// Serializes a given instance and deserializes it as a different type;
         /// this can be used to translate between wire-compatible objects (where
@@ -1401,6 +1401,28 @@ namespace AqlaSerializer.Meta
                 Serialize(ms, instance);
                 ms.Position = 0;
                 return Deserialize<TTo>(ms);
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Serializes a given instance and deserializes it as a different type;
+        /// this can be used to translate between wire-compatible objects (where
+        /// two .NET types represent the same data), or to promote/demote a type
+        /// through an inheritance hierarchy.
+        /// </summary>
+        /// <remarks>No assumption of compatibility is made between the types.</remarks>
+        /// <typeparam name="TFrom">The type of the object being copied.</typeparam>
+        /// <typeparam name="TTo">The type of the new object to be created.</typeparam>
+        /// <param name="instance">The existing instance to use as a template.</param>
+        /// <returns>A new instane of type TNewType, with the data from TOldType.</returns>
+        public object ChangeType(object instance, System.Type to)
+        {
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Serialize(ms, instance);
+                ms.Position = 0;
+                return Deserialize(ms, null, to);
             }
         }
     }

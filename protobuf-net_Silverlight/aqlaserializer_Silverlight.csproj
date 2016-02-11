@@ -88,7 +88,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' != 'CoreOnly'">
     <ProjectReference Include="..\..\..\RunSharp\src\RunSharpSilverlight\RunSharp_Silverlight.csproj">
       <Project>{35031fc5-65e0-4f14-8dbc-a3140e940c14}</Project>
       <Name>RunSharp_Silverlight</Name>

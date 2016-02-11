@@ -124,7 +124,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' != 'CoreOnly'">
     <ProjectReference Include="..\..\..\RunSharp\src\RunSharpWP8\RunSharp_WP8.csproj">
       <Project>{9fc6ca0f-d5d7-4c23-83a2-e910e5ba4f6f}</Project>
       <Name>RunSharp_WP8</Name>
