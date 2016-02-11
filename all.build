@@ -71,6 +71,8 @@
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20SafeAndUnity"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net30Safe"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35Safe"/>
     
     <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
@@ -79,22 +81,35 @@
 <ItemGroup>
     <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
     <Net20SafeAndUnityFiles Include="protobuf-net\bin\Net20SafeAndUnity\aqlaserializer.*"/>
+    <Net20SafeAndUnityFiles Include="protobuf-net\bin\Net20SafeAndUnity\RunSharp.*"/>
     <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\aqlaserializer.*"/>
+    <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\RunSharp.*"/>
+    <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\aqlaserializer.*"/>
+    <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\RunSharp.*"/>
+    <Net35Files Include="protobuf-net\bin\Net35\aqlaserializer.*"/>
+    <Net35Files Include="protobuf-net\bin\Net35\RunSharp.*"/>
     <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
+    <Net20Files Include="protobuf-net\bin\Net20\RunSharp.*"/>
     <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
+    <Net30Files Include="protobuf-net\bin\Release\RunSharp.*"/>
     <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\aqlaserializer.*"/>
     <SLFiles Include="protobuf-net_Silverlight\bin\Release\aqlaserializer.*"/>
+    <SLFiles Include="protobuf-net_Silverlight\bin\Release\RunSharp.*"/>
     <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\aqlaserializer.*"/>
     <WP8Files Include="protobuf-net_Phone8\bin\Release\aqlaserializer.*"/>
+    <WP8Files Include="protobuf-net_Phone8\bin\Release\RunSharp.*"/>
     <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\aqlaserializer.*"/>
     <PortableFiles Include="protobuf-net_Portable\bin\Release\aqlaserializer.*"/>
+    <PortableFiles Include="protobuf-net_Portable\bin\Release\RunSharp.*"/>
     <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\aqlaserializer.*"/>
     <PrecompileFiles Include="precompile\bin\Release\*.*"/>
 
     <WinRTFiles Include="protobuf-net_WinRT\bin\Release\aqlaserializer.*"/>
+    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\RunSharp.*"/>
     <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
 
 <!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/> -->
+<!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\RunSharp.*"/> -->
 
     <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
 </ItemGroup>
@@ -115,6 +130,12 @@
 
     <Copy SourceFiles="@(Net20SafeAndUnityFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe+unity"/>
     <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
+    <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net35safe"/>
+    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
+    <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net40safe"/>
+    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net40"/>
+    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net35"/>
+    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net40"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl4+net40+wp7+windows8"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable"/>
 

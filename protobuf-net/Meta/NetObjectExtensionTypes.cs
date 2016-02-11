@@ -21,7 +21,7 @@ namespace AqlaSerializer.Meta
         All = Null | Reference | AdvancedVersioning | Collection | LateReference
     }
 
-    public static class NetObjectExtensionTypesExtensions
+    static class NetObjectExtensionTypesExtensions
     {
         public static bool HasFlag(this NetObjectExtensionTypes value, NetObjectExtensionTypes flag)
         {

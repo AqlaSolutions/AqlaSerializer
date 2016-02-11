@@ -26,7 +26,7 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
-        public override bool ReturnsValue { get { return forType.IsValueType; } }
+        public override bool ReturnsValue { get { return Helpers.IsValueType(forType); } }
         private readonly bool canSetInRuntime;
         private readonly MethodInfo shadowSetter;
 
