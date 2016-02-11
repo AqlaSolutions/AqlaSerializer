@@ -247,15 +247,8 @@ namespace AqlaSerializer.Serializers
                         {
                             if (serType == forType && CanCreateInstance) value = CreateInstance(source, true);
                         }
-                        if (ser.ReturnsValue)
-                        {
-                            value = ser.Read(value, source);
-                        }
-                        else
-                        { // pop
-                            ser.Read(value, source);
-                        }
-
+                        value = ser.Read(value, source);
+                        
                         lastFieldIndex = i;
                         lastFieldNumber = fieldNumber;
                         fieldHandled = true;

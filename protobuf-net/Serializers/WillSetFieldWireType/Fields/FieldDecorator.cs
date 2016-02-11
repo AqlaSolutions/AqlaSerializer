@@ -58,13 +58,10 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value != null);
             object newVal = Tail.Read(Tail.RequiresOldValue ? GetValue(value) : null, source);
-            if (Tail.ReturnsValue) // no need to check it's not the same as old value because field set is basically "free" operation
-            {
-                if (_accessors.Set != null)
-                    _accessors.Set(value, newVal);
-                else
-                    field.SetValue(value, newVal);
-            }
+            if (_accessors.Set != null)
+                _accessors.Set(value, newVal);
+            else
+                field.SetValue(value, newVal);
             return value;
         }
 #endif
