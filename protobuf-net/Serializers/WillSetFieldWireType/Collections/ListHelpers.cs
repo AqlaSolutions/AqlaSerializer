@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using AltLinq;
 using AqlaSerializer.Meta;
 using TriAxis.RunSharp;
@@ -31,11 +32,11 @@ namespace AqlaSerializer.Serializers
         public const int FieldSubtype = 2;
         public const int FieldLength = 3;
         
-        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, Type itemType, bool protoCompatibility, IProtoSerializerWithWireType tail)
+        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail)
         {
             _packedWireTypeForRead = packedWireTypeForRead;
             _tail = tail;
-            _itemType = itemType;
+            _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;
             _writePacked = writePacked;
         }
@@ -183,6 +184,138 @@ namespace AqlaSerializer.Serializers
             _tail.EmitWrite(g.ctx, null);
         }
 
+        public delegate void EmitReadPrepareInstanceDelegate(Operand length);
+
+        public void EmitRead(SerializerCodeGen g, Action subTypeHandler, EmitReadPrepareInstanceDelegate prepareInstance, Action add)
+        {
+            WireType packedWireType = _packedWireTypeForRead;
+            bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
+            using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
+            using (var token = g.ctx.Local(typeof(SubItemToken)))
+            using (var length = g.ctx.Local(typeof(int?), true))
+            using (var read = g.ctx.Local(typeof(bool)))
+            {
+                if (packedAllowedStatic)
+                    g.Assign(packed, g.ReaderFunc.WireType() == WireType.String);
+
+                bool subItemNeededStatic = !_protoCompatibility;
+
+                if (subItemNeededStatic || packedAllowedStatic)
+                {
+                    if (!subItemNeededStatic) g.If(packed);
+                    g.Assign(token, g.ReaderFunc.StartSubItem());
+                    if (!subItemNeededStatic) g.End();
+                }
+                
+                if (!_protoCompatibility)
+                {
+                    g.DoWhile();
+                    {
+                        g.Assign(read, false);
+
+                        if (g.ReaderFunc.TryReadFieldHeader_bool(FieldLength))
+                        {
+                            // we write length to construct an array before deserializing
+                            // so we can handle references to array from inside it
+
+                            g.Assign(length, g.ReaderFunc.ReadInt32());
+                            g.Assign(read, true);
+                        }
+
+                        if (g.ReaderFunc.TryReadFieldHeader_bool(FieldSubtype))
+                        {
+                            if (subTypeHandler == null)
+                                g.Reader.SkipField();
+                            else
+                                subTypeHandler(); // TODO multiple times?
+                            g.Assign(read, true);
+                        }
+                    } 
+                    g.EndDoWhile(read);
+                }
+
+                // this is not an error that we don't wait for the first item
+                // if we are here it's either not compatible mode (so should call anyway)
+                // or there is at least one element
+                prepareInstance?.Invoke(length);
+
+                if (_protoCompatibility)
+                {
+                    if (packedAllowedStatic)
+                    {
+                        g.If(packed);
+                        {
+                            g.While(g.ReaderFunc.HasSubValue_bool(packedWireType));
+                            {
+                                EmitReadElementContent(g, add);
+                            }
+                            g.End();
+                        }
+                        g.Else();
+                    }
+
+                    using (var fieldNumber = g.ctx.Local(typeof(int)))
+                    {
+                        g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
+                        g.DoWhile();
+                        {
+                            EmitReadElementContent(g, add);
+                        }
+                        g.EndDoWhile(g.ReaderFunc.TryReadFieldHeader_bool(fieldNumber));
+                    }
+                    if (packedAllowedStatic) g.End();
+                }
+                else
+                {
+                    g.If(packed);
+                    {
+                        g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
+                        {
+                            using (var packedWireTypeDynamic = g.ctx.Local(typeof(WireType)))
+                            {
+                                g.Assign(packedWireTypeDynamic, g.ReaderFunc.WireType());
+                                g.DoWhile();
+                                {
+                                    EmitReadElementContent(g, add);
+                                }
+                                g.EndDoWhile(g.ReaderFunc.HasSubValue_bool(packedWireTypeDynamic));
+                            }
+                        }
+                        g.End();
+                    }
+                    g.Else();
+                    {
+                        g.While(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
+                        {
+                            EmitReadElementContent(g, add);
+                        }
+                        g.End();
+                    }
+                    g.End();
+                }
+
+                if (subItemNeededStatic || packedAllowedStatic)
+                {
+                    if (!subItemNeededStatic) g.If(packed);
+                    g.Reader.EndSubItem(token);
+                    if (!subItemNeededStatic) g.End();
+                }
+            }
+        }
+
+        void EmitReadElementContent(SerializerCodeGen g, Action add)
+        {
+            using (var loc = _tail.RequiresOldValue ? g.ctx.Local(_tail.ExpectedType, true) : null)
+            {
+                _tail.EmitRead(g.ctx, loc);
+                if (!_tail.ReturnsValue)
+                {
+                    Debug.Assert(_tail.RequiresOldValue);
+                    g.ctx.LoadValue(loc);
+                }
+            }
+            add();
+        }
 #endif
 #if !FEAT_IKVM
         public void Write(object value, Action subTypeWriter, int? length, Action prepareInstance, ProtoWriter dest)
@@ -345,13 +478,13 @@ namespace AqlaSerializer.Serializers
                 if (packed)
                 {
                     while (ProtoReader.HasSubValue(packedWireType, source))
-                        add(_tail.Read(null, source));
+                        ReadElementContent(add, source);
                 }
                 else
                 {
                     do
                     {
-                        add(_tail.Read(null, source));
+                        ReadElementContent(add, source);
                     } while (source.TryReadFieldHeader(fieldNumber));
                 }
             }
@@ -364,19 +497,24 @@ namespace AqlaSerializer.Serializers
                         packedWireType = source.WireType;
                         do
                         {
-                            add(_tail.Read(null, source));
+                            ReadElementContent(add, source);
                         } while (ProtoReader.HasSubValue(packedWireType, source));
                     }
                 }
                 else
                 {
                     while (source.TryReadFieldHeader(FieldItem))
-                        add(_tail.Read(null, source));
+                        ReadElementContent(add, source);
                 }
             }
 
             if (subItemNeeded)
                 ProtoReader.EndSubItem(token, source);
+        }
+
+        void ReadElementContent(Action<object> add, ProtoReader source)
+        {
+            add(_tail.Read(null, source));
         }
 #endif
     }

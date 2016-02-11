@@ -69,6 +69,7 @@ namespace AqlaSerializer.Serializers
         /// Now all Read operations return a value (although most do); if false no
         /// value should be expected.
         /// </summary>
+        /// <remarks>This is only for EmitRead. Read should **always** return a value because if it created a new value it can't reassign it to passed argument!</remarks>
         bool ReturnsValue { get; }
         
 #if FEAT_COMPILER

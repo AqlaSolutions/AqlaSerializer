@@ -37,13 +37,13 @@ namespace AqlaSerializer.Compiler
         }
 #endif
 
-        internal Local(CompilerContext ctx, Type type, bool fromPool = true)
+        internal Local(CompilerContext ctx, Type type, bool fromPool = true, bool zeroed = false)
         {
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             if (type == null) throw new ArgumentNullException(nameof(type));
             _ctx = ctx;
             if (fromPool)
-                _value = ctx.GetFromPool(type);
+                _value = ctx.GetFromPool(type, zeroed);
             _type = type;
             _fromPool = fromPool;
             AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
