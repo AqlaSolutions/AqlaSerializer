@@ -33,8 +33,8 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.995")]
+[assembly: AssemblyVersion("2.0.0.20")]
 #if !CF
-[assembly: AssemblyFileVersion("1.0.0.995")]
+[assembly: AssemblyFileVersion("2.0.0.20")]
 #endif
 [assembly: CLSCompliant(true)]
