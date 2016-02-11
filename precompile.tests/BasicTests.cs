@@ -52,7 +52,7 @@ namespace precompile.tests
             Assert.IsTrue(CommandLineAttribute.TryParse(new[] { @"..\..\..\SignedDto\bin\release\SignedDto.dll"
                 , @"-o:..\..\..\SignedDto\bin\release\SignedSerializer.dll",
                 "-t:MySignedSerializer",
-                @"-keyfile:..\..\..\AqlaSerializerKey.snk"
+                @"-keyfile:..\..\..\AqlaSerializer2Key.snk"
             }, out ctx), "TryParse");
             Assert.IsTrue(ctx.SanityCheck(), "SanityCheck");
             Assert.IsTrue(ctx.Execute(), "Execute");
