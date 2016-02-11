@@ -31,7 +31,7 @@
 
     <MSBuild Projects="RevisionGenerator\RevisionGenerator.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
-    <Exec Command="RevisionGenerator\bin\Release\RevisionGenerator.exe 2014 10 > &quot;$(RevGeneratorOutputFile)&quot;" />
+    <Exec Command="RevisionGenerator\bin\Release\RevisionGenerator.exe 2016 2 > &quot;$(RevGeneratorOutputFile)&quot;" />
     <ReadLinesFromFile File="$(RevGeneratorOutputFile)">
        <Output TaskParameter="Lines" PropertyName="BuildRev"/>
     </ReadLinesFromFile>
@@ -68,8 +68,9 @@
     <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=CoreOnly" BuildInParallel="true"/>
 
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20Safe"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20SafeAndUnity"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net30Safe"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35Safe"/>
@@ -80,8 +81,10 @@
 
 <ItemGroup>
     <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
-    <Net20SafeAndUnityFiles Include="protobuf-net\bin\Net20SafeAndUnity\aqlaserializer.*"/>
-    <Net20SafeAndUnityFiles Include="protobuf-net\bin\Net20SafeAndUnity\RunSharp.*"/>
+    <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
+    <UnityFiles Include="protobuf-net\bin\Unity\RunSharp.*"/>
+    <Net20SafeFiles Include="protobuf-net\bin\Net20Safe\aqlaserializer.*"/>
+    <Net20SafeFiles Include="protobuf-net\bin\Net20Safe\RunSharp.*"/>
     <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\aqlaserializer.*"/>
     <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\RunSharp.*"/>
     <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\aqlaserializer.*"/>
@@ -117,6 +120,8 @@
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
     
+    <Copy SourceFiles="@(Net20SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>
+    
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net30"/>
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(ZipDirectory)\Full\net30"/>
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net35"/>
@@ -128,7 +133,7 @@
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
 
-    <Copy SourceFiles="@(Net20SafeAndUnityFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe+unity"/>
+    <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
     <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net35safe"/>
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>

@@ -11,8 +11,8 @@
     <RootNamespace>AqlaSerializer</RootNamespace>
     <AssemblyName>aqlaserializer</AssemblyName>
     <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition=" '$(Configuration)|$(Platform)' == 'Net35|AnyCPU'">v3.5</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition=" '$(Configuration)|$(Platform)' == 'Net35Safe|AnyCPU'">v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(Configuration)' == 'Net35' OR '$(Configuration)' == 'Net35Safe' OR '$(Configuration)' == 'Unity'">v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition="'$(Configuration)' == 'Net20' OR '$(Configuration)' == 'Net20Safe'">v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
@@ -128,6 +128,21 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net20Safe|AnyCPU' ">
+    <OutputPath>bin\Net20Safe\</OutputPath>
+    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FEAT_SAFE</DefineConstants>
+    <DocumentationFile>bin\Net20Safe\aqlaserializer.XML</DocumentationFile>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Silverlight2|AnyCPU' ">
     <OutputPath>bin\Silverlight2\</OutputPath>
     <DefineConstants>TRACE;SILVERLIGHT NET_3_0 FEAT_SAFE</DefineConstants>
@@ -175,11 +190,11 @@
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Net20SafeAndUnity|AnyCPU'">
-    <OutputPath>bin\Net20SafeAndUnity\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER PLAT_NO_INTERLOCKED FEAT_SAFE</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Unity|AnyCPU'">
+    <OutputPath>bin\Unity\</OutputPath>
+    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER PLAT_NO_INTERLOCKED FEAT_SAFE NET_3_0 NET_3_5</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Net20SafeAndUnity\aqlaserializer.XML</DocumentationFile>
+    <DocumentationFile>bin\Unity\aqlaserializer.XML</DocumentationFile>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -222,13 +237,15 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' != 'Net20' AND '$(Configuration)' != 'Net20Safe' AND '$(Configuration)' != 'Unity'">
     <Reference Include="System.Runtime.Serialization">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.ServiceModel">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aqla\DefaultAutoAddStrategy.cs" />
@@ -394,7 +411,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)' != 'CoreOnly'">
+  <ItemGroup Condition="'$(Configuration)' != 'CoreOnly' AND '$(Configuration)' != 'Silverlight2' AND '$(Configuration)' != 'iOS'">
     <ProjectReference Include="..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
       <Project>{08f134ae-48e8-4a35-9dc7-2f31eaf4a66f}</Project>
       <Name>RunSharp</Name>
