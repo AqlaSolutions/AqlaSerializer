@@ -33,7 +33,6 @@ namespace AqlaSerializer.Serializers
         }
 
         public Type ExpectedType => _serializer.ExpectedType;
-        public bool ReturnsValue => _serializer.ReturnsValue;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 
         const int CurrentFormatVersion = 18;
@@ -97,6 +96,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public bool EmitReadReturnsValue => _serializer.EmitReadReturnsValue;
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             var g = ctx.G;
@@ -153,7 +153,7 @@ namespace AqlaSerializer.Serializers
                 }
                 g.End();
                 _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
-                if (_serializer.ReturnsValue)
+                if (_serializer.EmitReadReturnsValue)
                     g.Assign(value, g.GetStackValueOperand(ExpectedType));
 
                 g.While(g.StaticFactory.Invoke(typeof(ProtoReader), nameof(ProtoReader.TryGetNextLateReference), typeKey, obj, expectedRefKey, g.ArgReaderWriter()));
@@ -187,7 +187,7 @@ namespace AqlaSerializer.Serializers
                 g.End();
                 g.Reader.EndSubItem(rootToken);
                 
-                if (ReturnsValue)
+                if (EmitReadReturnsValue)
                     ctx.LoadValue(value);
             }
         }

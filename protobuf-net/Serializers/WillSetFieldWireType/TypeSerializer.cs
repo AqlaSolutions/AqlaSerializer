@@ -359,9 +359,9 @@ namespace AqlaSerializer.Serializers
         }
 #endif
         public bool RequiresOldValue => true;
-        public bool ReturnsValue { get; } = false; // updates field directly
 
 #if FEAT_COMPILER
+        public bool EmitReadReturnsValue { get; } = false; // updates field directly
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             var g = ctx.G;
@@ -669,7 +669,7 @@ namespace AqlaSerializer.Serializers
 
                 g.Reader.EndSubItem(token);
 
-                if (ReturnsValue)
+                if (EmitReadReturnsValue)
                     ctx.LoadValue(loc);
             }
         }
@@ -712,14 +712,14 @@ namespace AqlaSerializer.Serializers
             else
             {
                 ctx.LoadValue(loc);
-                if (forType.IsValueType || !serializer.ReturnsValue)
+                if (forType.IsValueType || !serializer.EmitReadReturnsValue)
                     ctx.Cast(serType);
                 else
                     ctx.TryCast(serType); // default value can be another inheritance branch
                 serializer.EmitRead(ctx, null);
             }
 
-            if (serializer.ReturnsValue)
+            if (serializer.EmitReadReturnsValue)
             {   // update the variable
                 ctx.StoreValue(loc);
             }

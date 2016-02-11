@@ -113,7 +113,7 @@ namespace AqlaSerializer.Compiler
                 ctx.StoreValueOrDefaultFromObject(ctx.inputValue, typedVal);
                 head.EmitRead(ctx, typedVal);
 
-                if (head.ReturnsValue) {
+                if (head.EmitReadReturnsValue) {
                     ctx.StoreValue(typedVal);
                 }
 
@@ -571,7 +571,7 @@ namespace AqlaSerializer.Compiler
         public Local GetLocalWithValueForEmitRead(IProtoSerializer ser, Compiler.Local fromValue)
         {
             if (!ser.RequiresOldValue) return null;
-            return GetLocalWithValue(ser.ExpectedType, fromValue, !ser.ReturnsValue);
+            return GetLocalWithValue(ser.ExpectedType, fromValue, !ser.EmitReadReturnsValue);
         }
 
         public Local GetLocalWithValue(Type type, Compiler.Local fromValue)
@@ -793,7 +793,7 @@ namespace AqlaSerializer.Compiler
                     Helpers.DebugAssert(valueFrom.IsNullRef()); // not expecting a valueFrom in this case
                 }
                 tail.EmitRead(this, null); // either unwrapped on the stack or not provided
-                if (tail.ReturnsValue)
+                if (tail.EmitReadReturnsValue)
                 {
                     // now re-wrap the value
                     EmitCtor(type, underlyingType);
@@ -1606,9 +1606,9 @@ namespace AqlaSerializer.Compiler
         }
 
 #if FEAT_IKVM
-        public Local Local(System.Type type)
+        public Local Local(System.Type type, bool zeroed = false)
         {
-            return new Local(this, type);
+            return new Local(this, type, zeroed: zeroed);
         }
 #endif
         internal Type MapType(System.Type type)

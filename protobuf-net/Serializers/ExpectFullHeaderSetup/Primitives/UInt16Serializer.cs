@@ -28,7 +28,6 @@ namespace AqlaSerializer.Serializers
         public virtual Type ExpectedType { get { return expectedType; } }
 
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        bool IProtoSerializer.ReturnsValue { get { return true; } }
 #if !FEAT_IKVM
         public virtual object Read(object value, ProtoReader source)
         {
@@ -41,6 +40,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.EmitBasicWrite("WriteUInt16", valueFrom);

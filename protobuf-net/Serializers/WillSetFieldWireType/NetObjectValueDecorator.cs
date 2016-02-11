@@ -94,7 +94,6 @@ namespace AqlaSerializer.Serializers
         }
 
         public Type ExpectedType => _type;
-        public bool ReturnsValue => _tail?.ReturnsValue ?? true;
         public bool RequiresOldValue { get; } = true;
 
 #if !FEAT_IKVM
@@ -209,6 +208,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public bool EmitReadReturnsValue => _tail?.EmitReadReturnsValue ?? true;
         public void EmitRead(CompilerContext ctx, Local valueFrom)
         {
             var g = ctx.G;
@@ -267,7 +267,7 @@ namespace AqlaSerializer.Serializers
                             g.If(typeKey.AsOperand == _key);
                             {
                                 _keySerializer.EmitRead(ctx, _keySerializer.RequiresOldValue ? value : null);
-                                if (_keySerializer.ReturnsValue)
+                                if (_keySerializer.EmitReadReturnsValue)
                                     g.Assign(value, g.GetStackValueOperand(_keySerializer.ExpectedType));
                                 g.Assign(valueBoxed, value);
                             }
@@ -306,7 +306,7 @@ namespace AqlaSerializer.Serializers
                             else
                             {
                                 _tail.EmitRead(ctx, _tail.RequiresOldValue ? value : null);
-                                if (_tail.ReturnsValue)
+                                if (_tail.EmitReadReturnsValue)
                                     g.Assign(value, g.GetStackValueOperand(_tail.ExpectedType));
                                 g.Assign(valueBoxed, value);
                             }
@@ -329,7 +329,7 @@ namespace AqlaSerializer.Serializers
                 }
                 g.Else();
                 {
-                    if (Helpers.IsValueType(_type) && (ReturnsValue || RequiresOldValue))
+                    if (Helpers.IsValueType(_type) && (EmitReadReturnsValue || RequiresOldValue))
                     {
                         g.If(valueBoxed.AsOperand == null);
                         {
@@ -350,7 +350,7 @@ namespace AqlaSerializer.Serializers
                 }
                 g.End();
 
-                if (ReturnsValue)
+                if (EmitReadReturnsValue)
                     ctx.LoadValue(value);
             }
         }

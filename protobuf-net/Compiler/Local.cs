@@ -31,8 +31,8 @@ namespace AqlaSerializer.Compiler
         }
 
 #if FEAT_IKVM
-        internal Local(CompilerContext ctx, System.Type type, bool fromPool = true)
-            : this(ctx, ctx.MapType(type), fromPool)
+        internal Local(CompilerContext ctx, System.Type type, bool fromPool = true, bool zeroed = false)
+            : this(ctx, ctx.MapType(type), fromPool, zeroed)
         {
         }
 #endif

@@ -17,7 +17,6 @@ namespace AqlaSerializer.Serializers
         public bool DemandWireTypeStabilityStatus() => false;
         public override Type ExpectedType { get { return Tail.ExpectedType; } }
         public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
-        public override bool ReturnsValue { get { return Tail.ReturnsValue; } }
         private readonly object defaultValue;
         public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {
@@ -56,6 +55,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue { get { return Tail.EmitReadReturnsValue; } }
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             Compiler.CodeLabel done = ctx.DefineLabel();

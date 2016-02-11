@@ -64,8 +64,7 @@ namespace AqlaSerializer.Serializers
         public Type ExpectedType { get { return enumType; } }
         
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        bool IProtoSerializer.ReturnsValue { get { return true; } }
-
+        
 #if !FEAT_IKVM
         private int EnumToWire(object value)
         {
@@ -140,6 +139,8 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ProtoTypeCode typeCode = GetTypeCode();

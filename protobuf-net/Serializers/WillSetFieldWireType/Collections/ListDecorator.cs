@@ -211,11 +211,11 @@ namespace AqlaSerializer.Serializers
 
         public override Type ExpectedType => declaredType;
         public override bool RequiresOldValue => AppendToCollection;
-        public override bool ReturnsValue => ReturnList;
-
+        
         protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;
 
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue => ReturnList;
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
 #if false

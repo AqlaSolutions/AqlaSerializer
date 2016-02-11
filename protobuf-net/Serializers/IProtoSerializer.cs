@@ -65,16 +65,13 @@ namespace AqlaSerializer.Serializers
         /// discarded, and should be passed in as null.
         /// </summary>
         bool RequiresOldValue { get; }
+
+#if FEAT_COMPILER
         /// <summary>
-        /// Now all Read operations return a value (although most do); if false no
-        /// value should be expected.
+        /// Now all Read operations return a value because input value is passed not as ref. But some EmitRead operations may replace the old value instead of pushing new value to stack.
         /// </summary>
         /// <remarks>This is only for EmitRead. Read should **always** return a value because if it created a new value it can't reassign it to passed argument!</remarks>
-        bool ReturnsValue { get; }
-        
-#if FEAT_COMPILER
-
-
+        bool EmitReadReturnsValue { get; }
 
         /// <summary>Emit the IL necessary to perform the given actions
         /// to serialize this data.

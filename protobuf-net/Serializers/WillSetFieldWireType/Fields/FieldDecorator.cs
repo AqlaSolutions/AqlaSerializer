@@ -22,8 +22,7 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
-        public override bool ReturnsValue { get { return Helpers.IsValueType(forType); } }
-
+        
         AccessorsCache.Accessors _accessors;
 
 
@@ -67,6 +66,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue { get { return Helpers.IsValueType(forType); } }
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.LoadAddress(valueFrom, ExpectedType);
@@ -84,7 +84,7 @@ namespace AqlaSerializer.Serializers
                 {
                     ctx.LoadAddress(loc, ExpectedType);
                     ctx.LoadValue(field);
-                    if (!Tail.ReturnsValue)
+                    if (!Tail.EmitReadReturnsValue)
                     {
                         ctx.StoreValue(newVal);
                         valueForTail = newVal;
@@ -95,14 +95,14 @@ namespace AqlaSerializer.Serializers
 
                 Tail.EmitRead(ctx, valueForTail);
 
-                if (Tail.ReturnsValue)
+                if (Tail.EmitReadReturnsValue)
                     ctx.StoreValue(newVal);
 
                 ctx.LoadAddress(loc, ExpectedType);
                 ctx.LoadValue(newVal);
                 ctx.StoreValue(field);
 
-                if (ReturnsValue)
+                if (EmitReadReturnsValue)
                     ctx.LoadValue(loc);
             }
         }

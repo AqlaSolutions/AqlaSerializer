@@ -76,8 +76,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
         public override bool RequiresOldValue => Tail.RequiresOldValue;
-        public override bool ReturnsValue => Tail.ReturnsValue;
-
+        
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
             IProtoTypeSerializer pts = Tail as IProtoTypeSerializer;
@@ -101,6 +100,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue => Tail.EmitReadReturnsValue;
         public void EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
         {
             // we only expect this to be invoked if HasCallbacks returned true, so implicitly Tail

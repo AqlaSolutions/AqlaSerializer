@@ -32,7 +32,6 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.WriteString((string)value, dest);
         }
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        bool IProtoSerializer.ReturnsValue { get { return true; } }
 
         public object Read(object value, ProtoReader source)
         {
@@ -40,6 +39,7 @@ namespace AqlaSerializer.Serializers
             return source.ReadString();
         }
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.EmitBasicWrite("WriteString", valueFrom);

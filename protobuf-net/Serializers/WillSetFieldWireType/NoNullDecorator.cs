@@ -44,7 +44,6 @@ namespace AqlaSerializer.Serializers
         }
 
         public override Type ExpectedType { get { return expectedType; } }
-        public override bool ReturnsValue { get { return true; } }
         public override bool RequiresOldValue { get { return true; } }
 
 #if !FEAT_IKVM
@@ -67,13 +66,14 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue { get { return true; } }
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (Compiler.Local oldValue = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             {
                 Compiler.Local tempLocal = null;
                 Compiler.Local valueForTail;
-                Debug.Assert(!Tail.RequiresOldValue || Tail.ReturnsValue);
+                Debug.Assert(!Tail.RequiresOldValue || Tail.EmitReadReturnsValue);
                 if (Tail.RequiresOldValue)
                 {
                     if (expectedType.IsValueType)
@@ -97,16 +97,16 @@ namespace AqlaSerializer.Serializers
 
                 if (expectedType.IsValueType)
                 {
-                    if (!Tail.ReturnsValue)
+                    if (!Tail.EmitReadReturnsValue)
                         ctx.LoadValue(tempLocal);
                     // note we demanded always returns a value
                     ctx.EmitCtor(expectedType, Tail.ExpectedType); // re-nullable<T> it
                 }
 
-                if (Tail.ReturnsValue || expectedType.IsValueType)
+                if (Tail.EmitReadReturnsValue || expectedType.IsValueType)
                     ctx.StoreValue(oldValue);
 
-                if (ReturnsValue)
+                if (EmitReadReturnsValue)
                     ctx.LoadValue(oldValue);
 
                 if (!tempLocal.IsNullRef()) tempLocal.Dispose();

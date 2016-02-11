@@ -53,7 +53,7 @@ namespace AqlaSerializer.Serializers
             deserializer = Compiler.CompilerContext.BuildDeserializer(head, model);
         }
         bool IProtoSerializer.RequiresOldValue { get { return head.RequiresOldValue; } }
-        bool IProtoSerializer.ReturnsValue { get { return head.ReturnsValue; } }
+        bool IProtoSerializer.EmitReadReturnsValue { get { return head.EmitReadReturnsValue; } }
 
         Type IProtoSerializer.ExpectedType { get { return head.ExpectedType; } }
 

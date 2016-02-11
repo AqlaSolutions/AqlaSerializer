@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using AltLinq;
 using AqlaSerializer.Meta;
-using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -16,6 +15,7 @@ using System.Reflection;
 
 #endif
 #if FEAT_COMPILER
+using TriAxis.RunSharp;
 using AqlaSerializer.Compiler;
 #endif
 
@@ -138,11 +138,11 @@ namespace AqlaSerializer.Serializers
             bool castNeeded = !Helpers.IsAssignableFrom(enumerableGenericType, enumerable.Type);
 
             using (var isFirst = g.ctx.Local(typeof(bool)))
-            using (var obj = g.ctx.Local(castNeeded ? typeof(object) : _itemType))
+            using (var obj = g.ctx.Local(castNeeded ? g.ctx.MapType(typeof(object)) : _itemType))
             {
                 g.Assign(isFirst, true);
 
-                g.ForEach(castNeeded ? typeof(object) : _itemType, enumerable);
+                g.ForEach(castNeeded ? g.ctx.MapType(typeof(object)) : _itemType, enumerable);
                 {
                     g.If(isFirst);
                     {
@@ -308,7 +308,7 @@ namespace AqlaSerializer.Serializers
             using (var loc = _tail.RequiresOldValue ? g.ctx.Local(_tail.ExpectedType, true) : null)
             {
                 _tail.EmitRead(g.ctx, loc);
-                if (!_tail.ReturnsValue)
+                if (!_tail.EmitReadReturnsValue)
                 {
                     Debug.Assert(_tail.RequiresOldValue);
                     g.ctx.LoadValue(loc);
