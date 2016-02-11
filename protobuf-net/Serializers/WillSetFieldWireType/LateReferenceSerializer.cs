@@ -67,8 +67,8 @@ namespace AqlaSerializer.Serializers
         string CantCreateInstanceMessage
             => "Can't create an instance for late reference of type " + ExpectedType.Name + "; late references are not supported on surrogate serializers and tuples.";
         bool IProtoSerializer.RequiresOldValue => true;
-        bool IProtoSerializer.ReturnsValue => true;
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue => true;
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (var loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))

@@ -17,7 +17,6 @@ namespace AqlaSerializer.Serializers
         public abstract Type ExpectedType { get; }
         protected readonly IProtoSerializer Tail;
         protected ProtoDecoratorBase(IProtoSerializer tail) { this.Tail = tail; }
-        public abstract bool ReturnsValue { get; }
         public abstract bool RequiresOldValue { get; }
 #if !FEAT_IKVM
         public abstract void Write(object value, ProtoWriter dest);
@@ -25,6 +24,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public abstract bool EmitReadReturnsValue { get; }
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom) { EmitWrite(ctx, valueFrom); }
         protected abstract void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom);
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom) { EmitRead(ctx, valueFrom); }

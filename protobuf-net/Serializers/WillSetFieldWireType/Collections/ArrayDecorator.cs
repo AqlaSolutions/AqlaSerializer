@@ -113,8 +113,9 @@ namespace AqlaSerializer.Serializers
 
         public override Type ExpectedType { get { return _arrayType; } }
         public override bool RequiresOldValue { get { return AppendToCollection; } }
-        public override bool ReturnsValue { get { return true; } }
+
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue { get { return true; } }
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
 #if false

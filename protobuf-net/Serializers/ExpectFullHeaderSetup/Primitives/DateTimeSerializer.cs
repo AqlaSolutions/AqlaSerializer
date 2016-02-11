@@ -21,7 +21,7 @@ namespace AqlaSerializer.Serializers
         public Type ExpectedType { get { return expectedType; } }
 
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        bool IProtoSerializer.ReturnsValue { get { return true; } }
+        
 
         private readonly bool includeKind;
 
@@ -47,6 +47,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.EmitWrite(ctx.MapType(typeof(BclHelpers)), includeKind ? "WriteDateTimeWithKind" : "WriteDateTime", valueFrom);

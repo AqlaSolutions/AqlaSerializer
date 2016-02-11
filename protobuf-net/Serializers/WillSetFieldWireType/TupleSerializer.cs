@@ -172,10 +172,6 @@ namespace AqlaSerializer.Serializers
             get { return true; }
         }
 
-        public bool ReturnsValue
-        {
-            get { return false; }
-        }
         Type GetMemberType(int index)
         {
             Type result = Helpers.GetMemberType(members[index]);
@@ -185,6 +181,11 @@ namespace AqlaSerializer.Serializers
         bool IProtoTypeSerializer.CanCreateInstance() { return false; }
 
 #if FEAT_COMPILER
+
+        public bool EmitReadReturnsValue
+        {
+            get { return false; }
+        }
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (Compiler.Local loc = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
@@ -331,7 +332,7 @@ namespace AqlaSerializer.Serializers
                             IProtoSerializer tail = tails[i];
                             Compiler.Local oldValIfNeeded = tail.RequiresOldValue ? locals[i] : null;
                             ctx.ReadNullCheckedTail(locals[i].Type, tail, oldValIfNeeded);
-                            if (tail.ReturnsValue)
+                            if (tail.EmitReadReturnsValue)
                             {
                                 if (locals[i].Type.IsValueType)
                                 {

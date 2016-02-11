@@ -933,7 +933,7 @@ namespace AqlaSerializer.Meta
 
                 ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
                 pair.Type.Serializer.EmitRead(ctx, ctx.InputValue);
-                if (!pair.Type.Serializer.ReturnsValue)
+                if (!pair.Type.Serializer.EmitReadReturnsValue)
                 {
                     ctx.LoadValue(ctx.InputValue);
                 }
@@ -1016,7 +1016,7 @@ namespace AqlaSerializer.Meta
 
                 ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, baseMethodPairs, this, ilVersion, assemblyName, pair.Type.Type);
                 pair.Type.RootSerializer.EmitRead(ctx, ctx.InputValue);
-                if (!pair.Type.RootSerializer.ReturnsValue)
+                if (!pair.Type.RootSerializer.EmitReadReturnsValue)
                 {
                     ctx.LoadValue(ctx.InputValue);
                 }

@@ -49,7 +49,6 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 
-        public bool ReturnsValue { get { return false; } }
         public bool RequiresOldValue { get { return true; } }
         public Type ExpectedType { get { return forType; } }
         private readonly Type forType, declaredType;
@@ -62,7 +61,9 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(declaredType != null, "declaredType");
             Helpers.DebugAssert(rootTail != null, "rootTail");
             Helpers.DebugAssert(rootTail.RequiresOldValue, "RequiresOldValue"); // old check, may work without!
-            Helpers.DebugAssert(!rootTail.ReturnsValue, "ReturnsValue"); // old check, may work without!
+#if FEAT_COMPILER
+            Helpers.DebugAssert(!rootTail.EmitReadReturnsValue, "ReturnsValue"); // old check, may work without!
+#endif
             Helpers.DebugAssert(declaredType == rootTail.ExpectedType || Helpers.IsSubclassOf(declaredType, rootTail.ExpectedType));
             this.forType = forType;
             this.declaredType = declaredType;
@@ -155,6 +156,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public bool EmitReadReturnsValue { get { return false; } }
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             // TODO may be get rid of returning through stack? always require old value?
@@ -174,7 +176,7 @@ namespace AqlaSerializer.Serializers
 
                 rootTail.EmitRead(ctx, rootTail.RequiresOldValue ? converted : null); // downstream processing against surrogate local
 
-                if (rootTail.ReturnsValue)
+                if (rootTail.EmitReadReturnsValue)
                     ctx.StoreValue(converted);
 
                 ctx.LoadValue(converted); // load from surrogate local
@@ -184,7 +186,7 @@ namespace AqlaSerializer.Serializers
                 if (!ExpectedType.IsValueType)
                     g.Reader.NoteReservedTrappedObject(reservedTrap, value);
 
-                if (!ReturnsValue)
+                if (!EmitReadReturnsValue)
                     ctx.LoadValue(value);
             }
         }

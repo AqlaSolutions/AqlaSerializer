@@ -19,7 +19,7 @@ namespace AqlaSerializer.Serializers
     sealed class NilSerializer : IProtoSerializer
     {
         private readonly Type type;
-        public bool ReturnsValue { get { return true; } }
+        public bool EmitReadReturnsValue { get { return true; } }
         public bool RequiresOldValue { get { return true; } }
         public object Read(object value, ProtoReader reader) { return value; }
         Type IProtoSerializer.ExpectedType { get { return type; } }

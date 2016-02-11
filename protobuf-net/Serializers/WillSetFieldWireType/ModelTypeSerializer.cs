@@ -34,8 +34,7 @@ namespace AqlaSerializer.Serializers
 
         Type IProtoSerializer.ExpectedType { get { return type; } }
         bool IProtoSerializer.RequiresOldValue { get { return true; } }
-        bool IProtoSerializer.ReturnsValue { get { return true; } }
-
+        
 #if !FEAT_IKVM
         void IProtoSerializer.Write(object value, ProtoWriter dest)
         {
@@ -49,6 +48,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
         bool EmitDedicatedMethod(Compiler.CompilerContext ctx, Compiler.Local valueFrom, bool read)
         {
 #if SILVERLIGHT

@@ -29,7 +29,6 @@ namespace AqlaSerializer.Serializers
         public Type ExpectedType { get { return expectedType; } }
 
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        bool IProtoSerializer.ReturnsValue { get { return true; } }
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
@@ -42,6 +41,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
+        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.EmitWrite(ctx.MapType(typeof(BclHelpers)), "WriteTimeSpan", valueFrom);

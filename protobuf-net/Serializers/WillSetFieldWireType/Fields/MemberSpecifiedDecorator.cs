@@ -20,7 +20,6 @@ namespace AqlaSerializer.Serializers
         // may be not specified, right?
         public override Type ExpectedType => Tail.ExpectedType;
         public override bool RequiresOldValue => true;
-        public override bool ReturnsValue => Tail.ReturnsValue;
         private readonly MethodInfo _getSpecified, _setSpecified;
         readonly IProtoSerializerWithWireType _tail;
 
@@ -51,6 +50,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public override bool EmitReadReturnsValue => Tail.EmitReadReturnsValue;
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             if (_getSpecified == null)

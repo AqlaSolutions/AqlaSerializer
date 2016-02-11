@@ -33,10 +33,7 @@ namespace AqlaSerializer.Serializers
         {
             get { return _serializer.ExpectedType; }
         }
-        public bool ReturnsValue
-        {
-            get { return _serializer.ReturnsValue; }
-        }
+        
         public bool RequiresOldValue
         {
             get { return _serializer.RequiresOldValue; }
@@ -55,6 +52,10 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
+        public bool EmitReadReturnsValue
+        {
+            get { return _serializer.EmitReadReturnsValue; }
+        }
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             var g = ctx.G;

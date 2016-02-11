@@ -26,7 +26,6 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         private readonly Type forType;
         public override bool RequiresOldValue { get { return true; } }
-        public override bool ReturnsValue { get { return Helpers.IsValueType(forType); } }
         private readonly bool canSetInRuntime;
         private readonly MethodInfo shadowSetter;
 
@@ -40,7 +39,7 @@ namespace AqlaSerializer.Serializers
             this.forType = forType;
             this.property = property;
             _tail = tail;
-            SanityCheck(model, property, tail, out canSetInRuntime, true, true);
+            SanityCheck(model, property, tail, out canSetInRuntime, true, true, false);
             shadowSetter = Helpers.GetShadowSetter(model, property);
 #if FEAT_COMPILER && !FEAT_IKVM
             _accessors = AccessorsCache.GetAccessors(property);
@@ -49,11 +48,15 @@ namespace AqlaSerializer.Serializers
 #endif
         }
 
-        private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal)
+        private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal, bool forEmit)
         {
             if (property == null) throw new ArgumentNullException("property");
 
-            writeValue = tail.ReturnsValue && (Helpers.CheckIfPropertyWritable(model, property, nonPublic, allowInternal));
+            writeValue =
+#if FEAT_COMPILER
+                (!forEmit || tail.EmitReadReturnsValue) &&
+#endif
+                (Helpers.CheckIfPropertyWritable(model, property, nonPublic, allowInternal));
 
             if (!property.CanRead || Helpers.GetGetMethod(property, nonPublic, allowInternal) == null)
             {
@@ -112,6 +115,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER 
+        public override bool EmitReadReturnsValue { get { return Helpers.IsValueType(forType); } }
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             ctx.LoadAddress(valueFrom, ExpectedType);
@@ -123,7 +127,7 @@ namespace AqlaSerializer.Serializers
         {
             var g = ctx.G;
             bool canSet;
-            SanityCheck(ctx.Model, property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(property));
+            SanityCheck(ctx.Model, property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(property), true);
 
             using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             using (Compiler.Local oldVal = canSet ? new Compiler.Local(ctx, property.PropertyType) : null)
@@ -144,7 +148,7 @@ namespace AqlaSerializer.Serializers
 
                 if (Tail.RequiresOldValue) // !here! <-- we need value again
                 {
-                    if (!Tail.ReturnsValue)
+                    if (!Tail.EmitReadReturnsValue)
                     {
                         ctx.StoreValue(newVal);
                         valueForTail = newVal;
@@ -154,7 +158,7 @@ namespace AqlaSerializer.Serializers
                 Tail.EmitRead(ctx, valueForTail);
 
                 // otherwise newVal was passed to EmitRead so already has necessary data
-                if (Tail.ReturnsValue)
+                if (Tail.EmitReadReturnsValue)
                     ctx.StoreValue(newVal);
                 
                 // check-condition:
@@ -191,7 +195,7 @@ namespace AqlaSerializer.Serializers
                         g.End();
                 }
 
-                if (ReturnsValue)
+                if (EmitReadReturnsValue)
                     ctx.LoadValue(loc);
             }
         }
