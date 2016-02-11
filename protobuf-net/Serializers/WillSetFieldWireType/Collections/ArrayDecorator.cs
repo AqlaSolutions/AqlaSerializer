@@ -108,7 +108,7 @@ namespace AqlaSerializer.Serializers
             _arrayType = arrayType;
             _overwriteList = overwriteList;
             _protoCompatibility = protoCompatibility;
-            _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _itemType, _protoCompatibility, tail);
+            _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _protoCompatibility, tail);
         }
 
         public override Type ExpectedType { get { return _arrayType; } }

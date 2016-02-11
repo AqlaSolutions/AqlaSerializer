@@ -443,7 +443,7 @@ namespace AqlaSerializer.Compiler
         }
 
         MutableList locals = new MutableList();
-        internal LocalBuilder GetFromPool(Type type)
+        internal LocalBuilder GetFromPool(Type type, bool zeroed = false)
         {
             int count = locals.Count;
             for (int i = 0; i < count; i++)
@@ -452,6 +452,19 @@ namespace AqlaSerializer.Compiler
                 if (item != null && item.LocalType == type)
                 {
                     locals[i] = null; // remove from pool
+                    if (zeroed)
+                    {
+                        if (item.LocalType.IsValueType)
+                        {
+                            il.Emit(OpCodes.Ldloca, item);
+                            il.Emit(OpCodes.Initobj, type);
+                        }
+                        else
+                        {
+                            il.Emit(OpCodes.Ldnull);
+                            EmitStloc(item);
+                        }
+                    }
                     return item;
                 }
             }
@@ -497,26 +510,33 @@ namespace AqlaSerializer.Compiler
             }
             else
             {
-#if !FX11
-                switch (local.Value.LocalIndex)
-                {
-                    case 0: Emit(OpCodes.Stloc_0); break;
-                    case 1: Emit(OpCodes.Stloc_1); break;
-                    case 2: Emit(OpCodes.Stloc_2); break;
-                    case 3: Emit(OpCodes.Stloc_3); break;
-                    default:
-#endif
-                        OpCode code = UseShortForm(local) ? OpCodes.Stloc_S : OpCodes.Stloc;
-                        il.Emit(code, local.Value);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(code + ": $" + local.Value);
-#endif
-#if !FX11
-                        break;
-                }
-#endif
+                EmitStloc(local.Value);
             }
         }
+
+        void EmitStloc(LocalBuilder local)
+        {
+            if (local == null) throw new ArgumentNullException(nameof(local));
+#if !FX11
+            switch (local.LocalIndex)
+            {
+                case 0: Emit(OpCodes.Stloc_0); break;
+                case 1: Emit(OpCodes.Stloc_1); break;
+                case 2: Emit(OpCodes.Stloc_2); break;
+                case 3: Emit(OpCodes.Stloc_3); break;
+                default:
+#endif
+                    OpCode code = UseShortForm(local) ? OpCodes.Stloc_S : OpCodes.Stloc;
+                    il.Emit(code, local);
+#if DEBUG_COMPILE
+                        Helpers.DebugWriteLine(code + ": $" + local);
+#endif
+#if !FX11
+                    break;
+            }
+#endif
+        }
+
         public void LoadValue(Local local)
         {
             if (local.IsNullRef()) { /* nothing to do; top of stack */}
@@ -1028,12 +1048,18 @@ namespace AqlaSerializer.Compiler
 
         private bool UseShortForm(Local local)
         {
+            return UseShortForm(local.Value);
+        }
+
+        private bool UseShortForm(LocalBuilder local)
+        {
 #if FX11
             return locals.Count < 256;
 #else
-            return local.Value.LocalIndex < 256;
+            return local.LocalIndex < 256;
 #endif
         }
+
 #if FEAT_IKVM
         internal void LoadAddress(Local local, System.Type type)
         {
@@ -1574,9 +1600,9 @@ namespace AqlaSerializer.Compiler
 
         private readonly TypeModel model;
 
-        public Local Local(Type type)
+        public Local Local(Type type, bool zeroed = false)
         {
-            return new Local(this, type);
+            return new Local(this, type, zeroed: zeroed);
         }
 
 #if FEAT_IKVM
