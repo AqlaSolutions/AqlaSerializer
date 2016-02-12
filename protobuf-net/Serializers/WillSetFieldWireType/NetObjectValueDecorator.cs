@@ -200,12 +200,18 @@ namespace AqlaSerializer.Serializers
         {
             bool write;
             int dynamicTypeKey;
-            SubItemToken token = NetObjectHelpers.WriteNetObject_Start(value, dest, _options, out dynamicTypeKey, out write);
+
+            var options = _options;
+
+            if ((options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 && !ProtoWriter.CheckIsOnHalfToRecursionDepthLimit(dest))
+                options &= ~BclHelpers.NetObjectOptions.WriteAsLateReference;
+
+            SubItemToken token = NetObjectHelpers.WriteNetObject_Start(value, dest, options, out dynamicTypeKey, out write);
 
             if (write)
             {
                 // field header written!
-                if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0)
+                if ((options & BclHelpers.NetObjectOptions.DynamicType) != 0)
                 {
                     if (dynamicTypeKey < 0)
                     {
@@ -224,7 +230,7 @@ namespace AqlaSerializer.Serializers
                 }
                 else
                 {
-                    if ((_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0)
+                    if ((options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0)
                         _lateReferenceTail.Write(value, dest);
                     else if (_tail != null)
                         _tail.Write(value, dest);
@@ -420,18 +426,37 @@ namespace AqlaSerializer.Serializers
 
         public void EmitWrite(CompilerContext ctx, Local valueFrom)
         {
+            bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) == 0;
             using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
             {
                 var g = ctx.G;
                 using (Local write = ctx.Local(typeof(bool)))
                 using (Local dynamicTypeKey = ctx.Local(typeof(int)))
+                using (Local optionsLocal = canBeLateRef ? ctx.Local(typeof(BclHelpers.NetObjectOptions)):null)
                 using (Local token = ctx.Local(typeof(SubItemToken)))
                 {
                     var s = g.StaticFactory;
                     // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
+
+                    Operand options;
+                    if (canBeLateRef)
+                    {
+                        g.If(!g.WriterFunc.CheckIsOnHalfToRecursionDepthLimit_bool());
+                        {
+                            g.Assign(optionsLocal, _options & ~BclHelpers.NetObjectOptions.WriteAsLateReference);
+                        }
+                        g.Else();
+                        {
+                            g.Assign(optionsLocal, _options);
+                        }
+                        g.End();
+                        options = optionsLocal;
+                    }
+                    else options = _options;
+
                     g.Assign(
                         token,
-                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.ArgReaderWriter(), _options, dynamicTypeKey, write));
+                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.ArgReaderWriter(), options, dynamicTypeKey, write));
                     g.If(write);
                     {
                         // field header written!
@@ -468,9 +493,15 @@ namespace AqlaSerializer.Serializers
                         }
                         g.Else();
                         {
-                            if ((_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0)
-                                _lateReferenceTail.EmitWrite(ctx, value);
-                            else if (_tail != null)
+                            if (canBeLateRef)
+                            {
+                                g.If(optionsLocal.AsOperand == _options); // if not changed (now only one place) - write as ref
+                                {
+                                    _lateReferenceTail.EmitWrite(ctx, value);
+                                }
+                                g.Else();
+                            }
+                            if (_tail != null)
                                 _tail.EmitWrite(ctx, value);
                             else if (_keySerializer != null)
                             {
@@ -481,6 +512,10 @@ namespace AqlaSerializer.Serializers
                             {
                                 Debug.Assert(_key >= 0);
                                 g.Writer.WriteRecursionSafeObject(value, ctx.MapMetaKeyToCompiledKey(_key));
+                            }
+                            if (canBeLateRef)
+                            {
+                                g.End();
                             }
                         }
                         g.End();

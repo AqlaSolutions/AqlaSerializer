@@ -507,6 +507,11 @@ namespace AqlaSerializer
         }
         private void PopRecursionStack() { recursionStack.RemoveLast(); }
 
+        public static bool CheckIsOnHalfToRecursionDepthLimit(ProtoWriter writer)
+        {
+            return writer.depth > (writer.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit) / 2;
+        }
+
         private static SubItemToken StartSubItem(object instance, ProtoWriter writer, bool allowFixed)
         {
             if (writer == null) throw new ArgumentNullException("writer");
