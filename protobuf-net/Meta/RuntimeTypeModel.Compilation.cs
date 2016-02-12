@@ -70,6 +70,7 @@ namespace AqlaSerializer.Meta
             {
                 code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
             }
+            code.GetHashCode();
             foreach (MetaType type in types)
             {
                 type.CompileInPlace();
@@ -364,7 +365,9 @@ namespace AqlaSerializer.Meta
             {
                 code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
             }
-            return this; // TODO temporarily disabled
+#if FAKE_COMPILE
+            return this;
+#endif
             CompilerOptions options = new CompilerOptions();
             options.TypeName = name;
             options.OutputPath = path;
@@ -1161,6 +1164,6 @@ namespace AqlaSerializer.Meta
         }
 
 #endif
-    }
+        }
 }
 #endif

@@ -1325,15 +1325,16 @@ namespace AqlaSerializer.Meta
         /// <remarks>An in-place compile can access non-public types / members</remarks>
         public void CompileInPlace()
         {
-            // TODO temporarily disabled
             var s = Serializer;
             var r = RootSerializer;
+#if FAKE_COMPILE
             return;
+#endif
 #if FEAT_IKVM
             // just no nothing, quietely; don't want to break the API
 #else
-            serializer = CompiledSerializer.Wrap(Serializer, model);
-            rootSerializer = CompiledSerializer.Wrap(RootSerializer, model);
+            serializer = CompiledSerializer.Wrap(s, model);
+            rootSerializer = CompiledSerializer.Wrap(r, model);
 #endif
         }
 #endif

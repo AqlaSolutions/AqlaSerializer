@@ -61,38 +61,47 @@ namespace AqlaSerializer.Serializers
 
         string CantCreateInstanceMessage
             => "Can't create an instance for late reference of type " + ExpectedType.Name + "; late references are not supported on surrogate serializers and tuples.";
-        bool IProtoSerializer.RequiresOldValue => true;
+
+        public bool RequiresOldValue => true;
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue => true;
+        public bool EmitReadReturnsValue => true;
 
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (var loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
-                _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], loc);
+            using (var value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            {
+                _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], value);
+                ctx.G.Writer.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+            }
         }
 
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             var g = ctx.G;
-            using (var loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             {
                 _subTypeHelpers.EmitTryRead(
                     g,
-                    loc,
+                    value,
                     _model[_typeKey],
                     r =>
                         {
                             if (r == null)
                             {
-                                g.If(loc.AsOperand==null);
+                                g.If(value.AsOperand == null);
                                 {
                                     g.ThrowProtoException(CantCreateInstanceMessage);
                                 }
                                 g.End();
-                                ctx.LoadValue(loc);
                             }
                             else
+                            {
                                 r.Serializer.EmitCreateInstance(ctx);
+                                ctx.StoreValue(value);
+                            }
+                            g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+                            if (EmitReadReturnsValue)
+                                ctx.LoadValue(value);
                         });
             }
         }
