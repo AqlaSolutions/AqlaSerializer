@@ -186,7 +186,7 @@ namespace AqlaSerializer.Serializers
 
         public delegate void EmitReadPrepareInstanceDelegate(Operand length);
 
-        public void EmitRead(SerializerCodeGen g, Action subTypeHandler, EmitReadPrepareInstanceDelegate prepareInstance, Action add)
+        public void EmitRead(SerializerCodeGen g, Action subTypeHandler, EmitReadPrepareInstanceDelegate prepareInstance, Action<Local> add)
         {
             WireType packedWireType = _packedWireTypeForRead;
             bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
@@ -303,18 +303,15 @@ namespace AqlaSerializer.Serializers
             }
         }
 
-        void EmitReadElementContent(SerializerCodeGen g, Action add)
+        void EmitReadElementContent(SerializerCodeGen g, Action<Local> add)
         {
             using (var loc = _tail.RequiresOldValue ? g.ctx.Local(_tail.ExpectedType, true) : null)
             {
                 _tail.EmitRead(g.ctx, loc);
-                if (!_tail.EmitReadReturnsValue)
-                {
-                    Debug.Assert(_tail.RequiresOldValue);
-                    g.ctx.LoadValue(loc);
-                }
+                if (_tail.EmitReadReturnsValue)
+                    g.ctx.StoreValue(loc);
+                add(loc);
             }
-            add();
         }
 #endif
 #if !FEAT_IKVM
