@@ -31,7 +31,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AllowStreamRewriting { get; set; } = true;
 
-        internal const int DefaultRecursionDepthLimit = 1000;
+        internal const int DefaultRecursionDepthLimit = 500;
 
         public int RecursionDepthLimit { get; set; } = DefaultRecursionDepthLimit;
 

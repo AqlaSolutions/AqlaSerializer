@@ -180,6 +180,11 @@ namespace AqlaSerializer.Compiler
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.TryGetNextLateReference), outIntTypeKey, outObjValue, outIntReferenceKey, g.ArgReaderWriter());
         }
 
+        public ContextualOperand CheckIsOnHalfToRecursionDepthLimit_bool()
+        {
+            return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.CheckIsOnHalfToRecursionDepthLimit), g.ArgReaderWriter());
+        }
+
         public ContextualOperand TryWriteBuiltinTypeValue_bool(Operand objValue, Operand protoTypeCode, Operand boolAllowSystemType)
         {
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.TryWriteBuiltinTypeValue), objValue, protoTypeCode, boolAllowSystemType, g.ArgReaderWriter());
