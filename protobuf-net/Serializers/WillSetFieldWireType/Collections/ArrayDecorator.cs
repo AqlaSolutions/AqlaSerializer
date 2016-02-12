@@ -146,7 +146,7 @@ namespace AqlaSerializer.Serializers
                         {
                             g.If(length >= 0);
                             {
-                                EmitRead_CreateInstance(g, value, list.AsOperand.Property("Count"), -1, oldLen, result);
+                                EmitRead_CreateInstance(g, value, list.AsOperand.Property("Count"), null, oldLen, result);
                                 g.Assign(index, oldLen);
                             }
                             g.Else();
@@ -184,19 +184,14 @@ namespace AqlaSerializer.Serializers
             }
         }
 
-        void EmitRead_CreateInstance(SerializerCodeGen g, Local value, Operand appendCount, Operand reservedTrap, Local outOldLen, Local outResult)
+        void EmitRead_CreateInstance(SerializerCodeGen g, Local value, Operand appendCount, Local reservedTrap, Local outOldLen, Local outResult)
         {
             g.Assign(outOldLen, AppendToCollection ? (value.AsOperand != null).Conditional(value.AsOperand.Property("Length"), 0) : (Operand)0);
             g.Assign(outResult, g.ExpressionFactory.NewArray(_itemType, outOldLen + appendCount));
-            g.If(reservedTrap >= 0);
-            {
+            if (!reservedTrap.IsNullRef())
                 g.Reader.NoteReservedTrappedObject(reservedTrap, outResult);
-            }
-            g.Else();
-            {
+            else
                 g.Reader.NoteObject(outResult);
-            }
-            g.End();
 
             g.If(outOldLen.AsOperand != 0);
             {
