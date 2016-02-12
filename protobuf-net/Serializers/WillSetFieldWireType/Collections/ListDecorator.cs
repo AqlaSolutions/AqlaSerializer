@@ -344,6 +344,98 @@ namespace AqlaSerializer.Serializers
                 ListHelpers.EmitWrite(ctx.G, value, subTypeWriter, getLength, null);
             }
         }
+
+
+#if WINRT
+        private static readonly TypeInfo ienumeratorType = typeof(IEnumerator).GetTypeInfo(), ienumerableType = typeof (IEnumerable).GetTypeInfo();
+#else
+        static readonly System.Type ienumeratorType = typeof(IEnumerator);
+        static readonly System.Type ienumerableType = typeof(IEnumerable);
+#endif
+
+        protected MethodInfo GetEnumeratorInfo(TypeModel model, out MethodInfo moveNext, out MethodInfo current)
+        {
+
+#if WINRT
+            TypeInfo enumeratorType = null, iteratorType, expectedType = ExpectedType.GetTypeInfo();
+#else
+            Type enumeratorType = null, iteratorType, expectedType = ExpectedType;
+#endif
+
+            // try a custom enumerator
+            MethodInfo getEnumerator = Helpers.GetInstanceMethod(expectedType, "GetEnumerator", null);
+            Type itemType = Tail.ExpectedType;
+
+            Type getReturnType = null;
+            if (getEnumerator != null)
+            {
+                getReturnType = getEnumerator.ReturnType;
+                iteratorType = getReturnType
+#if WINRT
+                    .GetTypeInfo()
+#endif
+                    ;
+                moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext", null);
+                PropertyInfo prop = Helpers.GetProperty(iteratorType, "Current", false);
+                current = prop == null ? null : Helpers.GetGetMethod(prop, false, false);
+                if (moveNext == null && (model.MapType(ienumeratorType).IsAssignableFrom(iteratorType)))
+                {
+                    moveNext = Helpers.GetInstanceMethod(model.MapType(ienumeratorType), "MoveNext", null);
+                }
+                // fully typed
+                if (moveNext != null && moveNext.ReturnType == model.MapType(typeof(bool))
+                    && current != null && current.ReturnType == itemType)
+                {
+                    return getEnumerator;
+                }
+                moveNext = current = getEnumerator = null;
+            }
+
+#if !NO_GENERICS
+            // try IEnumerable<T>
+            Type tmp = model.MapType(typeof(System.Collections.Generic.IEnumerable<>), false);
+
+            if (tmp != null)
+            {
+                tmp = tmp.MakeGenericType(itemType);
+
+#if WINRT
+                enumeratorType = tmp.GetTypeInfo();
+#else
+                enumeratorType = tmp;
+#endif
+            }
+            ;
+            if (enumeratorType != null && enumeratorType.IsAssignableFrom(expectedType))
+            {
+                getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
+                getReturnType = getEnumerator.ReturnType;
+
+#if WINRT
+                iteratorType = getReturnType.GetTypeInfo();
+#else
+                iteratorType = getReturnType;
+#endif
+
+                moveNext = Helpers.GetInstanceMethod(model.MapType(ienumeratorType), "MoveNext");
+                current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
+                return getEnumerator;
+            }
+#endif
+            // give up and fall-back to non-generic IEnumerable
+            enumeratorType = model.MapType(ienumerableType);
+            getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
+            getReturnType = getEnumerator.ReturnType;
+            iteratorType = getReturnType
+#if WINRT
+                .GetTypeInfo()
+#endif
+                ;
+            moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext");
+            current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
+            return getEnumerator;
+        }
+
 #endif
 
         public virtual bool HasCallbacks(TypeModel.CallbackType callbackType)
