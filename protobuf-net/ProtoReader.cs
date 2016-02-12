@@ -719,6 +719,8 @@ namespace AqlaSerializer
                 case WireType.StartGroup:
                     reader.wireType = WireType.None; // to prevent glitches from double-calling
                     reader.depth++;
+                    if (reader.depth > (reader.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit))
+                        TypeModel.ThrowRecursionDepthLimitExceeded();
                     return new SubItemToken(-reader.fieldNumber);
                 case WireType.String:
                     int len = (int)reader.ReadUInt32Variant(false);
@@ -726,6 +728,8 @@ namespace AqlaSerializer
                     int lastEnd = reader.blockEnd;
                     reader.blockEnd = reader.position + len;
                     reader.depth++;
+                    if (reader.depth > (reader.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit))
+                        TypeModel.ThrowRecursionDepthLimitExceeded();
                     return new SubItemToken(lastEnd);
                 default:
                     throw reader.CreateWireTypeException(); // throws

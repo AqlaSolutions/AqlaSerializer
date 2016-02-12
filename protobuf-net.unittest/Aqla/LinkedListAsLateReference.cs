@@ -32,7 +32,7 @@ namespace AqlaSerializer.unittest.Aqla
         }
 
         [Test]
-        public void Execute()
+        public void Execute([Values(true, false)] bool late)
         {
             int index = 0;
             var first = new Node(index++);
@@ -49,10 +49,23 @@ namespace AqlaSerializer.unittest.Aqla
             var original = new Container() { Tail = current, Head = first };
 
             var comp = ProtoCompatibilitySettings.Default;
+            if (late)
             comp.AllowExtensionDefinitions |= NetObjectExtensionTypes.LateReference;
+            else
+            comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
             var tm = TypeModel.Create(false, comp);
             
-            var copy = tm.DeepClone(original);
+            Container copy;
+
+            if (late)
+                copy = tm.DeepClone(original);
+            else
+            {
+                Assert.That(
+                    () => copy = tm.DeepClone(original),
+                    Throws.TypeOf<ProtoException>().With.Message.EqualTo("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit"));
+                return;
+            }
 
             current = copy.Head;
             index = 0;

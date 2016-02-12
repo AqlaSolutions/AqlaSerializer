@@ -31,6 +31,15 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AllowStreamRewriting { get; set; } = true;
 
+        internal const int DefaultRecursionDepthLimit = 1000;
+
+        public int RecursionDepthLimit { get; set; } = DefaultRecursionDepthLimit;
+
+        internal static void ThrowRecursionDepthLimitExceeded()
+        {
+            throw new ProtoException("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit");
+        }
+
         protected TypeModel()
         {
             AllowStreamRewriting = true;
