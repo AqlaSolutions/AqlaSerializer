@@ -4,11 +4,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using AltLinq;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
 #endif
 using AqlaSerializer.Meta;
+using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -46,21 +48,21 @@ namespace AqlaSerializer.Serializers
         {
             IList list = null;
             object[] args = null;
+            bool createdNew = false;
+            bool asList = IsList && !SuppressIList;
 
-            Action<object> addLocal;
+            // can't call clear? => create new!
+            bool forceNewInstance = !AppendToCollection && ReturnList && !asList;
 
-            if (IsList && !SuppressIList)
-                addLocal = o => list.Add(o);
-            else
-            {
-                addLocal = o =>
+            Action subTypeHandler = () =>
+                {
+                    MetaType mt = _subTypeHelpers.TryRead(_metaType, forceNewInstance ? null : value?.GetType(), source);
+                    if (mt != null)
                     {
-                        args[0] = o;
-                        this.add.Invoke(value, args);
-                    };
-            }
-
-            Action subTypeHandler = () => value = _subTypeHelpers.TryRead(_metaType, value?.GetType(), source)?.Serializer.CreateInstance(source) ?? value;
+                        value = mt.Serializer.CreateInstance(source);
+                        createdNew = true;
+                    }
+                };
 
             if (_metaType == null)
                 subTypeHandler = null;
@@ -69,17 +71,32 @@ namespace AqlaSerializer.Serializers
                 subTypeHandler,
                 length =>
                     {
-                        if (value == null)
+                        if (value == null || (forceNewInstance && !createdNew))
                         {
+                            createdNew = true;
                             value = Activator.CreateInstance(concreteTypeDefault);
                             ProtoReader.NoteObject(value, source);
                         }
-                        if (IsList && !SuppressIList)
+                        if (asList)
+                        {
                             list = (IList)value;
+                            Debug.Assert(list != null);
+                            if (!AppendToCollection && !createdNew)
+                                list.Clear();
+                        }
                         else
                             args = new object[1];
                     },
-                addLocal,
+                v =>
+                    {
+                        if (asList)
+                            list.Add(v);
+                        else
+                        {
+                            args[0] = v;
+                            this.add.Invoke(value, args);
+                        }
+                    },
                 source);
             
             return value;
@@ -216,397 +233,116 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue => ReturnList;
+
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
-#if false
-/* This looks more complex than it is. Look at the non-compiled Read to
-             * see what it is trying to do, but note that it needs to cope with a
-             * few more scenarios. Note that it picks the **most specific** Add,
-             * unlike the runtime version that uses IList when possible. The core
-             * is just a "do {list.Add(readValue())} while {thereIsMore}"
-             * 
-             * The complexity is due to:
-             *  - value types vs reference types (boxing etc)
-             *  - initialization if we need to pass in a value to the tail
-             *  - handling whether or not the tail *returns* the value vs updates the input
-             */
-            bool returnList = ReturnList;
-            
-            using (Compiler.Local list = AppendToCollection ? ctx.GetLocalWithValue(ExpectedType, valueFrom) : new Compiler.Local(ctx, declaredType))
-            using (Compiler.Local origlist = (returnList && AppendToCollection) ? new Compiler.Local(ctx, ExpectedType) : null)
+            var g = ctx.G;
+            using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+            using (Compiler.Local oldValueForSubTypeHelpers = ctx.Local(value.Type))
+            using (Compiler.Local createdNew = ctx.Local(typeof(bool), true))
             {
-                if (!AppendToCollection)
-                { // always new
-                    ctx.LoadNullRef();
-                    ctx.StoreValue(list);
-                }
-                else if (returnList)
-                { // need a copy
-                    ctx.LoadValue(list);
-                    ctx.StoreValue(origlist);
-                }
-                if (concreteTypeDefault != null)
-                {
-                    ctx.LoadValue(list);
-                    Compiler.CodeLabel notNull = ctx.DefineLabel();
-                    ctx.BranchIfTrue(notNull, true);
-                    ctx.EmitCtor(concreteTypeDefault);
-                    ctx.CopyValue();
-                    ctx.CastToObject(concreteTypeDefault);
-                    ctx.EmitCallNoteObject();
-                    ctx.StoreValue(list);
-                    ctx.MarkLabel(notNull);
-                }
+                bool asList = IsList && !SuppressIList;
 
-                bool castListForAdd = !add.DeclaringType.IsAssignableFrom(declaredType);
-                EmitReadList(ctx, list, Tail, add, _packedWireTypeForRead, castListForAdd);
-
-                if (returnList)
-                {
-                    if (AppendToCollection)
-                    {
-                        // remember ^^^^ we had a spare copy of the list on the stack; now we'll compare
-                        ctx.LoadValue(origlist);
-                        ctx.LoadValue(list); // [orig] [new-value]
-                        Compiler.CodeLabel sameList = ctx.DefineLabel(), allDone = ctx.DefineLabel();
-                        ctx.BranchIfEqual(sameList, true);
-                        ctx.LoadValue(list);
-                        ctx.Branch(allDone, true);
-                        ctx.MarkLabel(sameList);
-                        ctx.LoadNullRef();
-                        ctx.MarkLabel(allDone);
-                    }
-                    else
-                    {
-                        ctx.LoadValue(list);
-                    }
-                }
-            }
-#endif
-
-        }
-
-#if false
-
-        internal static void EmitReadList(AqlaSerializer.Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, WireType _packedWireTypeForRead, bool castListForAdd)
-        {
-            using (Compiler.Local fieldNumber = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
-            {
-                Compiler.CodeLabel readPacked = _packedWireTypeForRead == WireType.None ? new Compiler.CodeLabel() : ctx.DefineLabel();                                   
-                if (_packedWireTypeForRead != WireType.None)
-                {
-                    ctx.LoadReaderWriter();
-                    ctx.LoadValue(typeof(ProtoReader).GetProperty("WireType"));
-                    ctx.LoadValue((int)WireType.String);
-                    ctx.BranchIfEqual(readPacked, false);
-                }
-
-                ctx.LoadReaderWriter();
-                ctx.LoadValue(typeof(ProtoReader).GetProperty("FieldNumber"));
-                ctx.StoreValue(fieldNumber);
-
-                EmitReadAndAddItem(ctx, list, tail, add, castListForAdd, true);
-
-                { // while TryReadFieldHeader
-                    Compiler.CodeLabel @continue = ctx.DefineLabel();
-                    Compiler.CodeLabel @end = ctx.DefineLabel();
-                    ctx.MarkLabel(@continue);
-
-                    ctx.LoadReaderWriter();
-                    ctx.LoadValue(fieldNumber);
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("TryReadFieldHeader"));
-                    ctx.BranchIfFalse(@end, false);
-
-                    EmitReadAndAddItem(ctx, list, tail, add, castListForAdd);
-                    
-                    ctx.Branch(@continue, false);
-
-                    ctx.MarkLabel(@end);
-                }
-
-                if (_packedWireTypeForRead != WireType.None)
-                {
-                    Compiler.CodeLabel allDone = ctx.DefineLabel();
-                    ctx.Branch(allDone, false);
-                    ctx.MarkLabel(readPacked);
-
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("StartSubItem"));
-
-                    ctx.LoadValue((int)_packedWireTypeForRead);
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("HasSubValue"));
-                    ctx.DiscardValue();
-                    // no check for performance
-                    EmitReadAndAddItem(ctx, list, tail, add, castListForAdd, true);
-
-                    Compiler.CodeLabel testForData = ctx.DefineLabel(), noMoreData = ctx.DefineLabel();
-                    ctx.MarkLabel(testForData);
-                    ctx.LoadValue((int)_packedWireTypeForRead);
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("HasSubValue"));
-                    ctx.BranchIfFalse(noMoreData, false);
-
-                    EmitReadAndAddItem(ctx, list, tail, add, castListForAdd);
-                    ctx.Branch(testForData, false);
-
-                    ctx.MarkLabel(noMoreData);
-                    ctx.LoadReaderWriter();
-                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("EndSubItem"));
-                    ctx.MarkLabel(allDone);
-                }
-
-
+                // can't call clear? => create new!
+                bool forceNewInstance = !AppendToCollection && ReturnList && !asList;
                 
-            }
-        }
+                ListHelpers.EmitRead(
+                    ctx.G,
+                    () =>
+                        {
+                            g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value);
+                            _subTypeHelpers.EmitTryRead(
+                                g,
+                                oldValueForSubTypeHelpers,
+                                _metaType,
+                                r =>
+                                    {
+                                        if (r != null)
+                                        {
+                                            r.Serializer.EmitCreateInstance(ctx);
+                                            ctx.StoreValue(value);
+                                            g.Assign(createdNew, true);
+                                        }
+                                    });
+                        },
+                    length =>
+                        {
+                            var createInstanceCondition = value.AsOperand == null;
 
-        static void EmitReadAndAddItem(Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, bool castListForAdd)
-        {
-            EmitReadAndAddItem(ctx, list, tail, add, castListForAdd, false);
-        }
+                            // also create new if should clear existing instance on not lists
+                            if (forceNewInstance)
+                                createInstanceCondition = createInstanceCondition || !createdNew.AsOperand;
 
-        static void EmitReadAndAddItem(Compiler.CompilerContext ctx, Compiler.Local list, IProtoSerializer tail, MethodInfo add, bool castListForAdd, bool isFake)
-        {
-            ctx.LoadAddress(list, list.Type); // needs to be the reference in case the list is value-type (static-call)
-            if (castListForAdd) ctx.Cast(add.DeclaringType);
-            Type itemType = tail.ExpectedType;
-            bool tailReturnsValue = tail.ReturnsValue;
-            if (tail.RequiresOldValue)
-            {
-                if (itemType.IsValueType || !tailReturnsValue)
-                {
-                    // going to need a variable
-                    using (Compiler.Local item = new Compiler.Local(ctx, itemType))
-                    {
-                        if (itemType.IsValueType)
-                        {   // initialise the struct
-                            ctx.LoadAddress(item, itemType);
-                            ctx.EmitCtor(itemType);
+                            g.If(createInstanceCondition);
+                            {
+                                EmitCreateInstance(ctx);
+                                ctx.StoreValue(value);
+                            }
+                            if (asList && !AppendToCollection)
+                            {
+                                g.Else();
+                                {
+                                    // ReSharper disable once PossibleNullReferenceException
+                                    value.AsOperand.Invoke("Clear");
+                                }
+                            }
+                            g.End();
+                        },
+                    v =>
+                        {
+                            if (asList)
+                                value.AsOperand.Invoke("Add", v);
+                            else
+                            {
+                                ctx.LoadAddress(value, _itemType);
+                                ctx.LoadValue(v);
+                                ctx.EmitCall(this.add);
+                            }
                         }
-                        else
-                        {   // assign null
-                            ctx.LoadNullRef();
-                            ctx.StoreValue(item);
-                        }
-                        tail.EmitRead(ctx, item);
-                        if (!tailReturnsValue) { ctx.LoadValue(item); }
-                    }
-                }
-                else
-                {    // no variable; pass the null on the stack and take the value *off* the stack
-                    ctx.LoadNullRef();
-                    tail.EmitRead(ctx, null);
-                }
-            }
-            else
-            {
-                if (tailReturnsValue)
-                {   // out only (on the stack); just emit it
-                    tail.EmitRead(ctx, null);
-                }
-                else
-                {   // doesn't take anything in nor return anything! WTF?
-                    throw new InvalidOperationException();
-                }
-            }
-            // our "Add" is chosen either to take the correct type, or to take "object";
-            // we may need to box the value
-                
-            Type addParamType = add.GetParameters()[0].ParameterType;
-            if(addParamType != itemType) {
-                if (addParamType == ctx.MapType(typeof(object)))
-                {
-                    ctx.CastToObject(itemType);
-                }
-#if !NO_GENERICS
-                else if(Helpers.GetNullableUnderlyingType( addParamType) == itemType)
-                { // list is nullable
-                    ConstructorInfo ctor = Helpers.GetConstructor(addParamType, new Type[] {itemType}, false);
-                    ctx.EmitCtor(ctor); // the itemType on the stack is now a Nullable<ItemType>
-                }
-#endif
-                else
-                {
-                    throw new InvalidOperationException("Conflicting item/add type");
-                }
-            }
-            if (isFake)
-            {
-                ctx.DiscardValue();
-                ctx.DiscardValue();
-            }
-            else
-            {
-                ctx.EmitCall(add);
-                if (add.ReturnType != ctx.MapType(typeof(void)))
-                {
-                    ctx.DiscardValue();
-                }
+                    );
+
+                if (EmitReadReturnsValue)
+                    ctx.LoadValue(value);
             }
         }
-#endif
-
-#endif
-
-#if WINRT
-        private static readonly TypeInfo ienumeratorType = typeof(IEnumerator).GetTypeInfo(), ienumerableType = typeof (IEnumerable).GetTypeInfo();
-#else
-        static readonly System.Type ienumeratorType = typeof(IEnumerator);
-        static readonly System.Type ienumerableType = typeof(IEnumerable);
-#endif
-
-        protected MethodInfo GetEnumeratorInfo(TypeModel model, out MethodInfo moveNext, out MethodInfo current)
-        {
-
-#if WINRT
-            TypeInfo enumeratorType = null, iteratorType, expectedType = ExpectedType.GetTypeInfo();
-#else
-            Type enumeratorType = null, iteratorType, expectedType = ExpectedType;
-#endif
-
-            // try a custom enumerator
-            MethodInfo getEnumerator = Helpers.GetInstanceMethod(expectedType, "GetEnumerator", null);
-            Type itemType = Tail.ExpectedType;
-
-            Type getReturnType = null;
-            if (getEnumerator != null)
-            {
-                getReturnType = getEnumerator.ReturnType;
-                iteratorType = getReturnType
-#if WINRT
-                    .GetTypeInfo()
-#endif
-                    ;
-                moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext", null);
-                PropertyInfo prop = Helpers.GetProperty(iteratorType, "Current", false);
-                current = prop == null ? null : Helpers.GetGetMethod(prop, false, false);
-                if (moveNext == null && (model.MapType(ienumeratorType).IsAssignableFrom(iteratorType)))
-                {
-                    moveNext = Helpers.GetInstanceMethod(model.MapType(ienumeratorType), "MoveNext", null);
-                }
-                // fully typed
-                if (moveNext != null && moveNext.ReturnType == model.MapType(typeof(bool))
-                    && current != null && current.ReturnType == itemType)
-                {
-                    return getEnumerator;
-                }
-                moveNext = current = getEnumerator = null;
-            }
-
-#if !NO_GENERICS
-            // try IEnumerable<T>
-            Type tmp = model.MapType(typeof(System.Collections.Generic.IEnumerable<>), false);
-
-            if (tmp != null)
-            {
-                tmp = tmp.MakeGenericType(itemType);
-
-#if WINRT
-                enumeratorType = tmp.GetTypeInfo();
-#else
-                enumeratorType = tmp;
-#endif
-            }
-            ;
-            if (enumeratorType != null && enumeratorType.IsAssignableFrom(expectedType))
-            {
-                getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
-                getReturnType = getEnumerator.ReturnType;
-
-#if WINRT
-                iteratorType = getReturnType.GetTypeInfo();
-#else
-                iteratorType = getReturnType;
-#endif
-
-                moveNext = Helpers.GetInstanceMethod(model.MapType(ienumeratorType), "MoveNext");
-                current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
-                return getEnumerator;
-            }
-#endif
-            // give up and fall-back to non-generic IEnumerable
-            enumeratorType = model.MapType(ienumerableType);
-            getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
-            getReturnType = getEnumerator.ReturnType;
-            iteratorType = getReturnType
-#if WINRT
-                .GetTypeInfo()
-#endif
-                ;
-            moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext");
-            current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
-            return getEnumerator;
-        }
-
-#if FEAT_COMPILER
 
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
-#if false
-            using (Compiler.Local list = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            var g = ctx.G;
+            using (Compiler.Local value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            using (Compiler.Local t = ctx.Local(typeof(System.Type)))
             {
-                MethodInfo moveNext, current, getEnumerator = GetEnumeratorInfo(ctx.Model, out moveNext, out current);
-                Helpers.DebugAssert(moveNext != null);
-                Helpers.DebugAssert(current != null);
-                Helpers.DebugAssert(getEnumerator != null);
-                Type enumeratorType = getEnumerator.ReturnType;
-                bool writePacked = WritePacked;
-                using (Compiler.Local iter = new Compiler.Local(ctx, enumeratorType))
-                using (Compiler.Local token = writePacked ? new Compiler.Local(ctx, ctx.MapType(typeof(SubItemToken))) : null)
+                Action subTypeWriter = null;
+                if (_writeSubType)
                 {
-                    if (writePacked)
+                    subTypeWriter = () =>
                     {
-                        ctx.LoadValue(fieldNumber);
-                        ctx.LoadValue((int)WireType.String);
-                        ctx.LoadReaderWriter();
-                        ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeader"));
-
-                        ctx.LoadValue(list);
-                        ctx.LoadReaderWriter();
-                        ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("StartSubItem"));
-                        ctx.StoreValue(token);
-
-                        ctx.LoadValue(fieldNumber);
-                        ctx.LoadReaderWriter();
-                        ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("SetPackedField"));
-                    }
-                    
-                    ctx.LoadAddress(list, ExpectedType);
-                    ctx.EmitCall(getEnumerator);
-                    ctx.StoreValue(iter);
-                    using (ctx.Using(iter))
-                    {
-                        Compiler.CodeLabel body = ctx.DefineLabel(), next = ctx.DefineLabel();
-                        ctx.Branch(next, false);
-                        
-                        ctx.MarkLabel(body);
-
-                        ctx.LoadAddress(iter, enumeratorType);
-                        ctx.EmitCall(current);
-                        Type expectedType = Tail.ExpectedType;
-                        if (expectedType != ctx.MapType(typeof(object)) && current.ReturnType == ctx.MapType(typeof(object)))
+                        g.Assign(t, value.AsOperand.InvokeGetType());
+                        g.If(concreteTypeDefault != t.AsOperand);
                         {
-                            ctx.CastFromObject(expectedType);
+                            _subTypeHelpers.EmitWrite(g, _metaType, value);
                         }
-                        Tail.EmitWrite(ctx, null);
-
-                        ctx.MarkLabel(@next);
-                        ctx.LoadAddress(iter, enumeratorType);
-                        ctx.EmitCall(moveNext);
-                        ctx.BranchIfTrue(body, false);
-                    }
-
-                    if (writePacked)
-                    {
-                        ctx.LoadValue(token);
-                        ctx.LoadReaderWriter();
-                        ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("EndSubItem"));
-                    }                    
+                        g.Else();
+                        {
+                            g.Writer.WriteFieldHeaderCancelBegin();
+                        }
+                        g.End();
+                    };
                 }
+                Func<Operand> getLength = null;
+                if (!_protoCompatibility)
+                {
+                    getLength = () =>
+                        {
+                            using (var icol = ctx.Local(typeof(ICollection)))
+                            {
+                                g.Assign(icol, value.AsOperand.As(icol.Type));
+                                return (icol.AsOperand != null).Conditional(icol.AsOperand.Property("Count"), -1);
+                            }
+                        };
+                }
+                ListHelpers.EmitWrite(ctx.G, value, subTypeWriter, getLength, null);
             }
-#endif
-
         }
 #endif
 
@@ -642,6 +378,9 @@ namespace AqlaSerializer.Serializers
         public virtual void EmitCreateInstance(CompilerContext ctx)
         {
             ctx.EmitCtor(concreteTypeDefault);
+            ctx.CopyValue();
+            // we can use stack value here because note object on reader is static (backwards API)
+            ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(ExpectedType));
         }
 #endif
     }

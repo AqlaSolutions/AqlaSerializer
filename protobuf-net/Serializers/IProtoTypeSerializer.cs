@@ -18,6 +18,9 @@ namespace AqlaSerializer.Serializers
         void EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType);
 #endif
 #if FEAT_COMPILER
+        /// <summary>
+        /// Only for Read opetations because CreateInstance version accepts source parameter
+        /// </summary>
         void EmitCreateInstance(Compiler.CompilerContext ctx);
 #endif
     }
