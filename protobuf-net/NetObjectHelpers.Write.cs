@@ -61,7 +61,7 @@ namespace AqlaSerializer
                 }
 
                 // do nothing, write will be outside
-                ProtoWriter.WriteFieldHeaderBegin(FieldObject, dest);
+                ProtoWriter.WriteFieldHeaderBegin((options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? FieldLateReferenceObject : FieldObject, dest);
             }
             return token;
 #endif
