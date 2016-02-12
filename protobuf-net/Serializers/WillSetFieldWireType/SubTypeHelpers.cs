@@ -121,10 +121,24 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitWrite(SerializerCodeGen g, MetaType metaType, Local actualValue)
         {
+            Debug.Assert(!actualValue.IsNullRef());
             var endLabel = g.DefineLabel();
             using (var actualType = new Local(g.ctx, typeof(System.Type)))
             {
-                g.Assign(actualType, actualValue.AsOperand.InvokeGetType());
+                if (actualValue.IsNullRef())
+                    g.Assign(actualType, null);
+                else
+                {
+                    //g.If(actualValue.AsOperand != null);
+                    {
+                        g.Assign(actualType, actualValue.AsOperand.InvokeGetType());
+                    }
+                    //g.Else();
+                    //{
+                    //    g.Assign(actualType, null);
+                    //}
+                    //g.End();
+                }
                 EmitWrite(g, endLabel, metaType, actualValue, actualType);
             }
             g.MarkLabel(endLabel);
@@ -133,6 +147,7 @@ namespace AqlaSerializer.Serializers
         void EmitWrite(SerializerCodeGen g, Label? endLabel, MetaType metaType, Local actualValue, Local actualType, int recursionLevel = 0)
         {
             WriterGen dest = g.Writer;
+            var breakLabel = g.DefineLabel();
             g.If(metaType.Type != actualType.AsOperand);
             {
                 foreach (var subType in metaType.GetSubtypes().OrderBy(st => st.FieldNumber))
@@ -147,10 +162,7 @@ namespace AqlaSerializer.Serializers
                             {
                                 dest.WriteFieldHeaderComplete(WireType.Variant);
                                 dest.WriteInt32(subType.FieldNumber + 1);
-                                if (endLabel == null)
-                                    g.Break();
-                                else
-                                    g.Goto(endLabel.Value);
+                                g.Goto(endLabel == null ? breakLabel : endLabel.Value);
                             }
                             g.End();
 
@@ -169,15 +181,13 @@ namespace AqlaSerializer.Serializers
                             dest.WriteInt32(subType.FieldNumber + 1);
                             EmitWrite(g, null, derivedType, actualValue, actualType, recursionLevel + 1);
                         }
-                        if (endLabel == null)
-                            g.Break();
-                        else
-                            g.Goto(endLabel.Value);
+                        g.Goto(endLabel == null ? breakLabel : endLabel.Value);
                     }
                     g.End();
                 }
             }
             g.End();
+            g.MarkLabel(breakLabel);
             if (recursionLevel == 0)
             {
                 dest.WriteFieldHeaderComplete(WireType.Variant);

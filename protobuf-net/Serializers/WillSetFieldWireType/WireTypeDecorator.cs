@@ -59,6 +59,10 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+#if DEBUG_EMIT
+            ctx.LoadValue("WireType dec");
+            ctx.DiscardValue();
+#endif
             ctx.LoadValue((int)_wireType);
             ctx.LoadReaderWriter();
             ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCompleteAnyType"));
@@ -66,6 +70,10 @@ namespace AqlaSerializer.Serializers
         }
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
+#if DEBUG_EMIT
+            ctx.LoadValue("WireType dec");
+            ctx.DiscardValue();
+#endif
             if (_strict || NeedsHint)
             {
                 ctx.LoadReaderWriter();

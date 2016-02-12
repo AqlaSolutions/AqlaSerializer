@@ -43,6 +43,10 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitWrite(SerializerCodeGen g, Local value, Action subTypeWriter, Func<Operand> getLength, Action prepareInstance)
         {
+#if DEBUG_EMIT
+            g.ctx.LoadValue("ListHelpers");
+            g.ctx.DiscardValue();
+#endif
             using (var token = g.ctx.Local(typeof(SubItemToken)))
             using (var length = getLength != null ? g.ctx.Local(typeof(int)) : null)
             {
@@ -174,10 +178,14 @@ namespace AqlaSerializer.Serializers
                 // we write only first header to get wire type
                 // the difference between standard pack and this
                 // is that we write wiretype here at the first time
-                if (!pack || isFirst)
-                    g.Writer.WriteFieldHeaderBegin(fieldNumber);
-                else
+                if (pack) g.If(isFirst);
+                g.Writer.WriteFieldHeaderBegin(fieldNumber);
+                if (pack)
+                {
+                    g.Else();
                     g.Writer.WriteFieldHeaderBeginIgnored();
+                    g.End();
+                }
             }
             g.LeaveNextReturnOnStack();
             g.Eval(obj);
@@ -188,6 +196,10 @@ namespace AqlaSerializer.Serializers
 
         public void EmitRead(SerializerCodeGen g, Action subTypeHandler, EmitReadPrepareInstanceDelegate prepareInstance, Action<Local> add)
         {
+#if DEBUG_EMIT
+            g.ctx.LoadValue("ListHelpers");
+            g.ctx.DiscardValue();
+#endif
             WireType packedWireType = _packedWireTypeForRead;
             bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
             using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
@@ -213,7 +225,7 @@ namespace AqlaSerializer.Serializers
                     {
                         g.Assign(read, false);
 
-                        if (g.ReaderFunc.TryReadFieldHeader_bool(FieldLength))
+                        g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldLength));
                         {
                             // we write length to construct an array before deserializing
                             // so we can handle references to array from inside it
@@ -221,8 +233,9 @@ namespace AqlaSerializer.Serializers
                             g.Assign(length, g.ReaderFunc.ReadInt32());
                             g.Assign(read, true);
                         }
+                        g.End();
 
-                        if (g.ReaderFunc.TryReadFieldHeader_bool(FieldSubtype))
+                        g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldSubtype));
                         {
                             if (subTypeHandler == null)
                                 g.Reader.SkipField();
@@ -230,6 +243,7 @@ namespace AqlaSerializer.Serializers
                                 subTypeHandler(); // TODO multiple times?
                             g.Assign(read, true);
                         }
+                        g.End();
                     } 
                     g.EndDoWhile(read);
                 }
@@ -305,7 +319,7 @@ namespace AqlaSerializer.Serializers
 
         void EmitReadElementContent(SerializerCodeGen g, Action<Local> add)
         {
-            using (var loc = _tail.RequiresOldValue ? g.ctx.Local(_tail.ExpectedType, true) : null)
+            using (var loc = g.ctx.Local(_tail.ExpectedType, true))
             {
                 _tail.EmitRead(g.ctx, loc);
                 if (_tail.EmitReadReturnsValue)

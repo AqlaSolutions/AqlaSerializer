@@ -193,7 +193,7 @@ namespace AqlaSerializer.Serializers
         {
             var g = ctx.G;
             using (Compiler.Local value = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
-            using (Compiler.Local token = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
+            using (Compiler.Local token = ctx.GetLocalWithValue(typeof(SubItemToken), valueFrom))
             {
                 g.Assign(token, g.WriterFunc.StartSubItem(value, _prefixLength));
                 for (int i = 0; i < tails.Length; i++)

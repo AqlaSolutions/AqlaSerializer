@@ -192,7 +192,7 @@ namespace AqlaSerializer.Compiler
 
         public ContextualOperand StartSubItem(Operand objInstance, Operand boolPrefixLength)
         {
-            if (Helpers.IsValueType(objInstance.GetReturnType(g.TypeMapper))) objInstance = null; // no need to box value types here
+            if ((object)objInstance != null && Helpers.IsValueType(objInstance.GetReturnType(g.TypeMapper))) objInstance = null; // no need to box value types here
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.StartSubItem), objInstance, boolPrefixLength, g.ArgReaderWriter());
         }
 
@@ -264,7 +264,7 @@ namespace AqlaSerializer.Compiler
 
         public ContextualOperand ReserveNoteObject_int()
         {
-            return g.StaticFactory.Invoke(typeof(ProtoReader), nameof(ProtoReader.ReserveNoteObject));
+            return g.StaticFactory.Invoke(typeof(ProtoReader), nameof(ProtoReader.ReserveNoteObject), g.ArgReaderWriter());
         }
 
         public ContextualOperand TryGetNextLateReference_bool(Operand outIntTypeKey, Operand outObjValue, Operand outIntReferenceKey)
@@ -292,7 +292,7 @@ namespace AqlaSerializer.Compiler
         /// </summary>
         public ContextualOperand StartSubItem()
         {
-            return g.ArgReaderWriter().Invoke(nameof(ProtoReader.StartSubItem));
+            return g.StaticFactory.Invoke(typeof(ProtoReader), nameof(ProtoReader.StartSubItem), g.ArgReaderWriter());
         }
 
         public ContextualOperand ReadFieldHeader_int()
