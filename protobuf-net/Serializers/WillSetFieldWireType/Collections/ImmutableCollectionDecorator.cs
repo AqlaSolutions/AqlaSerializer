@@ -217,19 +217,18 @@ namespace AqlaSerializer.Serializers
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-#if false
-            using (Compiler.Local oldList = AppendToCollection ? ctx.GetLocalWithValue(ExpectedType, valueFrom) : null)
-            using(Compiler.Local builder = new Compiler.Local(ctx, builderFactory.ReturnType))
+            using (Compiler.Local value = AppendToCollection ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : null)
+            using (Compiler.Local builderInstance = new Compiler.Local(ctx, builderFactory.ReturnType))
             {
                 ctx.EmitCall(builderFactory);
-                ctx.StoreValue(builder);
+                ctx.StoreValue(builderInstance);
 
                 if(AppendToCollection)
                 {
                     Compiler.CodeLabel done = ctx.DefineLabel();
                     if(!ExpectedType.IsValueType)
                     {
-                        ctx.LoadValue(oldList);
+                        ctx.LoadValue(value);
                         ctx.BranchIfFalse(done, false); // old value null; nothing to add
                     }
                     PropertyInfo prop = Helpers.GetProperty(ExpectedType, "Length", false);
@@ -237,15 +236,15 @@ namespace AqlaSerializer.Serializers
 #if !NO_GENERICS
                     if (prop == null) prop = Helpers.GetProperty(ResolveIReadOnlyCollection(ExpectedType, Tail.ExpectedType), "Count", false);
 #endif
-                    ctx.LoadAddress(oldList, oldList.Type);
+                    ctx.LoadAddress(value, value.Type);
                     ctx.EmitCall(Helpers.GetGetMethod(prop, false, false));
                     ctx.BranchIfFalse(done, false); // old list is empty; nothing to add
 
                     Type voidType = ctx.MapType(typeof(void));
                     if(addRange != null)
                     {
-                        ctx.LoadValue(builder);
-                        ctx.LoadValue(oldList);
+                        ctx.LoadValue(builderInstance);
+                        ctx.LoadValue(value);
                         ctx.EmitCall(addRange);
                         if (addRange.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
                     }
@@ -260,7 +259,7 @@ namespace AqlaSerializer.Serializers
                         Type enumeratorType = getEnumerator.ReturnType;
                         using (Compiler.Local iter = new Compiler.Local(ctx, enumeratorType))
                         {
-                            ctx.LoadAddress(oldList, ExpectedType);
+                            ctx.LoadAddress(value, ExpectedType);
                             ctx.EmitCall(getEnumerator);
                             ctx.StoreValue(iter);
                             using (ctx.Using(iter))
@@ -269,7 +268,7 @@ namespace AqlaSerializer.Serializers
                                 ctx.Branch(next, false);
 
                                 ctx.MarkLabel(body);
-                                ctx.LoadAddress(builder, builder.Type);
+                                ctx.LoadAddress(builderInstance, builderInstance.Type);
                                 ctx.LoadAddress(iter, enumeratorType);                                
                                 ctx.EmitCall(current);
                                 ctx.EmitCall(add);
@@ -287,17 +286,24 @@ namespace AqlaSerializer.Serializers
                     ctx.MarkLabel(done);
                 }
 
-                EmitReadList(ctx, builder, Tail, add, packedWireType, false);
-
-                ctx.LoadAddress(builder, builder.Type);
+                ListHelpers.EmitRead(ctx.G, null, null,
+                    o =>
+                        {
+                            ctx.LoadAddress(builderInstance, builderInstance.Type);
+                            ctx.LoadValue(o);
+                            ctx.EmitCall(add);
+                        });
+                
+                ctx.LoadAddress(builderInstance, builderInstance.Type);
                 ctx.EmitCall(finish);
                 if(ExpectedType != finish.ReturnType)
                 {
                     ctx.Cast(ExpectedType);
                 }
-            }
-#endif
 
+                if (!EmitReadReturnsValue)
+                    ctx.G.Assign(value, ctx.G.GetStackValueOperand(ExpectedType));
+            }
         }
 #endif
     }

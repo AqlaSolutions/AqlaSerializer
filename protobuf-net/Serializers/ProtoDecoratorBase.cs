@@ -28,6 +28,8 @@ namespace AqlaSerializer.Serializers
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom) { EmitWrite(ctx, valueFrom); }
         protected abstract void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom);
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom) { EmitRead(ctx, valueFrom); }
+        // TODO may be return null or local and remove property EmitReadReturnsValue to avoid unnecessary copying between locals
+        // TODO need to ensure that valueFrom is always correctly reassigned when not returns to stack
         protected abstract void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom);
 #endif
     }
