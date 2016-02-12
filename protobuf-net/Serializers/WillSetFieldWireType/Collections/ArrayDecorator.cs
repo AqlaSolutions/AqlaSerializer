@@ -32,8 +32,7 @@ namespace AqlaSerializer.Serializers
             Array result = null;
             BasicList list = null;
             int reservedTrap = -1;
-            int index;
-            Action<object> addMethod = null;
+            int index=0;
             
             _listHelpers.Read(
                 null,
@@ -45,16 +44,20 @@ namespace AqlaSerializer.Serializers
                             int oldLen;
                             result = Read_CreateInstance(value, length.Value, -1, out oldLen, source);
                             index = oldLen;
-                            addMethod = v => result.SetValue(v, index++);
                         }
                         else
                         {
                             reservedTrap = ProtoReader.ReserveNoteObject(source);
                             list = new BasicList();
-                            addMethod = v => list.Add(v);
                         }
                     },
-                el => addMethod(el),
+                v =>
+                    {
+                        if (result != null)
+                            result.SetValue(v, index++);
+                        else
+                            list.Add(v);
+                    },
                 source);
 
             if (result == null)
@@ -236,6 +239,8 @@ namespace AqlaSerializer.Serializers
         {
             ctx.G.LeaveNextReturnOnStack();
             ctx.G.Eval(ctx.G.ExpressionFactory.NewArray(_itemType));
+            ctx.CopyValue();
+            ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(_arrayType));
         }
 #endif
 
