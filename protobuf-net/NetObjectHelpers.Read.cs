@@ -16,7 +16,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
-        public static SubItemToken ReadNetObject_Start(ref object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, out bool isDynamic, ref int typeKey, out int newObjectKey, out int newTypeRefKey, out bool shouldEnd)
+        public static SubItemToken ReadNetObject_Start(ref object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, out bool isDynamic, out bool isLateReference, ref int typeKey, out int newObjectKey, out int newTypeRefKey, out bool shouldEnd)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -26,7 +26,8 @@ namespace AqlaSerializer
             newObjectKey = -1;
             newTypeRefKey = -1;
             isDynamic = false;
-            
+            isLateReference = false;
+
             SubItemToken token = ProtoReader.StartSubItem(source);
 
             int fieldNumber;
@@ -66,7 +67,9 @@ namespace AqlaSerializer
                         typeKey = source.GetTypeKey(ref type);
                         isDynamic = true;
                         break;
+                    case FieldLateReferenceObject:
                     case FieldObject:
+                        if (fieldNumber == FieldLateReferenceObject) isLateReference = true;
                         shouldEnd = true;
                         bool wasNull = value == null;
                         bool lateSet = wasNull && ((options & BclHelpers.NetObjectOptions.LateSet) != 0);
@@ -128,7 +131,8 @@ namespace AqlaSerializer
             FieldExistingTypeKey = 3,
             FieldNewTypeKey = 4,
             FieldTypeName = 8,
-            FieldObject = 10;
+            FieldObject = 10,
+            FieldLateReferenceObject = 11;
 
     }
 }

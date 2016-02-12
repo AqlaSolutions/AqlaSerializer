@@ -410,7 +410,11 @@ namespace AqlaSerializer
             /// <summary>
             /// Should not expect serializer to call NoteObject: usable for serializers of primitive immutable reference types (e.g. String, System.Type) 
             /// </summary>
-            LateSet = 8
+            LateSet = 8,
+            /// <summary>
+            /// Not recursive
+            /// </summary>
+            WriteAsLateReference = 16,
         }
     }
 }

@@ -26,13 +26,8 @@ namespace AqlaSerializer.Serializers
         readonly int _typeKey;
         readonly SubTypeHelpers _subTypeHelpers = new SubTypeHelpers();
         public Type ExpectedType { get; }
-
-        public static NetObjectValueDecorator CreateInsideNetObject(Type type, RuntimeTypeModel model)
-        {
-            return new NetObjectValueDecorator(new LateReferenceSerializer(type, model), false, true, model);
-        }
-
-        LateReferenceSerializer(Type type, RuntimeTypeModel model)
+        
+        public LateReferenceSerializer(Type type, int baseTypeKey, RuntimeTypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (model == null) throw new ArgumentNullException(nameof(model));
@@ -40,7 +35,7 @@ namespace AqlaSerializer.Serializers
             _model = model;
             if (Helpers.IsValueType(type))
                 throw new ArgumentException("Can't create " + this.GetType().Name + " for non-reference type " + type.Name + "!");
-            _typeKey = _model.GetKey(type, true, true);
+            _typeKey = baseTypeKey;
         }
 
 #if !FEAT_IKVM
@@ -69,13 +64,14 @@ namespace AqlaSerializer.Serializers
         bool IProtoSerializer.RequiresOldValue => true;
 #if FEAT_COMPILER
         bool IProtoSerializer.EmitReadReturnsValue => true;
-        void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
+
+        public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (var loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
                 _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], loc);
         }
 
-        void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
+        public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             var g = ctx.G;
             using (var loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))

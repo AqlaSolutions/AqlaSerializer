@@ -486,7 +486,7 @@ namespace AqlaSerializer.Meta
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
-                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, !itemIsNestedCollection, ref dummy);
+                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, true, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -595,7 +595,12 @@ namespace AqlaSerializer.Meta
                     // dynamic type is not applied to lists
                     if (MetaType.IsNetObjectValueDecoratorNecessary(model, objectType, tryAsReference))
                     {
-                        ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(objectType) != null, tryAsReference, model);
+                        ser = new NetObjectValueDecorator(
+                            ser,
+                            Helpers.GetNullableUnderlyingType(objectType) != null,
+                            tryAsReference,
+                            tryAsReference && CanBeAsLateReference(model.GetKey(objectType, false, true), model),
+                            model);
                     }
                     else if (!Helpers.IsValueType(objectType) || Helpers.GetNullableUnderlyingType(objectType) != null)
                     {
@@ -697,7 +702,7 @@ namespace AqlaSerializer.Meta
             }
 
             if (ser != null)
-                return isPackedCollection ? ser : DecorateValueSerializer(model, originalType, dynamicType ? dataFormat : (BinaryDataFormat?)null, ref tryAsReference, ser);
+                return (isPackedCollection || !allowComplexTypes) ? ser : DecorateValueSerializer(model, originalType, dynamicType ? dataFormat : (BinaryDataFormat?)null, ref tryAsReference, tryAsLateRef, ser);
 
             if (allowComplexTypes)
             {
@@ -709,21 +714,25 @@ namespace AqlaSerializer.Meta
                 {
                     if (dynamicType)
                         return new NetObjectValueDecorator(tryAsReference, dataFormat, model);
-                    else if (tryAsLateRef && tryAsReference && key >= 0 
-                             && model[key].GetSurrogateOrSelf() == model[key] // TODO subtype surrogate check
-                             && !model[key].IsAutoTuple
-                             && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference))
+                    else if (tryAsLateRef && tryAsReference && CanBeAsLateReference(key, model))
                     {
-                        return LateReferenceSerializer.CreateInsideNetObject(type, model);
+                        return new NetObjectValueDecorator(type, key, tryAsReference, true, model[type], model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
-                        return new NetObjectValueDecorator(type, key, tryAsReference, model[type]);
+                        return new NetObjectValueDecorator(type, key, tryAsReference, false, model[type], model);
                     else
                         return new ModelTypeSerializer(type, key, model[type]);
                 }
             }
             defaultWireType = WireType.None;
             return null;
+        }
+
+        internal static bool CanBeAsLateReference(int key, RuntimeTypeModel model)
+        {
+            if (key < 0) return false;
+            MetaType mt = model[key];
+            return !mt.Type.IsArray && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !Helpers.IsValueType(mt.Type) && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference);
         }
 
         static IProtoSerializerWithWireType TryGetBasicTypeSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)
@@ -795,7 +804,7 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
-        static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, BinaryDataFormat? dynamicTypeDataFormat, ref bool asReference, IProtoSerializerWithWireType ser)
+        static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, BinaryDataFormat? dynamicTypeDataFormat, ref bool asReference, bool tryAsLateRef, IProtoSerializerWithWireType ser)
         {
             if (Helpers.IsValueType(type)) asReference = false;
 
@@ -819,7 +828,7 @@ namespace AqlaSerializer.Meta
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(model, type, asReference))
             {
-                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, model);
+                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef & asReference && CanBeAsLateReference(model.GetKey(type, false, true), model), model);
             }
             else
             {

@@ -29,13 +29,13 @@ namespace AqlaSerializer.Serializers
             if (model == null) throw new ArgumentNullException(nameof(model));
             _protoCompatibility = protoCompatibility;
             _model = model;
-            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), model) : serializer;
+            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, model) : serializer;
         }
 
         public Type ExpectedType => _serializer.ExpectedType;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 
-        const int CurrentFormatVersion = 18;
+        const int CurrentFormatVersion = 3;
 
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
@@ -88,7 +88,8 @@ namespace AqlaSerializer.Serializers
                         source.SkipField(); // refKey < num
                     }
                 } while (actualRefKey < expectedRefKey);
-                if (!ReferenceEquals(ProtoReader.ReadObject(obj, typeKey, source), obj)) throw new ProtoException("Late reference changed during deserializing");
+                object lateObj = ProtoReader.ReadObject(obj, typeKey, source);
+                if (!ReferenceEquals(lateObj, obj)) throw new ProtoException("Late reference changed during deserializing");
             }
             ProtoReader.EndSubItem(rootToken, true, source);
             return r;
