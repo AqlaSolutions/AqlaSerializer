@@ -769,18 +769,7 @@ namespace AqlaSerializer.Meta
         /// Should serializers be compiled on demand? It may be useful
         /// to disable this for debugging purposes.
         /// </summary>
-        public bool AutoCompile
-        {
-            get
-            {
-                return false;
-            }
-            set
-            {
-                // TODO this is temprorary
-                value = false;
-                SetOption(OPTIONS_AutoCompile, value); }
-        }
+        public bool AutoCompile { get { return GetOption(OPTIONS_AutoCompile); } set { SetOption(OPTIONS_AutoCompile, value); } }
 #endif
         /// <summary>
         /// Should support for unexpected types be added automatically?

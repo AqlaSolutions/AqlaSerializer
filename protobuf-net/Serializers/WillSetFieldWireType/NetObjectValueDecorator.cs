@@ -309,7 +309,7 @@ namespace AqlaSerializer.Serializers
                             g.Assign(options, optionsWithoutLateSet);
                         if (_keySerializer != null)
                         {
-                            g.If(typeKey.AsOperand == _key);
+                            g.If(typeKey.AsOperand == ctx.MapMetaKeyToCompiledKey(_key));
                             {
                                 g.If(isLateReference);
                                 {
