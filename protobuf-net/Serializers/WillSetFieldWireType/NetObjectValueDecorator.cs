@@ -254,6 +254,10 @@ namespace AqlaSerializer.Serializers
         public bool EmitReadReturnsValue => true;
         public void EmitRead(CompilerContext ctx, Local valueFrom)
         {
+#if DEBUG_EMIT
+            ctx.LoadValue("Novdec ser");
+            ctx.DiscardValue();
+#endif
             var g = ctx.G;
             var s = g.StaticFactory;
 
@@ -426,7 +430,11 @@ namespace AqlaSerializer.Serializers
 
         public void EmitWrite(CompilerContext ctx, Local valueFrom)
         {
-            bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) == 0;
+#if DEBUG_EMIT
+            ctx.LoadValue("Novdec ser");
+            ctx.DiscardValue();
+#endif
+            bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0;
             using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
             {
                 var g = ctx.G;
@@ -491,7 +499,7 @@ namespace AqlaSerializer.Serializers
                             }
                             g.End();
                         }
-                        g.Else();
+                        else
                         {
                             if (canBeLateRef)
                             {
@@ -518,7 +526,6 @@ namespace AqlaSerializer.Serializers
                                 g.End();
                             }
                         }
-                        g.End();
                     }
                     g.End();
                     g.Writer.EndSubItem(token);

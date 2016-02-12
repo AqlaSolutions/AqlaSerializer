@@ -14,7 +14,7 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Compiler
 {
-    internal sealed class Local: IDisposable
+    internal sealed class Local : IDisposable
     {
         LocalBuilder _value;
         CompilerContext _ctx;
@@ -28,6 +28,7 @@ namespace AqlaSerializer.Compiler
             _type = type;
             _ctx = ctx;
             _fromPool = false;
+            AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
         }
 
 #if FEAT_IKVM
@@ -60,7 +61,7 @@ namespace AqlaSerializer.Compiler
         {
             return false;
         }
-        
+
         [Obsolete("Don't use == on Local", true)]
         public static bool operator ==(object b, Local a)
         {
@@ -72,7 +73,7 @@ namespace AqlaSerializer.Compiler
         {
             return false;
         }
-        
+
         public Type Type => _type;
 
         internal LocalBuilder Value
@@ -123,7 +124,7 @@ namespace AqlaSerializer.Compiler
             if (local.IsNullRef()) throw new InvalidCastException("Local is null, use " + nameof(StackValueOperand) + " with type specified");
             return local.AsOperand;
         }
-        
+
         public ContextualOperand AsOperand { get; }
 
         class FakeOperand : Operand
@@ -140,12 +141,14 @@ namespace AqlaSerializer.Compiler
             protected override void EmitGet(CodeGen g)
             {
                 LeakedState = false;
+                if (_local._ctx == null) throw new ObjectDisposedException("Local");
                 _local._ctx.LoadValue(_local);
             }
 
             protected override void EmitSet(CodeGen g, Operand value, bool allowExplicitConversion)
             {
                 LeakedState = false;
+                if (_local._ctx == null) throw new ObjectDisposedException("Local");
                 EmitGetHelper(g, value, _local.Type, allowExplicitConversion);
                 _local._ctx.StoreValue(_local);
             }
@@ -153,6 +156,7 @@ namespace AqlaSerializer.Compiler
             protected override void EmitAddressOf(CodeGen g)
             {
                 LeakedState = false;
+                if (_local._ctx == null) throw new ObjectDisposedException("Local");
                 _local._ctx.LoadRefArg(_local, _local._type);
             }
 

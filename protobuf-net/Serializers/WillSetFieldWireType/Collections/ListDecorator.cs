@@ -245,26 +245,30 @@ namespace AqlaSerializer.Serializers
 
                 // can't call clear? => create new!
                 bool forceNewInstance = !AppendToCollection && ReturnList && !asList;
-                
+
+                Action subTypeHandler = () =>
+                    {
+                        g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value);
+                        _subTypeHelpers.EmitTryRead(
+                            g,
+                            oldValueForSubTypeHelpers,
+                            _metaType,
+                            r =>
+                                {
+                                    if (r != null)
+                                    {
+                                        r.Serializer.EmitCreateInstance(ctx);
+                                        ctx.StoreValue(value);
+                                        g.Assign(createdNew, true);
+                                    }
+                                });
+                    };
+
+                if (_metaType == null) subTypeHandler = null;
+
                 ListHelpers.EmitRead(
                     ctx.G,
-                    () =>
-                        {
-                            g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value);
-                            _subTypeHelpers.EmitTryRead(
-                                g,
-                                oldValueForSubTypeHelpers,
-                                _metaType,
-                                r =>
-                                    {
-                                        if (r != null)
-                                        {
-                                            r.Serializer.EmitCreateInstance(ctx);
-                                            ctx.StoreValue(value);
-                                            g.Assign(createdNew, true);
-                                        }
-                                    });
-                        },
+                    subTypeHandler,
                     length =>
                         {
                             var createInstanceCondition = value.AsOperand == null;
@@ -283,7 +287,7 @@ namespace AqlaSerializer.Serializers
                                 g.Else();
                                 {
                                     // ReSharper disable once PossibleNullReferenceException
-                                    value.AsOperand.Invoke("Clear");
+                                    g.Invoke(value, "Clear");
                                 }
                             }
                             g.End();
@@ -291,7 +295,7 @@ namespace AqlaSerializer.Serializers
                     v =>
                         {
                             if (asList)
-                                value.AsOperand.Invoke("Add", v);
+                                g.Invoke(value, "Add", v);
                             else
                             {
                                 ctx.LoadAddress(value, _itemType);
@@ -311,6 +315,7 @@ namespace AqlaSerializer.Serializers
             var g = ctx.G;
             using (Compiler.Local value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             using (Compiler.Local t = ctx.Local(typeof(System.Type)))
+            using (var icol = !_protoCompatibility ? ctx.Local(typeof(ICollection)) : null)
             {
                 Action subTypeWriter = null;
                 if (_writeSubType)
@@ -334,11 +339,8 @@ namespace AqlaSerializer.Serializers
                 {
                     getLength = () =>
                         {
-                            using (var icol = ctx.Local(typeof(ICollection)))
-                            {
-                                g.Assign(icol, value.AsOperand.As(icol.Type));
-                                return (icol.AsOperand != null).Conditional(icol.AsOperand.Property("Count"), -1);
-                            }
+                            g.Assign(icol, value.AsOperand.As(icol.Type));
+                            return (icol.AsOperand != null).Conditional(icol.AsOperand.Property("Count"), -1);
                         };
                 }
                 ListHelpers.EmitWrite(ctx.G, value, subTypeWriter, getLength, null);

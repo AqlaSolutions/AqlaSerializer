@@ -233,7 +233,7 @@ namespace AqlaSerializer.Serializers
         public void EmitCreateInstance(CompilerContext ctx)
         {
             ctx.G.LeaveNextReturnOnStack();
-            ctx.G.Eval(ctx.G.ExpressionFactory.NewArray(_itemType));
+            ctx.G.Eval(ctx.G.ExpressionFactory.NewArray(_itemType, 0));
             ctx.CopyValue();
             ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(_arrayType));
         }

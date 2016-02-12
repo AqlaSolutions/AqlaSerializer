@@ -68,6 +68,10 @@ namespace AqlaSerializer.Serializers
 
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+#if DEBUG_EMIT
+            ctx.LoadValue("LateRef ser");
+            ctx.DiscardValue();
+#endif
             using (var value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             {
                 _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], value);
@@ -77,6 +81,10 @@ namespace AqlaSerializer.Serializers
 
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+#if DEBUG_EMIT
+            ctx.LoadValue("LateRef ser");
+            ctx.DiscardValue();
+#endif
             var g = ctx.G;
             using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             {
@@ -106,7 +114,7 @@ namespace AqlaSerializer.Serializers
             }
         }
 #endif
-    }
+        }
 }
 
 #endif
