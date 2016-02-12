@@ -123,7 +123,7 @@ namespace AqlaSerializer.Serializers
                 reservedTrap = ProtoReader.ReserveNoteObject(source);
                 invokeCtor = true;
             }
-            var token = ProtoReader.StartSubItem(source); // TODO emit
+            var token = ProtoReader.StartSubItem(source);
             for (int i = 0; i < values.Length; i++)
                     values[i] = GetValue(value, i);
             int field;
@@ -153,11 +153,14 @@ namespace AqlaSerializer.Serializers
         }
         public void Write(object value, ProtoWriter dest)
         {
-            // TODO emit
             var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
             for (int i = 0; i < tails.Length; i++)
             {
                 object val = GetValue(value, i);
+                // this is the only place where we don't use null check from NetObjectValueDecorator
+                // members of Tuple can't have default values so we don't mix up default value and null
+                // (default value simply don't write the field while NetObjectValueDecorator explicitely writes empty group)
+                // so this simple check will be more size-efficient
                 if (val != null)
                 {
                     ProtoWriter.WriteFieldHeaderBegin(i + 1, dest);
@@ -188,12 +191,15 @@ namespace AqlaSerializer.Serializers
         }
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Compiler.Local loc = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
+            var g = ctx.G;
+            using (Compiler.Local value = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
+            using (Compiler.Local token = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
             {
+                g.Assign(token, g.WriterFunc.StartSubItem(value, _prefixLength));
                 for (int i = 0; i < tails.Length; i++)
                 {
                     Type type = GetMemberType(i);
-                    ctx.LoadAddress(loc, ExpectedType);
+                    ctx.LoadAddress(value, ExpectedType);
                     switch(members[i].MemberType)
                     {
                         case MemberTypes.Field:
@@ -208,6 +214,7 @@ namespace AqlaSerializer.Serializers
                     ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderBegin)));
                     ctx.WriteNullCheckedTail(type, tails[i], null, true);
                 }
+                g.Writer.EndSubItem(token);
             }
         }
 
@@ -215,15 +222,21 @@ namespace AqlaSerializer.Serializers
 
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local incoming)
         {
-            using (Compiler.Local objValue = ctx.GetLocalWithValue(ExpectedType, incoming))
+            var g = ctx.G;
+
+            using (Compiler.Local objValue = ctx.GetLocalWithValueForEmitRead(this, incoming))
             using (Compiler.Local reservedTrap = new Local(ctx, ctx.MapType(typeof(int))))
+            using (Compiler.Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
             using (Compiler.Local refLocalToNoteObject = new Local(ctx, ctx.MapType(typeof(object))))
             {
                 ctx.EmitCallReserveNoteObject();
                 ctx.StoreValue(reservedTrap);
+
                 Compiler.Local[] locals = new Compiler.Local[members.Length];
                 try
                 {
+                    g.Assign(token, g.ReaderFunc.StartSubItem());
+
                     for (int i = 0; i < locals.Length; i++)
                     {
                         Type type = GetMemberType(i);
@@ -365,6 +378,9 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadValue(0);
                         ctx.BranchIfGreater(processField, false);
                     }
+
+                    g.Reader.EndSubItem(token);
+
                     for (int i = 0; i < locals.Length; i++)
                     {
                         ctx.LoadValue(locals[i]);
@@ -379,6 +395,9 @@ namespace AqlaSerializer.Serializers
                     ctx.LoadValue(reservedTrap);
                     ctx.LoadAddress(refLocalToNoteObject, refLocalToNoteObject.Type);
                     ctx.EmitCallNoteReservedTrappedObject();
+
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(objValue);
                 }
                 finally
                 {
