@@ -116,87 +116,94 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER 
         public override bool EmitReadReturnsValue { get { return Helpers.IsValueType(forType); } }
+
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.LoadAddress(valueFrom, ExpectedType);
-            ctx.LoadValue(property);
-            Tail.EmitWrite(ctx, null);
+            using (ctx.StartDebugBlockAuto(this, property.Name))
+            {
+                ctx.LoadAddress(valueFrom, ExpectedType);
+                ctx.LoadValue(property);
+                Tail.EmitWrite(ctx, null);
+            }
         }
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            var g = ctx.G;
-            bool canSet;
-            SanityCheck(ctx.Model, property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(property), true);
-
-            using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
-            using (Compiler.Local oldVal = canSet ? new Compiler.Local(ctx, property.PropertyType) : null)
-            using (Compiler.Local newVal = new Compiler.Local(ctx, property.PropertyType))
+            using (ctx.StartDebugBlockAuto(this, property.Name))
             {
-                Compiler.Local valueForTail = null;
-                if (Tail.RequiresOldValue || canSet)
-                {
-                    ctx.LoadAddress(loc, ExpectedType);
-                    ctx.LoadValue(property);
-                    if (!oldVal.IsNullRef())
-                    {
-                        if (Tail.RequiresOldValue) // we need it later
-                            ctx.CopyValue();
-                        ctx.StoreValue(oldVal);
-                    }
-                }
+                var g = ctx.G;
+                bool canSet;
+                SanityCheck(ctx.Model, property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(property), true);
 
-                if (Tail.RequiresOldValue) // !here! <-- we need value again
+                using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+                using (Compiler.Local oldVal = canSet ? new Compiler.Local(ctx, property.PropertyType) : null)
+                using (Compiler.Local newVal = new Compiler.Local(ctx, property.PropertyType))
                 {
-                    if (!Tail.EmitReadReturnsValue)
+                    Compiler.Local valueForTail = null;
+                    if (Tail.RequiresOldValue || canSet)
                     {
+                        ctx.LoadAddress(loc, ExpectedType);
+                        ctx.LoadValue(property);
+                        if (!oldVal.IsNullRef())
+                        {
+                            if (Tail.RequiresOldValue) // we need it later
+                                ctx.CopyValue();
+                            ctx.StoreValue(oldVal);
+                        }
+                    }
+
+                    if (Tail.RequiresOldValue) // !here! <-- we need value again
+                    {
+                        if (!Tail.EmitReadReturnsValue)
+                        {
+                            ctx.StoreValue(newVal);
+                            valueForTail = newVal;
+                        } // otherwise valueForTail = null (leave value on stack)
+                    }
+
+                    Tail.EmitRead(ctx, valueForTail);
+
+                    // otherwise newVal was passed to EmitRead so already has necessary data
+                    if (Tail.EmitReadReturnsValue)
                         ctx.StoreValue(newVal);
-                        valueForTail = newVal;
-                    } // otherwise valueForTail = null (leave value on stack)
+
+                    // check-condition:
+                    //(!Tail.RequiresOldValue // always set where can't check oldVal
+                    //                        // and if it's value type or nullable with changed null/not null or ref
+                    //    || (Helpers.IsValueType(property.PropertyType) && oldVal != null && newVal != null)
+                    //    || !ReferenceEquals(oldVal, newVal)
+                    //   ))
+                    if (canSet)
+                    {
+                        bool check = Tail.RequiresOldValue;
+                        if (check)
+                        {
+                            var condition = !g.StaticFactory.InvokeReferenceEquals(oldVal, newVal);
+
+                            if (Helpers.IsValueType(property.PropertyType))
+                                condition = (oldVal.AsOperand != null && newVal.AsOperand != null) || condition;
+
+                            g.If(condition);
+                        }
+
+                        ctx.LoadAddress(loc, ExpectedType);
+                        ctx.LoadValue(newVal);
+                        if (shadowSetter == null)
+                        {
+                            ctx.StoreValue(property);
+                        }
+                        else
+                        {
+                            ctx.EmitCall(shadowSetter);
+                        }
+
+                        if (check)
+                            g.End();
+                    }
+
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(loc);
                 }
-                
-                Tail.EmitRead(ctx, valueForTail);
-
-                // otherwise newVal was passed to EmitRead so already has necessary data
-                if (Tail.EmitReadReturnsValue)
-                    ctx.StoreValue(newVal);
-                
-                // check-condition:
-                //(!Tail.RequiresOldValue // always set where can't check oldVal
-                //                        // and if it's value type or nullable with changed null/not null or ref
-                //    || (Helpers.IsValueType(property.PropertyType) && oldVal != null && newVal != null)
-                //    || !ReferenceEquals(oldVal, newVal)
-                //   ))
-                if (canSet)
-                {
-                    bool check = Tail.RequiresOldValue;
-                    if (check)
-                    {
-                        var condition = !g.StaticFactory.InvokeReferenceEquals(oldVal, newVal);
-
-                        if (Helpers.IsValueType(property.PropertyType))
-                            condition = (oldVal.AsOperand != null && newVal.AsOperand != null) || condition;
-
-                        g.If(condition);
-                    }
-
-                    ctx.LoadAddress(loc, ExpectedType);
-                    ctx.LoadValue(newVal);
-                    if (shadowSetter == null)
-                    {
-                        ctx.StoreValue(property);
-                    }
-                    else
-                    {
-                        ctx.EmitCall(shadowSetter);
-                    }
-
-                    if (check)
-                        g.End();
-                }
-
-                if (EmitReadReturnsValue)
-                    ctx.LoadValue(loc);
             }
         }
 #endif

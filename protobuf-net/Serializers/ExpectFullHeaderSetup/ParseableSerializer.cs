@@ -89,29 +89,38 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            Type type = ExpectedType;
-            if (type.IsValueType)
-            {   // note that for structs, we've already asserted that a custom ToString
-                // exists; no need to handle the box/callvirt scenario
-                
-                // force it to a variable if needed, so we can take the address
-                using (Compiler.Local loc = ctx.GetLocalWithValue(type, valueFrom))
-                {
-                    ctx.LoadAddress(loc, type);
-                    ctx.EmitCall(GetCustomToString(type));
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                Type type = ExpectedType;
+                if (type.IsValueType)
+                { // note that for structs, we've already asserted that a custom ToString
+                    // exists; no need to handle the box/callvirt scenario
+
+                    // force it to a variable if needed, so we can take the address
+                    using (Compiler.Local loc = ctx.GetLocalWithValue(type, valueFrom))
+                    {
+                        ctx.LoadAddress(loc, type);
+                        ctx.EmitCall(GetCustomToString(type));
+                    }
                 }
+                else
+                {
+                    ctx.EmitCall(ctx.MapType(typeof(object)).GetMethod("ToString"));
+                }
+                ctx.EmitBasicWrite("WriteString", valueFrom);
             }
-            else {
-                ctx.EmitCall(ctx.MapType(typeof(object)).GetMethod("ToString"));
-            }
-            ctx.EmitBasicWrite("WriteString", valueFrom);
         }
+
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.EmitBasicRead("ReadString", ctx.MapType(typeof(string)));
-            ctx.EmitCall(parse);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.EmitBasicRead("ReadString", ctx.MapType(typeof(string)));
+                ctx.EmitCall(parse);
+            }
         }
 #endif
 

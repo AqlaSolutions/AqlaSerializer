@@ -47,12 +47,16 @@ namespace AqlaSerializer.Serializers
 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+            using (ctx.StartDebugBlockAuto(this))
+            {
             ctx.LoadValue(valueFrom);
             ctx.LoadValue(absoluteUriProperty);
             Tail.EmitWrite(ctx, null);
         }
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
+            using (ctx.StartDebugBlockAuto(this))
+            {
             Tail.EmitRead(ctx, valueFrom);
             ctx.CopyValue();
             Compiler.CodeLabel @nonEmpty = ctx.DefineLabel(), @end = ctx.DefineLabel();

@@ -67,94 +67,101 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue { get { return true; } }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Compiler.Local oldValue = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                Compiler.Local tempLocal = null;
-                Compiler.Local valueForTail;
-                Debug.Assert(!Tail.RequiresOldValue || Tail.EmitReadReturnsValue);
-                if (Tail.RequiresOldValue)
+                using (Compiler.Local oldValue = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
                 {
+                    Compiler.Local tempLocal = null;
+                    Compiler.Local valueForTail;
+                    Debug.Assert(!Tail.RequiresOldValue || Tail.EmitReadReturnsValue);
+                    if (Tail.RequiresOldValue)
+                    {
+                        if (expectedType.IsValueType)
+                        {
+                            tempLocal = ctx.Local(Tail.ExpectedType);
+                            ctx.LoadAddress(oldValue, expectedType);
+                            ctx.EmitCall(expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
+                            ctx.StoreValue(tempLocal);
+                            valueForTail = tempLocal;
+                        }
+                        else valueForTail = oldValue;
+                    }
+                    else valueForTail = null;
+
+                    // valueForTail contains:
+                    // null: when not required old value
+                    // oldValue local: when reference type
+                    // tempLocal: when nullable value type
+
+                    Tail.EmitRead(ctx, valueForTail);
+
                     if (expectedType.IsValueType)
                     {
-                        tempLocal = ctx.Local(Tail.ExpectedType);
-                        ctx.LoadAddress(oldValue, expectedType);
-                        ctx.EmitCall(expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
-                        ctx.StoreValue(tempLocal);
-                        valueForTail = tempLocal;
+                        if (!Tail.EmitReadReturnsValue)
+                            ctx.LoadValue(tempLocal);
+                        // note we demanded always returns a value
+                        ctx.EmitCtor(expectedType, Tail.ExpectedType); // re-nullable<T> it
                     }
-                    else valueForTail = oldValue;
+
+                    if (Tail.EmitReadReturnsValue || expectedType.IsValueType)
+                        ctx.StoreValue(oldValue);
+
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(oldValue);
+
+                    if (!tempLocal.IsNullRef()) tempLocal.Dispose();
                 }
-                else valueForTail = null;
-
-                // valueForTail contains:
-                // null: when not required old value
-                // oldValue local: when reference type
-                // tempLocal: when nullable value type
-
-                Tail.EmitRead(ctx, valueForTail);
-
-                if (expectedType.IsValueType)
-                {
-                    if (!Tail.EmitReadReturnsValue)
-                        ctx.LoadValue(tempLocal);
-                    // note we demanded always returns a value
-                    ctx.EmitCtor(expectedType, Tail.ExpectedType); // re-nullable<T> it
-                }
-
-                if (Tail.EmitReadReturnsValue || expectedType.IsValueType)
-                    ctx.StoreValue(oldValue);
-
-                if (EmitReadReturnsValue)
-                    ctx.LoadValue(oldValue);
-
-                if (!tempLocal.IsNullRef()) tempLocal.Dispose();
             }
         }
 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Compiler.Local valOrNull = ctx.GetLocalWithValue(expectedType, valueFrom))
+            using (ctx.StartDebugBlockAuto(this))
             {
+                using (Compiler.Local valOrNull = ctx.GetLocalWithValue(expectedType, valueFrom))
+                {
 
-                if (expectedType.IsValueType)
-                {
-                    ctx.LoadAddress(valOrNull, expectedType);
-                    ctx.LoadValue(expectedType.GetProperty("HasValue"));
-                }
-                else
-                {
-                    ctx.LoadValue(valOrNull);
-                }
-                Compiler.CodeLabel done = ctx.DefineLabel();
-                Compiler.CodeLabel onNull = ctx.DefineLabel();
-
-                ctx.BranchIfFalse(onNull, false);
-                // if !=null
-                {
                     if (expectedType.IsValueType)
                     {
                         ctx.LoadAddress(valOrNull, expectedType);
-                        ctx.EmitCall(expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
+                        ctx.LoadValue(expectedType.GetProperty("HasValue"));
                     }
                     else
                     {
                         ctx.LoadValue(valOrNull);
                     }
-                    Tail.EmitWrite(ctx, null);
+                    Compiler.CodeLabel done = ctx.DefineLabel();
+                    Compiler.CodeLabel onNull = ctx.DefineLabel();
 
-                    ctx.Branch(done, true);
+                    ctx.BranchIfFalse(onNull, false);
+                    // if !=null
+                    {
+                        if (expectedType.IsValueType)
+                        {
+                            ctx.LoadAddress(valOrNull, expectedType);
+                            ctx.EmitCall(expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
+                        }
+                        else
+                        {
+                            ctx.LoadValue(valOrNull);
+                        }
+                        Tail.EmitWrite(ctx, null);
+
+                        ctx.Branch(done, true);
+                    }
+                    // else
+                    {
+                        ctx.MarkLabel(onNull);
+                        if (_throwIfNull)
+                            ctx.G.ThrowNullReferenceException();
+                        else
+                            ctx.G.Writer.WriteFieldHeaderCancelBegin();
+                    }
+                    ctx.MarkLabel(done);
                 }
-                // else
-                {
-                    ctx.MarkLabel(onNull);
-                    if (_throwIfNull)
-                        ctx.G.ThrowNullReferenceException();
-                    else
-                        ctx.G.Writer.WriteFieldHeaderCancelBegin();
-                }
-                ctx.MarkLabel(done);
             }
         }
 #endif

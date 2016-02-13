@@ -56,46 +56,51 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue { get { return Tail.EmitReadReturnsValue; } }
+
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            Compiler.CodeLabel done = ctx.DefineLabel();
-            Compiler.CodeLabel onCancel = ctx.DefineLabel();
-            if (valueFrom.IsNullRef())
+            using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.CopyValue(); // on the stack
-                Compiler.CodeLabel needToPop = ctx.DefineLabel();
+                Compiler.CodeLabel done = ctx.DefineLabel();
+                Compiler.CodeLabel onCancel = ctx.DefineLabel();
+                if (valueFrom.IsNullRef())
+                {
+                    ctx.CopyValue(); // on the stack
+                    Compiler.CodeLabel needToPop = ctx.DefineLabel();
 
-                EmitBranchIfDefaultValue(ctx, needToPop);
-                // if != defaultValue
-                {
-                    Tail.EmitWrite(ctx, null);
-                    ctx.Branch(done, true);
+                    EmitBranchIfDefaultValue(ctx, needToPop);
+                    // if != defaultValue
+                    {
+                        Tail.EmitWrite(ctx, null);
+                        ctx.Branch(done, true);
+                    }
+                    // else
+                    {
+                        ctx.MarkLabel(needToPop);
+                        ctx.DiscardValue();
+                        // onCancel
+                    }
                 }
-                // else
+                else
                 {
-                    ctx.MarkLabel(needToPop);
-                    ctx.DiscardValue();
+                    ctx.LoadValue(valueFrom); // variable/parameter
+
+                    EmitBranchIfDefaultValue(ctx, onCancel);
+                    // if != defaultValue
+                    {
+                        Tail.EmitWrite(ctx, valueFrom);
+                        ctx.Branch(done, true);
+                    }
+                    // else
                     // onCancel
                 }
+                ctx.MarkLabel(onCancel);
+                ctx.LoadReaderWriter();
+                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                ctx.MarkLabel(done);
             }
-            else
-            {
-                ctx.LoadValue(valueFrom); // variable/parameter
-
-                EmitBranchIfDefaultValue(ctx, onCancel);
-                // if != defaultValue
-                {
-                    Tail.EmitWrite(ctx, valueFrom);
-                    ctx.Branch(done, true);
-                }
-                // else
-                // onCancel
-            }
-            ctx.MarkLabel(onCancel);
-            ctx.LoadReaderWriter();
-            ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
-            ctx.MarkLabel(done);
         }
+
         private void EmitBeq(Compiler.CompilerContext ctx, Compiler.CodeLabel label, Type type)
         {
             switch (Helpers.GetTypeCode(type))
@@ -313,9 +318,13 @@ namespace AqlaSerializer.Serializers
                     throw new NotSupportedException("Type cannot be represented as a default value: " + expected.FullName);
             }
         }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            Tail.EmitRead(ctx, valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                Tail.EmitRead(ctx, valueFrom);
+            }
         }
 #endif
     }

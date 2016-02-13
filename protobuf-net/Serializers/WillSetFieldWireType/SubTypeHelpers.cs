@@ -121,82 +121,89 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitWrite(SerializerCodeGen g, MetaType metaType, Local actualValue)
         {
-            Debug.Assert(!actualValue.IsNullRef());
-            var endLabel = g.DefineLabel();
-            using (var actualType = new Local(g.ctx, typeof(System.Type)))
+            using (g.ctx.StartDebugBlockAuto(this))
             {
-                if (actualValue.IsNullRef())
-                    g.Assign(actualType, null);
-                else
+                Debug.Assert(!actualValue.IsNullRef());
+                var endLabel = g.DefineLabel();
+                using (var actualType = new Local(g.ctx, typeof(System.Type)))
                 {
-                    //g.If(actualValue.AsOperand != null);
+                    if (actualValue.IsNullRef())
+                        g.Assign(actualType, null);
+                    else
                     {
-                        g.Assign(actualType, actualValue.AsOperand.InvokeGetType());
+                        //g.If(actualValue.AsOperand != null);
+                        {
+                            g.Assign(actualType, actualValue.AsOperand.InvokeGetType());
+                        }
+                        //g.Else();
+                        //{
+                        //    g.Assign(actualType, null);
+                        //}
+                        //g.End();
                     }
-                    //g.Else();
-                    //{
-                    //    g.Assign(actualType, null);
-                    //}
-                    //g.End();
+                    EmitWrite(g, endLabel, metaType, actualValue, actualType);
                 }
-                EmitWrite(g, endLabel, metaType, actualValue, actualType);
+                g.MarkLabel(endLabel);
             }
-            g.MarkLabel(endLabel);
         }
 
         void EmitWrite(SerializerCodeGen g, Label? endLabel, MetaType metaType, Local actualValue, Local actualType, int recursionLevel = 0)
         {
-            WriterGen dest = g.Writer;
-            var breakLabel = g.DefineLabel();
-            g.If(metaType.Type != actualType.AsOperand);
+            using (g.ctx.StartDebugBlockAuto(this, metaType.Name + ", level = " + recursionLevel))
             {
-                foreach (var subType in metaType.GetSubtypes().OrderBy(st => st.FieldNumber))
+                WriterGen dest = g.Writer;
+                var breakLabel = g.DefineLabel();
+                g.If(metaType.Type != actualType.AsOperand);
                 {
-                    MetaType derivedType = subType.DerivedType;
-                    if (derivedType.Type == metaType.Type) continue;
-                    g.If(actualValue.AsOperand.Is(derivedType.Type));
+                    foreach (var subType in metaType.GetSubtypes().OrderBy(st => st.FieldNumber))
                     {
-                        if (recursionLevel == 0)
+                        MetaType derivedType = subType.DerivedType;
+                        if (derivedType.Type == metaType.Type) continue;
+                        g.If(actualValue.AsOperand.Is(derivedType.Type));
                         {
-                            g.If(derivedType.Type == actualType.AsOperand);
+                            if (recursionLevel == 0)
                             {
-                                dest.WriteFieldHeaderComplete(WireType.Variant);
+                                g.If(derivedType.Type == actualType.AsOperand);
+                                {
+                                    dest.WriteFieldHeaderComplete(WireType.Variant);
+                                    dest.WriteInt32(subType.FieldNumber + 1);
+                                    g.Goto(endLabel == null ? breakLabel : endLabel.Value);
+                                }
+                                g.End();
+
+                                var token = g.WriterFunc.StartSubItem(null, true);
+                                dest.WriteFieldHeaderIgnored(WireType.Variant);
                                 dest.WriteInt32(subType.FieldNumber + 1);
-                                g.Goto(endLabel == null ? breakLabel : endLabel.Value);
+
+                                EmitWrite(g, null, derivedType, actualValue, actualType, 1);
+
+                                dest.EndSubItem(token);
+
                             }
-                            g.End();
-
-                            var token = g.WriterFunc.StartSubItem(null, true);
-                            dest.WriteFieldHeaderIgnored(WireType.Variant);
-                            dest.WriteInt32(subType.FieldNumber + 1);
-
-                            EmitWrite(g, null, derivedType, actualValue, actualType, 1);
-                            
-                            dest.EndSubItem(token);
-
+                            else
+                            {
+                                dest.WriteFieldHeaderIgnored(WireType.Variant);
+                                dest.WriteInt32(subType.FieldNumber + 1);
+                                EmitWrite(g, null, derivedType, actualValue, actualType, recursionLevel + 1);
+                            }
+                            g.Goto(endLabel == null ? breakLabel : endLabel.Value);
                         }
-                        else
-                        {
-                            dest.WriteFieldHeaderIgnored(WireType.Variant);
-                            dest.WriteInt32(subType.FieldNumber + 1);
-                            EmitWrite(g, null, derivedType, actualValue, actualType, recursionLevel + 1);
-                        }
-                        g.Goto(endLabel == null ? breakLabel : endLabel.Value);
+                        g.End();
                     }
-                    g.End();
                 }
-            }
-            g.End();
-            g.MarkLabel(breakLabel);
-            if (recursionLevel == 0)
-            {
-                dest.WriteFieldHeaderComplete(WireType.Variant);
-                dest.WriteInt32(0);
+                g.End();
+                g.MarkLabel(breakLabel);
+                if (recursionLevel == 0)
+                {
+                    dest.WriteFieldHeaderComplete(WireType.Variant);
+                    dest.WriteInt32(0);
+                }
             }
         }
 
         public void EmitTryRead(SerializerCodeGen g, Local oldValue, MetaType metaType, Action<MetaType> returnGen)
         {
+            using (g.ctx.StartDebugBlockAuto(this))
             using (var fieldNumber = new Local(g.ctx, typeof(int)))
             {
                 EmitTryRead(
@@ -225,45 +232,48 @@ namespace AqlaSerializer.Serializers
 
         void EmitTryRead(SerializerCodeGen g, Local fieldNumber, MetaType metaType, int recursionLevel, Action<MetaType> returnGen)
         {
-            SubType[] subTypes = metaType.GetSubtypes();
-            if (recursionLevel == 0)
+            using (g.ctx.StartDebugBlockAuto(this, metaType.Name + ", level = " + recursionLevel))
             {
-                g.If(g.ReaderFunc.WireType() != WireType.String);
+                SubType[] subTypes = metaType.GetSubtypes();
+                if (recursionLevel == 0)
                 {
-                    g.Assign(fieldNumber, g.ReaderFunc.ReadInt32() - 1);
-                    EmitTryRead_GenSwitch(g, fieldNumber, metaType, subTypes, returnGen);
+                    g.If(g.ReaderFunc.WireType() != WireType.String);
+                    {
+                        g.Assign(fieldNumber, g.ReaderFunc.ReadInt32() - 1);
+                        EmitTryRead_GenSwitch(g, fieldNumber, metaType, subTypes, returnGen);
+                    }
+                    g.End();
+                }
+                Local token = null;
+                if (recursionLevel == 0)
+                {
+                    token = new Local(g.ctx, typeof(SubItemToken));
+                    g.Assign(token, g.ReaderFunc.StartSubItem());
+                    returnGen = (r => g.Reader.EndSubItem(token)) + returnGen;
+                }
+
+                g.If(!g.ReaderFunc.HasSubValue_bool(WireType.Variant));
+                {
+                    returnGen(metaType);
                 }
                 g.End();
-            }
-            Local token = null;
-            if (recursionLevel == 0)
-            {
-                token = new Local(g.ctx, typeof(SubItemToken));
-                g.Assign(token, g.ReaderFunc.StartSubItem());
-                returnGen = (r => g.Reader.EndSubItem(token)) + returnGen;
-            }
 
-            g.If(!g.ReaderFunc.HasSubValue_bool(WireType.Variant));
-            {
-                returnGen(metaType);
+                g.Assign(fieldNumber, g.ReaderFunc.ReadInt32() - 1);
+                EmitTryRead_GenSwitch(
+                    g,
+                    fieldNumber,
+                    metaType,
+                    subTypes,
+                    r =>
+                        {
+                            if (r == metaType)
+                                returnGen(metaType);
+                            else
+                                EmitTryRead(g, fieldNumber, r, recursionLevel + 1, returnGen);
+                        });
+
+                token?.Dispose();
             }
-            g.End();
-
-            g.Assign(fieldNumber, g.ReaderFunc.ReadInt32() - 1);
-            EmitTryRead_GenSwitch(
-                g,
-                fieldNumber,
-                metaType,
-                subTypes,
-                r =>
-                    {
-                        if (r == metaType)
-                            returnGen(metaType);
-                        else
-                            EmitTryRead(g, fieldNumber, r, recursionLevel + 1, returnGen);
-                    });
-
-            token?.Dispose();
         }
 
         void EmitTryRead_GenSwitch(SerializerCodeGen g, Local fieldNumber, MetaType metaType, SubType[] subTypes, Action<MetaType> returnGen)

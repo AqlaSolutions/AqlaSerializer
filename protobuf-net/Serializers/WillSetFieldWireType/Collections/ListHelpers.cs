@@ -43,64 +43,63 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitWrite(SerializerCodeGen g, Local value, Action subTypeWriter, Func<Operand> getLength, Action prepareInstance)
         {
-#if DEBUG_EMIT
-            g.ctx.LoadValue("ListHelpers");
-            g.ctx.DiscardValue();
-#endif
-            using (var token = g.ctx.Local(typeof(SubItemToken)))
-            using (var length = getLength != null ? g.ctx.Local(typeof(int)) : null)
+            using (g.ctx.StartDebugBlockAuto(this))
             {
-                bool writePacked = _writePacked;
-                if (_protoCompatibility)
+                using (var token = g.ctx.Local(typeof(SubItemToken)))
+                using (var length = getLength != null ? g.ctx.Local(typeof(int)) : null)
                 {
-                    // empty arrays are nulls, no subitem or field
-
-                    if (writePacked)
-                        g.Assign(token, g.WriterFunc.StartSubItem(null, true));
-                    else // each element will begin its own header
-                        g.Writer.WriteFieldHeaderCancelBegin();
-
-                    using (var fieldNumber = g.ctx.Local(typeof(int)))
+                    bool writePacked = _writePacked;
+                    if (_protoCompatibility)
                     {
-                        g.Assign(fieldNumber, g.WriterFunc.FieldNumber());
-                        EmitWriteContent(
-                            g,
-                            value,
-                            fieldNumber.AsOperand,
-                            _writePacked,
-                            first: prepareInstance);
+                        // empty arrays are nulls, no subitem or field
+
+                        if (writePacked)
+                            g.Assign(token, g.WriterFunc.StartSubItem(null, true));
+                        else // each element will begin its own header
+                            g.Writer.WriteFieldHeaderCancelBegin();
+
+                        using (var fieldNumber = g.ctx.Local(typeof(int)))
+                        {
+                            g.Assign(fieldNumber, g.WriterFunc.FieldNumber());
+                            EmitWriteContent(
+                                g,
+                                value,
+                                fieldNumber.AsOperand,
+                                _writePacked,
+                                first: prepareInstance);
+                        }
+                        if (writePacked)
+                        {
+                            // last element - end subitem
+                            g.Writer.EndSubItem(token);
+                        }
                     }
-                    if (writePacked)
+                    else
                     {
-                        // last element - end subitem
+                        bool pack = _tail.DemandWireTypeStabilityStatus();
+                        g.Assign(token, g.WriterFunc.StartSubItem(null, pack));
+
+                        if (subTypeWriter != null)
+                        {
+                            g.Writer.WriteFieldHeaderBegin(FieldSubtype);
+                            subTypeWriter?.Invoke();
+                        }
+                        if (!getLength.IsNullRef())
+                        {
+                            g.Assign(length, getLength());
+                            g.If(length.AsOperand > 0);
+                            {
+                                g.Writer.WriteFieldHeader(FieldLength, WireType.Variant);
+                                g.Writer.WriteInt32(length);
+                            }
+                            g.End();
+                        }
+
+                        prepareInstance?.Invoke();
+
+                        EmitWriteContent(g, value, FieldItem, pack);
                         g.Writer.EndSubItem(token);
                     }
-                }
-                else
-                {
-                    bool pack = _tail.DemandWireTypeStabilityStatus();
-                    g.Assign(token, g.WriterFunc.StartSubItem(null, pack));
-
-                    if (subTypeWriter != null)
-                    {
-                        g.Writer.WriteFieldHeaderBegin(FieldSubtype);
-                        subTypeWriter?.Invoke();
-                    }
-                    if (!getLength.IsNullRef())
-                    {
-                        g.Assign(length, getLength());
-                        g.If(length.AsOperand > 0);
-                        {
-                            g.Writer.WriteFieldHeader(FieldLength, WireType.Variant);
-                            g.Writer.WriteInt32(length);
-                        }
-                        g.End();
-                    }
-
-                    prepareInstance?.Invoke();
-
-                    EmitWriteContent(g, value, FieldItem, pack);
-                    g.Writer.EndSubItem(token);
                 }
             }
         }
@@ -196,123 +195,122 @@ namespace AqlaSerializer.Serializers
 
         public void EmitRead(SerializerCodeGen g, Action subTypeHandler, EmitReadPrepareInstanceDelegate prepareInstance, Action<Local> add)
         {
-#if DEBUG_EMIT
-            g.ctx.LoadValue("ListHelpers");
-            g.ctx.DiscardValue();
-#endif
-            WireType packedWireType = _packedWireTypeForRead;
-            bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
-            using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
-            using (var token = g.ctx.Local(typeof(SubItemToken)))
-            using (var length = g.ctx.Local(typeof(int?), true))
-            using (var read = g.ctx.Local(typeof(bool)))
+            using (g.ctx.StartDebugBlockAuto(this))
             {
-                if (packedAllowedStatic)
-                    g.Assign(packed, g.ReaderFunc.WireType() == WireType.String);
-
-                bool subItemNeededStatic = !_protoCompatibility;
-
-                if (subItemNeededStatic || packedAllowedStatic)
-                {
-                    if (!subItemNeededStatic) g.If(packed);
-                    g.Assign(token, g.ReaderFunc.StartSubItem());
-                    if (!subItemNeededStatic) g.End();
-                }
-                
-                if (!_protoCompatibility)
-                {
-                    g.DoWhile();
-                    {
-                        g.Assign(read, false);
-
-                        g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldLength));
-                        {
-                            // we write length to construct an array before deserializing
-                            // so we can handle references to array from inside it
-
-                            g.Assign(length, g.ReaderFunc.ReadInt32());
-                            g.Assign(read, true);
-                        }
-                        g.End();
-
-                        g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldSubtype));
-                        {
-                            if (subTypeHandler == null)
-                                g.Reader.SkipField();
-                            else
-                                subTypeHandler(); // TODO multiple times?
-                            g.Assign(read, true);
-                        }
-                        g.End();
-                    } 
-                    g.EndDoWhile(read);
-                }
-
-                // this is not an error that we don't wait for the first item
-                // if we are here it's either not compatible mode (so should call anyway)
-                // or there is at least one element
-                prepareInstance?.Invoke(length);
-
-                if (_protoCompatibility)
+                WireType packedWireType = _packedWireTypeForRead;
+                bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
+                using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
+                using (var token = g.ctx.Local(typeof(SubItemToken)))
+                using (var length = g.ctx.Local(typeof(int?), true))
+                using (var read = g.ctx.Local(typeof(bool)))
                 {
                     if (packedAllowedStatic)
+                        g.Assign(packed, g.ReaderFunc.WireType() == WireType.String);
+
+                    bool subItemNeededStatic = !_protoCompatibility;
+
+                    if (subItemNeededStatic || packedAllowedStatic)
+                    {
+                        if (!subItemNeededStatic) g.If(packed);
+                        g.Assign(token, g.ReaderFunc.StartSubItem());
+                        if (!subItemNeededStatic) g.End();
+                    }
+
+                    if (!_protoCompatibility)
+                    {
+                        g.DoWhile();
+                        {
+                            g.Assign(read, false);
+
+                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldLength));
+                            {
+                                // we write length to construct an array before deserializing
+                                // so we can handle references to array from inside it
+
+                                g.Assign(length, g.ReaderFunc.ReadInt32());
+                                g.Assign(read, true);
+                            }
+                            g.End();
+
+                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldSubtype));
+                            {
+                                if (subTypeHandler == null)
+                                    g.Reader.SkipField();
+                                else
+                                    subTypeHandler(); // TODO multiple times?
+                                g.Assign(read, true);
+                            }
+                            g.End();
+                        }
+                        g.EndDoWhile(read);
+                    }
+
+                    // this is not an error that we don't wait for the first item
+                    // if we are here it's either not compatible mode (so should call anyway)
+                    // or there is at least one element
+                    prepareInstance?.Invoke(length);
+
+                    if (_protoCompatibility)
+                    {
+                        if (packedAllowedStatic)
+                        {
+                            g.If(packed);
+                            {
+                                g.While(g.ReaderFunc.HasSubValue_bool(packedWireType));
+                                {
+                                    EmitReadElementContent(g, add);
+                                }
+                                g.End();
+                            }
+                            g.Else();
+                        }
+
+                        using (var fieldNumber = g.ctx.Local(typeof(int)))
+                        {
+                            g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
+                            g.DoWhile();
+                            {
+                                EmitReadElementContent(g, add);
+                            }
+                            g.EndDoWhile(g.ReaderFunc.TryReadFieldHeader_bool(fieldNumber));
+                        }
+                        if (packedAllowedStatic) g.End();
+                    }
+                    else
                     {
                         g.If(packed);
                         {
-                            g.While(g.ReaderFunc.HasSubValue_bool(packedWireType));
+                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
+                            {
+                                using (var packedWireTypeDynamic = g.ctx.Local(typeof(WireType)))
+                                {
+                                    g.Assign(packedWireTypeDynamic, g.ReaderFunc.WireType());
+                                    g.DoWhile();
+                                    {
+                                        EmitReadElementContent(g, add);
+                                    }
+                                    g.EndDoWhile(g.ReaderFunc.HasSubValue_bool(packedWireTypeDynamic));
+                                }
+                            }
+                            g.End();
+                        }
+                        g.Else();
+                        {
+                            g.While(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
                             {
                                 EmitReadElementContent(g, add);
                             }
                             g.End();
                         }
-                        g.Else();
-                    }
-
-                    using (var fieldNumber = g.ctx.Local(typeof(int)))
-                    {
-                        g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
-                        g.DoWhile();
-                        {
-                            EmitReadElementContent(g, add);
-                        }
-                        g.EndDoWhile(g.ReaderFunc.TryReadFieldHeader_bool(fieldNumber));
-                    }
-                    if (packedAllowedStatic) g.End();
-                }
-                else
-                {
-                    g.If(packed);
-                    {
-                        g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
-                        {
-                            using (var packedWireTypeDynamic = g.ctx.Local(typeof(WireType)))
-                            {
-                                g.Assign(packedWireTypeDynamic, g.ReaderFunc.WireType());
-                                g.DoWhile();
-                                {
-                                    EmitReadElementContent(g, add);
-                                }
-                                g.EndDoWhile(g.ReaderFunc.HasSubValue_bool(packedWireTypeDynamic));
-                            }
-                        }
                         g.End();
                     }
-                    g.Else();
-                    {
-                        g.While(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
-                        {
-                            EmitReadElementContent(g, add);
-                        }
-                        g.End();
-                    }
-                    g.End();
-                }
 
-                if (subItemNeededStatic || packedAllowedStatic)
-                {
-                    if (!subItemNeededStatic) g.If(packed);
-                    g.Reader.EndSubItem(token);
-                    if (!subItemNeededStatic) g.End();
+                    if (subItemNeededStatic || packedAllowedStatic)
+                    {
+                        if (!subItemNeededStatic) g.If(packed);
+                        g.Reader.EndSubItem(token);
+                        if (!subItemNeededStatic) g.End();
+                    }
                 }
             }
         }

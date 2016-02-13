@@ -58,20 +58,26 @@ namespace AqlaSerializer.Serializers
         }
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            var g = ctx.G;
-            g.If(g.ReaderFunc.ReadFieldHeader_int()!=_number);
+            using (ctx.StartDebugBlockAuto(this))
             {
-                g.ThrowProtoException("Expected tag " + _number);
+                var g = ctx.G;
+                g.If(g.ReaderFunc.ReadFieldHeader_int() != _number);
+                {
+                    g.ThrowProtoException("Expected tag " + _number);
+                }
+                g.End();
+                _serializer.EmitRead(ctx, valueFrom);
             }
-            g.End();
-            _serializer.EmitRead(ctx, valueFrom);
         }
 
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            var g = ctx.G;
-            g.Writer.WriteFieldHeaderBegin(_number);
-            _serializer.EmitWrite(ctx, valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                var g = ctx.G;
+                g.Writer.WriteFieldHeaderBegin(_number);
+                _serializer.EmitWrite(ctx, valueFrom);
+            }
         }
 #endif
         public bool HasCallbacks(TypeModel.CallbackType callbackType)

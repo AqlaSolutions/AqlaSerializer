@@ -217,92 +217,98 @@ namespace AqlaSerializer.Serializers
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Compiler.Local value = AppendToCollection ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : null)
-            using (Compiler.Local builderInstance = new Compiler.Local(ctx, builderFactory.ReturnType))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.EmitCall(builderFactory);
-                ctx.StoreValue(builderInstance);
-
-                if(AppendToCollection)
+                using (Compiler.Local value = AppendToCollection ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : null)
+                using (Compiler.Local builderInstance = new Compiler.Local(ctx, builderFactory.ReturnType))
                 {
-                    Compiler.CodeLabel done = ctx.DefineLabel();
-                    if(!ExpectedType.IsValueType)
-                    {
-                        ctx.LoadValue(value);
-                        ctx.BranchIfFalse(done, false); // old value null; nothing to add
-                    }
-                    PropertyInfo prop = Helpers.GetProperty(ExpectedType, "Length", false);
-                    if(prop == null) prop = Helpers.GetProperty(ExpectedType, "Count", false);
-#if !NO_GENERICS
-                    if (prop == null) prop = Helpers.GetProperty(ResolveIReadOnlyCollection(ExpectedType, Tail.ExpectedType), "Count", false);
-#endif
-                    ctx.LoadAddress(value, value.Type);
-                    ctx.EmitCall(Helpers.GetGetMethod(prop, false, false));
-                    ctx.BranchIfFalse(done, false); // old list is empty; nothing to add
+                    ctx.EmitCall(builderFactory);
+                    ctx.StoreValue(builderInstance);
 
-                    Type voidType = ctx.MapType(typeof(void));
-                    if(addRange != null)
+                    if (AppendToCollection)
                     {
-                        ctx.LoadValue(builderInstance);
-                        ctx.LoadValue(value);
-                        ctx.EmitCall(addRange);
-                        if (addRange.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
-                    }
-                    else
-                    {
-                        // loop and call Add repeatedly
-                        MethodInfo moveNext, current, getEnumerator = GetEnumeratorInfo(ctx.Model, out moveNext, out current);
-                        Helpers.DebugAssert(moveNext != null);
-                        Helpers.DebugAssert(current != null);
-                        Helpers.DebugAssert(getEnumerator != null);
-
-                        Type enumeratorType = getEnumerator.ReturnType;
-                        using (Compiler.Local iter = new Compiler.Local(ctx, enumeratorType))
+                        Compiler.CodeLabel done = ctx.DefineLabel();
+                        if (!ExpectedType.IsValueType)
                         {
-                            ctx.LoadAddress(value, ExpectedType);
-                            ctx.EmitCall(getEnumerator);
-                            ctx.StoreValue(iter);
-                            using (ctx.Using(iter))
+                            ctx.LoadValue(value);
+                            ctx.BranchIfFalse(done, false); // old value null; nothing to add
+                        }
+                        PropertyInfo prop = Helpers.GetProperty(ExpectedType, "Length", false);
+                        if (prop == null) prop = Helpers.GetProperty(ExpectedType, "Count", false);
+#if !NO_GENERICS
+                        if (prop == null) prop = Helpers.GetProperty(ResolveIReadOnlyCollection(ExpectedType, Tail.ExpectedType), "Count", false);
+#endif
+                        ctx.LoadAddress(value, value.Type);
+                        ctx.EmitCall(Helpers.GetGetMethod(prop, false, false));
+                        ctx.BranchIfFalse(done, false); // old list is empty; nothing to add
+
+                        Type voidType = ctx.MapType(typeof(void));
+                        if (addRange != null)
+                        {
+                            ctx.LoadValue(builderInstance);
+                            ctx.LoadValue(value);
+                            ctx.EmitCall(addRange);
+                            if (addRange.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
+                        }
+                        else
+                        {
+                            // loop and call Add repeatedly
+                            MethodInfo moveNext, current, getEnumerator = GetEnumeratorInfo(ctx.Model, out moveNext, out current);
+                            Helpers.DebugAssert(moveNext != null);
+                            Helpers.DebugAssert(current != null);
+                            Helpers.DebugAssert(getEnumerator != null);
+
+                            Type enumeratorType = getEnumerator.ReturnType;
+                            using (Compiler.Local iter = new Compiler.Local(ctx, enumeratorType))
                             {
-                                Compiler.CodeLabel body = ctx.DefineLabel(), next = ctx.DefineLabel();
-                                ctx.Branch(next, false);
+                                ctx.LoadAddress(value, ExpectedType);
+                                ctx.EmitCall(getEnumerator);
+                                ctx.StoreValue(iter);
+                                using (ctx.Using(iter))
+                                {
+                                    Compiler.CodeLabel body = ctx.DefineLabel(), next = ctx.DefineLabel();
+                                    ctx.Branch(next, false);
 
-                                ctx.MarkLabel(body);
-                                ctx.LoadAddress(builderInstance, builderInstance.Type);
-                                ctx.LoadAddress(iter, enumeratorType);                                
-                                ctx.EmitCall(current);
-                                ctx.EmitCall(add);
-                                if (add.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
+                                    ctx.MarkLabel(body);
+                                    ctx.LoadAddress(builderInstance, builderInstance.Type);
+                                    ctx.LoadAddress(iter, enumeratorType);
+                                    ctx.EmitCall(current);
+                                    ctx.EmitCall(add);
+                                    if (add.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
 
-                                ctx.MarkLabel(@next);
-                                ctx.LoadAddress(iter, enumeratorType);
-                                ctx.EmitCall(moveNext);
-                                ctx.BranchIfTrue(body, false);
+                                    ctx.MarkLabel(@next);
+                                    ctx.LoadAddress(iter, enumeratorType);
+                                    ctx.EmitCall(moveNext);
+                                    ctx.BranchIfTrue(body, false);
+                                }
                             }
                         }
+
+
+                        ctx.MarkLabel(done);
                     }
 
+                    ListHelpers.EmitRead(
+                        ctx.G,
+                        null,
+                        null,
+                        o =>
+                            {
+                                ctx.LoadAddress(builderInstance, builderInstance.Type);
+                                ctx.LoadValue(o);
+                                ctx.EmitCall(add);
+                            });
 
-                    ctx.MarkLabel(done);
+                    ctx.LoadAddress(builderInstance, builderInstance.Type);
+                    ctx.EmitCall(finish);
+                    if (ExpectedType != finish.ReturnType)
+                    {
+                        ctx.Cast(ExpectedType);
+                    }
+
+                    if (!EmitReadReturnsValue)
+                        ctx.G.Assign(value, ctx.G.GetStackValueOperand(ExpectedType));
                 }
-
-                ListHelpers.EmitRead(ctx.G, null, null,
-                    o =>
-                        {
-                            ctx.LoadAddress(builderInstance, builderInstance.Type);
-                            ctx.LoadValue(o);
-                            ctx.EmitCall(add);
-                        });
-                
-                ctx.LoadAddress(builderInstance, builderInstance.Type);
-                ctx.EmitCall(finish);
-                if(ExpectedType != finish.ReturnType)
-                {
-                    ctx.Cast(ExpectedType);
-                }
-
-                if (!EmitReadReturnsValue)
-                    ctx.G.Assign(value, ctx.G.GetStackValueOperand(ExpectedType));
             }
         }
 #endif

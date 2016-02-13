@@ -51,45 +51,53 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue => Tail.EmitReadReturnsValue;
+
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (_getSpecified == null)
+            using (ctx.StartDebugBlockAuto(this, _getSpecified?.Name))
             {
-                Tail.EmitWrite(ctx, valueFrom);
-                return;
-            }
-            using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
-            {
-                ctx.LoadAddress(loc, ExpectedType);
-                ctx.EmitCall(_getSpecified);
-                Compiler.CodeLabel done = ctx.DefineLabel();
-                Compiler.CodeLabel notSpecified = ctx.DefineLabel();
-                ctx.BranchIfFalse(notSpecified, false);
+                if (_getSpecified == null)
                 {
-                    Tail.EmitWrite(ctx, loc);
+                    Tail.EmitWrite(ctx, valueFrom);
+                    return;
                 }
-                ctx.Branch(done, true);
-                ctx.MarkLabel(notSpecified);
+                using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
                 {
-                    ctx.G.Writer.WriteFieldHeaderCancelBegin();
+                    ctx.LoadAddress(loc, ExpectedType);
+                    ctx.EmitCall(_getSpecified);
+                    Compiler.CodeLabel done = ctx.DefineLabel();
+                    Compiler.CodeLabel notSpecified = ctx.DefineLabel();
+                    ctx.BranchIfFalse(notSpecified, false);
+                    {
+                        Tail.EmitWrite(ctx, loc);
+                    }
+                    ctx.Branch(done, true);
+                    ctx.MarkLabel(notSpecified);
+                    {
+                        ctx.G.Writer.WriteFieldHeaderCancelBegin();
+                    }
+                    ctx.MarkLabel(done);
                 }
-                ctx.MarkLabel(done);
-            }
 
+            }
         }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (_setSpecified == null)
+            using (ctx.StartDebugBlockAuto(this, _setSpecified?.Name))
             {
-                Tail.EmitRead(ctx, valueFrom);
-                return;
-            }
-            using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
-            {
-                Tail.EmitRead(ctx, loc);
-                ctx.LoadAddress(loc, ExpectedType);
-                ctx.LoadValue(1); // true
-                ctx.EmitCall(_setSpecified);
+                if (_setSpecified == null)
+                {
+                    Tail.EmitRead(ctx, valueFrom);
+                    return;
+                }
+                using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+                {
+                    Tail.EmitRead(ctx, loc);
+                    ctx.LoadAddress(loc, ExpectedType);
+                    ctx.LoadValue(1); // true
+                    ctx.EmitCall(_setSpecified);
+                }
             }
         }
 #endif
