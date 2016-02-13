@@ -891,6 +891,8 @@ namespace AqlaSerializer.Meta
         public static RuntimeTypeModel Create(bool newestBehavior, ProtoCompatibilitySettings protoCompatibility)
         {
             var r = new RuntimeTypeModel(false, protoCompatibility);
+            // TODO temporary:
+            r.AutoCompile = true;
             if (newestBehavior)
             {
                 r.AlwaysUseTypeRegistrationForCollections = true;
