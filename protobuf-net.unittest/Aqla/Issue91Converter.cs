@@ -58,11 +58,12 @@ namespace AqlaSerializer.unittest.Aqla
         }
 
         // TODO late reference is not supported for surrogate subtypes
-        [Ignore]
         [Test]
         public void Execute([Values(false, true)] bool compile)
         {
-            var model = TypeModel.Create();
+            var comp = ProtoCompatibilitySettings.Default;
+            comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
+            var model = TypeModel.Create(false, comp);
             model.AutoCompile = compile;
             model.Add(typeof(SObjectSurrogate), true);
             model.Add(typeof(STag), true);
