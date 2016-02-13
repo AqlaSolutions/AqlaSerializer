@@ -50,8 +50,13 @@ namespace AqlaSerializer.Serializers
 
         public object Read(object value, ProtoReader source)
         {
-            value = _subTypeHelpers.TryRead(_model[_typeKey], value?.GetType(), source)?.Serializer.CreateInstance(source) ?? value;
-            if (value == null) throw new ProtoException(CantCreateInstanceMessage);
+            // TODO what may happen if old value is already existing reference? do we need to consider it?
+            var v = _subTypeHelpers.TryRead(_model[_typeKey], value?.GetType(), source);
+            if (v != null)
+                value = v.Serializer.CreateInstance(source);
+            else if (value != null)
+                ProtoReader.NoteObject(value, source);
+            else throw new ProtoException(CantCreateInstanceMessage);
             // each CreateInstance notes object
             ProtoReader.NoteLateReference(_typeKey, value, source);
             return value;
@@ -100,6 +105,7 @@ namespace AqlaSerializer.Serializers
                                             g.ThrowProtoException(CantCreateInstanceMessage);
                                         }
                                         g.End();
+                                        g.Reader.NoteObject(value);
                                     }
                                     else
                                     {
