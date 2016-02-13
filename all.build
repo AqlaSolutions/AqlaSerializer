@@ -74,6 +74,10 @@
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net30Safe"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35"/>
     <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35Safe"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net40"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net40Safe"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net45"/>
+    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net45Safe"/>
     
     <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
@@ -89,8 +93,16 @@
     <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\RunSharp.*"/>
     <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\aqlaserializer.*"/>
     <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\RunSharp.*"/>
+    <Net40SafeFiles Include="protobuf-net\bin\Net40Safe\aqlaserializer.*"/>
+    <Net40SafeFiles Include="protobuf-net\bin\Net40Safe\RunSharp.*"/>
+    <Net45SafeFiles Include="protobuf-net\bin\Net45Safe\aqlaserializer.*"/>
+    <Net45SafeFiles Include="protobuf-net\bin\Net45Safe\RunSharp.*"/>
     <Net35Files Include="protobuf-net\bin\Net35\aqlaserializer.*"/>
     <Net35Files Include="protobuf-net\bin\Net35\RunSharp.*"/>
+    <Net40Files Include="protobuf-net\bin\Net40\aqlaserializer.*"/>
+    <Net40Files Include="protobuf-net\bin\Net40\RunSharp.*"/>
+    <Net45Files Include="protobuf-net\bin\Net45\aqlaserializer.*"/>
+    <Net45Files Include="protobuf-net\bin\Net45\RunSharp.*"/>
     <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
     <Net20Files Include="protobuf-net\bin\Net20\RunSharp.*"/>
     <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
@@ -119,13 +131,25 @@
 
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
-    
     <Copy SourceFiles="@(Net20SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>
     
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net30"/>
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(ZipDirectory)\Full\net30"/>
-    <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net35"/>
-    <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net40"/>
+    <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
+
+    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net35"/>
+    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
+    <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net35safe"/>
+
+    <Copy SourceFiles="@(Net40Files)" DestinationFolder="$(NugetDirectory)\net40"/>
+    <Copy SourceFiles="@(Net40Files)" DestinationFolder="$(ZipDirectory)\Full\net40"/>    
+    <Copy SourceFiles="@(Net40SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net40safe"/>
+
+    <Copy SourceFiles="@(Net45Files)" DestinationFolder="$(NugetDirectory)\net45"/>
+    <Copy SourceFiles="@(Net45Files)" DestinationFolder="$(ZipDirectory)\Full\net45"/>
+    <Copy SourceFiles="@(Net45SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net45safe"/>
+    
+    <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl4"/>
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl4"/>
@@ -133,14 +157,7 @@
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
 
-    <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
-    <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
-    <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net35safe"/>
-    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
-    <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net40safe"/>
-    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net40"/>
-    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net35"/>
-    <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net40"/>
+
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl4+net40+wp7+windows8"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable"/>
 

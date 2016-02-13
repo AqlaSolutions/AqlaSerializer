@@ -579,6 +579,12 @@ namespace AqlaSerializer.Compiler
             return GetLocalWithValue(type, fromValue, false);
         }
 
+#if FEAT_IKVM
+        public Local GetLocalWithValue(System.Type type, Compiler.Local fromValue)
+        {
+            return GetLocalWithValue(MapType(type), fromValue, false);
+        }
+#endif
         Local GetLocalWithValue(Type type, Compiler.Local fromValue, bool reassignBack)
         {
             if (!fromValue.IsNullRef())
@@ -926,7 +932,7 @@ namespace AqlaSerializer.Compiler
                             if(
 #if !SILVERLIGHT
                                 member is MethodBuilder ||
-#endif                
+#endif
                                 member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true; 
                         }
                         break;
