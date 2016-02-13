@@ -53,25 +53,30 @@ namespace AqlaSerializer.Serializers
         bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.EmitBasicWrite("WriteBytes", valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.EmitBasicWrite("WriteBytes", valueFrom);
+            }
         }
-
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            var g = ctx.G;
-            using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom)) // overwriteList ? null : value
-            using (var result = value?.AsCopy() ?? ctx.Local(ExpectedType))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                g.Assign(result, g.ReaderFunc.AppendBytes(value));
-                if (!value.IsNullRef()) g.If(value.AsOperand == null);
+                var g = ctx.G;
+                using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom)) // overwriteList ? null : value
+                using (var result = value?.AsCopy() ?? ctx.Local(ExpectedType))
                 {
-                    //if (overwriteList || value == null)
-                    g.Reader.NoteObject(result);
-                }
-                if (!value.IsNullRef()) g.End();
+                    g.Assign(result, g.ReaderFunc.AppendBytes(value));
+                    if (!value.IsNullRef()) g.If(value.AsOperand == null);
+                    {
+                        //if (overwriteList || value == null)
+                        g.Reader.NoteObject(result);
+                    }
+                    if (!value.IsNullRef()) g.End();
 
-                if (overwriteList)
-                    ctx.LoadValue(result);
+                    if (overwriteList)
+                        ctx.LoadValue(result);
+                }
             }
         }
 #endif

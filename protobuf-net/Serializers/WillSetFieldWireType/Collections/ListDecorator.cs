@@ -98,7 +98,7 @@ namespace AqlaSerializer.Serializers
                         }
                     },
                 source);
-            
+
             return value;
         }
 
@@ -143,7 +143,7 @@ namespace AqlaSerializer.Serializers
         protected readonly ListHelpers ListHelpers;
         readonly SubTypeHelpers _subTypeHelpers = new SubTypeHelpers();
         readonly MetaType _metaType;
-        
+
         internal static ListDecorator Create(
             RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList,
             bool overwriteList, bool protoCompatibility, bool writeSubType)
@@ -223,12 +223,12 @@ namespace AqlaSerializer.Serializers
                     _writeSubType = false; // warn?
             }
         }
-        
+
         protected virtual bool RequireAdd => true;
 
         public override Type ExpectedType => declaredType;
         public override bool RequiresOldValue => AppendToCollection;
-        
+
         protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;
 
 #if FEAT_COMPILER
@@ -310,6 +310,7 @@ namespace AqlaSerializer.Serializers
             }
         }
 
+
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             var g = ctx.G;
@@ -321,18 +322,18 @@ namespace AqlaSerializer.Serializers
                 if (_writeSubType)
                 {
                     subTypeWriter = () =>
-                    {
-                        g.Assign(t, value.AsOperand.InvokeGetType());
-                        g.If(concreteTypeDefault != t.AsOperand);
                         {
-                            _subTypeHelpers.EmitWrite(g, _metaType, value);
-                        }
-                        g.Else();
-                        {
-                            g.Writer.WriteFieldHeaderCancelBegin();
-                        }
-                        g.End();
-                    };
+                            g.Assign(t, value.AsOperand.InvokeGetType());
+                            g.If(concreteTypeDefault != t.AsOperand);
+                            {
+                                _subTypeHelpers.EmitWrite(g, _metaType, value);
+                            }
+                            g.Else();
+                            {
+                                g.Writer.WriteFieldHeaderCancelBegin();
+                            }
+                            g.End();
+                        };
                 }
                 Func<Operand> getLength = null;
                 if (!_protoCompatibility)
@@ -346,6 +347,7 @@ namespace AqlaSerializer.Serializers
                 ListHelpers.EmitWrite(ctx.G, value, subTypeWriter, getLength, null);
             }
         }
+
 
 
 #if WINRT
@@ -471,10 +473,13 @@ namespace AqlaSerializer.Serializers
 
         public virtual void EmitCreateInstance(CompilerContext ctx)
         {
-            ctx.EmitCtor(concreteTypeDefault);
-            ctx.CopyValue();
-            // we can use stack value here because note object on reader is static (backwards API)
-            ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(ExpectedType));
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.EmitCtor(concreteTypeDefault);
+                ctx.CopyValue();
+                // we can use stack value here because note object on reader is static (backwards API)
+                ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(ExpectedType));
+            }
         }
 #endif
     }

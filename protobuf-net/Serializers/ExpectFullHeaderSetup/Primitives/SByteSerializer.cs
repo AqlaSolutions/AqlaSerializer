@@ -41,13 +41,21 @@ namespace AqlaSerializer.Serializers
 #endif
 #if FEAT_COMPILER
         bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.EmitBasicWrite("WriteSByte", valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.EmitBasicWrite("WriteSByte", valueFrom);
+            }
         }
+
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.EmitBasicRead("ReadSByte", ExpectedType);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.EmitBasicRead("ReadSByte", ExpectedType);
+            }
         }
 #endif
 

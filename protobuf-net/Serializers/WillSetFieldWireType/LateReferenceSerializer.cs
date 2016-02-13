@@ -68,49 +68,47 @@ namespace AqlaSerializer.Serializers
 
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-#if DEBUG_EMIT
-            ctx.LoadValue("LateRef ser");
-            ctx.DiscardValue();
-#endif
-            using (var value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], value);
-                ctx.G.Writer.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+                using (var value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
+                {
+                    _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], value);
+                    ctx.G.Writer.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+                }
             }
         }
 
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-#if DEBUG_EMIT
-            ctx.LoadValue("LateRef ser");
-            ctx.DiscardValue();
-#endif
-            var g = ctx.G;
-            using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                _subTypeHelpers.EmitTryRead(
-                    g,
-                    value,
-                    _model[_typeKey],
-                    r =>
-                        {
-                            if (r == null)
+                var g = ctx.G;
+                using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+                {
+                    _subTypeHelpers.EmitTryRead(
+                        g,
+                        value,
+                        _model[_typeKey],
+                        r =>
                             {
-                                g.If(value.AsOperand == null);
+                                if (r == null)
                                 {
-                                    g.ThrowProtoException(CantCreateInstanceMessage);
+                                    g.If(value.AsOperand == null);
+                                    {
+                                        g.ThrowProtoException(CantCreateInstanceMessage);
+                                    }
+                                    g.End();
                                 }
-                                g.End();
-                            }
-                            else
-                            {
-                                r.Serializer.EmitCreateInstance(ctx);
-                                ctx.StoreValue(value);
-                            }
-                            g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
-                            if (EmitReadReturnsValue)
-                                ctx.LoadValue(value);
-                        });
+                                else
+                                {
+                                    r.Serializer.EmitCreateInstance(ctx);
+                                    ctx.StoreValue(value);
+                                }
+                                g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+                                if (EmitReadReturnsValue)
+                                    ctx.LoadValue(value);
+                            });
+                }
             }
         }
 #endif

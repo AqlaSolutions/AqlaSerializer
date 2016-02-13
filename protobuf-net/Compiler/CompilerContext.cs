@@ -2,6 +2,10 @@
 #if FEAT_COMPILER
 //#define DEBUG_COMPILE
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using AltLinq;
 using AqlaSerializer.Meta;
@@ -565,6 +569,91 @@ namespace AqlaSerializer.Compiler
                 }
 #endif
             }
+        }
+
+        class DisposableAction : IDisposable
+        {
+            readonly Action _action;
+
+            public DisposableAction(Action action)
+            {
+                _action = action;
+            }
+
+            public void Dispose()
+            {
+                _action?.Invoke();
+            }
+        }
+        
+        int _debugDepth;
+
+        public IDisposable StartDebugBlockAuto(object owner, string subBlock = null, [CallerFilePath] string filePath = null, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber=0)
+        {
+#if DEBUG_COMPILE_2
+            var ser = owner as IProtoSerializer;
+            if (ser != null)
+            {
+                string data = "ExpectedType = " + ser.ExpectedType.Name;
+                if (string.IsNullOrEmpty(subBlock))
+                    subBlock = data;
+                else
+                    subBlock = data + ", " + subBlock;
+            }
+            if (!string.IsNullOrEmpty(subBlock)) subBlock = " (" + subBlock + ") ";
+            string name;
+            if (!string.IsNullOrEmpty(filePath) && !string.IsNullOrEmpty(memberName))
+            {
+                name = Path.GetFileNameWithoutExtension(filePath) + "." + memberName;
+                if (!string.IsNullOrEmpty(subBlock)) name += subBlock;
+                name += ":" + lineNumber;
+            }
+            else
+            {
+                var type = (owner as Type) ?? owner?.GetType();
+                MethodBase mb = new StackFrame(1, false).GetMethod();
+                Debug.Assert(mb.DeclaringType != null, "mb.DeclaringType != null");
+                name = (type ?? mb.DeclaringType).FullName + "." + mb.Name;
+                if (name.StartsWith("AqlaSerializer.", StringComparison.Ordinal))
+                    name = name.Substring("AqlaSerializer.".Length);
+                if (name.StartsWith("Compiler.", StringComparison.Ordinal))
+                    name = name.Substring("Compiler.".Length);
+                if (name.StartsWith("Serializers.", StringComparison.Ordinal))
+                    name = name.Substring("Serializers.".Length);
+                if (!string.IsNullOrEmpty(subBlock)) name += subBlock;
+            }
+            return StartDebugBlock(name);
+#else
+            return null;
+#endif
+        }
+
+        public IDisposable StartDebugBlock(string name)
+        {
+#if DEBUG_COMPILE_2
+            int depth = _debugDepth++;
+            MarkDebug(new string('>', depth * 4) + "  {  " + name);
+            return new DisposableAction(
+                () =>
+                    {
+                        MarkDebug(new string('<', depth * 4) + "  }  " + name);
+                        _debugDepth--;
+                    });
+#else
+            return null;
+#endif
+        }
+
+        public void MarkDebug(string mark)
+        {
+#if DEBUG_COMPILE_2
+            LoadValue(new string('*', 300));
+            LoadValue(mark);
+            LoadValue(new string('*', 300));
+            DiscardValue();
+            DiscardValue();
+            DiscardValue();
+#endif
         }
 
         // TODO ensure valueFrom is reassigned everywhere

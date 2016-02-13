@@ -67,43 +67,50 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue { get { return Helpers.IsValueType(forType); } }
+
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.LoadAddress(valueFrom, ExpectedType);
-            ctx.LoadValue(field);
-            Tail.EmitWrite(ctx, null);
+            using (ctx.StartDebugBlockAuto(this, field.Name))
+            {
+                ctx.LoadAddress(valueFrom, ExpectedType);
+                ctx.LoadValue(field);
+                Tail.EmitWrite(ctx, null);
+            }
         }
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
-            using (Compiler.Local newVal = new Compiler.Local(ctx, field.FieldType))
+            using (ctx.StartDebugBlockAuto(this, field.Name))
             {
-                Compiler.Local valueForTail;
-                if (Tail.RequiresOldValue)
+                using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+                using (Compiler.Local newVal = new Compiler.Local(ctx, field.FieldType))
                 {
-                    ctx.LoadAddress(loc, ExpectedType);
-                    ctx.LoadValue(field);
-                    if (!Tail.EmitReadReturnsValue)
+                    Compiler.Local valueForTail;
+                    if (Tail.RequiresOldValue)
                     {
-                        ctx.StoreValue(newVal);
-                        valueForTail = newVal;
+                        ctx.LoadAddress(loc, ExpectedType);
+                        ctx.LoadValue(field);
+                        if (!Tail.EmitReadReturnsValue)
+                        {
+                            ctx.StoreValue(newVal);
+                            valueForTail = newVal;
+                        }
+                        else valueForTail = null; // on stack
                     }
-                    else valueForTail = null; // on stack
+                    else valueForTail = null;
+
+                    Tail.EmitRead(ctx, valueForTail);
+
+                    if (Tail.EmitReadReturnsValue)
+                        ctx.StoreValue(newVal);
+
+                    ctx.LoadAddress(loc, ExpectedType);
+                    ctx.LoadValue(newVal);
+                    ctx.StoreValue(field);
+
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(loc);
                 }
-                else valueForTail = null;
-
-                Tail.EmitRead(ctx, valueForTail);
-
-                if (Tail.EmitReadReturnsValue)
-                    ctx.StoreValue(newVal);
-
-                ctx.LoadAddress(loc, ExpectedType);
-                ctx.LoadValue(newVal);
-                ctx.StoreValue(field);
-
-                if (EmitReadReturnsValue)
-                    ctx.LoadValue(loc);
             }
         }
 #endif

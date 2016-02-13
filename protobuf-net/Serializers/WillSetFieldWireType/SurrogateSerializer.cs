@@ -157,45 +157,52 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public bool EmitReadReturnsValue { get { return false; } }
+
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            // TODO may be get rid of returning through stack? always require old value?
-            using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
-            using (Compiler.Local converted = new Compiler.Local(ctx, declaredType)) // declare/re-use local
-            using (Compiler.Local reservedTrap = new Compiler.Local(ctx, typeof(int)))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                var g = ctx.G;
+                // TODO may be get rid of returning through stack? always require old value?
+                using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
+                using (Compiler.Local converted = new Compiler.Local(ctx, declaredType)) // declare/re-use local
+                using (Compiler.Local reservedTrap = new Compiler.Local(ctx, typeof(int)))
+                {
+                    var g = ctx.G;
 
-                if (!ExpectedType.IsValueType)
-                    g.Assign(reservedTrap, g.ReaderFunc.ReserveNoteObject_int());
+                    if (!ExpectedType.IsValueType)
+                        g.Assign(reservedTrap, g.ReaderFunc.ReserveNoteObject_int());
 
-                ctx.LoadValue(value); // load primary onto stack
-                ctx.EmitCall(toTail); // static convert op, primary-to-surrogate
-                
-                ctx.StoreValue(converted); // store into surrogate local
+                    ctx.LoadValue(value); // load primary onto stack
+                    ctx.EmitCall(toTail); // static convert op, primary-to-surrogate
 
-                rootTail.EmitRead(ctx, rootTail.RequiresOldValue ? converted : null); // downstream processing against surrogate local
+                    ctx.StoreValue(converted); // store into surrogate local
 
-                if (rootTail.EmitReadReturnsValue)
-                    ctx.StoreValue(converted);
+                    rootTail.EmitRead(ctx, rootTail.RequiresOldValue ? converted : null); // downstream processing against surrogate local
 
-                ctx.LoadValue(converted); // load from surrogate local
-                ctx.EmitCall(fromTail); // static convert op, surrogate-to-primary
-                ctx.StoreValue(value); // store back into primary
+                    if (rootTail.EmitReadReturnsValue)
+                        ctx.StoreValue(converted);
 
-                if (!ExpectedType.IsValueType)
-                    g.Reader.NoteReservedTrappedObject(reservedTrap, value);
+                    ctx.LoadValue(converted); // load from surrogate local
+                    ctx.EmitCall(fromTail); // static convert op, surrogate-to-primary
+                    ctx.StoreValue(value); // store back into primary
 
-                if (!EmitReadReturnsValue)
-                    ctx.LoadValue(value);
+                    if (!ExpectedType.IsValueType)
+                        g.Reader.NoteReservedTrappedObject(reservedTrap, value);
+
+                    if (!EmitReadReturnsValue)
+                        ctx.LoadValue(value);
+                }
             }
         }
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.LoadValue(valueFrom);
-            ctx.EmitCall(toTail);
-            rootTail.EmitWrite(ctx, null);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.LoadValue(valueFrom);
+                ctx.EmitCall(toTail);
+                rootTail.EmitWrite(ctx, null);
+            }
         }
 #endif
     }

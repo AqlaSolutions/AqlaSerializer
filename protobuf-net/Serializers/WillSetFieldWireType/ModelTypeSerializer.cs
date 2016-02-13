@@ -69,26 +69,32 @@ namespace AqlaSerializer.Serializers
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (!EmitDedicatedMethod(ctx, valueFrom, false))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.LoadValue(valueFrom);
-                if (type.IsValueType) ctx.CastToObject(type);
-                ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
-                ctx.LoadReaderWriter();
-                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteRecursionSafeObject"));
+                if (!EmitDedicatedMethod(ctx, valueFrom, false))
+                {
+                    ctx.LoadValue(valueFrom);
+                    if (type.IsValueType) ctx.CastToObject(type);
+                    ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
+                    ctx.LoadReaderWriter();
+                    ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteRecursionSafeObject"));
+                }
             }
         }
 
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            if (!EmitDedicatedMethod(ctx, valueFrom, true))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.LoadValue(valueFrom);
-                if (type.IsValueType) ctx.CastToObject(type);
-                ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
-                ctx.LoadReaderWriter();
-                ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("ReadObject"));
-                ctx.CastFromObject(type);
+                if (!EmitDedicatedMethod(ctx, valueFrom, true))
+                {
+                    ctx.LoadValue(valueFrom);
+                    if (type.IsValueType) ctx.CastToObject(type);
+                    ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
+                    ctx.LoadReaderWriter();
+                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("ReadObject"));
+                    ctx.CastFromObject(type);
+                }
             }
         }
 #endif

@@ -59,28 +59,27 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-#if DEBUG_EMIT
-            ctx.LoadValue("WireType dec");
-            ctx.DiscardValue();
-#endif
-            ctx.LoadValue((int)_wireType);
-            ctx.LoadReaderWriter();
-            ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCompleteAnyType"));
-            Tail.EmitWrite(ctx, valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.LoadValue((int)_wireType);
+                ctx.LoadReaderWriter();
+                ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteFieldHeaderCompleteAnyType"));
+                Tail.EmitWrite(ctx, valueFrom);
+            }
         }
+
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
-#if DEBUG_EMIT
-            ctx.LoadValue("WireType dec");
-            ctx.DiscardValue();
-#endif
-            if (_strict || NeedsHint)
+            using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.LoadReaderWriter();
-                ctx.LoadValue((int)_wireType);
-                ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod(_strict ? "Assert" : "Hint"));
+                if (_strict || NeedsHint)
+                {
+                    ctx.LoadReaderWriter();
+                    ctx.LoadValue((int)_wireType);
+                    ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod(_strict ? "Assert" : "Hint"));
+                }
+                Tail.EmitRead(ctx, valueFrom);
             }
-            Tail.EmitRead(ctx, valueFrom);
         }
 #endif
         public override bool RequiresOldValue => Tail.RequiresOldValue;

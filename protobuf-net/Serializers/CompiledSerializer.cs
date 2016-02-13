@@ -68,12 +68,20 @@ namespace AqlaSerializer.Serializers
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            head.EmitWrite(ctx, valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                head.EmitWrite(ctx, valueFrom);
+            }
         }
+
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            head.EmitRead(ctx, valueFrom);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                head.EmitRead(ctx, valueFrom);
+            }
         }
+
         void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
         {
             head.EmitCallback(ctx, valueFrom, callbackType);

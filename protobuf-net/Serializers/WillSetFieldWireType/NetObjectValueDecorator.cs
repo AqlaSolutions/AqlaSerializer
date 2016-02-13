@@ -252,283 +252,298 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
         public bool EmitReadReturnsValue => true;
+
         public void EmitRead(CompilerContext ctx, Local valueFrom)
         {
-#if DEBUG_EMIT
-            ctx.LoadValue("Novdec ser");
-            ctx.DiscardValue();
-#endif
-            var g = ctx.G;
-            var s = g.StaticFactory;
-
-            //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
-
-            using (Local value = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(_type))
-            using (Local shouldEnd = ctx.Local(typeof(bool)))
-            using (Local isLateReference = ctx.Local(typeof(bool)))
-            using (Local newTypeRefKey = ctx.Local(typeof(int)))
-            using (Local typeKey = ctx.Local(typeof(int)))
-            using (Local type = ctx.Local(typeof(System.Type)))
-            using (Local newObjectKey = ctx.Local(typeof(int)))
-            using (Local isDynamic = ctx.Local(typeof(bool)))
-            using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
-            using (Local token = ctx.Local(typeof(SubItemToken)))
-            using (Local oldValueBoxed = ctx.Local(typeof(object)))
-            using (Local valueBoxed = ctx.Local(typeof(object)))
-            {
-                g.Assign(options, _options);
-                if (!RequiresOldValue)
-                    g.Assign(valueBoxed, null);
-                else
-                    g.Assign(valueBoxed, value); // box
-
-                g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_key));
-                g.Assign(type, _type);
-                g.Assign(
-                    token,
-                    s.Invoke(
-                        typeof(NetObjectHelpers),
-                        nameof(NetObjectHelpers.ReadNetObject_Start),
-                        valueBoxed,
-                        g.ArgReaderWriter(),
-                        type,
-                        options,
-                        isDynamic,
-                        isLateReference,
-                        typeKey,
-                        newObjectKey,
-                        newTypeRefKey,
-                        shouldEnd));
-
-                g.If(shouldEnd);
-                {
-                    g.Assign(oldValueBoxed, valueBoxed);
-
-                    // now valueBoxed is not null otherwise it would go to else
-
-                    g.If(typeKey.AsOperand >= 0);
-                    {
-                        var optionsWithoutLateSet = _options & ~BclHelpers.NetObjectOptions.LateSet;
-                        if (optionsWithoutLateSet != _options)
-                            g.Assign(options, optionsWithoutLateSet);
-                        if (_keySerializer != null)
-                        {
-                            g.If(typeKey.AsOperand == ctx.MapMetaKeyToCompiledKey(_key));
-                            {
-                                g.If(isLateReference);
-                                {
-                                    if (_lateReferenceTail == null)
-                                        g.ThrowProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
-                                    else
-                                        EmitReadTail(g, ctx, _lateReferenceTail, value, valueBoxed);
-                                }
-                                g.Else();
-                                {
-                                    EmitReadTail(g, ctx, _keySerializer, value, valueBoxed);
-                                }
-                                g.End();
-                            }
-                            g.Else();
-                            {
-                                g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
-                                g.Assign(value, valueBoxed.AsOperand.Cast(_type));
-                            }
-                            g.End();
-                        }
-                        else
-                        {
-                            g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
-                            g.Assign(value, valueBoxed.AsOperand.Cast(_type));
-                        }
-                    }
-                    g.Else();
-                    {
-                        g.If(isDynamic);
-                        {
-                            g.If(g.ReaderFunc.TryReadBuiltinType_bool(valueBoxed, g.HelpersFunc.GetTypeCode(type), true));
-                            {
-                                g.Assign(options, _options | BclHelpers.NetObjectOptions.LateSet);
-                                g.Assign(value, valueBoxed.AsOperand.Cast(_type));
-                            }
-                            g.Else();
-                            {
-                                g.ThrowProtoException("Dynamic type is not a contract-type: " + type.AsOperand.Property(nameof(Type.Name)));
-                            }
-                            g.End();
-                        }
-                        g.Else();
-                        {
-                            g.If(isLateReference);
-                            {
-                                if (_lateReferenceTail == null)
-                                    g.ThrowProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
-                                else
-                                    EmitReadTail(g, ctx, _lateReferenceTail, value, valueBoxed);
-                            }
-                            g.Else();
-                            {
-                                if (_tail == null)
-                                    g.ThrowProtoException("Dynamic type expected but no type info was read");
-                                else
-                                {
-                                    EmitReadTail(g, ctx, _tail, value, valueBoxed);
-                                }
-                            }
-                            g.End();
-                        }
-                        g.End();
-                    }
-                    g.End();
-
-                    g.Invoke(
-                        typeof(NetObjectHelpers),
-                        nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
-                        valueBoxed,
-                        g.ArgReaderWriter(),
-                        oldValueBoxed,
-                        type,
-                        newObjectKey,
-                        newTypeRefKey,
-                        options,
-                        token);
-                }
-                g.Else();
-                {
-                    if (Helpers.IsValueType(_type) && (EmitReadReturnsValue || RequiresOldValue))
-                    {
-                        g.If(valueBoxed.AsOperand == null);
-                        {
-                            // also nullable can just unbox from null or value
-                            // but anyway
-                            g.InitObj(value);
-                        }
-                        g.Else();
-                        {
-                            g.Assign(value, valueBoxed.AsOperand.Cast(_type));
-                        }
-                        g.End();
-                    }
-                    else
-                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
-
-                    g.Reader.EndSubItem(token);
-                }
-                g.End();
-
-                if (EmitReadReturnsValue)
-                    ctx.LoadValue(value);
-            }
-        }
-
-        static void EmitReadTail(SerializerCodeGen g, CompilerContext ctx, IProtoSerializerWithWireType ser, Local value, Local valueBoxed)
-        {
-            ser.EmitRead(ctx, ser.RequiresOldValue ? value : null);
-            if (ser.EmitReadReturnsValue)
-                g.Assign(value, g.GetStackValueOperand(ser.ExpectedType));
-            g.Assign(valueBoxed, value);
-        }
-
-        public void EmitWrite(CompilerContext ctx, Local valueFrom)
-        {
-#if DEBUG_EMIT
-            ctx.LoadValue("Novdec ser");
-            ctx.DiscardValue();
-#endif
-            bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0;
-            using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
+            using (ctx.StartDebugBlockAuto(this))
             {
                 var g = ctx.G;
-                using (Local write = ctx.Local(typeof(bool)))
-                using (Local dynamicTypeKey = ctx.Local(typeof(int)))
-                using (Local optionsLocal = canBeLateRef ? ctx.Local(typeof(BclHelpers.NetObjectOptions)):null)
+                var s = g.StaticFactory;
+
+                //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
+
+                using (Local value = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(_type))
+                using (Local shouldEnd = ctx.Local(typeof(bool)))
+                using (Local isLateReference = ctx.Local(typeof(bool)))
+                using (Local newTypeRefKey = ctx.Local(typeof(int)))
+                using (Local typeKey = ctx.Local(typeof(int)))
+                using (Local type = ctx.Local(typeof(System.Type)))
+                using (Local newObjectKey = ctx.Local(typeof(int)))
+                using (Local isDynamic = ctx.Local(typeof(bool)))
+                using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
                 using (Local token = ctx.Local(typeof(SubItemToken)))
+                using (Local oldValueBoxed = ctx.Local(typeof(object)))
+                using (Local valueBoxed = ctx.Local(typeof(object)))
                 {
-                    var s = g.StaticFactory;
-                    // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
+                    g.Assign(options, _options);
+                    if (!RequiresOldValue)
+                        g.Assign(valueBoxed, null);
+                    else
+                        g.Assign(valueBoxed, value); // box
 
-                    Operand options;
-                    if (canBeLateRef)
-                    {
-                        g.If(!g.WriterFunc.CheckIsOnHalfToRecursionDepthLimit_bool());
-                        {
-                            g.Assign(optionsLocal, _options & ~BclHelpers.NetObjectOptions.WriteAsLateReference);
-                        }
-                        g.Else();
-                        {
-                            g.Assign(optionsLocal, _options);
-                        }
-                        g.End();
-                        options = optionsLocal;
-                    }
-                    else options = _options;
-
+                    g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_key));
+                    g.Assign(type, _type);
                     g.Assign(
                         token,
-                        s.Invoke(ctx.MapType(typeof(NetObjectHelpers)), nameof(NetObjectHelpers.WriteNetObject_Start), value, g.ArgReaderWriter(), options, dynamicTypeKey, write));
-                    g.If(write);
+                        s.Invoke(
+                            typeof(NetObjectHelpers),
+                            nameof(NetObjectHelpers.ReadNetObject_Start),
+                            valueBoxed,
+                            g.ArgReaderWriter(),
+                            type,
+                            options,
+                            isDynamic,
+                            isLateReference,
+                            typeKey,
+                            newObjectKey,
+                            newTypeRefKey,
+                            shouldEnd));
+
+                    g.If(shouldEnd);
                     {
-                        // field header written!
-                        if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0)
+                        using (ctx.StartDebugBlockAuto(this, "ShouldEnd=True"))
                         {
-                            g.If(dynamicTypeKey.AsOperand < 0);
+                            g.Assign(oldValueBoxed, valueBoxed);
+
+                            // now valueBoxed is not null otherwise it would go to else
+
+                            g.If(typeKey.AsOperand >= 0);
                             {
-                                using (Local typeCode = ctx.Local(typeof(ProtoTypeCode)))
-                                using (Local wireType = ctx.Local(typeof(WireType)))
+                                var optionsWithoutLateSet = _options & ~BclHelpers.NetObjectOptions.LateSet;
+                                if (optionsWithoutLateSet != _options)
+                                    g.Assign(options, optionsWithoutLateSet);
+                                if (_keySerializer != null)
                                 {
-                                    g.Assign(typeCode, g.HelpersFunc.GetTypeCode(value.AsOperand.InvokeGetType()));
-                                    g.Assign(wireType, g.HelpersFunc.GetWireType(typeCode, _dataFormatForDynamicBuiltins));
-                                    g.If(wireType.AsOperand != WireType.None);
+                                    g.If(typeKey.AsOperand == ctx.MapMetaKeyToCompiledKey(_key));
                                     {
-                                        g.Writer.WriteFieldHeaderComplete(wireType);
-                                        g.If(!g.WriterFunc.TryWriteBuiltinTypeValue_bool(value, typeCode, true));
+                                        g.If(isLateReference);
                                         {
-                                            g.ThrowProtoException("Dynamic type is not a contract-type: " + value.AsOperand.InvokeGetType().Property("Name"));
+                                            if (_lateReferenceTail == null)
+                                                g.ThrowProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
+                                            else
+                                                EmitReadTail(g, ctx, _lateReferenceTail, value, valueBoxed);
+                                        }
+                                        g.Else();
+                                        {
+                                            EmitReadTail(g, ctx, _keySerializer, value, valueBoxed);
                                         }
                                         g.End();
                                     }
                                     g.Else();
                                     {
-                                        g.ThrowProtoException("Dynamic type is not a contract-type: " + value.AsOperand.InvokeGetType().Property("Name"));
+                                        g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
+                                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
                                     }
                                     g.End();
+                                }
+                                else
+                                {
+                                    g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
+                                    g.Assign(value, valueBoxed.AsOperand.Cast(_type));
                                 }
                             }
                             g.Else();
                             {
-                                g.Writer.WriteRecursionSafeObject(value, dynamicTypeKey);
+                                g.If(isDynamic);
+                                {
+                                    g.If(g.ReaderFunc.TryReadBuiltinType_bool(valueBoxed, g.HelpersFunc.GetTypeCode(type), true));
+                                    {
+                                        g.Assign(options, _options | BclHelpers.NetObjectOptions.LateSet);
+                                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                                    }
+                                    g.Else();
+                                    {
+                                        g.ThrowProtoException("Dynamic type is not a contract-type: " + type.AsOperand.Property(nameof(Type.Name)));
+                                    }
+                                    g.End();
+                                }
+                                g.Else();
+                                {
+                                    g.If(isLateReference);
+                                    {
+                                        if (_lateReferenceTail == null)
+                                            g.ThrowProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
+                                        else
+                                            EmitReadTail(g, ctx, _lateReferenceTail, value, valueBoxed);
+                                    }
+                                    g.Else();
+                                    {
+                                        if (_tail == null)
+                                            g.ThrowProtoException("Dynamic type expected but no type info was read");
+                                        else
+                                        {
+                                            EmitReadTail(g, ctx, _tail, value, valueBoxed);
+                                        }
+                                    }
+                                    g.End();
+                                }
+                                g.End();
+                            }
+                            g.End();
+
+                            g.Invoke(
+                                typeof(NetObjectHelpers),
+                                nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
+                                valueBoxed,
+                                g.ArgReaderWriter(),
+                                oldValueBoxed,
+                                type,
+                                newObjectKey,
+                                newTypeRefKey,
+                                options,
+                                token);
+                        }
+                    }
+                    g.Else();
+                    {
+                        if (Helpers.IsValueType(_type) && (EmitReadReturnsValue || RequiresOldValue))
+                        {
+                            g.If(valueBoxed.AsOperand == null);
+                            {
+                                // also nullable can just unbox from null or value
+                                // but anyway
+                                g.InitObj(value);
+                            }
+                            g.Else();
+                            {
+                                g.Assign(value, valueBoxed.AsOperand.Cast(_type));
                             }
                             g.End();
                         }
                         else
-                        {
-                            if (canBeLateRef)
-                            {
-                                g.If(optionsLocal.AsOperand == _options); // if not changed (now only one place) - write as ref
-                                {
-                                    _lateReferenceTail.EmitWrite(ctx, value);
-                                }
-                                g.Else();
-                            }
-                            if (_tail != null)
-                                _tail.EmitWrite(ctx, value);
-                            else if (_keySerializer != null)
-                            {
-                                Debug.Assert(_key >= 0);
-                                _keySerializer.EmitWrite(ctx, value);
-                            }
-                            else
-                            {
-                                Debug.Assert(_key >= 0);
-                                g.Writer.WriteRecursionSafeObject(value, ctx.MapMetaKeyToCompiledKey(_key));
-                            }
-                            if (canBeLateRef)
-                            {
-                                g.End();
-                            }
-                        }
+                            g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+
+                        g.Reader.EndSubItem(token);
                     }
                     g.End();
-                    g.Writer.EndSubItem(token);
+
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(value);
+                }
+            }
+        }
+
+        void EmitReadTail(SerializerCodeGen g, CompilerContext ctx, IProtoSerializerWithWireType ser, Local value, Local valueBoxed)
+        {
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ser.EmitRead(ctx, ser.RequiresOldValue ? value : null);
+                if (ser.EmitReadReturnsValue)
+                    g.Assign(value, g.GetStackValueOperand(ser.ExpectedType));
+                g.Assign(valueBoxed, value);
+            }
+        }
+
+        public void EmitWrite(CompilerContext ctx, Local valueFrom)
+        {
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0;
+                using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
+                {
+                    var g = ctx.G;
+                    using (Local write = ctx.Local(typeof(bool)))
+                    using (Local dynamicTypeKey = ctx.Local(typeof(int)))
+                    using (Local optionsLocal = canBeLateRef ? ctx.Local(typeof(BclHelpers.NetObjectOptions)) : null)
+                    using (Local token = ctx.Local(typeof(SubItemToken)))
+                    {
+                        var s = g.StaticFactory;
+                        // nullables: if null - will be boxed as null, if value - will be boxed as value, so don't worry about it
+
+                        Operand options;
+                        if (canBeLateRef)
+                        {
+                            g.If(!g.WriterFunc.CheckIsOnHalfToRecursionDepthLimit_bool());
+                            {
+                                g.Assign(optionsLocal, _options & ~BclHelpers.NetObjectOptions.WriteAsLateReference);
+                            }
+                            g.Else();
+                            {
+                                g.Assign(optionsLocal, _options);
+                            }
+                            g.End();
+                            options = optionsLocal;
+                        }
+                        else options = _options;
+
+                        g.Assign(
+                            token,
+                            s.Invoke(
+                                ctx.MapType(typeof(NetObjectHelpers)),
+                                nameof(NetObjectHelpers.WriteNetObject_Start),
+                                value,
+                                g.ArgReaderWriter(),
+                                options,
+                                dynamicTypeKey,
+                                write));
+                        g.If(write);
+                        {
+                            using (ctx.StartDebugBlockAuto(this, "Write=True"))
+                            {
+                                // field header written!
+                                if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0)
+                                {
+                                    g.If(dynamicTypeKey.AsOperand < 0);
+                                    {
+                                        using (Local typeCode = ctx.Local(typeof(ProtoTypeCode)))
+                                        using (Local wireType = ctx.Local(typeof(WireType)))
+                                        {
+                                            g.Assign(typeCode, g.HelpersFunc.GetTypeCode(value.AsOperand.InvokeGetType()));
+                                            g.Assign(wireType, g.HelpersFunc.GetWireType(typeCode, _dataFormatForDynamicBuiltins));
+                                            g.If(wireType.AsOperand != WireType.None);
+                                            {
+                                                g.Writer.WriteFieldHeaderComplete(wireType);
+                                                g.If(!g.WriterFunc.TryWriteBuiltinTypeValue_bool(value, typeCode, true));
+                                                {
+                                                    g.ThrowProtoException("Dynamic type is not a contract-type: " + value.AsOperand.InvokeGetType().Property("Name"));
+                                                }
+                                                g.End();
+                                            }
+                                            g.Else();
+                                            {
+                                                g.ThrowProtoException("Dynamic type is not a contract-type: " + value.AsOperand.InvokeGetType().Property("Name"));
+                                            }
+                                            g.End();
+                                        }
+                                    }
+                                    g.Else();
+                                    {
+                                        g.Writer.WriteRecursionSafeObject(value, dynamicTypeKey);
+                                    }
+                                    g.End();
+                                }
+                                else
+                                {
+                                    if (canBeLateRef)
+                                    {
+                                        g.If(optionsLocal.AsOperand == _options); // if not changed (now only one place) - write as ref
+                                        {
+                                            _lateReferenceTail.EmitWrite(ctx, value);
+                                        }
+                                        g.Else();
+                                    }
+                                    if (_tail != null)
+                                        _tail.EmitWrite(ctx, value);
+                                    else if (_keySerializer != null)
+                                    {
+                                        Debug.Assert(_key >= 0);
+                                        _keySerializer.EmitWrite(ctx, value);
+                                    }
+                                    else
+                                    {
+                                        Debug.Assert(_key >= 0);
+                                        g.Writer.WriteRecursionSafeObject(value, ctx.MapMetaKeyToCompiledKey(_key));
+                                    }
+                                    if (canBeLateRef)
+                                    {
+                                        g.End();
+                                    }
+                                }
+                            }
+                        }
+                        g.End();
+                        g.Writer.EndSubItem(token);
+                    }
                 }
             }
         }

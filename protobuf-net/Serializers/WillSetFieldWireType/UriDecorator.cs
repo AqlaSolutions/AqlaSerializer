@@ -50,24 +50,31 @@ namespace AqlaSerializer.Serializers
         public override bool EmitReadReturnsValue { get { return true; } }
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            ctx.LoadValue(valueFrom);
-            ctx.LoadValue(typeof(Uri).GetProperty("AbsoluteUri"));
-            Tail.EmitWrite(ctx, null);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                ctx.LoadValue(valueFrom);
+                ctx.LoadValue(typeof(Uri).GetProperty("AbsoluteUri"));
+                Tail.EmitWrite(ctx, null);
+            }
         }
+
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            Tail.EmitRead(ctx, valueFrom);
-            ctx.CopyValue();
-            Compiler.CodeLabel @nonEmpty = ctx.DefineLabel(), @end = ctx.DefineLabel();
-            ctx.LoadValue(typeof(string).GetProperty("Length"));
-            ctx.BranchIfTrue(@nonEmpty, true);
-            ctx.DiscardValue();
-            ctx.LoadNullRef();
-            ctx.Branch(@end, true);
-            ctx.MarkLabel(@nonEmpty);
-            ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)));
-            ctx.MarkLabel(@end);
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                Tail.EmitRead(ctx, valueFrom);
+                ctx.CopyValue();
+                Compiler.CodeLabel @nonEmpty = ctx.DefineLabel(), @end = ctx.DefineLabel();
+                ctx.LoadValue(typeof(string).GetProperty("Length"));
+                ctx.BranchIfTrue(@nonEmpty, true);
+                ctx.DiscardValue();
+                ctx.LoadNullRef();
+                ctx.Branch(@end, true);
+                ctx.MarkLabel(@nonEmpty);
+                ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)));
+                ctx.MarkLabel(@end);
 
+            }
         }
 #endif
     }
