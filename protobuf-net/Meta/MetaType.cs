@@ -398,10 +398,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public string Name
         {
-            get
-            {
-                return name;
-            }
+            get { return !string.IsNullOrEmpty(name) ? name : Type.Name; }
             set
             {
                 ThrowIfFrozen();

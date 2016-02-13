@@ -39,7 +39,9 @@ namespace AqlaSerializer.unittest
                 if (ok)
                 {
                     Assert.AreEqual(exitCode, proc.ExitCode, path + "\r\n" + output);
+#if !DEBUG_COMPILE && !DEBUG_COMPILE_2
                     if (deleteOnSuccess) File.Delete(path);
+#endif
                 }
                 else
                 {
