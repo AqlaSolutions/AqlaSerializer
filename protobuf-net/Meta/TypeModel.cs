@@ -891,8 +891,9 @@ namespace AqlaSerializer.Meta
         public static RuntimeTypeModel Create(bool newestBehavior, ProtoCompatibilitySettings protoCompatibility)
         {
             var r = new RuntimeTypeModel(false, protoCompatibility);
-            // TODO temporary:
+#if FEAT_COMPILER && FORCE_AUTOCOMPILE
             r.AutoCompile = true;
+#endif
             if (newestBehavior)
             {
                 r.AlwaysUseTypeRegistrationForCollections = true;
@@ -902,9 +903,9 @@ namespace AqlaSerializer.Meta
         }
 #endif
 
-        /// <summary>
-        /// Applies common proxy scenarios, resolving the actual type to consider
-        /// </summary>
+            /// <summary>
+            /// Applies common proxy scenarios, resolving the actual type to consider
+            /// </summary>
         protected internal static Type ResolveProxies(Type type)
         {
             if (type == null) return null;

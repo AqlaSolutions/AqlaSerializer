@@ -4,10 +4,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 #if FEAT_COMPILER
+using TriAxis.RunSharp;
 using AqlaSerializer.Compiler;
 #endif
 using AqlaSerializer.Meta;
-using TriAxis.RunSharp;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
