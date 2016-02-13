@@ -585,7 +585,8 @@ namespace AqlaSerializer.Compiler
                 _action?.Invoke();
             }
         }
-        
+
+        Local _debugLocal;
         int _debugDepth;
 
         public IDisposable StartDebugBlockAuto(object owner, string subBlock = null, [CallerFilePath] string filePath = null, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber=0)
@@ -632,11 +633,11 @@ namespace AqlaSerializer.Compiler
         {
 #if DEBUG_COMPILE_2
             int depth = _debugDepth++;
-            MarkDebug(new string('>', depth * 4) + "  {  " + name);
+            MarkDebug(new string('>', depth * 4) + "  {  " + name, true);
             return new DisposableAction(
                 () =>
                     {
-                        MarkDebug(new string('<', depth * 4) + "  }  " + name);
+                        MarkDebug(new string('<', depth * 4) + "  }  " + name, true);
                         _debugDepth--;
                     });
 #else
@@ -644,15 +645,27 @@ namespace AqlaSerializer.Compiler
 #endif
         }
 
-        public void MarkDebug(string mark)
+        public void MarkDebug(string mark, bool strong = false)
         {
 #if DEBUG_COMPILE_2
-            LoadValue(new string('*', 300));
-            LoadValue(mark);
-            LoadValue(new string('*', 300));
-            DiscardValue();
-            DiscardValue();
-            DiscardValue();
+            if (_debugLocal.IsNullRef())
+                _debugLocal = Local(typeof(string));
+
+            if (strong)
+            {
+                LoadValue(new string('*', 300));
+                LoadValue(mark);
+                //LoadValue(new string('*', 300));
+                //DiscardValue();
+                StoreValue(_debugLocal);
+                DiscardValue();
+            }
+            else
+            {
+                LoadValue(mark);
+                StoreValue(_debugLocal);
+            }
+            
 #endif
         }
 

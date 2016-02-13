@@ -203,9 +203,17 @@ namespace AqlaSerializer.Serializers
 
         public void EmitTryRead(SerializerCodeGen g, Local oldValue, MetaType metaType, Action<MetaType> returnGen)
         {
-            using (g.ctx.StartDebugBlockAuto(this))
+            Debug.Assert(metaType != null);
+            using (g.ctx.StartDebugBlockAuto(this, metaType.Name))
             using (var fieldNumber = new Local(g.ctx, typeof(int)))
             {
+                var jumpOut = g.DefineLabel();
+                returnGen += mt =>
+                    {
+                        g.ctx.MarkDebug("// jump out of SubTypeHelpers.EmitTryRead");
+                        g.Goto(jumpOut);
+                    };
+                
                 EmitTryRead(
                     g,
                     fieldNumber,
@@ -227,11 +235,13 @@ namespace AqlaSerializer.Serializers
                             }
                             returnGen(r);
                         });
+                g.MarkLabel(jumpOut);
             }
         }
 
         void EmitTryRead(SerializerCodeGen g, Local fieldNumber, MetaType metaType, int recursionLevel, Action<MetaType> returnGen)
         {
+            Debug.Assert(metaType != null);
             using (g.ctx.StartDebugBlockAuto(this, metaType.Name + ", level = " + recursionLevel))
             {
                 SubType[] subTypes = metaType.GetSubtypes();
@@ -278,21 +288,36 @@ namespace AqlaSerializer.Serializers
 
         void EmitTryRead_GenSwitch(SerializerCodeGen g, Local fieldNumber, MetaType metaType, SubType[] subTypes, Action<MetaType> returnGen)
         {
-            // may be optimized to check -1
-            g.Switch(fieldNumber);
+            using (g.ctx.StartDebugBlockAuto(this))
             {
-                foreach (var subType in subTypes)
+                if (subTypes.Length == 0)
                 {
-                    g.Case(subType.FieldNumber);
-                    returnGen(subType.DerivedType);
-                    g.Break();
+                    returnGen(metaType);
+                    return;
                 }
 
-                g.DefaultCase();
-                returnGen(metaType);
-                g.Break();
+                // may be optimized to check -1
+                g.ctx.MarkDebug("// Start of switch");
+                g.Switch(fieldNumber);
+                {
+                    foreach (var subType in subTypes)
+                    {
+                        g.ctx.MarkDebug("// Switch case");
+                        g.Case(subType.FieldNumber);
+                        returnGen(subType.DerivedType);
+                        g.ctx.MarkDebug("// Switch case - break");
+                        g.Break();
+                    }
+
+                    g.ctx.MarkDebug("// Default switch case");
+                    g.DefaultCase();
+                    returnGen(metaType);
+                    g.ctx.MarkDebug("// Default switch case - break");
+                    g.Break();
+                }
+                g.ctx.MarkDebug("// End of switch");
+                g.End();
             }
-            g.End();
         }
 #endif
     }

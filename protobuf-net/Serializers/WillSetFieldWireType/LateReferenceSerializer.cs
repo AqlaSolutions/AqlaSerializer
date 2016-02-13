@@ -91,23 +91,27 @@ namespace AqlaSerializer.Serializers
                         _model[_typeKey],
                         r =>
                             {
-                                if (r == null)
+                                using (ctx.StartDebugBlockAuto(this, "returnGen"))
                                 {
-                                    g.If(value.AsOperand == null);
+                                    if (r == null)
                                     {
-                                        g.ThrowProtoException(CantCreateInstanceMessage);
+                                        g.If(value.AsOperand == null);
+                                        {
+                                            g.ThrowProtoException(CantCreateInstanceMessage);
+                                        }
+                                        g.End();
                                     }
-                                    g.End();
+                                    else
+                                    {
+                                        r.Serializer.EmitCreateInstance(ctx);
+                                        ctx.StoreValue(value);
+                                    }
+                                    g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
                                 }
-                                else
-                                {
-                                    r.Serializer.EmitCreateInstance(ctx);
-                                    ctx.StoreValue(value);
-                                }
-                                g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
-                                if (EmitReadReturnsValue)
-                                    ctx.LoadValue(value);
                             });
+
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(value);
                 }
             }
         }
