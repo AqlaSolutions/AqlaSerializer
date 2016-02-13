@@ -586,7 +586,6 @@ namespace AqlaSerializer.Compiler
             }
         }
 
-        Local _debugLocal;
         int _debugDepth;
 
         public IDisposable StartDebugBlockAuto(object owner, string subBlock = null, [CallerFilePath] string filePath = null, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber=0)
@@ -648,24 +647,17 @@ namespace AqlaSerializer.Compiler
         public void MarkDebug(string mark, bool strong = false)
         {
 #if DEBUG_COMPILE_2
-            if (_debugLocal.IsNullRef())
-                _debugLocal = Local(typeof(string));
-
             if (strong)
             {
                 LoadValue(new string('*', 300));
-                LoadValue(mark);
-                //LoadValue(new string('*', 300));
-                //DiscardValue();
-                StoreValue(_debugLocal);
+                G.Invoke(typeof(Debug), "WriteLine", mark);
                 DiscardValue();
             }
             else
             {
-                LoadValue(mark);
-                StoreValue(_debugLocal);
+                G.Invoke(typeof(Debug), "WriteLine", mark);
             }
-            
+
 #endif
         }
 
