@@ -64,15 +64,7 @@ namespace AqlaSerializer.Meta
         /// <remarks>An in-place compile can access non-public types / members</remarks>
         public void CompileInPlace()
         {
-            // should prepare all serializers (not one) before compiling any
-            int code = 0;
-            foreach (MetaType type in types)
-            {
-                // not optimize
-                code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
-            }
-            // not optimize
-            code.GetHashCode();
+            BuildAllSerializers();
             foreach (MetaType type in types)
             {
                 type.CompileInPlace();
@@ -194,6 +186,14 @@ namespace AqlaSerializer.Meta
         /// <returns>An instance of the newly created compiled type-model</returns>
         public TypeModel Compile()
         {
+#if DEBUG
+            if (ValidateDll != null)
+            {
+                var r = Compile("AutoCompile", "AutoCompile.dll");
+                RaiseValidateDll("AutoCompile.dll");
+                return r;
+            }
+#endif
             return Compile(null, null);
         }
 
@@ -361,13 +361,8 @@ namespace AqlaSerializer.Meta
         /// <returns>An instance of the newly created compiled type-model</returns>
         public TypeModel Compile(string name, string path)
         {
-            // should prepare all serializers (not one) before compiling any
-            int code = 0;
-            foreach (MetaType type in types)
-            {
-                code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
-            }
 #if FAKE_COMPILE
+            BuildAllSerializers();
             return this;
 #endif
             CompilerOptions options = new CompilerOptions();
@@ -388,6 +383,7 @@ namespace AqlaSerializer.Meta
             string typeName = options.TypeName;
             string path = options.OutputPath;
             BuildAllSerializers();
+            CompileInPlace();
             Freeze();
             bool save = !Helpers.IsNullOrEmpty(path);
             if (Helpers.IsNullOrEmpty(typeName))

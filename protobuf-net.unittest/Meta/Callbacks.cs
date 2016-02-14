@@ -112,6 +112,7 @@ namespace AqlaSerializer.unittest.Meta
         private static RuntimeTypeModel BuildModel()
         {
             var model = TypeModel.Create();
+            model.SkipCompiledVsNotCheck = true;
             model.Add(typeof(A), false).Add(2, "AValue").SetCallbacks("OnSerializing", "OnSerialized", "OnDeserializing", "OnDeserialized").UseConstructor = false;
             model.Add(typeof(B), false).Add(2, "BValue").SetCallbacks("OnSerializing", "OnSerialized", "OnDeserializing", "OnDeserialized").UseConstructor = false;
             model.Add(typeof(C), false).Add(2, "CValue").SetCallbacks("OnSerializing", "OnSerialized", "OnDeserializing", "OnDeserialized").UseConstructor = false;

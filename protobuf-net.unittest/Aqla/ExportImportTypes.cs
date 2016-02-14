@@ -70,11 +70,12 @@ namespace AqlaSerializer.unittest.Aqla
             Check(false);
             Check(true);
         }
-
-
+        
         [Test]
         public void ShouldWorkForAssembly()
         {
+            _model.Add(typeof(TestSurrogate), true);
+            _model.Add(typeof(Aqla.Test), false).SetSurrogate(typeof(TestSurrogate));
             _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
             Check(false);
             Check(true);

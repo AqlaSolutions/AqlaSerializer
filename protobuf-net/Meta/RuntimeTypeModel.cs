@@ -538,7 +538,7 @@ namespace AqlaSerializer.Meta
         public bool AlwaysUseTypeRegistrationForCollections { get; set; }
 
         /// <summary>
-        /// Adds all types inside the specified assembly
+        /// Adds all types inside the specified assembly. Surrogates are not detected automatically, set surrogates before calling this!
         /// </summary>
         public void Add(Assembly assembly, bool recognizableOnly, bool nonPublic, bool applyDefaultBehavior)
         {
@@ -847,6 +847,8 @@ namespace AqlaSerializer.Meta
 
         internal static event Action<string> ValidateDll;
 
+        internal bool SkipCompiledVsNotCheck { get; set; }
+
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream.
         /// </summary>
@@ -867,13 +869,19 @@ namespace AqlaSerializer.Meta
             ser.Write(value, dest);
 
 #if CHECK_COMPILED_VS_NOT
-            if (value.GetType().IsPublic && (isRoot || ProtoWriter.GetPosition(dest) == 0))
+            if (!SkipCompiledVsNotCheck && value.GetType().IsPublic && (isRoot || ProtoWriter.GetPosition(dest) == 0))
             {
                 bool compiled = IsFrozen || metaType.IsFrozen;
                 var rtm = CloneAsUnfrozen();
+                bool canCompileDll = types.Cast<MetaType>().All(t => t.Type.IsPublic);
                 if (!compiled)
-                    CompileForCheckAndValidate(rtm);
-                else
+                {
+                    if (canCompileDll)
+                        CompileForCheckAndValidate(rtm);
+                    else
+                        rtm[key].CompileInPlace();
+                }
+                else if (canCompileDll)
                 {
                     rtm.AutoCompile = false;
                     // still need to validate
@@ -950,13 +958,19 @@ namespace AqlaSerializer.Meta
                 result = ser.Read(value, source);
 
 #if CHECK_COMPILED_VS_NOT
-            if ((result == null || result.GetType().IsPublic) && (isRoot || source.Position == 0))
+            if (!SkipCompiledVsNotCheck && (result == null || result.GetType().IsPublic) && (isRoot || source.Position == 0))
             {
                 bool compiled = IsFrozen || metaType.IsFrozen;
                 var rtm = CloneAsUnfrozen();
+                bool canBeCompiled = types.Cast<MetaType>().All(t => t.Type.IsPublic);
                 if (!compiled)
-                    CompileForCheckAndValidate(rtm);
-                else
+                {
+                    if (canBeCompiled)
+                        CompileForCheckAndValidate(rtm);
+                     else 
+                        rtm[key].CompileInPlace();
+                }
+                else if (canBeCompiled)
                 {
                     // still need to validate
                     if (string.IsNullOrEmpty(_compiledToPath))
@@ -1003,14 +1017,17 @@ namespace AqlaSerializer.Meta
             rtm.Compile(name, name + ".dll");
             RaiseValidateDll(name);
         }
+#endif
 
         static void RaiseValidateDll(string name)
         {
-
+#if CHECK_COMPILED_VS_NOT
             if (ValidateDll == null) throw new InvalidOperationException("For CHECK_COMPILED_VS_NOT ValidateDll event should be subscribed to");
+#else
+            if (ValidateDll == null) return;
+#endif
             ValidateDll(name);
         }
-#endif
 
 #if !FEAT_IKVM
         private object CreateInstance(IProtoSerializer ser, ProtoReader source)

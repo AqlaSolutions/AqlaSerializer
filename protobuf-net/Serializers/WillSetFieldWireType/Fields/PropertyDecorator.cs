@@ -140,7 +140,7 @@ namespace AqlaSerializer.Serializers
                 using (Compiler.Local newVal = new Compiler.Local(ctx, property.PropertyType))
                 {
                     Compiler.Local valueForTail = null;
-                    if (Tail.RequiresOldValue || canSet)
+                    if (Tail.RequiresOldValue)
                     {
                         ctx.LoadAddress(loc, ExpectedType);
                         ctx.LoadValue(property);
