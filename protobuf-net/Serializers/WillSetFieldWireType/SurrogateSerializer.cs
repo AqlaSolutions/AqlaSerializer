@@ -143,14 +143,19 @@ namespace AqlaSerializer.Serializers
 
         public object Read(object value, ProtoReader source)
         {
-            var reservedTrap = ProtoReader.ReserveNoteObject(source);
+            int reservedTrap = -1;
+
+            if (!ExpectedType.IsValueType)
+                reservedTrap = ProtoReader.ReserveNoteObject(source);
             // convert the incoming value
             object[] args = { value };
             value = toTail.Invoke(null, args); // don't note, references are not to surrogate but to the final object
             // invoke the tail and convert the outgoing value
             args[0] = rootTail.Read(value, source);
             var r = fromTail.Invoke(null, args);
-            ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
+
+            if (!ExpectedType.IsValueType)
+                ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
             return r;
         }
 #endif
@@ -189,7 +194,7 @@ namespace AqlaSerializer.Serializers
                     if (!ExpectedType.IsValueType)
                         g.Reader.NoteReservedTrappedObject(reservedTrap, value);
 
-                    if (!EmitReadReturnsValue)
+                    if (EmitReadReturnsValue)
                         ctx.LoadValue(value);
                 }
             }

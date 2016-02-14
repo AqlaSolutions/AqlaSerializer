@@ -70,6 +70,8 @@ namespace Examples
         {
             var m = TypeModel.Create();
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));
+            m.Compile("BigArray32BitTest", "BigArray32BitTest.dll");
+            PEVerify.AssertValid("BigArray32BitTest.dll");
             const string fileName = "BigArray32BitTest.bin";
             TestClone(fileName, count, m);
             File.Delete(fileName);

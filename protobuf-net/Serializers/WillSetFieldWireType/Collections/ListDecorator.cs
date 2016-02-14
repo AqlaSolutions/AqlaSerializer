@@ -326,9 +326,16 @@ namespace AqlaSerializer.Serializers
                         },
                     v =>
                         {
+                            // TODO do null checks without allowing user == operators!
                             using (ctx.StartDebugBlockAuto(this, "add"))
                             {
-                                g.ctx.MarkDebug("adding " + v.AsOperand.InvokeToString());
+#if DEBUG_COMPILE_2
+                                g.If(v.AsOperand != null);
+                                {
+                                    g.ctx.MarkDebug("adding " + v.AsOperand.InvokeToString());
+                                }
+                                g.End();
+#endif
                                 g.ctx.MarkDebug("count before: " + value.AsOperand.Property("Count"));
                                 if (asList)
                                 {

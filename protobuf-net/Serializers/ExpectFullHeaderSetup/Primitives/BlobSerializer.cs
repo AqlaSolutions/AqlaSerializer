@@ -64,7 +64,7 @@ namespace AqlaSerializer.Serializers
             {
                 var g = ctx.G;
                 using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom)) // overwriteList ? null : value
-                using (var result = value?.AsCopy() ?? ctx.Local(ExpectedType))
+                using (var result = ctx.Local(ExpectedType))
                 {
                     g.Assign(result, g.ReaderFunc.AppendBytes(value));
                     if (!value.IsNullRef()) g.If(value.AsOperand == null);
