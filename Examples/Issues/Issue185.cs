@@ -98,7 +98,9 @@ namespace Examples.Issues
             c.PopulateRun();
 
             Test(m, c, "Runtime");
-            m.CompileInPlace();
+            m.Compile("ExecuteWithSubType", "ExecuteWithSubType.dll");
+            PEVerify.AssertValid("ExecuteWithSubType.dll");
+            //m.CompileInPlace();
             Test(m, c, "CompileInPlace");
             Test(m.Compile(), c, "Compile");
         }

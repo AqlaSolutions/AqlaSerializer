@@ -156,7 +156,10 @@ namespace AqlaSerializer.Serializers
                     {
                         ctx.MarkLabel(onNull);
                         if (_throwIfNull)
+                        {
                             ctx.G.ThrowNullReferenceException();
+                            ctx.G.ForceResetUnreachableState();
+                        }
                         else
                             ctx.G.Writer.WriteFieldHeaderCancelBegin();
                     }
