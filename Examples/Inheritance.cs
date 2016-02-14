@@ -52,14 +52,14 @@ namespace Examples
     
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(2, typeof(Bar))]
-    class Foo
+    public class Foo
     {
         [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
     }
 
     [ProtoBuf.ProtoContract]
-    class Bar : Foo
+    public class Bar : Foo
     {
 
     }

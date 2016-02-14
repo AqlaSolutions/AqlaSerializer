@@ -2,17 +2,17 @@
 namespace System.Runtime.CompilerServices
 {
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    class CallerMemberNameAttribute : Attribute
+    public class CallerMemberNameAttribute : Attribute
     {
     }
 
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    class CallerFilePathAttribute : Attribute
+    public class CallerFilePathAttribute : Attribute
     {
     }
 
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    class CallerLineNumberAttribute : Attribute
+    public class CallerLineNumberAttribute : Attribute
     {
     }
 }

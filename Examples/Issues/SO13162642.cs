@@ -65,7 +65,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class DTO
+        public class DTO
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public byte[] Data { get; set; }

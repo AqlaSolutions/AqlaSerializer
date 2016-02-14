@@ -20,21 +20,21 @@ namespace Examples
     }
 
     [DataContract]
-    class DMO_First
+    public class DMO_First
     {
         [DataMember(Order = 5)]
         public int Foo { get; set; }
     }
     [DataContract]
     [ProtoBuf.ProtoContract(DataMemberOffset = 2)]
-    class DMO_Second
+    public class DMO_Second
     {
         [DataMember(Order = 3)]
         public int Bar { get; set; }
     }
 
     [DataContract, ProtoBuf.ProtoContract]
-    class TypeWithProtosAndDataContract_UseAny
+    public class TypeWithProtosAndDataContract_UseAny
     {
         [ProtoBuf.ProtoMember(1)]
         public int Foo { get; set; }
@@ -42,7 +42,7 @@ namespace Examples
         public int Bar { get; set; }
     }
     [DataContract, ProtoBuf.ProtoContract(UseProtoMembersOnly=true)]
-    class TypeWithProtosAndDataContract_UseProtoOnly
+    public class TypeWithProtosAndDataContract_UseProtoOnly
     {
         [ProtoBuf.ProtoMember(1)]
         public int Foo { get; set; }

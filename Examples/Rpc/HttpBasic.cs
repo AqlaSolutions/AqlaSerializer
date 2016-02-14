@@ -12,10 +12,10 @@
 //namespace Examples.Rpc
 //{
 //    [ProtoBuf.ProtoContract]
-//    class TestRequest {
+//    public class TestRequest {
 //        [ProtoBuf.ProtoMember(1)] public int RequestBody { get; set; }
 //    }
-//    [ProtoBuf.ProtoContract] class TestResponse {
+//    [ProtoBuf.ProtoContract] public class TestResponse {
 //        [ProtoBuf.ProtoMember(1)] public int ResponseBody { get; set; }
 //    }
 //    interface IBasicService
@@ -27,7 +27,7 @@
 
 //        int Test(int inOnly, ref int inOut, out int outOnly);
 //    }
-//    class BasicService : IBasicService
+//    public class BasicService : IBasicService
 //    {
 //        public DAL.Database TestMethod(DAL.Database request)
 //        {
@@ -43,7 +43,7 @@
 //        }
 //    }
 
-//    class BasicServiceHttpClient : ProtoClient<IBasicService>, IBasicService
+//    public class BasicServiceHttpClient : ProtoClient<IBasicService>, IBasicService
 //    {
 //        public BasicServiceHttpClient() : base(HttpBasic.ViaHttp()) { }
 //        public void Ping() { }
@@ -123,7 +123,7 @@
 //        internal static ITransport ViaHttp() {
 //            return new HttpBasicTransport(HTTP_PREFIX);
 //        }
-//        static ProtoClient<T> ClientViaHttp<T>() where T : class {
+//        static ProtoClient<T> ClientViaHttp<T>() where T : public class {
 //            return new ProtoClient<T>(
 //                ViaHttp());
 //        }
@@ -133,7 +133,7 @@
 //        {
 //            new ProtoClient<IBasicService>(null);
 //        }
-//        class NotAContract { }
+//        public class NotAContract { }
 //        [Test, ExpectedException(typeof(ArgumentException))]
 //        public void TestNotAContract() {
 //            new ProtoClient<NotAContract>(ViaHttp());

@@ -13,7 +13,7 @@ namespace Examples.Issues
     public class SO6230449
     {
         [ProtoBuf.ProtoContract]
-        class Foo
+        public class Foo
         {
             [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }

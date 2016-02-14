@@ -40,7 +40,7 @@ namespace Examples.Issues
             Assert.AreEqual("prop1=prop1, prop2=prop2", hb.ToString());
             Assert.AreEqual("prop1=prop1, prop2=prop2", flatB.ToString());
         }
-        class hierarchy
+        public class hierarchy
         {
 
             [ProtoBuf.ProtoContract]
@@ -68,7 +68,7 @@ namespace Examples.Issues
             }
         }
 
-        class flat
+        public class flat
         {
             [ProtoBuf.ProtoContract]
             public class B

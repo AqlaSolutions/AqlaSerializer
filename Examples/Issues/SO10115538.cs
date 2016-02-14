@@ -163,7 +163,7 @@ namespace Examples.Issues
             #endregion
         }
          /// <summary>
-        /// This class represents a user in the system.  For example, a user could be a member or a merchant user.
+        /// This public class represents a user in the system.  For example, a user could be a member or a merchant user.
         /// </summary>
         [DataContract]
         [Serializable]
@@ -186,10 +186,10 @@ namespace Examples.Issues
 
             }
         /// <summary>
-        /// This is the base class for all entities involved in the request/response pattern of our services
+        /// This is the base public class for all entities involved in the request/response pattern of our services
         /// </summary>
         /// <remarks>
-        /// The objects derived from this class are used to transfer data from our service classes to our UIs and back again and they should 
+        /// The objects derived from this public class are used to transfer data from our service classes to our UIs and back again and they should 
         /// not contain any logic.
         /// </remarks>
         [DataContract]
@@ -272,7 +272,7 @@ namespace Examples.Issues
 
 
             /// <summary>
-            /// Flag to say if the id generated for this class need to be int64 in size.
+            /// Flag to say if the id generated for this public class need to be int64 in size.
             /// </summary>
             [DataMember(Order = 9)]
             public bool IdRequiresInt64 { get; protected set; }

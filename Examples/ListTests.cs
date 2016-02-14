@@ -13,13 +13,13 @@ using Serializer = AqlaSerializer.Serializer;
 namespace Examples
 {
     [ProtoBuf.ProtoContract]
-    class Entity
+    public class Entity
     {
         [ProtoBuf.ProtoMember(1)]
         public string Foo { get; set; }
     }
 
-    class CustomEnumerable : IEnumerable<int>
+    public class CustomEnumerable : IEnumerable<int>
     {
         private readonly List<int> items = new List<int>();
         IEnumerator<int> IEnumerable<int>.GetEnumerator() { return items.GetEnumerator(); }
@@ -27,7 +27,7 @@ namespace Examples
         public void Add(int value) { items.Add(value); }
     }
     [ProtoBuf.ProtoContract]
-    class EntityWithPackedInts
+    public class EntityWithPackedInts
     {
         public void ClearList()
         {
@@ -47,7 +47,7 @@ namespace Examples
         public CustomEnumerable Custom { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class EntityWithUnpackedInts
+    public class EntityWithUnpackedInts
     {
         public EntityWithUnpackedInts() { Items = new List<int>(); }
         [ProtoBuf.ProtoMember(1)]
@@ -63,7 +63,7 @@ namespace Examples
         public CustomEnumerable Custom { get; set; }
     }
 
-    class MyList : List<Entity> { }
+    public class MyList : List<Entity> { }
 
     [TestFixture]
     public class ListTests
@@ -376,7 +376,7 @@ namespace Examples
         }
 
         [ProtoBuf.ProtoContract]
-        class DictionaryTestEntity
+        public class DictionaryTestEntity
         {
             public DictionaryTestEntity() {
                 Stuff = new CustomBox();
@@ -389,7 +389,7 @@ namespace Examples
         }
 
 
-        class CustomBox : Dictionary<string, CompositeType>
+        public class CustomBox : Dictionary<string, CompositeType>
         {
             
         } 
@@ -398,7 +398,7 @@ namespace Examples
         [ProtoBuf.ProtoInclude(1, typeof(CompositeType<int>))]
         [ProtoBuf.ProtoInclude(2, typeof(CompositeType<DateTime>))]
         [ProtoBuf.ProtoInclude(3, typeof(CompositeType<string>))]
-        abstract class CompositeType
+        abstract public class CompositeType
         {
             public static CompositeType<T> Create<T>(T value)
             {
@@ -413,7 +413,7 @@ namespace Examples
             }
         }
         [ProtoBuf.ProtoContract]
-        class CompositeType<T> : CompositeType
+        public class CompositeType<T> : CompositeType
         {
             [ProtoBuf.ProtoMember(1)]
             public new T Value { get; set; }
@@ -447,7 +447,7 @@ namespace Examples
             CheckLists(list, clone);
         }
 
-        class Test3Enumerable : IEnumerable<Test3>
+        public class Test3Enumerable : IEnumerable<Test3>
         {
             private readonly List<Test3> items = new List<Test3>();
 
@@ -516,7 +516,7 @@ namespace Examples
             Serializer.DeepClone(new ArrayOfString());
         }
         [ProtoBuf.ProtoContract]
-        class ArrayOfString
+        public class ArrayOfString
         {
             [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public string[] Items { get; set; }
@@ -527,7 +527,7 @@ namespace Examples
             Serializer.DeepClone(new ListOfDateTime());
         }
         [ProtoBuf.ProtoContract]
-        class ListOfDateTime
+        public class ListOfDateTime
         {
             [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public List<DateTime> Items { get; set; }
@@ -539,21 +539,21 @@ namespace Examples
         }
 
         [ProtoBuf.ProtoContract]
-        class CustomOfSubMessage
+        public class CustomOfSubMessage
         {
             [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public CustomCollection Items { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class CustomItem { }
-        class CustomCollection : IEnumerable<CustomItem>
+        public class CustomItem { }
+        public class CustomCollection : IEnumerable<CustomItem>
         {
             public void Add(CustomItem item) { throw new NotImplementedException(); }
             public IEnumerator<CustomItem> GetEnumerator() { throw new NotImplementedException(); }
             IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         }
 
-        class Test3Comparer : IEqualityComparer<Test3>
+        public class Test3Comparer : IEqualityComparer<Test3>
         {
 
             public bool Equals(Test3 x, Test3 y)
@@ -599,13 +599,13 @@ namespace Examples
             Assert.AreEqual("def", clone.Items.Last.Value.Value);
         }
         [ProtoBuf.ProtoContract]
-        class BasicItem
+        public class BasicItem
         {
             [ProtoBuf.ProtoMember(1)]
             public string Value { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class WithLinkedList
+        public class WithLinkedList
         {
             [ProtoBuf.ProtoMember(1)]
             public LinkedList<BasicItem> Items { get; private set; }

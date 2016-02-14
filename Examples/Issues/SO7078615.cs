@@ -29,7 +29,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class DontAskWrapper
+        public class DontAskWrapper
         {
             [ProtoBuf.ProtoMember(1)]
             public IMessage Message { get; set; }
@@ -74,7 +74,7 @@ namespace Examples.Issues
             public string NameOfDog { get; set; }
             public int Times { get; set; }
         }
-        class DontAskWrapper
+        public class DontAskWrapper
         {
             public IMessage Message { get; set; }
         }

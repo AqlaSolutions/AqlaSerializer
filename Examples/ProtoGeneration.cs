@@ -395,7 +395,7 @@ message TestCase {
 }
 
 [ProtoBuf.ProtoContract]
-class MyClass
+public class MyClass
 {
     [ProtoBuf.ProtoMember(1), DefaultValue("Test Test TEst")]
     public string TestString { get; set; }

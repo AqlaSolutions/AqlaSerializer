@@ -16,7 +16,7 @@ namespace AqlaSerializer.Serializers
             Util.Test("123", nil => nil, "");
         }
     }
-    sealed class NilSerializer : IProtoSerializer
+    sealed public class NilSerializer : IProtoSerializer
     {
         private readonly Type type;
         public bool EmitReadReturnsValue { get { return true; } }

@@ -69,7 +69,7 @@ namespace Examples
         }
 
         [ProtoBuf.ProtoContract]
-        class Foo
+        public class Foo
         {
             [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }

@@ -10,7 +10,7 @@ using AqlaSerializer.Meta;
 
 namespace Examples
 {
-    class Program
+    public class Program
     {
         static void Main() {
             Console.WriteLine("CLR: " + Environment.Version);

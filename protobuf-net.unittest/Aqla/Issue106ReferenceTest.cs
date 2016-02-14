@@ -45,7 +45,7 @@ namespace AqlaSerializer.unittest.Aqla
         }
 
         [SerializableType]
-        class MainObject
+        public class MainObject
         {
             [SerializableMember(1)]
             public List<TestObject> TestObjects = new List<TestObject>();
@@ -55,14 +55,14 @@ namespace AqlaSerializer.unittest.Aqla
         }
 
         [SerializableType]
-        class TestObject
+        public class TestObject
         {
             [SerializableMember(1)]
             public ObjectByReference ObjectByReference { get; set; }
         }
 
         [SerializableType]
-        class ObjectByReference
+        public class ObjectByReference
         {
         }
     }

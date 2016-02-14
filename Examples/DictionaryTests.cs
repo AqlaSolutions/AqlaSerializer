@@ -12,7 +12,7 @@ using System.Text;
 namespace Examples.Dictionary
 {
     [ProtoBuf.ProtoContract]
-    class DataWithDictionary<T>
+    public class DataWithDictionary<T>
     {
         public DataWithDictionary()
         {
@@ -23,7 +23,7 @@ namespace Examples.Dictionary
     }
 
     [ProtoBuf.ProtoContract]
-    class SimpleData : IEquatable<SimpleData>
+    public class SimpleData : IEquatable<SimpleData>
     {
         private SimpleData() {}
         public SimpleData(int value) {
@@ -351,7 +351,7 @@ namespace Examples.Dictionary
             [ProtoBuf.ProtoMember(2)] public int Value { get; set;}
         }
         [ProtoBuf.ProtoContract]
-        class PropsViaProperties
+        public class PropsViaProperties
         {
             [ProtoBuf.ProtoMember(1)] public int Field1 { get; set;}
             [ProtoBuf.ProtoMember(2)] public int Field2 { get; set;}

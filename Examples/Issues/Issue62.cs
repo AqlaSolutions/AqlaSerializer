@@ -11,7 +11,7 @@ namespace Examples.Issues
     public class Issue62
     {
         [ProtoBuf.ProtoContract]
-        class CacheItem
+        public class CacheItem
         {
             [ProtoBuf.ProtoMember(1)]
             public int Id { get; set; }
@@ -26,7 +26,7 @@ namespace Examples.Issues
             public ListNode Nodes { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class ListNode // I'd probably expose this as a simple list, though
+        public class ListNode // I'd probably expose this as a simple list, though
         {
             [ProtoBuf.ProtoMember(1)]
             public double Head { get; set; }
@@ -34,7 +34,7 @@ namespace Examples.Issues
             public ListNode Tail { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class CacheItemValue
+        public class CacheItemValue
         {
             [ProtoBuf.ProtoMember(1)]
             public string Key { get; set; }

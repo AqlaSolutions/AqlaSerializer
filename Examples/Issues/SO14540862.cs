@@ -18,7 +18,7 @@ namespace Examples.Issues
     {
         [ProtoBuf.ProtoContract]
         [ProtoBuf.ProtoInclude(10, typeof(Derived))]
-        class Base
+        public class Base
         {
             [ProtoBuf.ProtoMember(1)]
             public string BaseFirstProperty { get; set; }
@@ -27,7 +27,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Derived : Base
+        public class Derived : Base
         {
             [ProtoBuf.ProtoMember(1)]
             public string DerivedFirstProperty { get; set; }

@@ -99,7 +99,7 @@ namespace Examples
         }
 
         [ProtoBuf.ProtoContract]
-        class StringDynamicType
+        public class StringDynamicType
         {
 	        [ProtoBuf.ProtoMember(1, DynamicType = true)]
 	        public object Data { get; set; }
@@ -205,19 +205,19 @@ namespace Examples
 
 
         [ProtoBuf.ProtoContract]
-        abstract class BaseType
+        abstract public class BaseType
         {
             [ProtoBuf.ProtoMember(1)]
             public string Foo { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class Derived : BaseType
+        public class Derived : BaseType
         {
             [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class Wrapper
+        public class Wrapper
         {
             [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value { get; set; }

@@ -8,10 +8,10 @@ using Examples.Ppt;
 namespace Examples.SimpleStream
 {
     [ProtoBuf.ProtoContract]
-    class NoddyExtends : Extensible { }
+    public class NoddyExtends : Extensible { }
 
     [ProtoBuf.ProtoContract]
-    class Noddy
+    public class Noddy
     {
         [ProtoBuf.ProtoMember(2)]
         public int Foo { get; set; }
@@ -65,14 +65,14 @@ namespace Examples.SimpleStream
         }
 
         [ProtoBuf.ProtoContract]
-        class Test3List
+        public class Test3List
         {
             [ProtoBuf.ProtoMember(3)]
             public List<Test1> C { get; set; }
         }
 
         [ProtoBuf.ProtoContract]
-        class Test1List
+        public class Test1List
         {
             [ProtoBuf.ProtoMember(1)]
             public List<int> A { get; set; }

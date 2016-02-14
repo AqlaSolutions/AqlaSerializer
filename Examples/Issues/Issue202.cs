@@ -12,7 +12,7 @@ namespace Examples.Issues
     public class Issue202
     {
         [ProtoBuf.ProtoContract]
-        class App
+        public class App
         {
             [ProtoBuf.ProtoMember(1)]
             public List<Bp> list { get; set; }
@@ -24,7 +24,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Afp
+        public class Afp
         {
             [ProtoBuf.ProtoMember(1)]
             public List<Bp> list;
@@ -36,7 +36,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Aff
+        public class Aff
         {
             [ProtoBuf.ProtoMember(1)]
             public List<Bf> list;
@@ -48,7 +48,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Apf
+        public class Apf
         {
             [ProtoBuf.ProtoMember(1)]
             public List<Bf> list { get; set; }
@@ -60,7 +60,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Bp
+        public class Bp
         {
             [ProtoBuf.ProtoMember(1)]
             public string a { get; set; }
@@ -75,7 +75,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Bf
+        public class Bf
         {
             [ProtoBuf.ProtoMember(1)]
             public string a;

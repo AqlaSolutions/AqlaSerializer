@@ -32,17 +32,17 @@ message BinarySerializationSurrogate_MyException {
 ", proto);
         }
 
-        class MyException : Exception { }
+        public class MyException : Exception { }
         
 
 
  /// <summary>
-    /// Surrogate class to allow Protobuf-net to serialize any class that implements ISerializeable
+    /// Surrogate public class to allow Protobuf-net to serialize any public class that implements ISerializeable
     /// (e.g. Exceptions).
     /// </summary>
     /// <typeparam name="T">The type of an object that implements ISerializeable.</typeparam>
     [ProtoBuf.ProtoContract]
-    internal class BinarySerializationSurrogate<T>
+    public class BinarySerializationSurrogate<T>
     {
         [ProtoBuf.ProtoMember(1)]
         private byte[] objectData = null;

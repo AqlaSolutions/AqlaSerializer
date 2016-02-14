@@ -68,7 +68,7 @@ namespace Examples.Issues.ComplexGenerics
     [ProtoBuf.ProtoInclude(23, typeof(Y))]
     [ProtoBuf.ProtoInclude(25, typeof(SpecialQuery))]
     [ProtoBuf.ProtoContract]
-    abstract class Query : IQuery
+    abstract public class Query : IQuery
     {
         public string Result
         {
@@ -90,7 +90,7 @@ namespace Examples.Issues.ComplexGenerics
     }
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(21, typeof(Z))]
-    abstract class SpecialQuery : Query, IQuery<DataSet>
+    abstract public class SpecialQuery : Query, IQuery<DataSet>
     {
         
         public new DataSet Result { get; set; }
@@ -118,7 +118,7 @@ namespace Examples.Issues.ComplexGenerics
     }
 
     [ProtoBuf.ProtoContract]
-    class W : Query, IQuery<bool>
+    public class W : Query, IQuery<bool>
     {
         [ProtoBuf.ProtoMember(1)]
         public new bool Result { get; set; }
@@ -130,7 +130,7 @@ namespace Examples.Issues.ComplexGenerics
         }
     }
     [ProtoBuf.ProtoContract]
-    class X : Query, IQuery<string>
+    public class X : Query, IQuery<string>
     {
         [ProtoBuf.ProtoMember(1)]
         public new string Result { get; set; }
@@ -142,7 +142,7 @@ namespace Examples.Issues.ComplexGenerics
         }
     }
     [ProtoBuf.ProtoContract]
-    class Y : Query, IQuery<int>
+    public class Y : Query, IQuery<int>
     {
         [ProtoBuf.ProtoMember(1)]
         public new int Result { get; set; }
@@ -154,7 +154,7 @@ namespace Examples.Issues.ComplexGenerics
         }
     }
     [ProtoBuf.ProtoContract]
-    class Z : SpecialQuery
+    public class Z : SpecialQuery
     {
     }
 }

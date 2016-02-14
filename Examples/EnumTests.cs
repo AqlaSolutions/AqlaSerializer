@@ -18,7 +18,7 @@ namespace Examples.DesignIdeas
     ///             could later use a bitmap sweep?)
     /// </summary>
     [ProtoBuf.ProtoContract(Name="blah")]
-    enum SomeEnum
+    public enum SomeEnum
     {
         [ProtoBuf.ProtoEnum(Name="FOO")]
         ChangeName = 3,
@@ -35,7 +35,7 @@ namespace Examples.DesignIdeas
         Default = 2
     }
     [ProtoBuf.ProtoContract]
-    class EnumFoo
+    public class EnumFoo
     {
         public EnumFoo() { Bar = SomeEnum.Default; }
         [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
@@ -43,19 +43,19 @@ namespace Examples.DesignIdeas
     }
 
     [ProtoBuf.ProtoContract]
-    class EnumNullableFoo
+    public class EnumNullableFoo
     {
         public EnumNullableFoo() { Bar = SomeEnum.Default; }
         [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         public SomeEnum? Bar { get; set; }
     }
 
-    enum NegEnum
+    public enum NegEnum
     {
         A = -1, B = 0, C = 1
     }
     [ProtoBuf.ProtoContract]
-    class NegEnumType
+    public class NegEnumType
     {
         [ProtoBuf.ProtoMember(1)]
         public NegEnum Value { get; set; }
@@ -75,20 +75,20 @@ namespace Examples.DesignIdeas
         Bar = 1
     }
     [ProtoBuf.ProtoContract]
-    class TypeDuffKeys
+    public class TypeDuffKeys
     {
         [ProtoBuf.ProtoMember(1)]
         public HasConflictingKeys Value {get;set;}
     }
     [ProtoBuf.ProtoContract]
-    class TypeDuffValues
+    public class TypeDuffValues
     {
         [ProtoBuf.ProtoMember(1)]
         public HasConflictingValues Value {get;set;}
     }
 
     [ProtoBuf.ProtoContract]
-    class NonNullValues
+    public class NonNullValues
     {
         [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         SomeEnum Foo { get; set; }
@@ -96,7 +96,7 @@ namespace Examples.DesignIdeas
         bool Bar { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class NullValues
+    public class NullValues
     {
         [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
         SomeEnum? Foo { get; set; }
@@ -204,7 +204,7 @@ enum blah {
         }
 
         [ProtoBuf.ProtoContract]
-        class TypeWithFlags
+        public class TypeWithFlags
         {
             [Flags]
             public enum FlagsEnum
@@ -277,12 +277,12 @@ enum blah {
             Assert.AreEqual(NastDuplicates.B, clone.Value);
         }
         [ProtoBuf.ProtoContract]
-        class HasDuplicatedEnumProp
+        public class HasDuplicatedEnumProp
         {
             [ProtoBuf.ProtoMember(1)]
             public NastDuplicates Value { get; set; }
         }
-        enum NastDuplicates
+        public enum NastDuplicates
         {
             None = 0,
             A = 1,

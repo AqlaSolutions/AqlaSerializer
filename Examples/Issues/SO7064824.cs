@@ -11,28 +11,28 @@ namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
 {
     
     [ProtoBuf.ProtoContract]
-    class BaseClassArrayContainerClass
+    public class BaseClassArrayContainerClass
     {
         [ProtoBuf.ProtoMember(1, DynamicType = true)]
         public Base[] BaseArray { get; set; }
     }
 
     [ProtoBuf.ProtoContract]
-    class ObjectArrayContainerClass
+    public class ObjectArrayContainerClass
     {
         [ProtoBuf.ProtoMember(1, DynamicType = true)]
         public object[] ObjectArray { get; set; }
 
     }
     [ProtoBuf.ProtoContract]
-    class Base
+    public class Base
     {
         [ProtoBuf.ProtoMember(1)]
         public string BaseClassText { get; set; }
     }
 
     [ProtoBuf.ProtoContract]
-    class Derived : Base
+    public class Derived : Base
     {
         [ProtoBuf.ProtoMember(1)]
         public string DerivedClassText { get; set; }

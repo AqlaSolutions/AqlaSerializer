@@ -93,19 +93,19 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class Int32Simple
+    public class Int32Simple
     {
         [ProtoBuf.ProtoMember(1)]
         public int Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class SingleSimple
+    public class SingleSimple
     {
         [ProtoBuf.ProtoMember(2)]
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class DoubleSimple
+    public class DoubleSimple
     {
         [ProtoBuf.ProtoMember(3)]
         public double Value { get; set; }

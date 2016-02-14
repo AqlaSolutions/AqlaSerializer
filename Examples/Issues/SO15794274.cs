@@ -49,7 +49,7 @@ namespace Examples.Issues
 
             Console.ReadLine();
         }
-        class RefComparer : IEqualityComparer<object>
+        public class RefComparer : IEqualityComparer<object>
         {
             private RefComparer() { }
             public static readonly RefComparer Default = new RefComparer();

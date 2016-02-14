@@ -29,7 +29,7 @@ namespace Examples
     
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(1, typeof(TestInheritedImplementedAtRootDerived))]
-    abstract class TestInheritedImplementedAtRoot : ICallbackTest
+    abstract public class TestInheritedImplementedAtRoot : ICallbackTest
     {
         
         protected abstract string BarCore { get; set;}
@@ -48,7 +48,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class TestInheritedImplementedAtRootDerived : TestInheritedImplementedAtRoot
+    public class TestInheritedImplementedAtRootDerived : TestInheritedImplementedAtRoot
     {
         protected override string BarCore
         {
@@ -61,7 +61,7 @@ namespace Examples
 
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(1, typeof (TestInheritedVirtualAtRootDerived))]
-    internal abstract class TestInheritedVirtualAtRoot : ICallbackTest
+    public abstract class TestInheritedVirtualAtRoot : ICallbackTest
     {
 
         protected abstract string BarCore { get; set; }
@@ -84,7 +84,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class TestInheritedVirtualAtRootDerived : TestInheritedVirtualAtRoot
+    public class TestInheritedVirtualAtRootDerived : TestInheritedVirtualAtRoot
     {
         protected override string BarCore
         {
@@ -102,7 +102,7 @@ namespace Examples
 
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(1, typeof(TestInheritedVirtualAtRootDerivedProtoAttribs))]
-    internal abstract class TestInheritedVirtualAtRootProtoAttribs : ICallbackTest
+    public abstract class TestInheritedVirtualAtRootProtoAttribs : ICallbackTest
     {
 
         protected abstract string BarCore { get; set; }
@@ -125,7 +125,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class TestInheritedVirtualAtRootDerivedProtoAttribs : TestInheritedVirtualAtRootProtoAttribs
+    public class TestInheritedVirtualAtRootDerivedProtoAttribs : TestInheritedVirtualAtRootProtoAttribs
     {
         protected override string BarCore
         {
@@ -145,7 +145,7 @@ namespace Examples
 
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(1, typeof(TestInheritedImplementedAtChildDerived))]
-    abstract class TestInheritedImplementedAtChild : ICallbackTest
+    abstract public class TestInheritedImplementedAtChild : ICallbackTest
     {
 
         protected abstract string BarCore { get; set; }
@@ -156,7 +156,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class TestInheritedImplementedAtChildDerived : TestInheritedImplementedAtChild
+    public class TestInheritedImplementedAtChildDerived : TestInheritedImplementedAtChild
     {
         [OnDeserialized]
         void OnDeserialized() { History += ";OnDeserialized"; }
@@ -259,7 +259,7 @@ namespace Examples
         }
 
         [ProtoBuf.ProtoContract]
-        class DuplicateCallbacks
+        public class DuplicateCallbacks
         {
             [ProtoBuf.ProtoBeforeSerialization]
             void Foo() {}

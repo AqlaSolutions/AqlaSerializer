@@ -81,20 +81,20 @@ namespace Examples
             Assert.AreEqual(6, len, "max len");
         }
         [ProtoBuf.ProtoContract]
-        class DateTimeOnly
+        public class DateTimeOnly
         {
             [ProtoBuf.ProtoMember(1)]
             public DateTime When { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class TimeSpanOnly
+        public class TimeSpanOnly
         {
             [ProtoBuf.ProtoMember(1)]
             public TimeSpan HowLong { get; set; }
         }
 
         [ProtoBuf.ProtoContract]
-        class TimeSpanDefaulted
+        public class TimeSpanDefaulted
         {
             public TimeSpanDefaulted() {
                 HowLong = new TimeSpan(0,1,0);
@@ -591,7 +591,7 @@ namespace Examples
         }
     }
     [DataContract]
-    class Primatives
+    public class Primatives
     {
         public Primatives()
         {
@@ -618,7 +618,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class BytePrimatives
+    public class BytePrimatives
     {
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public byte ByteTwos { get; set; }
@@ -631,7 +631,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class CharData
+    public class CharData
     {
         [ProtoBuf.ProtoMember(1)]
         public char Foo { get; set; }

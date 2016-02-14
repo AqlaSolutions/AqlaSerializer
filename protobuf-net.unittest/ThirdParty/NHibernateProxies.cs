@@ -121,7 +121,7 @@ namespace AqlaSerializer.unittest.ThirdParty
             return model;
         }
 
-        class Bar : Foo { }
+        public class Bar : Foo { }
         [Test, ExpectedException(typeof(InvalidOperationException))]
         public void AttemptToSerializeUnknownSubtypeShouldFail_Runtime()
         {

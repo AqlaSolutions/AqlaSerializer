@@ -28,7 +28,7 @@ namespace Examples.Issues
             int IDataRow.Evil { get; set; }
         }
 
-        // This version of the class won't work because it defines the collection with the
+        // This version of the public class won't work because it defines the collection with the
         // strongly type name i.e. List<Some
         [ProtoBuf.ProtoContract]
         public class SomeResponse

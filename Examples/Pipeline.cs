@@ -140,14 +140,14 @@ message EnumWrapper {
         }
 
         [ProtoBuf.ProtoContract]
-        class DatabaseReader
+        public class DatabaseReader
         {
             public DatabaseReader() { OrderReader = new OrderReader(); }
             [ProtoBuf.ProtoMember(1)]
             public OrderReader OrderReader { get; private set; }
         }
 
-        class OrderReader : IEnumerable<DAL.Order>
+        public class OrderReader : IEnumerable<DAL.Order>
         {
             public int OrderCount { get; private set; }
             public int LineCount { get; private set; }
@@ -194,7 +194,7 @@ message EnumWrapper {
     }
 
     [ProtoBuf.ProtoContract(Name = "EnumParentWrapper")]
-    class EnumParentGroupWrapper
+    public class EnumParentGroupWrapper
     {
         public EnumParentGroupWrapper() { Wrapper = new EnumWrapper(); }
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
@@ -202,7 +202,7 @@ message EnumWrapper {
     }
 
     [ProtoBuf.ProtoContract(Name = "EnumParentWrapper")]
-    class EnumParentStandardWrapper
+    public class EnumParentStandardWrapper
     {
         public EnumParentStandardWrapper() { Wrapper = new EnumWrapper(); }
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
@@ -210,7 +210,7 @@ message EnumWrapper {
     }
 
     [ProtoBuf.ProtoContract]
-    class EnumWrapper
+    public class EnumWrapper
     {
         public EnumWrapper() { SubData = new EnumData(); }
         [ProtoBuf.ProtoMember(1)]

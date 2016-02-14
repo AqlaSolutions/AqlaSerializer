@@ -12,7 +12,7 @@ using Serializer = AqlaSerializer.Serializer;
 namespace ProtoSharp.Core
 {
     // throwaway [Tag] replacement from ProtoSharp
-    class TagAttribute : Attribute
+    public class TagAttribute : Attribute
     {
         public TagAttribute(int tag) { }
     }

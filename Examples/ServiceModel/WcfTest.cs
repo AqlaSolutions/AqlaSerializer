@@ -54,7 +54,7 @@ namespace Examples.ServiceModel
         [OperationContract, BinarySerializationBehavior]
         string SimpleTypesProto(int value);
     }
-    class MyService : IMyService
+    public class MyService : IMyService
     {
         public MyData RegularWcfItem(MyData data) { return data; }
         public MyData UsingProtoItem(MyData data) { return data; }
