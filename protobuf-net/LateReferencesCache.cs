@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace AqlaSerializer
 {
-    internal class LateReferencesCache
+    internal class LateReferencesCache : ICloneable
     {
         public struct LateReference
         {
@@ -19,7 +20,7 @@ namespace AqlaSerializer
             }
         }
 
-        readonly List<LateReference> _lateReferences = new List<LateReference>();
+        List<LateReference> _lateReferences = new List<LateReference>();
         int _lateReferenceCurrentIndex;
 
         public void AddLateReference(LateReference v)
@@ -41,6 +42,18 @@ namespace AqlaSerializer
         {
             _lateReferenceCurrentIndex = 0;
             _lateReferences.Clear();
+        }
+
+        public LateReferencesCache Clone()
+        {
+            var c = (LateReferencesCache)MemberwiseClone();
+            c._lateReferences = new List<LateReference>(_lateReferences);
+            return c;
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
     }
 }

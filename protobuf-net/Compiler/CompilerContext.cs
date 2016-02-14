@@ -657,6 +657,8 @@ namespace AqlaSerializer.Compiler
 #endif
         }
 
+        int _debugCounter;
+
         public void MarkDebug(Operand mark, bool strong = false)
         {
 #if DEBUG_COMPILE_2
@@ -669,6 +671,8 @@ namespace AqlaSerializer.Compiler
             if (strong)
             {
                 LoadValue(new string('*', 300));
+                _debugCounter++;
+                G.Invoke(typeof(Debug), "Write", (_debugCounter.ToString("0000") + ":"));
                 G.Invoke(typeof(Debug), "WriteLine", mark);
                 DiscardValue();
             }

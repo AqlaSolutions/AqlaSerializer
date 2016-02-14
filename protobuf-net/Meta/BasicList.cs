@@ -9,6 +9,15 @@ namespace AqlaSerializer.Meta
 
     internal sealed class MutableList : BasicList
     {
+        public MutableList()
+        {
+        }
+
+        public MutableList(IEnumerable<object> enumerable)
+            : base(enumerable)
+        {
+        }
+
         /*  Like BasicList, but allows existing values to be changed
          */ 
         public new object this[int index] {

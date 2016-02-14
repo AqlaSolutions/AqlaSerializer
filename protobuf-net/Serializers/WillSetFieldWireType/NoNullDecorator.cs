@@ -49,7 +49,7 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override object Read(object value, ProtoReader source)
         {
-            return Tail.Read(value, source);
+            return Tail.Read(Tail.RequiresOldValue ? value : null, source);
         }
 
         public override void Write(object value, ProtoWriter dest)
@@ -76,7 +76,7 @@ namespace AqlaSerializer.Serializers
                 {
                     Compiler.Local tempLocal = null;
                     Compiler.Local valueForTail;
-                    Debug.Assert(!Tail.RequiresOldValue || Tail.EmitReadReturnsValue);
+                    Debug.Assert(Tail.RequiresOldValue || Tail.EmitReadReturnsValue);
                     if (Tail.RequiresOldValue)
                     {
                         if (expectedType.IsValueType)

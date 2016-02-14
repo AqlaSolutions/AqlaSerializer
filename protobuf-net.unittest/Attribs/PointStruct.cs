@@ -69,7 +69,7 @@ namespace AqlaSerializer.unittest.Attribs
         {
             Point point = new Point(26, 13);
             var model = BuildModel();
-
+            model.SkipCompiledVsNotCheck = true;
             ClonePoint(model, point, "Runtime");
 
             model.CompileInPlace();
@@ -128,7 +128,7 @@ namespace AqlaSerializer.unittest.Attribs
         {
             Point point = new Point(26, 13);
             var model = BuildModelWithSurrogate();
-
+            model.SkipCompiledVsNotCheck = true; // this test uses static state 
             // two Point => Surrogate (one write, one read)
             // one Point <= Surrogate (one read)
             ClonePointCountingConversions(model, point, "Runtime", 1, 2);

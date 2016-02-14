@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Xml;
+using AltLinq;
 using AqlaSerializer.Meta;
 #if MF
 using OverflowException = System.ApplicationException;
@@ -38,7 +39,7 @@ namespace AqlaSerializer
             return _tempBuffer;
         }
 
-        readonly LateReferencesCache _lateReferences = new LateReferencesCache();
+        LateReferencesCache _lateReferences = new LateReferencesCache();
 
         public static void NoteLateReference(int typeKey, object value, ProtoWriter writer)
         {
@@ -177,7 +178,7 @@ namespace AqlaSerializer
             return model.GetKey(ref type);
         }
         
-        private readonly NetObjectCache netCache = new NetObjectCache();
+        private NetObjectCache netCache = new NetObjectCache();
         internal NetObjectCache NetCache
         {
             get { return netCache;}
@@ -821,9 +822,9 @@ namespace AqlaSerializer
             if (context == null) { context = SerializationContext.Default; }
             else { context.Freeze(); }
             this.context = context;
-            
+            InitialUnderlyingStreamPosition = dest.Position;
         }
-
+        
         private readonly SerializationContext context;
         /// <summary>
         /// Addition information about this serialization operation.
@@ -851,6 +852,7 @@ namespace AqlaSerializer
         private int ioIndex;
         // note that this is used by some of the unit tests and should not be removed
         internal static int GetPosition(ProtoWriter writer) { return writer.position; }
+        internal long InitialUnderlyingStreamPosition { get; }
         private int position;
         private static void DemandSpace(int required, ProtoWriter writer)
         {

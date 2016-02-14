@@ -10,7 +10,7 @@ using AqlaSerializer.Meta;
 namespace test
 {
     [DataContract]
-    public class Coordinates
+    class Coordinates
     {
         [DataContract]
         public struct CoOrd
