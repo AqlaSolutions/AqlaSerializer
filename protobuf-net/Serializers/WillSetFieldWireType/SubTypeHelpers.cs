@@ -174,13 +174,16 @@ namespace AqlaSerializer.Serializers
                                 }
                                 g.End();
 
-                                var token = g.WriterFunc.StartSubItem(null, true);
-                                dest.WriteFieldHeaderIgnored(WireType.Variant);
-                                dest.WriteInt32(subType.FieldNumber + 1);
+                                using (var token = g.ctx.Local(typeof(SubItemToken)))
+                                {
+                                    g.Assign(token, g.WriterFunc.StartSubItem(null, true));
+                                    dest.WriteFieldHeaderIgnored(WireType.Variant);
+                                    dest.WriteInt32(subType.FieldNumber + 1);
 
-                                EmitWrite(g, null, derivedType, actualValue, actualType, 1);
+                                    EmitWrite(g, null, derivedType, actualValue, actualType, 1);
 
-                                dest.EndSubItem(token);
+                                    dest.EndSubItem(token);
+                                }
 
                             }
                             else

@@ -228,7 +228,7 @@ namespace AqlaSerializer.Serializers
 
             if (!protoCompatibility)
             {
-                int key = model.GetKey(ref declaredType);
+                int key = model.GetKey(declaredType, false, false);
                 if (key >= 0)
                     _metaType = model[key];
                 else
@@ -339,12 +339,17 @@ namespace AqlaSerializer.Serializers
                                 if (asList)
                                 {
                                     ctx.MarkDebug("// using Add method");
-                                    g.Invoke(value, "Add", v);
+                                    Operand instance = value;
+                                    if (add != null && !Helpers.IsAssignableFrom(add.DeclaringType, ExpectedType))
+                                        instance = instance.Cast(add.DeclaringType); // TODO optimize to local
+                                    g.Invoke(instance, "Add", v);
                                 }
                                 else
                                 {
                                     ctx.MarkDebug("// using add delegate");
                                     ctx.LoadAddress(value, ExpectedType);
+                                    if (!Helpers.IsAssignableFrom(add.DeclaringType, ExpectedType))
+                                        ctx.Cast(add.DeclaringType);
                                     ctx.LoadValue(v);
                                     ctx.EmitCall(this.add);
                                 }

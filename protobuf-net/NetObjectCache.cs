@@ -1,11 +1,13 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using AltLinq;
 using AqlaSerializer.Meta;
 
 namespace AqlaSerializer
 {
-    internal sealed class NetObjectCache
+    internal sealed class NetObjectCache:ICloneable
     {
         const int Root = 0;
 
@@ -275,6 +277,23 @@ namespace AqlaSerializer
 #if !CF && !PORTABLE
             if (objectKeys != null) objectKeys.Clear();
 #endif
+        }
+
+        public NetObjectCache Clone()
+        {
+            var c = (NetObjectCache)MemberwiseClone();
+            if (stringKeys != null)
+                c.stringKeys = new Dictionary<string, int>(stringKeys);
+            if (objectKeys != null)
+                c.objectKeys = new Dictionary<object, int>(objectKeys);
+            if (underlyingList != null)
+                c.underlyingList = new MutableList(underlyingList.Cast<object>());
+            return c;
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
     }
 }

@@ -7,6 +7,7 @@ using NUnit.Framework;
 using System.Threading;
 using AqlaSerializer.Meta;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace AqlaSerializer.unittest.Meta
 {
@@ -63,6 +64,7 @@ namespace AqlaSerializer.unittest.Meta
             {
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
+                model.SkipCompiledVsNotCheck = true;
                 model.AutoCompile = true;
                 object starter = new object();
                 int waiting = 20;
@@ -134,6 +136,7 @@ namespace AqlaSerializer.unittest.Meta
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
                 model.AutoCompile = true;
+                model.SkipCompiledVsNotCheck = true;
                 object starter = new object();
                 int waiting = 20;
                 int failures = 0;
@@ -231,6 +234,7 @@ namespace AqlaSerializer.unittest.Meta
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
                 model.AutoCompile = true;
+                model.SkipCompiledVsNotCheck = true;
                 object starter = new object();
                 int waiting = 20;
                 int failures = 0;
@@ -288,6 +292,7 @@ namespace AqlaSerializer.unittest.Meta
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
                 model.AutoCompile = true;
+                model.SkipCompiledVsNotCheck = true;
                 object starter = new object();
 #if DEBUG
                 const int threadsCount = 5;
@@ -365,6 +370,7 @@ namespace AqlaSerializer.unittest.Meta
                 ManualResetEvent allGo = new ManualResetEvent(false);
                 var model = TypeModel.Create();
                 model.AutoCompile = true;
+                model.SkipCompiledVsNotCheck = true;
                 object starter = new object();
                 int waiting = 20;
                 int failures = 0;

@@ -45,6 +45,29 @@ namespace AqlaSerializer
         // note: objects are trapped (the ref and key mapped) via NoteObject
         uint trapCount; // uint is so we can use beq/bne more efficiently than bgt
 
+        class ReferenceState
+        {
+            public readonly LateReferencesCache LateReferencesCache;
+            public readonly NetObjectCache NetObjectCache;
+
+            public ReferenceState(NetObjectCache netObjectCache, LateReferencesCache lateReferencesCache)
+            {
+                LateReferencesCache = lateReferencesCache;
+                NetObjectCache = netObjectCache;
+            }
+        }
+
+        internal object StoreReferenceState()
+        {
+            return new ReferenceState(netCache.Clone(), _lateReferences.Clone());
+        }
+
+        internal void LoadReferenceState(object state)
+        {
+            var s = (ReferenceState)state;
+            _lateReferences = s.LateReferencesCache.Clone();
+            netCache = s.NetObjectCache.Clone();
+        }
 
         /// <summary>
         /// Gets the number of the field being processed.
@@ -93,6 +116,7 @@ namespace AqlaSerializer
         {
             if (source == null) throw new ArgumentNullException("source");
             if (!source.CanRead) throw new ArgumentException("Cannot read from stream", "source");
+            reader.InitialUnderlyingStreamPosition = source.Position;
             reader.source = source;
             reader.ioBuffer = BufferPool.GetBuffer();
             reader.model = model;
@@ -138,7 +162,7 @@ namespace AqlaSerializer
         }
         
 
-        readonly LateReferencesCache _lateReferences = new LateReferencesCache();
+        LateReferencesCache _lateReferences = new LateReferencesCache();
 
         public static void NoteLateReference(int typeKey, object value, ProtoReader reader)
         {
@@ -266,6 +290,9 @@ namespace AqlaSerializer
         /// in the underlying stream, if multiple readers are used on the same stream)
         /// </summary>
         public int Position { get { return position; } }
+
+        internal long InitialUnderlyingStreamPosition { get; private set; }
+
         internal void Ensure(int count, bool strict)
         {
             Helpers.DebugAssert(available <= count, "Asking for data without checking first");

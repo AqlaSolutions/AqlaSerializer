@@ -791,12 +791,16 @@ namespace AqlaSerializer.Meta
                 SetOption(OPTIONS_AutoAddMissingTypes, value);
             }
         }
+
+        RuntimeTypeModel _compiledVersionCache;
+
         /// <summary>
         /// Verifies that the model is still open to changes; if not, an exception is thrown
         /// </summary>
         private void ThrowIfFrozen()
         {
             if (GetOption(OPTIONS_Frozen)) throw new InvalidOperationException("The model cannot be changed once frozen");
+            _compiledVersionCache = null;
         }
         /// <summary>
         /// Prevents further changes to this model
@@ -861,9 +865,6 @@ namespace AqlaSerializer.Meta
             throw new NotSupportedException();
 #else
             var metaType = ((MetaType)types[key]);
-#if CHECK_COMPILED_VS_NOT
-            var skip = ProtoWriter.GetPosition(dest);
-#endif
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 
             ser.Write(value, dest);
@@ -871,46 +872,16 @@ namespace AqlaSerializer.Meta
 #if CHECK_COMPILED_VS_NOT
             if (!SkipCompiledVsNotCheck && (value.GetType().IsPublic || value.GetType().IsNestedPublic) && isRoot)
             {
-                bool compiled = IsFrozen || metaType.IsCompiledInPlace;
-                var rtm = CloneAsUnfrozen();
-                bool canCompileDll = types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
-                if (!compiled)
-                {
-                    if (canCompileDll)
-                        CompileForCheckAndValidate(rtm);
-                    else
-                        rtm[key].CompileInPlace();
-                }
-                else if (canCompileDll)
-                {
-                    rtm.AutoCompile = false;
-                    // still need to validate
-                    if (string.IsNullOrEmpty(_compiledToPath))
-                        CompileForCheckAndValidate(rtm.CloneAsUnfrozen());
-                    else
-                        RaiseValidateDll(_compiledToPath);
-                }
+                RuntimeTypeModel rtm = GetInvertedVersionForCheckCompiledVsNot(key, metaType);
 
-                ProtoWriter.Flush(dest);
-
-                var stream = dest.UnderlyingStream;
                 byte[] original;
-                if (stream.CanSeek && stream.CanRead)
+                // can't use cause netCache may contain items from ather array items from aux so different output
+
+                using (var ms = new MemoryStream())
                 {
-                    var p = stream.Position;
-                    stream.Position = skip;
-                    original = new byte[p - skip];
-                    stream.Read(original, 0, original.Length);
-                    stream.Position = p;
-                }
-                else
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        using (var wr = new ProtoWriter(ms, this, null))
-                            ser.Write(value, wr);
-                        original = ms.ToArray();
-                    }
+                    using (var wr = new ProtoWriter(ms, this, null))
+                        ser.Write(value, wr);
+                    original = ms.ToArray();
                 }
 
                 using (var ms = new MemoryStream())
@@ -918,16 +889,65 @@ namespace AqlaSerializer.Meta
                     using (var wr = new ProtoWriter(ms, this, null))
                     {
                         var invType = rtm[key];
-                        var invSer = isRoot ? invType.RootSerializer : invType.Serializer;
+                        var invSer = invType.RootSerializer;
                         invSer.Write(value, wr);
                     }
-                    if (!original.SequenceEqual(ms.ToArray())) throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, lengths " + ms.Length + ", " + original.Length);
+                    if (!original.SequenceEqual(ms.ToArray()))
+                        throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, lengths " + ms.Length + ", " + original.Length);
+                    if (1.Equals(2))
+                    {
+                        using (var ms2 = new MemoryStream())
+                        {
+                            using (var wr = new ProtoWriter(ms2, this, null))
+                            {
+                                ser.Write(value, wr);
+                            }
+                        }
+                    }
                 }
             }
 #endif
 #endif
         }
 
+#if CHECK_COMPILED_VS_NOT
+        RuntimeTypeModel GetInvertedVersionForCheckCompiledVsNot(int key, MetaType metaType)
+        {
+
+            bool compiled = IsFrozen || metaType.IsCompiledInPlace;
+            RuntimeTypeModel rtm;
+            bool canCompileDll = types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
+            if (!compiled)
+            {
+                if (_compiledVersionCache != null)
+                    rtm = _compiledVersionCache;
+                else
+                {
+                    rtm = CloneAsUnfrozen();
+                    if (canCompileDll)
+                        CompileForCheckAndValidate(rtm);
+                    else
+                        rtm[key].CompileInPlace();
+                    _compiledVersionCache = rtm;
+                }
+            }
+            else if (canCompileDll && _compiledVersionCache == null)
+            {
+                // we only check compilation here and throw away
+                rtm = CloneAsUnfrozen();
+                rtm.AutoCompile = false;
+                // still need to validate
+                if (string.IsNullOrEmpty(_compiledToPath))
+                    CompileForCheckAndValidate(rtm.CloneAsUnfrozen());
+                else
+                    RaiseValidateDll(_compiledToPath);
+                _compiledVersionCache = rtm;
+            }
+            else rtm = CloneAsUnfrozen();
+            rtm.AutoCompile = false;
+            return rtm;
+        }
+#endif
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -946,7 +966,8 @@ namespace AqlaSerializer.Meta
 
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 #if CHECK_COMPILED_VS_NOT
-            long initialPosition = source.Position;
+            long initialStreamPosition = source.Position + source.InitialUnderlyingStreamPosition;
+            var refState = source.StoreReferenceState();
 #endif
             object result;
             if (value == null && Helpers.IsValueType(ser.ExpectedType))
@@ -960,34 +981,18 @@ namespace AqlaSerializer.Meta
 #if CHECK_COMPILED_VS_NOT
             if (!SkipCompiledVsNotCheck && (result == null || result.GetType().IsPublic || result.GetType().IsNestedPublic) && isRoot)
             {
-                bool compiled = IsFrozen || metaType.IsCompiledInPlace;
-                var rtm = CloneAsUnfrozen();
-                bool canBeCompiled = types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
-                if (!compiled)
-                {
-                    if (canBeCompiled)
-                        CompileForCheckAndValidate(rtm);
-                     else 
-                        rtm[key].CompileInPlace();
-                }
-                else if (canBeCompiled)
-                {
-                    // still need to validate
-                    if (string.IsNullOrEmpty(_compiledToPath))
-                        CompileForCheckAndValidate(rtm.CloneAsUnfrozen());
-                    else
-                        RaiseValidateDll(_compiledToPath);
-                }
-
+                var rtm = GetInvertedVersionForCheckCompiledVsNot(key, metaType);
+                
                 var stream = source.UnderlyingStream;
                 if (stream.CanSeek)
                 {
                     long positionAfterRead = stream.Position;
-                    stream.Position = initialPosition;
+                    stream.Position = initialStreamPosition;
                     using (var pr = ProtoReader.Create(stream, this, null, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
                     {
+                        pr.LoadReferenceState(refState);
                         var invType = rtm[key];
-                        var invSer = isRoot ? invType.RootSerializer : invType.Serializer;
+                        var invSer = invType.RootSerializer;
                         
                         var copy = invSer.Read(value, pr);
 
@@ -998,8 +1003,10 @@ namespace AqlaSerializer.Meta
                         }
                         else if (copy.GetType() != result.GetType())
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, types " + copy.GetType() + ", " + result.GetType());
-                        else if (copy.GetType().IsPrimitive && !result.Equals(result))
+                        else if (copy.GetType().IsPrimitive && !result.Equals(copy))
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, values " + copy + ", " + result);
+                        else if (stream.Position != positionAfterRead)
+                            throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, wrong position after read");
                     }
                     stream.Position = positionAfterRead;
                 }

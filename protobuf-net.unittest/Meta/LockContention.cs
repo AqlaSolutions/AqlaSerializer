@@ -96,6 +96,7 @@ namespace AqlaSerializer.unittest.Meta
                 Thread[] threadArr = new Thread[threads];
                 ManualResetEvent evt = new ManualResetEvent(false);
                 var model = RuntimeTypeModel.Create();
+                model.SkipCompiledVsNotCheck = true;
                 string eek = null;
                 int eekCount = 0;
                 model.LockContended += (s, a) => { eek = a.OwnerStackTrace;
