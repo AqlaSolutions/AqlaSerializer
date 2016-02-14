@@ -207,6 +207,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\protobuf-net.unittest\CallerMamberName.cs">
+      <Link>CallerMamberName.cs</Link>
+    </Compile>
     <Compile Include="Arrays.cs" />
     <Compile Include="AutoFields.cs" />
     <Compile Include="AutoTuple.cs" />
@@ -353,7 +356,7 @@
     <Compile Include="Issues\SO9491933.cs" />
     <Compile Include="Issues\SurrogateForObjectUsage.cs" />
     <Compile Include="ItemsWithLengthPrefix.cs" />
-    <Compile Include="LeakDetection.cs" />
+    <Compile Include="MainSetUpFixture.cs" />
     <Compile Include="ListAsInterfaceTests.cs" />
     <Compile Include="ListsWithInheritance.cs" />
     <Compile Include="ListTests.cs" />

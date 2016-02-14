@@ -858,10 +858,65 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            //Helpers.DebugWriteLine("Serialize", value);
             var metaType = ((MetaType)types[key]);
+#if CHECK_COMPILED_VS_NOT
+            var skip = ProtoWriter.GetPosition(dest);
+#endif
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
+
             ser.Write(value, dest);
+
+#if CHECK_COMPILED_VS_NOT
+            if (value.GetType().IsPublic && (isRoot || ProtoWriter.GetPosition(dest) == 0))
+            {
+                bool compiled = IsFrozen || metaType.IsFrozen;
+                var rtm = CloneAsUnfrozen();
+                if (!compiled)
+                    CompileForCheckAndValidate(rtm);
+                else
+                {
+                    rtm.AutoCompile = false;
+                    // still need to validate
+                    if (string.IsNullOrEmpty(_compiledToPath))
+                        CompileForCheckAndValidate(rtm.CloneAsUnfrozen());
+                    else
+                        RaiseValidateDll(_compiledToPath);
+                }
+
+                ProtoWriter.Flush(dest);
+
+                var stream = dest.UnderlyingStream;
+                byte[] original;
+                if (stream.CanSeek && stream.CanRead)
+                {
+                    var p = stream.Position;
+                    stream.Position = skip;
+                    original = new byte[p - skip];
+                    stream.Read(original, 0, original.Length);
+                    stream.Position = p;
+                }
+                else
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        using (var wr = new ProtoWriter(ms, this, null))
+                            ser.Write(value, wr);
+                        original = ms.ToArray();
+                    }
+                }
+
+                using (var ms = new MemoryStream())
+                {
+                    using (var wr = new ProtoWriter(ms, this, null))
+                    {
+                        var invType = rtm[key];
+                        var invSer = isRoot ? invType.RootSerializer : invType.Serializer;
+                        invSer.Write(value, wr);
+                    }
+                    if (!original.SequenceEqual(ms.ToArray())) throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, lengths " + ms.Length + ", " + original.Length);
+                }
+            }
+#endif
 #endif
         }
 
@@ -879,21 +934,83 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            //Helpers.DebugWriteLine("Deserialize", value);
             var metaType = ((MetaType)types[key]);
-            var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 
+            var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
+#if CHECK_COMPILED_VS_NOT
+            long initialPosition = source.UnderlyingStream.Position;
+#endif
+            object result;
             if (value == null && Helpers.IsValueType(ser.ExpectedType))
             {
                 if (ser.RequiresOldValue) value = CreateInstance(ser, source);
-                return ser.Read(value, source);
+                result = ser.Read(value, source);
             }
             else
+                result = ser.Read(value, source);
+
+#if CHECK_COMPILED_VS_NOT
+            if ((result == null || result.GetType().IsPublic) && (isRoot || source.Position == 0))
             {
-                return ser.Read(value, source);
+                bool compiled = IsFrozen || metaType.IsFrozen;
+                var rtm = CloneAsUnfrozen();
+                if (!compiled)
+                    CompileForCheckAndValidate(rtm);
+                else
+                {
+                    // still need to validate
+                    if (string.IsNullOrEmpty(_compiledToPath))
+                        CompileForCheckAndValidate(rtm.CloneAsUnfrozen());
+                    else
+                        RaiseValidateDll(_compiledToPath);
+                }
+
+                var stream = source.UnderlyingStream;
+                if (stream.CanSeek)
+                {
+                    long positionAfterRead = stream.Position;
+                    stream.Position = initialPosition;
+                    using (var pr = ProtoReader.Create(stream, this, null, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
+                    {
+                        var invType = rtm[key];
+                        var invSer = isRoot ? invType.RootSerializer : invType.Serializer;
+                        
+                        var copy = invSer.Read(value, pr);
+
+                        if (copy == null || result == null)
+                        {
+                            if ((copy == null) != (result == null))
+                                throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, copy is null");
+                        }
+                        else if (copy.GetType() != result.GetType())
+                            throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, types " + copy.GetType() + ", " + result.GetType());
+                        else if (copy.GetType().IsPrimitive && !result.Equals(result))
+                            throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, values " + copy + ", " + result);
+                    }
+                    stream.Position = positionAfterRead;
+                }
             }
 #endif
+            return result;
+#endif
         }
+
+#if CHECK_COMPILED_VS_NOT
+        static void CompileForCheckAndValidate(RuntimeTypeModel rtm)
+        {
+
+            const string name = "AutoTest";
+            rtm.Compile(name, name + ".dll");
+            RaiseValidateDll(name);
+        }
+
+        static void RaiseValidateDll(string name)
+        {
+
+            if (ValidateDll == null) throw new InvalidOperationException("For CHECK_COMPILED_VS_NOT ValidateDll event should be subscribed to");
+            ValidateDll(name);
+        }
+#endif
 
 #if !FEAT_IKVM
         private object CreateInstance(IProtoSerializer ser, ProtoReader source)

@@ -120,8 +120,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Examples\LeakDetection.cs">
-      <Link>LeakDetection.cs</Link>
+    <Compile Include="..\Examples\MainSetUpFixture.cs">
+      <Link>MainSetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="..\Examples\PEVerify.cs">
+      <Link>LinkedPeVerify\PEVerify.cs</Link>
     </Compile>
     <Compile Include="Aqla\AccessorsEmitTest.cs" />
     <Compile Include="Aqla\DerivedDerivedOnField.cs" />
@@ -143,6 +146,7 @@
     <Compile Include="Attribs\Basic.cs" />
     <Compile Include="Attribs\ComplexMultiTypes.cs" />
     <Compile Include="Attribs\PointStruct.cs" />
+    <Compile Include="CallerMamberName.cs" />
     <Compile Include="FX11.cs" />
     <Compile Include="Issues\TurkishL.cs" />
     <Compile Include="Issues\SO8933251.cs" />

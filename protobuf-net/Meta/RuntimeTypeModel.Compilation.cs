@@ -479,6 +479,7 @@ namespace AqlaSerializer.Meta
             {
                 asm.Save(path);
                 Helpers.DebugWriteLine("Wrote dll:" + path);
+                _compiledToPath = path;
             }
 #if FEAT_IKVM
             return null;
@@ -486,6 +487,9 @@ namespace AqlaSerializer.Meta
             return (TypeModel)Activator.CreateInstance(finalType);
 #endif
         }
+
+        string _compiledToPath;
+
 #if FEAT_IKVM
         private byte[] FromHex(string value)
         {

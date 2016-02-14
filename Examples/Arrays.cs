@@ -253,7 +253,7 @@ namespace Examples
     public class ArrayTests
     {
         [ProtoBuf.ProtoContract]
-        class Foo { }
+        public class Foo { }
         [Test]
         public void DeserializeNakedArray()
         {
