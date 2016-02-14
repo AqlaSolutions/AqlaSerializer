@@ -47,7 +47,11 @@ namespace AqlaSerializer.Serializers
             {
                 using (var token = g.ctx.Local(typeof(SubItemToken)))
                 using (var length = getLength != null ? g.ctx.Local(typeof(int)) : null)
+                using (var fieldNumber = _protoCompatibility ? g.ctx.Local(typeof(int)) : null)
                 {
+                    if (!fieldNumber.IsNullRef())
+                        g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
+                    
                     bool writePacked = _writePacked;
                     if (_protoCompatibility)
                     {
@@ -58,16 +62,13 @@ namespace AqlaSerializer.Serializers
                         else // each element will begin its own header
                             g.Writer.WriteFieldHeaderCancelBegin();
 
-                        using (var fieldNumber = g.ctx.Local(typeof(int)))
-                        {
-                            g.Assign(fieldNumber, g.WriterFunc.FieldNumber());
-                            EmitWriteContent(
-                                g,
-                                value,
-                                fieldNumber.AsOperand,
-                                _writePacked,
-                                first: prepareInstance);
-                        }
+                        EmitWriteContent(
+                            g,
+                            value,
+                            fieldNumber.AsOperand,
+                            _writePacked,
+                            first: prepareInstance);
+
                         if (writePacked)
                         {
                             // last element - end subitem
@@ -202,8 +203,11 @@ namespace AqlaSerializer.Serializers
                 using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
                 using (var token = g.ctx.Local(typeof(SubItemToken)))
                 using (var length = g.ctx.Local(typeof(int?), true))
+                using (var fieldNumber = _protoCompatibility ? g.ctx.Local(typeof(int)):null)
                 using (var read = g.ctx.Local(typeof(bool)))
                 {
+                    if (!fieldNumber.IsNullRef())
+                        g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
                     if (packedAllowedStatic)
                         g.Assign(packed, g.ReaderFunc.WireType() == WireType.String);
 
@@ -266,15 +270,12 @@ namespace AqlaSerializer.Serializers
                             g.Else();
                         }
 
-                        using (var fieldNumber = g.ctx.Local(typeof(int)))
+                        g.DoWhile();
                         {
-                            g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
-                            g.DoWhile();
-                            {
-                                EmitReadElementContent(g, add);
-                            }
-                            g.EndDoWhile(g.ReaderFunc.TryReadFieldHeader_bool(fieldNumber));
+                            EmitReadElementContent(g, add);
                         }
+                        g.EndDoWhile(g.ReaderFunc.TryReadFieldHeader_bool(fieldNumber));
+                        
                         if (packedAllowedStatic) g.End();
                     }
                     else

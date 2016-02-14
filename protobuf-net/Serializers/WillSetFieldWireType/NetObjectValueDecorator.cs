@@ -56,7 +56,7 @@ namespace AqlaSerializer.Serializers
 
             int baseKey = model.GetKey(type, false, true);
             int key = model.GetKey(type, false, false);
-            if (!Helpers.IsValueType(type) && key >= 0 && baseKey>=0)
+            if (!Helpers.IsValueType(type) && key >= 0 && baseKey >= 0 && ValueMember.CanBeAsLateReference(key, model, true))
                 _lateReferenceTail = new LateReferenceSerializer(type, key, baseKey, model);
             else if (asLateReference) throw new ArgumentException("Can't use late reference with non-model or value type " + type.Name);
 
@@ -263,7 +263,9 @@ namespace AqlaSerializer.Serializers
 
                 //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
 
-                using (Local value = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(_type))
+                Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
+                using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(_type))
+                using (Local innerValue = nullableUnderlying == null ? nullableValue.AsCopy() : ctx.Local(nullableUnderlying))
                 using (Local shouldEnd = ctx.Local(typeof(bool)))
                 using (Local isLateReference = ctx.Local(typeof(bool)))
                 using (Local newTypeRefKey = ctx.Local(typeof(int)))
@@ -274,13 +276,13 @@ namespace AqlaSerializer.Serializers
                 using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
                 using (Local token = ctx.Local(typeof(SubItemToken)))
                 using (Local oldValueBoxed = ctx.Local(typeof(object)))
-                using (Local valueBoxed = ctx.Local(typeof(object)))
+                using (Local inputValueBoxed = ctx.Local(typeof(object)))
                 {
                     g.Assign(options, _options);
                     if (!RequiresOldValue)
-                        g.Assign(valueBoxed, null);
+                        g.Assign(inputValueBoxed, null);
                     else
-                        g.Assign(valueBoxed, value); // box
+                        g.Assign(inputValueBoxed, nullableValue); // box
 
                     g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_key));
                     g.Assign(type, _type);
@@ -289,7 +291,7 @@ namespace AqlaSerializer.Serializers
                         s.Invoke(
                             typeof(NetObjectHelpers),
                             nameof(NetObjectHelpers.ReadNetObject_Start),
-                            valueBoxed,
+                            inputValueBoxed,
                             g.ArgReaderWriter(),
                             type,
                             options,
@@ -304,9 +306,25 @@ namespace AqlaSerializer.Serializers
                     {
                         using (ctx.StartDebugBlockAuto(this, "ShouldEnd=True"))
                         {
-                            g.Assign(oldValueBoxed, valueBoxed);
-
+                            g.Assign(oldValueBoxed, inputValueBoxed);
+                            
                             // now valueBoxed is not null otherwise it would go to else
+
+                            // unwrap nullable
+                            if (!innerValue.IsSame(nullableValue))
+                            {
+                                // old value may be null
+                                g.If(nullableValue.AsOperand != null);
+                                {
+                                    g.Assign(innerValue, nullableValue.AsOperand.Property("Value"));
+                                }
+                                g.Else();
+                                {
+                                    g.InitObj(innerValue);
+                                }
+                                g.End();
+                            }
+
 
                             g.If(typeKey.AsOperand >= 0);
                             {
@@ -323,25 +341,25 @@ namespace AqlaSerializer.Serializers
                                             if (_lateReferenceTail == null)
                                                 g.ThrowProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
                                             else
-                                                EmitReadTail(g, ctx, _lateReferenceTail, value, valueBoxed);
+                                                EmitReadTail(g, ctx, _lateReferenceTail, innerValue, inputValueBoxed);
                                         }
                                         g.Else();
                                         {
-                                            EmitReadTail(g, ctx, _keySerializer, value, valueBoxed);
+                                            EmitReadTail(g, ctx, _keySerializer, innerValue, inputValueBoxed);
                                         }
                                         g.End();
                                     }
                                     g.Else();
                                     {
-                                        g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
-                                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                                        g.Assign(inputValueBoxed, g.ReaderFunc.ReadObject(inputValueBoxed, typeKey));
+                                        g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? _type));
                                     }
                                     g.End();
                                 }
                                 else
                                 {
-                                    g.Assign(valueBoxed, g.ReaderFunc.ReadObject(valueBoxed, typeKey));
-                                    g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                                    g.Assign(inputValueBoxed, g.ReaderFunc.ReadObject(inputValueBoxed, typeKey));
+                                    g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? _type));
                                 }
                             }
                             g.Else();
@@ -350,10 +368,10 @@ namespace AqlaSerializer.Serializers
                                 g.If(isDynamic);
                                 {
                                     g.ctx.MarkDebug("dynamic");
-                                    g.If(g.ReaderFunc.TryReadBuiltinType_bool(valueBoxed, g.HelpersFunc.GetTypeCode(type), true));
+                                    g.If(g.ReaderFunc.TryReadBuiltinType_bool(inputValueBoxed, g.HelpersFunc.GetTypeCode(type), true));
                                     {
                                         g.Assign(options, _options | BclHelpers.NetObjectOptions.LateSet);
-                                        g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                                        g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? _type));
                                     }
                                     g.Else();
                                     {
@@ -369,7 +387,7 @@ namespace AqlaSerializer.Serializers
                                         if (_lateReferenceTail == null)
                                             g.ThrowProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
                                         else
-                                            EmitReadTail(g, ctx, _lateReferenceTail, value, valueBoxed);
+                                            EmitReadTail(g, ctx, _lateReferenceTail, innerValue, inputValueBoxed);
                                     }
                                     g.Else();
                                     {
@@ -377,7 +395,7 @@ namespace AqlaSerializer.Serializers
                                             g.ThrowProtoException("Dynamic type expected but no type info was read");
                                         else
                                         {
-                                            EmitReadTail(g, ctx, _tail, value, valueBoxed);
+                                            EmitReadTail(g, ctx, _tail, innerValue, inputValueBoxed);
                                         }
                                     }
                                     g.End();
@@ -386,10 +404,13 @@ namespace AqlaSerializer.Serializers
                             }
                             g.End();
 
+                            if (!innerValue.IsSame(nullableValue))
+                                g.Assign(nullableValue, innerValue); // nullable~T it back
+
                             g.Invoke(
                                 typeof(NetObjectHelpers),
                                 nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
-                                valueBoxed,
+                                inputValueBoxed,
                                 g.ArgReaderWriter(),
                                 oldValueBoxed,
                                 type,
@@ -403,39 +424,41 @@ namespace AqlaSerializer.Serializers
                     {
                         if (Helpers.IsValueType(_type) && (EmitReadReturnsValue || RequiresOldValue))
                         {
-                            g.If(valueBoxed.AsOperand == null);
+                            g.If(inputValueBoxed.AsOperand == null);
                             {
                                 // also nullable can just unbox from null or value
                                 // but anyway
-                                g.InitObj(value);
+                                g.InitObj(nullableValue);
                             }
                             g.Else();
                             {
-                                g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                                g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(_type));
                             }
                             g.End();
                         }
                         else
-                            g.Assign(value, valueBoxed.AsOperand.Cast(_type));
+                            g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(_type));
 
                         g.Reader.EndSubItem(token);
                     }
                     g.End();
 
                     if (EmitReadReturnsValue)
-                        ctx.LoadValue(value);
+                        ctx.LoadValue(nullableValue);
                 }
             }
         }
 
-        void EmitReadTail(SerializerCodeGen g, CompilerContext ctx, IProtoSerializerWithWireType ser, Local value, Local valueBoxed)
+        void EmitReadTail(SerializerCodeGen g, CompilerContext ctx, IProtoSerializerWithWireType ser, Local value, Local outValueBoxed)
         {
+            // inputValue may be nullable
             using (ctx.StartDebugBlockAuto(this))
             {
                 ser.EmitRead(ctx, ser.RequiresOldValue ? value : null);
                 if (ser.EmitReadReturnsValue)
                     g.Assign(value, g.GetStackValueOperand(ser.ExpectedType));
-                g.Assign(valueBoxed, value);
+                
+                g.Assign(outValueBoxed, value);
             }
         }
 
@@ -443,8 +466,10 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
+                Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
                 bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0;
-                using (Local value = ctx.GetLocalWithValue(_type, valueFrom))
+                using (Local inputValue = ctx.GetLocalWithValue(_type, valueFrom))
+                using (Local value = nullableUnderlying == null ? inputValue.AsCopy() : ctx.Local(nullableUnderlying))
                 {
                     var g = ctx.G;
                     using (Local write = ctx.Local(typeof(bool)))
@@ -476,7 +501,7 @@ namespace AqlaSerializer.Serializers
                             s.Invoke(
                                 ctx.MapType(typeof(NetObjectHelpers)),
                                 nameof(NetObjectHelpers.WriteNetObject_Start),
-                                value,
+                                inputValue,
                                 g.ArgReaderWriter(),
                                 options,
                                 dynamicTypeKey,
@@ -485,6 +510,8 @@ namespace AqlaSerializer.Serializers
                         {
                             using (ctx.StartDebugBlockAuto(this, "Write=True"))
                             {
+                                if (!value.IsSame(inputValue))
+                                    g.Assign(value, inputValue.AsOperand.Property("Value")); // write = true so not null
                                 // field header written!
                                 if ((_options & BclHelpers.NetObjectOptions.DynamicType) != 0)
                                 {

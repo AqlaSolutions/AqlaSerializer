@@ -728,11 +728,12 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
-        internal static bool CanBeAsLateReference(int key, RuntimeTypeModel model)
+        internal static bool CanBeAsLateReference(int key, RuntimeTypeModel model, bool forRead = false)
         {
             if (key < 0) return false;
             MetaType mt = model[key];
-            return !mt.Type.IsArray && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !Helpers.IsValueType(mt.Type) && model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference);
+            return !mt.Type.IsArray && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !Helpers.IsValueType(mt.Type) &&
+                   (forRead || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference));
         }
 
         static IProtoSerializerWithWireType TryGetBasicTypeSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)

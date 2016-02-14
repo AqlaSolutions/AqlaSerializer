@@ -336,7 +336,6 @@ namespace AqlaSerializer.Serializers
                                 }
                                 g.End();
 #endif
-                                g.ctx.MarkDebug("count before: " + value.AsOperand.Property("Count"));
                                 if (asList)
                                 {
                                     ctx.MarkDebug("// using Add method");
@@ -345,15 +344,13 @@ namespace AqlaSerializer.Serializers
                                 else
                                 {
                                     ctx.MarkDebug("// using add delegate");
-                                    ctx.LoadAddress(value, _itemType);
+                                    ctx.LoadAddress(value, ExpectedType);
                                     ctx.LoadValue(v);
                                     ctx.EmitCall(this.add);
                                 }
-                                g.ctx.MarkDebug("count after: " + value.AsOperand.Property("Count"));
                             }
                         }
                     );
-                g.ctx.MarkDebug("count after all: " + value.AsOperand.Property("Count"));
                 if (EmitReadReturnsValue)
                 {
                     ctx.MarkDebug("returning list");

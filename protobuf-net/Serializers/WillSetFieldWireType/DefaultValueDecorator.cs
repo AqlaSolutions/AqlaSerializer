@@ -135,187 +135,192 @@ namespace AqlaSerializer.Serializers
 
         private void EmitBranchIfDefaultValue(Compiler.CompilerContext ctx, Compiler.CodeLabel label)
         {
-            var g = ctx.G;
-            Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
-
-            if (nullableUnderlying != null)
+            using (ctx.StartDebugBlockAuto(this))
             {
-                // we another for null check
-                ctx.CopyValue();
-                g.If(g.GetStackValueOperand(ExpectedType).Property("HasValue"));
+                var g = ctx.G;
+                Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
 
-                // unwrap value
-                g.LeaveNextReturnOnStack();
-                g.Eval(g.GetStackValueOperand(ExpectedType).Property("Value"));
-            }
-
-            EmitBranchIfDefaultValue_Switch(ctx, label);
-
-            if (nullableUnderlying != null)
-            {
-                g.Else();
+                if (nullableUnderlying != null)
                 {
-                    ctx.DiscardValue();
+                    using (var loc = ctx.Local(ExpectedType))
+                    {
+                        // we another for null check
+                        ctx.G.Assign(loc, g.GetStackValueOperand(ExpectedType));
+                        g.If(loc.AsOperand.Property("HasValue"));
+
+                        // unwrap value
+                        g.LeaveNextReturnOnStack();
+                        g.Eval(loc.AsOperand.Property("Value"));
+                    }
                 }
-                g.End();
+
+                EmitBranchIfDefaultValue_Switch(ctx, label);
+
+                if (nullableUnderlying != null)
+                {
+                    g.End();
+                }
             }
         }
 
         private void EmitBranchIfDefaultValue_Switch(Compiler.CompilerContext ctx, Compiler.CodeLabel label)
         {
-            Type expected = Helpers.GetNullableUnderlyingType(ExpectedType) ?? ExpectedType;
-            switch (Helpers.GetTypeCode(expected))
+            using (ctx.StartDebugBlockAuto(this))
             {
-                case ProtoTypeCode.Boolean:
-                    if ((bool)defaultValue)
-                    {
-                        ctx.BranchIfTrue(label, false);
-                    }
-                    else
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    break;
-                case ProtoTypeCode.Byte:
-                    if ((byte)defaultValue == (byte)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)(byte)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.SByte:
-                    if ((sbyte)defaultValue == (sbyte)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)(sbyte)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.Int16:
-                    if ((short)defaultValue == (short)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)(short)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.UInt16:
-                    if ((ushort)defaultValue == (ushort)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)(ushort)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.Int32:
-                    if ((int)defaultValue == (int)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.UInt32:
-                    if ((uint)defaultValue == (uint)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)(uint)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.Char:
-                    if ((char)defaultValue == (char)0)
-                    {
-                        ctx.BranchIfFalse(label, false);
-                    }
-                    else
-                    {
-                        ctx.LoadValue((int)(char)defaultValue);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.Int64:
-                    ctx.LoadValue((long)defaultValue);
-                    EmitBeq(ctx, label, expected);
-                    break;
-                case ProtoTypeCode.UInt64:
-                    ctx.LoadValue((long)(ulong)defaultValue);
-                    EmitBeq(ctx, label, expected);
-                    break;
-                case ProtoTypeCode.Double:
-                    ctx.LoadValue((double)defaultValue);
-                    EmitBeq(ctx, label, expected);
-                    break;
-                case ProtoTypeCode.Single:
-                    ctx.LoadValue((float)defaultValue);
-                    EmitBeq(ctx, label, expected);
-                    break;
-                case ProtoTypeCode.String:
-                    ctx.LoadValue((string)defaultValue);
-                    EmitBeq(ctx, label, expected);
-                    break;
-                case ProtoTypeCode.Decimal:
-                    {
-                        decimal d = (decimal)defaultValue;
-                        ctx.LoadValue(d);
-                        EmitBeq(ctx, label, expected);
-                    }
-                    break;
-                case ProtoTypeCode.TimeSpan:
-                    {
-                        TimeSpan ts = (TimeSpan)defaultValue;
-                        if (ts == TimeSpan.Zero)
+                Type expected = Helpers.GetNullableUnderlyingType(ExpectedType) ?? ExpectedType;
+                switch (Helpers.GetTypeCode(expected))
+                {
+                    case ProtoTypeCode.Boolean:
+                        if ((bool)defaultValue)
                         {
-                            ctx.LoadValue(typeof(TimeSpan).GetField("Zero"));
+                            ctx.BranchIfTrue(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue(ts.Ticks);
-                            ctx.EmitCall(ctx.MapType(typeof(TimeSpan)).GetMethod("FromTicks"));
+                            ctx.BranchIfFalse(label, false);
                         }
+                        break;
+                    case ProtoTypeCode.Byte:
+                        if ((byte)defaultValue == (byte)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)(byte)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.SByte:
+                        if ((sbyte)defaultValue == (sbyte)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)(sbyte)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.Int16:
+                        if ((short)defaultValue == (short)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)(short)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.UInt16:
+                        if ((ushort)defaultValue == (ushort)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)(ushort)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.Int32:
+                        if ((int)defaultValue == (int)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.UInt32:
+                        if ((uint)defaultValue == (uint)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)(uint)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.Char:
+                        if ((char)defaultValue == (char)0)
+                        {
+                            ctx.BranchIfFalse(label, false);
+                        }
+                        else
+                        {
+                            ctx.LoadValue((int)(char)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.Int64:
+                        ctx.LoadValue((long)defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
-                    }
-                case ProtoTypeCode.Guid:
-                    {
-                        ctx.LoadValue((Guid)defaultValue);
+                    case ProtoTypeCode.UInt64:
+                        ctx.LoadValue((long)(ulong)defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
-                    }
-                case ProtoTypeCode.DateTime:
-                    {
+                    case ProtoTypeCode.Double:
+                        ctx.LoadValue((double)defaultValue);
+                        EmitBeq(ctx, label, expected);
+                        break;
+                    case ProtoTypeCode.Single:
+                        ctx.LoadValue((float)defaultValue);
+                        EmitBeq(ctx, label, expected);
+                        break;
+                    case ProtoTypeCode.String:
+                        ctx.LoadValue((string)defaultValue);
+                        EmitBeq(ctx, label, expected);
+                        break;
+                    case ProtoTypeCode.Decimal:
+                        {
+                            decimal d = (decimal)defaultValue;
+                            ctx.LoadValue(d);
+                            EmitBeq(ctx, label, expected);
+                        }
+                        break;
+                    case ProtoTypeCode.TimeSpan:
+                        {
+                            TimeSpan ts = (TimeSpan)defaultValue;
+                            if (ts == TimeSpan.Zero)
+                            {
+                                ctx.LoadValue(typeof(TimeSpan).GetField("Zero"));
+                            }
+                            else
+                            {
+                                ctx.LoadValue(ts.Ticks);
+                                ctx.EmitCall(ctx.MapType(typeof(TimeSpan)).GetMethod("FromTicks"));
+                            }
+                            EmitBeq(ctx, label, expected);
+                            break;
+                        }
+                    case ProtoTypeCode.Guid:
+                        {
+                            ctx.LoadValue((Guid)defaultValue);
+                            EmitBeq(ctx, label, expected);
+                            break;
+                        }
+                    case ProtoTypeCode.DateTime:
+                        {
 #if FX11 || SILVERLIGHT
                         ctx.LoadValue(((DateTime)defaultValue).ToFileTime());
                         ctx.EmitCall(typeof(DateTime).GetMethod("FromFileTime"));                      
 #else
-                        ctx.LoadValue(((DateTime)defaultValue).ToBinary());
-                        ctx.EmitCall(ctx.MapType(typeof(DateTime)).GetMethod("FromBinary"));
+                            ctx.LoadValue(((DateTime)defaultValue).ToBinary());
+                            ctx.EmitCall(ctx.MapType(typeof(DateTime)).GetMethod("FromBinary"));
 #endif
 
-                        EmitBeq(ctx, label, expected);
-                        break;
-                    }
-                default:
-                    throw new NotSupportedException("Type cannot be represented as a default value: " + expected.FullName);
+                            EmitBeq(ctx, label, expected);
+                            break;
+                        }
+                    default:
+                        throw new NotSupportedException("Type cannot be represented as a default value: " + expected.FullName);
+                }
             }
         }
 

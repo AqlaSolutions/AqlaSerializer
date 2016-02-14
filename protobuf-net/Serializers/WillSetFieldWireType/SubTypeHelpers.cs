@@ -75,7 +75,7 @@ namespace AqlaSerializer.Serializers
         public MetaType TryRead(MetaType metaType, Type oldValueActualType, ProtoReader source)
         {
             var r = TryRead(metaType, source, 0);
-            while (r != null && !r.Serializer.CanCreateInstance())
+            while (r != null && !r.Serializer.CanCreateInstance() && r != metaType)
                 r = r.BaseType;
 
             if (r == null || Helpers.IsAssignableFrom(r.Type, oldValueActualType))
@@ -224,7 +224,7 @@ namespace AqlaSerializer.Serializers
                     0,
                     r =>
                         {
-                            while (r != null && !r.Serializer.CanCreateInstance())
+                            while (r != null && !r.Serializer.CanCreateInstance() && r != metaType)
                                 r = r.BaseType;
 
                             if (r == null)

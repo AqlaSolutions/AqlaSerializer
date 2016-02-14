@@ -7,6 +7,7 @@ using DAL;
 using Examples.SimpleStream;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
+using NUnit.Framework;
 
 namespace Examples
 {
@@ -79,9 +80,11 @@ namespace Examples
                 if (!equal)
                 {
                     string exp = GetByteString(expected), act = GetByteString(actual);
-                    Console.WriteLine("Expected: {0}", exp);
-                    Console.WriteLine("Actual: {0}", act);
+                    //Console.WriteLine("Expected: {0}", exp);
+                    //Console.WriteLine("Actual: {0}", act);
+                    ms.Position = 0;
                     var d = model.Deserialize<T>(ms);
+                    Assert.That(act, Is.EqualTo(exp));
                 }
                 return equal;
             }
