@@ -660,6 +660,12 @@ namespace AqlaSerializer.Compiler
         public void MarkDebug(Operand mark, bool strong = false)
         {
 #if DEBUG_COMPILE_2
+            if (!G.IsReachable)
+            {
+                if (!ReferenceEquals(mark, null))
+                    mark.SetNotLeaked();
+                return;
+            }
             if (strong)
             {
                 LoadValue(new string('*', 300));
