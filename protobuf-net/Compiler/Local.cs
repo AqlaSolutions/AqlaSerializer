@@ -74,6 +74,18 @@ namespace AqlaSerializer.Compiler
             return false;
         }
 
+        [Obsolete("Don't use + on local", true)]
+        public static object operator +(string b, Local a)
+        {
+            return null;
+        }
+
+        [Obsolete("Don't use + on local", true)]
+        public static object operator +(Local a, string b)
+        {
+            return null;
+        }
+
         public Type Type => _type;
 
         internal LocalBuilder Value

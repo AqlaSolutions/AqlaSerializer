@@ -294,9 +294,12 @@ namespace AqlaSerializer.Serializers
                         null,
                         o =>
                             {
-                                ctx.LoadAddress(builderInstance, builderInstance.Type);
-                                ctx.LoadValue(o);
-                                ctx.EmitCall(add);
+                                using (ctx.StartDebugBlockAuto(this, "add"))
+                                {
+                                    ctx.LoadAddress(builderInstance, builderInstance.Type);
+                                    ctx.LoadValue(o);
+                                    ctx.EmitCall(add);
+                                }
                             });
 
                     ctx.LoadAddress(builderInstance, builderInstance.Type);
