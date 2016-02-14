@@ -48,6 +48,11 @@ namespace AqlaSerializer.Compiler
             Throw(ExpressionFactory.New(typeof(ProtoException), message));
         }
 
+        public void ThrowNotSupportedException(Operand message)
+        {
+            Throw(ExpressionFactory.New(typeof(NotSupportedException), message));
+        }
+
         public void ThrowNullReferenceException()
         {
             Throw(ExpressionFactory.New(typeof(NullReferenceException)));

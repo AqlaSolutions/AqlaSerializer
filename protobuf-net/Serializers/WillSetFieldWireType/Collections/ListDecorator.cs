@@ -263,7 +263,7 @@ namespace AqlaSerializer.Serializers
                 {
                     using (ctx.StartDebugBlockAuto(this, "subtype handler"))
                     {
-                        g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value);
+                        g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value.AsOperand);
                         _subTypeHelpers.EmitTryRead(
                             g,
                             oldValueForSubTypeHelpers,

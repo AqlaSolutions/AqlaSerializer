@@ -75,7 +75,10 @@ namespace AqlaSerializer.Serializers
         public MetaType TryRead(MetaType metaType, Type oldValueActualType, ProtoReader source)
         {
             var r = TryRead(metaType, source, 0);
-            if (!metaType.Serializer.CanCreateInstance() || Helpers.IsAssignableFrom(r.Type, oldValueActualType))
+            while (r != null && !r.Serializer.CanCreateInstance())
+                r = r.BaseType;
+
+            if (r == null || Helpers.IsAssignableFrom(r.Type, oldValueActualType))
                     return null;
             return r;
         }
@@ -221,19 +224,24 @@ namespace AqlaSerializer.Serializers
                     0,
                     r =>
                         {
-                            if (!r.Serializer.CanCreateInstance())
-                            {
+                            while (r != null && !r.Serializer.CanCreateInstance())
+                                r = r.BaseType;
+
+                            if (r == null)
                                 returnGen(null);
-                            }
                             else if (!oldValue.IsNullRef()) // check local exists
                             {
                                 g.If(oldValue.AsOperand.Is(r.Type));
                                 {
                                     returnGen(null);
                                 }
+                                g.Else();
+                                {
+                                    returnGen(r);
+                                }
                                 g.End();
                             }
-                            returnGen(r);
+                            else returnGen(r);
                         });
                 g.MarkLabel(jumpOut);
             }

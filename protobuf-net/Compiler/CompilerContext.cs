@@ -671,7 +671,8 @@ namespace AqlaSerializer.Compiler
                 G.Invoke(typeof(Debug), "WriteLine", mark);
             }
 #else
-            mark.SetNotLeaked(true);
+            if (!ReferenceEquals(mark, null))
+                mark.SetNotLeaked();
 #endif
         }
 

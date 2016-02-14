@@ -411,7 +411,7 @@ namespace Examples
 
             var external = model.Compile(name, name + ".dll");
             PEVerify.AssertValid(name + ".dll");
-            TestSortedDictionaryImpl<T>(external, "External");
+            TestSortedDictionaryImpl<T>(external, name + ".dll");
 
             model.CompileInPlace();
             TestSortedDictionaryImpl<T>(model, "CompileInPlace");

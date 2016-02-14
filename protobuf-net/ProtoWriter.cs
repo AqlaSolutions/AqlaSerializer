@@ -183,8 +183,8 @@ namespace AqlaSerializer
 
         private int fieldNumber, flushLock;
         WireType wireType;
-        internal WireType WireType => wireType;
-        internal int FieldNumber => fieldNumber;
+        public WireType WireType => wireType;
+        public int FieldNumber => fieldNumber;
 
         bool expectRoot;
 
