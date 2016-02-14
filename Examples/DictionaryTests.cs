@@ -84,7 +84,8 @@ namespace Examples.Dictionary
             lookup[4] = "def";
             lookup[7] = "abc";
 
-            var clone = Serializer.DeepClone(lookup);
+            var tm = TypeModel.Create();
+            var clone = tm.DeepClone(lookup);
             
             AssertEqual(lookup, clone);
         }

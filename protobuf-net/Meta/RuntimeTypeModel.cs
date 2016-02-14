@@ -869,11 +869,11 @@ namespace AqlaSerializer.Meta
             ser.Write(value, dest);
 
 #if CHECK_COMPILED_VS_NOT
-            if (!SkipCompiledVsNotCheck && value.GetType().IsPublic && (isRoot || ProtoWriter.GetPosition(dest) == 0))
+            if (!SkipCompiledVsNotCheck && (value.GetType().IsPublic || value.GetType().IsNestedPublic) && isRoot)
             {
-                bool compiled = IsFrozen || metaType.IsFrozen;
+                bool compiled = IsFrozen || metaType.IsCompiledInPlace;
                 var rtm = CloneAsUnfrozen();
-                bool canCompileDll = types.Cast<MetaType>().All(t => t.Type.IsPublic);
+                bool canCompileDll = types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
                 if (!compiled)
                 {
                     if (canCompileDll)
@@ -946,7 +946,7 @@ namespace AqlaSerializer.Meta
 
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 #if CHECK_COMPILED_VS_NOT
-            long initialPosition = source.UnderlyingStream.Position;
+            long initialPosition = source.Position;
 #endif
             object result;
             if (value == null && Helpers.IsValueType(ser.ExpectedType))
@@ -958,11 +958,11 @@ namespace AqlaSerializer.Meta
                 result = ser.Read(value, source);
 
 #if CHECK_COMPILED_VS_NOT
-            if (!SkipCompiledVsNotCheck && (result == null || result.GetType().IsPublic) && (isRoot || source.Position == 0))
+            if (!SkipCompiledVsNotCheck && (result == null || result.GetType().IsPublic || result.GetType().IsNestedPublic) && isRoot)
             {
-                bool compiled = IsFrozen || metaType.IsFrozen;
+                bool compiled = IsFrozen || metaType.IsCompiledInPlace;
                 var rtm = CloneAsUnfrozen();
-                bool canBeCompiled = types.Cast<MetaType>().All(t => t.Type.IsPublic);
+                bool canBeCompiled = types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
                 if (!compiled)
                 {
                     if (canBeCompiled)
@@ -1015,7 +1015,7 @@ namespace AqlaSerializer.Meta
 
             const string name = "AutoTest";
             rtm.Compile(name, name + ".dll");
-            RaiseValidateDll(name);
+            RaiseValidateDll(name + ".dll");
         }
 #endif
 

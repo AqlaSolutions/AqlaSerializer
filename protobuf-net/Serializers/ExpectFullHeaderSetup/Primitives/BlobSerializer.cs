@@ -73,9 +73,8 @@ namespace AqlaSerializer.Serializers
                         g.Reader.NoteObject(result);
                     }
                     if (!value.IsNullRef()) g.End();
-
-                    if (overwriteList)
-                        ctx.LoadValue(result);
+                    
+                    ctx.LoadValue(result);
                 }
             }
         }

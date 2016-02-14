@@ -87,7 +87,7 @@ namespace Examples.Issues
             ProtoCompatibilitySettings comp=ProtoCompatibilitySettings.Default;
             // late reference mode is not allowed on surrogates
             // TODO move LateReference mode to attributes
-            comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
+            //comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
             var m = TypeModel.Create(false, comp);
             m.AutoCompile = false;
             m.Add(typeof(C), false).SetSurrogate(typeof(CS));

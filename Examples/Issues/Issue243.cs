@@ -31,8 +31,8 @@ namespace Examples.Issues
             var model = GetModel();
             RunTestNonNull(model, "Runtime");
             model.CompileInPlace();
-            RunTestNonNull(model, "CompileInPlace");
             RunTestNonNull(model.Compile(), "Compile");
+            RunTestNonNull(model, "CompileInPlace");
         }
         static RuntimeTypeModel GetModel()
         {
