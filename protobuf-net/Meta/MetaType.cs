@@ -899,6 +899,8 @@ namespace AqlaSerializer.Meta
             // no point in offering chaining; no options are respected
         }
 
+        public bool HasSurrogate => surrogate != null;
+
         internal MetaType GetSurrogateOrSelf()
         {
             if (surrogate != null) return model[surrogate];

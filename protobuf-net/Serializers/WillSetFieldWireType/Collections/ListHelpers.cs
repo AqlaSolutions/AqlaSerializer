@@ -145,7 +145,7 @@ namespace AqlaSerializer.Serializers
             {
                 g.Assign(isFirst, true);
 
-                g.ForEach(castNeeded ? g.ctx.MapType(typeof(object)) : _itemType, enumerable);
+                var el = g.ForEach(castNeeded ? g.ctx.MapType(typeof(object)) : _itemType, enumerable);
                 {
                     g.If(isFirst);
                     {
@@ -153,7 +153,7 @@ namespace AqlaSerializer.Serializers
                     }
                     g.End();
 
-                    EmitWriteElement(g, castNeeded ? obj.AsOperand.Cast(_itemType) : obj.AsOperand, fieldNumber, pack, isFirst);
+                    EmitWriteElement(g, castNeeded ? el.Cast(_itemType) : el, fieldNumber, pack, isFirst);
 
                     g.Assign(isFirst, false);
                     

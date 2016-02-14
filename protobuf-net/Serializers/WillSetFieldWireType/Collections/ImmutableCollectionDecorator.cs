@@ -219,6 +219,7 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
+                Type voidType = ctx.MapType(typeof(void));
                 using (Compiler.Local value = AppendToCollection ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : null)
                 using (Compiler.Local builderInstance = new Compiler.Local(ctx, builderFactory.ReturnType))
                 {
@@ -242,7 +243,6 @@ namespace AqlaSerializer.Serializers
                         ctx.EmitCall(Helpers.GetGetMethod(prop, false, false));
                         ctx.BranchIfFalse(done, false); // old list is empty; nothing to add
 
-                        Type voidType = ctx.MapType(typeof(void));
                         if (addRange != null)
                         {
                             ctx.LoadValue(builderInstance);
@@ -299,6 +299,7 @@ namespace AqlaSerializer.Serializers
                                     ctx.LoadAddress(builderInstance, builderInstance.Type);
                                     ctx.LoadValue(o);
                                     ctx.EmitCall(add);
+                                    if (add.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
                                 }
                             });
 
