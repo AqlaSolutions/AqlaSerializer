@@ -11,7 +11,7 @@ using AqlaSerializer;
 namespace Examples
 {
     [ProtoBuf.ProtoContract, Serializable]
-    class RemotingEntity : ISerializable
+    public class RemotingEntity : ISerializable
     {
         public RemotingEntity()
         {}
@@ -35,7 +35,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract, Serializable]
-    class BrokenSerEntity : ISerializable
+    public class BrokenSerEntity : ISerializable
     {
         public BrokenSerEntity()
         { }
@@ -53,7 +53,7 @@ namespace Examples
         }
     }
     [ProtoBuf.ProtoContract, Serializable]
-    class BrokenDeserEntity : ISerializable
+    public class BrokenDeserEntity : ISerializable
     {
         public BrokenDeserEntity()
         { }

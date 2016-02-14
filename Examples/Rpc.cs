@@ -20,7 +20,7 @@
 //        Customer MultiArg(int id, Customer cust);
 //    }
 //    [DataContract]
-//    class Customer
+//    public class Customer
 //    {
 //        [DataMember(Order=1)]
 //        public string Name { get; set;}   

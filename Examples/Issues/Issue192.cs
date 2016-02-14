@@ -13,9 +13,9 @@ namespace Examples.Issues
     public class Issue192
     {
         [ProtoBuf.ProtoContract]
-        class SomeType { }
+        public class SomeType { }
         [ProtoBuf.ProtoContract]
-        class Wrapper
+        public class Wrapper
         {
             [ProtoBuf.ProtoMember(1)]
             public List<SomeType>[] List { get; set; }

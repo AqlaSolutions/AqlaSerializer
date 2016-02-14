@@ -16,7 +16,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class InterfaceBased : object, AqlaSerializer.IExtensible, IExtTest, System.ComponentModel.INotifyPropertyChanged
+    public class InterfaceBased : object, AqlaSerializer.IExtensible, IExtTest, System.ComponentModel.INotifyPropertyChanged
     {
         [ProtoBuf.ProtoMember(1)]
         public string Bof { get; set; }
@@ -47,7 +47,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class SmallerObject : Extensible, IExtTest
+    public class SmallerObject : Extensible, IExtTest
     {
         [ProtoBuf.ProtoMember(1)]
         public string Bof { get; set; }
@@ -56,7 +56,7 @@ namespace Examples
         public string Eof { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class BiggerObject
+    public class BiggerObject
     {
         [ProtoBuf.ProtoMember(1)]
         public string Bof { get; set; }

@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace AqlaSerializer.unittest
 {
-    static class PEVerify
+    static public class PEVerify
     {
         public static void Verify(string path)
         {

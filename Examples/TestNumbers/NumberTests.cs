@@ -9,7 +9,7 @@ using AqlaSerializer;
 namespace Examples.TestNumbers
 {
     [ProtoBuf.ProtoContract]
-    class NumRig
+    public class NumRig
     {
         [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.Default)]
         public int Int32Default { get; set; }
@@ -48,14 +48,14 @@ namespace Examples.TestNumbers
     }
 
     [ProtoBuf.ProtoContract]
-    class ZigZagInt32
+    public class ZigZagInt32
     {
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         [DefaultValue(123456)]
         public int Foo { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class TwosComplementInt32
+    public class TwosComplementInt32
     {
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         [DefaultValue(123456)]
@@ -63,14 +63,14 @@ namespace Examples.TestNumbers
     }
 
     [ProtoBuf.ProtoContract]
-    class TwosComplementUInt32
+    public class TwosComplementUInt32
     {
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.TwosComplement)]
         public uint Foo { get; set; }
     }
     
     [ProtoBuf.ProtoContract]
-    class ZigZagInt64
+    public class ZigZagInt64
     {
         [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.ZigZag)]
         public long Foo { get; set; }

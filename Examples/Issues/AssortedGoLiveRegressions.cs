@@ -96,7 +96,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class Foo
+        public class Foo
         {
             [ProtoBuf.ProtoMember(1)]
             public string Name { get; set; }

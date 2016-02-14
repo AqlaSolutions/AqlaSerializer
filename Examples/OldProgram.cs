@@ -58,7 +58,7 @@
 //        Test3 Get(Test1 request);
 //    }
 
-//    static class Program
+//    static public class Program
 //    {
 //        static T WriteBytes<T>(T instance) where T : class, new()
 //        {

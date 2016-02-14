@@ -73,7 +73,7 @@ namespace Examples.Issues
                 // Do nothing
             }
 
-            // NOTE: For whatever reason, this class will not correctly deserialize without this method, even though
+            // NOTE: For whatever reason, this public class will not correctly deserialize without this method, even though
             // the base class, Dictionary, has the SerializableAttribute. It's protected so only the framework can access it.
             protected ProtoDictionary(SerializationInfo info, StreamingContext context)
                 : base(info, context)

@@ -42,7 +42,7 @@ namespace Examples.Issues
 
     }
     [DataContract]
-    class Foo
+    public class Foo
     {
         [DataMember(Name = "Pair", Order = 1)]
         public KeyPair<int, string> Pair { get; set; }
@@ -60,7 +60,7 @@ namespace Examples.Issues
     }
 
     [DataContract]
-    sealed class KeyPairProxy<TKey1, TKey2>
+    sealed public class KeyPairProxy<TKey1, TKey2>
     {
         [DataMember(Order = 1)]
         public TKey1 Key1 { get; set; }
@@ -84,7 +84,7 @@ namespace Examples.Issues
            Key1 = k1;
            Key2 = k2;
        }
-       // Stupid tuple class for datacontract
+       // Stupid tuple public class for datacontract
        [DataMember(Order = 1)]
        public TKey1 Key1 { get;  internal set; }
        [DataMember(Order = 2)]

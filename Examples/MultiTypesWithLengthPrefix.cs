@@ -52,14 +52,14 @@ namespace Examples
         }
     }
     [ProtoBuf.ProtoContract]
-    class Person
+    public class Person
     {
         [ProtoBuf.ProtoMember(1)]
         public string Name { get; set; }
         public override string ToString() { return "Person: " + Name; }
     }
     [ProtoBuf.ProtoContract]
-    class Address
+    public class Address
     {
         [ProtoBuf.ProtoMember(1)]
         public string Line1 { get; set; }

@@ -50,7 +50,7 @@ namespace Examples.Issues
         }
 
         [SerializableType]
-        class DummySurrogate
+        public class DummySurrogate
         {
             [SerializableMember(1)]
             public int Negative { get; set; }

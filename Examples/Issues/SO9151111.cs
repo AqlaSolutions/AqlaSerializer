@@ -29,7 +29,7 @@ namespace Examples.Issues
         [Test]
         public void TestManualConstuctionClosedType()
         {
-            // In runtime this class is build (with specific TDATA) and Serialized. When I'm adding this type to runtime modal : (error)
+            // In runtime this public class is build (with specific TDATA) and Serialized. When I'm adding this type to runtime modal : (error)
             var model = RuntimeTypeModel.Create();
             model.Add(typeof (Command<SomeData>), false).Add(1, "Foo");
         }

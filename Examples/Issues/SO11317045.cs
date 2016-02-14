@@ -93,13 +93,13 @@ namespace Examples.Issues.NamedProtoInclude
 {
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(1, "Examples.Issues.NamedProtoInclude.Bar")]
-    internal class Foo
+    public class Foo
     {
 
     }
 
     [ProtoBuf.ProtoContract]
-    internal class Bar : Foo
+    public class Bar : Foo
     {
 
     }

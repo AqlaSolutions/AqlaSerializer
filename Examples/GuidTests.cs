@@ -11,7 +11,7 @@ using AqlaSerializer.Meta;
 namespace Examples
 {
     [ProtoBuf.ProtoContract]
-    class GuidData
+    public class GuidData
     {
         [ProtoBuf.ProtoMember(1)]
         public Guid Bar { get; set; }

@@ -30,7 +30,7 @@ namespace Examples
             model.Serialize(destination, shell, Context);
         }
         [ProtoBuf.ProtoContract]
-        class DynamicShell
+        public class DynamicShell
         {
             [ProtoBuf.ProtoMember(1, DynamicType = true)]
             public object Value { get; set; }
@@ -55,7 +55,7 @@ namespace Examples
             }
         }
         [ProtoBuf.ProtoContract]
-        class Foo
+        public class Foo
         {
             [ProtoBuf.ProtoMember(1)]
             public int Bar { get; set; }

@@ -10,7 +10,7 @@ namespace Examples.SimpleStream
     public class NullTypes
     {
         [DataContract]
-        class TypeWithNulls
+        public class TypeWithNulls
         {
             [DataMember(Order = 1)]
             public int? Foo { get; set; }

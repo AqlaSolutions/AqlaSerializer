@@ -17,15 +17,15 @@ namespace Examples.DesignIdeas
     /// During single entity deserialization, merge message (to merge) would need to check existing type
     /// against perceived type:
     /// * if same type merge directly
-    /// * if new message is for a base-class of the current value then merge directly
-    /// * if new message is for a sub-class of the current value, then:
+    /// * if new message is for a base-public class of the current value then merge directly
+    /// * if new message is for a sub-public class of the current value, then:
     ///     * serialize the current value into a buffer
     ///     * deserialize the current value into a new instance of the new type
     ///     * merge the stream into the new instance
     ///         (see new ChangeType method)
     /// </summary>
     [ProtoBuf.ProtoContract]
-    class Message {
+    public class Message {
         [ProtoBuf.ProtoMember(1)]
         public List<SomeBase> Data { get; private set; }
     }
@@ -37,16 +37,16 @@ namespace Examples.DesignIdeas
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(2, typeof(Sub1))]
     [ProtoBuf.ProtoInclude(3, typeof(Sub2))]
-    class SomeBase
+    public class SomeBase
     {
         [ProtoBuf.ProtoMember(10)]
         public int Test { get; set; }
     }
-    [ProtoBuf.ProtoContract] class Sub1 : SomeBase {
+    [ProtoBuf.ProtoContract] public class Sub1 : SomeBase {
         [ProtoBuf.ProtoMember(11)]
         public string Foo { get; set; }
     }
-    [ProtoBuf.ProtoContract] class Sub2 : SomeBase {
+    [ProtoBuf.ProtoContract] public class Sub2 : SomeBase {
         [ProtoBuf.ProtoMember(11)]
         public float Bar { get; set; }
     }

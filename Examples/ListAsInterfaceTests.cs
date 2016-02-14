@@ -9,13 +9,13 @@ using AqlaSerializer;
 namespace Examples
 {
     [ProtoBuf.ProtoContract]
-    class DataWithListUninitialized : IDataWithList
+    public class DataWithListUninitialized : IDataWithList
     {
         [ProtoBuf.ProtoMember(1)]
         public IList<string> Data { get; internal set; } // non-public just for fun
     }
     [ProtoBuf.ProtoContract]
-    class DataWithListInitialized : IDataWithList
+    public class DataWithListInitialized : IDataWithList
     {
         private readonly IList<string> data = new List<string>();
         [ProtoBuf.ProtoMember(1)]

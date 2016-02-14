@@ -151,7 +151,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        class SomeNewType
+        public class SomeNewType
         {
             [ProtoBuf.ProtoMember(1)]
             public List<MyDto> Items { get { return items; } }

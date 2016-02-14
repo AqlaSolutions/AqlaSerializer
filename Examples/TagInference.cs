@@ -11,7 +11,7 @@ namespace Examples
 {
     [ProtoBuf.ProtoContract(InferTagFromName=true)]
     [DataContract]
-    class TagData
+    public class TagData
     {
         [DataMember(Order = 1)]
         public int Bravo { get; set; }
@@ -28,7 +28,7 @@ namespace Examples
 
     [ProtoBuf.ProtoContract]
     [DataContract]
-    class TagDataWithoutInfer
+    public class TagDataWithoutInfer
     {
         [DataMember(Order = 1)]
         public int Bravo { get; set; }
@@ -44,7 +44,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class TagDataExpected
+    public class TagDataExpected
     {
         [ProtoBuf.ProtoMember(3)]
         public int Bravo { get; set; }

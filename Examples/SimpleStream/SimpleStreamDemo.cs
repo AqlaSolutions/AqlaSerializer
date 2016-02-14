@@ -179,14 +179,14 @@ namespace Examples.SimpleStream
         }
 
         [ProtoBuf.ProtoContract]
-        class Test5
+        public class Test5
         {
             [ProtoBuf.ProtoMember(1)]
             public int[] Data { get; set; }
         }
 
         [ProtoBuf.ProtoContract]
-        class TwoFields
+        public class TwoFields
         {
             [ProtoBuf.ProtoMember(1)]
             public int Foo { get; set; }
@@ -213,7 +213,7 @@ namespace Examples.SimpleStream
         }
 
         [ProtoBuf.ProtoContract]
-        class ItemWithBlob
+        public class ItemWithBlob
         {
             [ProtoBuf.ProtoMember(1)]
             public byte[] Foo { get; set; }

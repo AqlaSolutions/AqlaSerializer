@@ -15,43 +15,43 @@ namespace Examples
     public class ExtendedTimeTests
     {
         [ProtoBuf.ProtoContract]
-        class DateTimeFixed
+        public class DateTimeFixed
         {
             [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.FixedSize, IsRequired=true)]
             public DateTime When {get;set;}
         }
         [ProtoBuf.ProtoContract]
-        class DateTimeGroup
+        public class DateTimeGroup
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public DateTime When { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class DateTimeString
+        public class DateTimeString
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
             public DateTime When { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class TimeSpanFixed
+        public class TimeSpanFixed
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.FixedSize, IsRequired = true)]
             public TimeSpan When { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class TimeSpanGroup
+        public class TimeSpanGroup
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Group)]
             public TimeSpan When { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class TimeSpanString
+        public class TimeSpanString
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.Default)]
             public TimeSpan When { get; set; }
         }
         [ProtoBuf.ProtoContract]
-        class Int64Fixed
+        public class Int64Fixed
         {
             [ProtoBuf.ProtoMember(1, DataFormat = ProtoBuf.DataFormat.FixedSize)]
             public long Value { get; set; }

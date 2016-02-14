@@ -11,7 +11,7 @@ using AqlaSerializer.Meta;
 namespace Examples
 {
     /// <summary>
-    /// Tests the scenario where a class exposes a property that isn't the root - i.e. Child : Parent, and has
+    /// Tests the scenario where a public class exposes a property that isn't the root - i.e. Child : Parent, and has
     /// a Child property
     /// </summary>
     [TestFixture]
@@ -201,13 +201,13 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class IMLTestRoot
+    public class IMLTestRoot
     {
         [ProtoBuf.ProtoMember(1)]
         public IMLRoot Root {get; set;}
     }
     [ProtoBuf.ProtoContract]
-    class IMLTestRoots
+    public class IMLTestRoots
     {
         public IMLTestRoots() {Roots = new List<IMLRoot>();}
         [ProtoBuf.ProtoMember(1)]
@@ -215,7 +215,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class IMLTest
+    public class IMLTest
     {
         public IMLTest()
         {
@@ -235,7 +235,7 @@ namespace Examples
         public List<IMLChild> Children { get; private set; }
     }
     [ProtoBuf.ProtoContract]
-    class IMLChild : IMLParent
+    public class IMLChild : IMLParent
     {
         [ProtoBuf.ProtoMember(1)]
         public int ChildProperty { get; set; }
@@ -243,13 +243,13 @@ namespace Examples
 
     [ProtoBuf.ProtoContract]
     [ProtoBuf.ProtoInclude(2, typeof(IMLChild))]
-    abstract class IMLParent : IMLRoot
+    abstract public class IMLParent : IMLRoot
     {
         [ProtoBuf.ProtoMember(1)]
         public int ParentProperty { get; set;}
     }
 
-    abstract class IMLRoot
+    abstract public class IMLRoot
     {
         public int RootProperty { get; set; }
     }

@@ -9,7 +9,7 @@ namespace Examples.Issues
     public class SO6127380
     {
         [ProtoBuf.ProtoContract]
-        class Node
+        public class Node
         {
             public override string ToString()
             {

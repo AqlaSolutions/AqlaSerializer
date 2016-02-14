@@ -10,7 +10,7 @@ namespace Examples.Issues
     public class Issue54
     {
         [ProtoBuf.ProtoContract]
-        class Test54
+        public class Test54
         {
             [ProtoBuf.ProtoMember(1)]
             public Dictionary<float, List<int>> Lists { get; set; }

@@ -3,7 +3,7 @@ using System;
 
 namespace AqlaSerializer.unittest.Perf.Issue103Types
 {
-    partial class ContainedType
+    public partial class ContainedType
     {
         public override string ToString()
         {

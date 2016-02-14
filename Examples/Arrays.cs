@@ -12,7 +12,7 @@ using Serializer = AqlaSerializer.Serializer;
 namespace Examples
 {
     [ProtoBuf.ProtoContract]
-    class Node
+    public class Node
     {
         [ProtoBuf.ProtoMember(1)]
         public int Key { get; set; }
@@ -22,7 +22,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class Prim
+    public class Prim
     {
         [ProtoBuf.ProtoMember(1)]
         public string[] Values { get; set; }
@@ -142,7 +142,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class ArrayArrayArray
+    public class ArrayArrayArray
     {
         [ProtoBuf.ProtoMember(1)]
         public string[][][] Values { get; set; }
@@ -172,7 +172,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class ArrayList
+    public class ArrayList
     {
         [ProtoBuf.ProtoMember(1)]
         public List<string>[] Values { get; set; } 
@@ -191,7 +191,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class ListArray
+    public class ListArray
     {
         [ProtoBuf.ProtoMember(1)]
         public List<string[]> Values { get; set; }
@@ -209,7 +209,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class ListList
+    public class ListList
     {
         [ProtoBuf.ProtoMember(1)]
         public List<List<string>> Values { get; set; }
@@ -227,7 +227,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    class MultiDim
+    public class MultiDim
     {
         [ProtoBuf.ProtoMember(1)]
         public int[,] Values { get; set; }
@@ -701,7 +701,7 @@ namespace Examples
         }
 
         [ProtoBuf.ProtoContract]
-        internal class Tst
+        public class Tst
         {
             [ProtoBuf.ProtoMember(1)]
             public int ValInt

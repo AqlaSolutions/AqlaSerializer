@@ -39,7 +39,7 @@ namespace Examples
                 Assert.AreEqual(EXPECTED, db.Orders.Count);
             }
         }
-        private class FakeStream : MemoryStream
+        public class FakeStream : MemoryStream
         {
             public FakeStream() : base()
             {

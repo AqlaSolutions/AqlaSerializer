@@ -86,38 +86,38 @@ namespace Examples
         float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class ImplicitDefaultZero : IOptionalData
+    public class ImplicitDefaultZero : IOptionalData
     {
         [ProtoBuf.ProtoMember(1)]
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class ExplicitDefaultZero : IOptionalData
+    public class ExplicitDefaultZero : IOptionalData
     {
         [ProtoBuf.ProtoMember(1), DefaultValue(0F)]
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class RequiredImplicitZero : IOptionalData
+    public class RequiredImplicitZero : IOptionalData
     {
         [ProtoBuf.ProtoMember(1, IsRequired = true)]
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class RequiredExplicitZero : IOptionalData
+    public class RequiredExplicitZero : IOptionalData
     {
         [ProtoBuf.ProtoMember(1, IsRequired = true), DefaultValue(0F)]
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class ExplicitDefaultFive : IOptionalData
+    public class ExplicitDefaultFive : IOptionalData
     {
         public ExplicitDefaultFive() { Value = 5F; }
         [ProtoBuf.ProtoMember(1), DefaultValue(5F)]
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    class ExplicitDefaultFivePrivateField : IOptionalData
+    public class ExplicitDefaultFivePrivateField : IOptionalData
     {
         public ExplicitDefaultFivePrivateField() { value = 5F; }
         [ProtoBuf.ProtoMember(1), DefaultValue(5F)]
@@ -131,7 +131,7 @@ namespace Examples
     }
     
     [ProtoBuf.ProtoContract]
-    class RequiredExplicitFive : IOptionalData
+    public class RequiredExplicitFive : IOptionalData
     {
         public RequiredExplicitFive() {Value = 5F; }
         [ProtoBuf.ProtoMember(1, IsRequired = true), DefaultValue(5F)]
