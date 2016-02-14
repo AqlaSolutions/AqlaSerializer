@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -60,11 +60,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Examples\LeakDetection.cs">
-      <Link>LeakDetection.cs</Link>
+    <Compile Include="..\Examples\MainSetUpFixture.cs">
+      <Link>MainSetUpFixture.cs</Link>
     </Compile>
     <Compile Include="..\Examples\PEVerify.cs">
       <Link>PEVerify.cs</Link>
+    </Compile>
+    <Compile Include="..\protobuf-net.unittest\CallerMamberName.cs">
+      <Link>CallerMamberName.cs</Link>
     </Compile>
     <Compile Include="BasicTests.cs" />
     <Compile Include="Issues\SO11895998.cs" />
@@ -75,6 +78,10 @@
     <ProjectReference Include="..\precompile\precompile.csproj">
       <Project>{2ea60052-319b-4079-8da1-4d65853a9a76}</Project>
       <Name>precompile</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">
+      <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
+      <Name>aqlaserializer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

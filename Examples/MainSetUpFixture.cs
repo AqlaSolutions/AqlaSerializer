@@ -2,16 +2,20 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using AqlaSerializer.Meta;
+using Examples;
 using NUnit.Framework;
 
 [SetUpFixture]
-public class LeakDetection
+public class MainSetUpFixture
 {
     private UnhandledExceptionEventHandler _unhandledExceptionHandler;
     readonly List<object> _exceptions = new List<object>();
 
     public Action<IList<object>> UnhandledExceptionCheck { get; set; }
-    
+
+    static bool _validateInitialized;
+
     [SetUp]
     public void UnhandledExceptionRegistering()
     {
@@ -25,6 +29,16 @@ public class LeakDetection
         };
 
         AppDomain.CurrentDomain.UnhandledException += _unhandledExceptionHandler;
+
+
+        if (_validateInitialized) return;
+        _validateInitialized = true;
+        RuntimeTypeModel.ValidateDll += RuntimeTypeModel_ValidateDll;
+    }
+
+    void RuntimeTypeModel_ValidateDll(string obj)
+    {
+        PEVerify.AssertValid(obj);
     }
 
     void DefaultExceptionCheck(IList<object> e)

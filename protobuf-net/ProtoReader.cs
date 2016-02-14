@@ -27,6 +27,11 @@ namespace AqlaSerializer
     public sealed class ProtoReader : IDisposable
     {
         Stream source;
+
+        internal Stream UnderlyingStream => source;
+
+        internal int FixedLength { get; private set; }
+
         byte[] ioBuffer;
         TypeModel model;
         int fieldNumber, depth, dataRemaining, ioIndex, position, available, blockEnd;
@@ -92,6 +97,7 @@ namespace AqlaSerializer
             reader.ioBuffer = BufferPool.GetBuffer();
             reader.model = model;
             bool isFixedLength = length >= 0;
+            reader.FixedLength = length;
             reader.isFixedLength = isFixedLength;
             reader.dataRemaining = isFixedLength ? length : 0;
 

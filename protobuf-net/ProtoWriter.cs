@@ -24,6 +24,8 @@ namespace AqlaSerializer
     /// </summary>
     public sealed class ProtoWriter : IDisposable
     {
+        internal Stream UnderlyingStream => dest;
+
         private Stream dest;
         TypeModel model;
 

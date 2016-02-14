@@ -50,7 +50,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER DEBUG_COMPILE_2 FORCE_AUTOCOMPILE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER DEBUG_COMPILE_2 FORCE_AUTOCOMPILE CHECK_COMPILED_VS_NOT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
