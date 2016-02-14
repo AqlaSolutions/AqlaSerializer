@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
                     {
                         if (length >= 0)
                         {
-                            // TODO use same instance when length equals
+                            // TODO use same instance when length equals, don't forget to NoteObject
                             int oldLen;
                             result = Read_CreateInstance(value, length.Value, -1, out oldLen, source);
                             index = oldLen;
@@ -122,6 +122,7 @@ namespace AqlaSerializer.Serializers
         public override bool EmitReadReturnsValue { get { return true; } }
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
+            using (ctx.StartDebugBlockAuto(this))
             using (Compiler.Local value = ctx.GetLocalWithValue(_arrayType, valueFrom))
             {
                 _listHelpers.EmitWrite(ctx.G, value, null, () => value.AsOperand.Property("Length"), null);
@@ -131,6 +132,7 @@ namespace AqlaSerializer.Serializers
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             var g = ctx.G;
+            using (ctx.StartDebugBlockAuto(this))
             using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             using (Compiler.Local result = ctx.Local(_arrayType, true))
             using (Compiler.Local reservedTrap = ctx.Local(typeof(int)))
@@ -144,35 +146,44 @@ namespace AqlaSerializer.Serializers
                     null,
                     length =>
                         {
-                            g.If(length >= 0);
+                            using (ctx.StartDebugBlockAuto(this, "prepareInstance"))
                             {
-                                EmitRead_CreateInstance(g, value, list.AsOperand.Property("Count"), null, oldLen, result);
-                                g.Assign(index, oldLen);
+                                g.If(length >= 0);
+                                {
+                                    ctx.MarkDebug("// length read, creating instance");
+                                    EmitRead_CreateInstance(g, value, length.Property("Value", g.TypeMapper), null, oldLen, result);
+                                    g.Assign(index, oldLen);
+                                }
+                                g.Else();
+                                {
+                                    ctx.MarkDebug("// length read, creating list");
+                                    g.Assign(reservedTrap, g.ReaderFunc.ReserveNoteObject_int());
+                                    g.Assign(list, g.ExpressionFactory.New(list.Type));
+                                }
+                                g.End();
                             }
-                            g.Else();
-                            {
-                                g.Assign(reservedTrap, g.ReaderFunc.ReserveNoteObject_int());
-                                g.Assign(list, g.ExpressionFactory.New(list.Type));
-                            }
-                            g.End();
                         },
                     v =>
                         {
-                            g.If(result.AsOperand != null);
+                            using (ctx.StartDebugBlockAuto(this, "add"))
                             {
-                                g.Assign(result.AsOperand[index], v);
-                                g.Increment(index);
+                                g.If(result.AsOperand != null);
+                                {
+                                    g.Assign(result.AsOperand[index], v);
+                                    g.Increment(index);
+                                }
+                                g.Else();
+                                {
+                                    g.Invoke(list, "Add", v);
+                                }
+                                g.End();
                             }
-                            g.Else();
-                            {
-                                g.Invoke(list, "Add", v);
-                            }
-                            g.End();
                         }
                     );
 
                 g.If(result.AsOperand == null);
                 {
+                    ctx.MarkDebug("// result == null, creating");
                     EmitRead_CreateInstance(g, value, list.AsOperand.Property("Count"), reservedTrap, oldLen, result);
                     g.Invoke(list, "CopyTo", result, oldLen);
                 }
@@ -186,18 +197,21 @@ namespace AqlaSerializer.Serializers
 
         void EmitRead_CreateInstance(SerializerCodeGen g, Local value, Operand appendCount, Local reservedTrap, Local outOldLen, Local outResult)
         {
-            g.Assign(outOldLen, AppendToCollection ? (value.AsOperand != null).Conditional(value.AsOperand.Property("Length"), 0) : (Operand)0);
-            g.Assign(outResult, g.ExpressionFactory.NewArray(_itemType, outOldLen + appendCount));
-            if (!reservedTrap.IsNullRef())
-                g.Reader.NoteReservedTrappedObject(reservedTrap, outResult);
-            else
-                g.Reader.NoteObject(outResult);
-
-            g.If(outOldLen.AsOperand != 0);
+            using (g.ctx.StartDebugBlockAuto(this))
             {
-                g.Invoke(value, "CopyTo", outResult, 0);
+                g.Assign(outOldLen, AppendToCollection ? (value.AsOperand != null).Conditional(value.AsOperand.Property("Length"), 0) : (Operand)0);
+                g.Assign(outResult, g.ExpressionFactory.NewArray(_itemType, outOldLen + appendCount));
+                if (!reservedTrap.IsNullRef())
+                    g.Reader.NoteReservedTrappedObject(reservedTrap, outResult);
+                else
+                    g.Reader.NoteObject(outResult);
+
+                g.If(outOldLen.AsOperand != 0);
+                {
+                    g.Invoke(value, "CopyTo", outResult, 0);
+                }
+                g.End();
             }
-            g.End();
         }
 #endif
 

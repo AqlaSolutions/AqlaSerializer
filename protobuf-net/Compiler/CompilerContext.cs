@@ -457,18 +457,7 @@ namespace AqlaSerializer.Compiler
                 {
                     locals[i] = null; // remove from pool
                     if (zeroed)
-                    {
-                        if (item.LocalType.IsValueType)
-                        {
-                            il.Emit(OpCodes.Ldloca, item);
-                            il.Emit(OpCodes.Initobj, type);
-                        }
-                        else
-                        {
-                            il.Emit(OpCodes.Ldnull);
-                            EmitStloc(item);
-                        }
-                    }
+                        InitLocal(type, item);
                     return item;
                 }
             }
@@ -476,8 +465,32 @@ namespace AqlaSerializer.Compiler
 #if DEBUG_COMPILE
             Helpers.DebugWriteLine("$ " + result + ": " + type);
 #endif
+            if (zeroed)
+            {
+                // we should always zero them
+                // because if we are now inside loop
+                // (there are no scopes in dynamicmethod)
+                // they won't reset on each loop pass!!!
+                // TODO any optimization?
+                InitLocal(type, result);
+            }
             return result;
         }
+
+        void InitLocal(Type type, LocalBuilder local)
+        {
+            if (local.LocalType.IsValueType)
+            {
+                il.Emit(OpCodes.Ldloca, local);
+                il.Emit(OpCodes.Initobj, type);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldnull);
+                EmitStloc(local);
+            }
+        }
+
         //
         internal void ReleaseToPool(LocalBuilder value)
         {
@@ -644,7 +657,7 @@ namespace AqlaSerializer.Compiler
 #endif
         }
 
-        public void MarkDebug(string mark, bool strong = false)
+        public void MarkDebug(Operand mark, bool strong = false)
         {
 #if DEBUG_COMPILE_2
             if (strong)
@@ -657,7 +670,8 @@ namespace AqlaSerializer.Compiler
             {
                 G.Invoke(typeof(Debug), "WriteLine", mark);
             }
-
+#else
+            mark.SetNotLeaked(true);
 #endif
         }
 

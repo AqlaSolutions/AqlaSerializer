@@ -76,15 +76,27 @@ namespace AqlaSerializer.Serializers
                             createdNew = true;
                             value = Activator.CreateInstance(concreteTypeDefault);
                             ProtoReader.NoteObject(value, source);
-                        }
-                        if (asList)
-                        {
-                            list = (IList)value;
-                            Debug.Assert(list != null);
-                            if (!AppendToCollection && !createdNew)
-                                list.Clear();
+                            if (asList)
+                            {
+                                list = (IList)value;
+                                Debug.Assert(list != null);
+                            }
                         }
                         else
+                        {
+                            if (!createdNew)
+                                ProtoReader.NoteObject(value, source);
+
+                            if (asList)
+                            {
+                                list = (IList)value;
+                                Debug.Assert(list != null);
+                                if (!AppendToCollection && !createdNew)
+                                    list.Clear();
+                            }
+                        }
+
+                        if (!asList)
                             args = new object[1];
                     },
                 v =>
@@ -237,6 +249,7 @@ namespace AqlaSerializer.Serializers
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             var g = ctx.G;
+            using (ctx.StartDebugBlockAuto(this))
             using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             using (Compiler.Local oldValueForSubTypeHelpers = ctx.Local(value.Type))
             using (Compiler.Local createdNew = ctx.Local(typeof(bool), true))
@@ -247,6 +260,8 @@ namespace AqlaSerializer.Serializers
                 bool forceNewInstance = !AppendToCollection && ReturnList && !asList;
 
                 Action subTypeHandler = () =>
+                {
+                    using (ctx.StartDebugBlockAuto(this, "subtype handler"))
                     {
                         g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value);
                         _subTypeHelpers.EmitTryRead(
@@ -255,14 +270,20 @@ namespace AqlaSerializer.Serializers
                             _metaType,
                             r =>
                                 {
-                                    if (r != null)
+                                    using (ctx.StartDebugBlockAuto(this, "subtype handler - read"))
                                     {
-                                        r.Serializer.EmitCreateInstance(ctx);
-                                        ctx.StoreValue(value);
-                                        g.Assign(createdNew, true);
+                                        if (r != null)
+                                        {
+                                            ctx.MarkDebug("// creating list subtype");
+                                            r.Serializer.EmitCreateInstance(ctx);
+                                            ctx.StoreValue(value);
+                                            g.Assign(createdNew, true);
+                                        }
                                     }
                                 });
-                    };
+
+                    }
+                };
 
                 if (_metaType == null) subTypeHandler = null;
 
@@ -271,49 +292,73 @@ namespace AqlaSerializer.Serializers
                     subTypeHandler,
                     length =>
                         {
-                            var createInstanceCondition = value.AsOperand == null;
-
-                            // also create new if should clear existing instance on not lists
-                            if (forceNewInstance)
-                                createInstanceCondition = createInstanceCondition || !createdNew.AsOperand;
-
-                            g.If(createInstanceCondition);
+                            using (ctx.StartDebugBlockAuto(this, "prepareInstance"))
                             {
-                                EmitCreateInstance(ctx);
-                                ctx.StoreValue(value);
-                            }
-                            if (asList && !AppendToCollection)
-                            {
+                                var createInstanceCondition = value.AsOperand == null;
+
+                                // also create new if should clear existing instance on not lists
+                                if (forceNewInstance)
+                                    createInstanceCondition = createInstanceCondition || !createdNew.AsOperand;
+
+                                g.If(createInstanceCondition);
+                                {
+                                    ctx.MarkDebug("// creating new list");
+                                    EmitCreateInstance(ctx);
+                                    ctx.StoreValue(value);
+                                    g.Reader.NoteObject(value);
+                                }
                                 g.Else();
                                 {
-                                    // ReSharper disable once PossibleNullReferenceException
-                                    g.Invoke(value, "Clear");
+                                    g.If(!createdNew.AsOperand);
+                                    {
+                                        g.Reader.NoteObject(value);
+                                    }
+                                    g.End();
+                                    if (asList && !AppendToCollection)
+                                    {
+                                        ctx.MarkDebug("// clearing existing list");
+                                        // ReSharper disable once PossibleNullReferenceException
+                                        g.Invoke(value, "Clear");
+                                    }
                                 }
+                                g.End();
                             }
-                            g.End();
                         },
                     v =>
                         {
-                            if (asList)
-                                g.Invoke(value, "Add", v);
-                            else
+                            using (ctx.StartDebugBlockAuto(this, "add"))
                             {
-                                ctx.LoadAddress(value, _itemType);
-                                ctx.LoadValue(v);
-                                ctx.EmitCall(this.add);
+                                g.ctx.MarkDebug("adding " + v.AsOperand.InvokeToString());
+                                g.ctx.MarkDebug("count before: " + value.AsOperand.Property("Count"));
+                                if (asList)
+                                {
+                                    ctx.MarkDebug("// using Add method");
+                                    g.Invoke(value, "Add", v);
+                                }
+                                else
+                                {
+                                    ctx.MarkDebug("// using add delegate");
+                                    ctx.LoadAddress(value, _itemType);
+                                    ctx.LoadValue(v);
+                                    ctx.EmitCall(this.add);
+                                }
+                                g.ctx.MarkDebug("count after: " + value.AsOperand.Property("Count"));
                             }
                         }
                     );
-
+                g.ctx.MarkDebug("count after all: " + value.AsOperand.Property("Count"));
                 if (EmitReadReturnsValue)
+                {
+                    ctx.MarkDebug("returning list");
                     ctx.LoadValue(value);
+                }
             }
         }
-
 
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             var g = ctx.G;
+            using (ctx.StartDebugBlockAuto(this))
             using (Compiler.Local value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             using (Compiler.Local t = ctx.Local(typeof(System.Type)))
             using (var icol = !_protoCompatibility ? ctx.Local(typeof(ICollection)) : null)

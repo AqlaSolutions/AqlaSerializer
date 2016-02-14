@@ -309,6 +309,7 @@ namespace AqlaSerializer.Serializers
 
                             g.If(typeKey.AsOperand >= 0);
                             {
+                                g.ctx.MarkDebug("typeKey >= 0");
                                 var optionsWithoutLateSet = _options & ~BclHelpers.NetObjectOptions.LateSet;
                                 if (optionsWithoutLateSet != _options)
                                     g.Assign(options, optionsWithoutLateSet);
@@ -344,8 +345,10 @@ namespace AqlaSerializer.Serializers
                             }
                             g.Else();
                             {
+                                g.ctx.MarkDebug("typeKey < 0");
                                 g.If(isDynamic);
                                 {
+                                    g.ctx.MarkDebug("dynamic");
                                     g.If(g.ReaderFunc.TryReadBuiltinType_bool(valueBoxed, g.HelpersFunc.GetTypeCode(type), true));
                                     {
                                         g.Assign(options, _options | BclHelpers.NetObjectOptions.LateSet);
@@ -359,6 +362,7 @@ namespace AqlaSerializer.Serializers
                                 }
                                 g.Else();
                                 {
+                                    g.ctx.MarkDebug("nondynamic");
                                     g.If(isLateReference);
                                     {
                                         if (_lateReferenceTail == null)

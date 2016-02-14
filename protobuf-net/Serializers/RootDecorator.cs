@@ -155,7 +155,7 @@ namespace AqlaSerializer.Serializers
                     g.Assign(formatVersion, g.ReaderFunc.ReadFieldHeader_int());
                     g.If(formatVersion.AsOperand != CurrentFormatVersion);
                     {
-                        g.ThrowProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
+                        g.ThrowProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion.AsOperand);
                     }
                     g.End();
                     _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);

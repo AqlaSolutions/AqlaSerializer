@@ -250,6 +250,7 @@ namespace AqlaSerializer.Serializers
                     // or there is at least one element
                     prepareInstance?.Invoke(length);
 
+                    g.ctx.MarkDebug("ProtoCompatibility: " + _protoCompatibility);
                     if (_protoCompatibility)
                     {
                         if (packedAllowedStatic)
@@ -317,12 +318,15 @@ namespace AqlaSerializer.Serializers
 
         void EmitReadElementContent(SerializerCodeGen g, Action<Local> add)
         {
-            using (var loc = g.ctx.Local(_tail.ExpectedType, true))
+            using (g.ctx.StartDebugBlockAuto(this))
             {
-                _tail.EmitRead(g.ctx, loc);
-                if (_tail.EmitReadReturnsValue)
-                    g.ctx.StoreValue(loc);
-                add(loc);
+                using (var loc = g.ctx.Local(_tail.ExpectedType, true))
+                {
+                    _tail.EmitRead(g.ctx, loc);
+                    if (_tail.EmitReadReturnsValue)
+                        g.ctx.StoreValue(loc);
+                    add(loc);
+                }
             }
         }
 #endif

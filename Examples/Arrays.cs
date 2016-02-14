@@ -375,6 +375,10 @@ namespace Examples
             var source = ArrayList.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
+            tm.Compile("TestArrayListDirect", "TestArrayListDirect.dll");
+            PEVerify.AssertValid("TestArrayListDirect.dll");
+            copy = tm.DeepClone(source);
+            Assert.That(copy, Is.EqualTo(source));
         }
 
         [Test]
