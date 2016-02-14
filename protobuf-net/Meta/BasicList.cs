@@ -1,6 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace AqlaSerializer.Meta
@@ -43,6 +44,16 @@ namespace AqlaSerializer.Meta
          *   - Assume that the data is private; internal data structure is allowed to
          *     be mutable (i.e. array is fine as long as we don't screw it up)
          */
+
+        public BasicList()
+        {
+        }
+
+        public BasicList(IEnumerable<object> enumerable)
+        {
+            foreach (var el in enumerable) Add(el);
+        }
+
         private static readonly Node nil = new Node(null, 0);
         public void CopyTo(Array array, int offset)
         {

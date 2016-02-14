@@ -34,6 +34,7 @@ using AqlaSerializer;
 using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
+using AltLinq;
 
 namespace AqlaSerializer.Meta
 {
@@ -50,7 +51,8 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed partial class RuntimeTypeModel : TypeModel
     {
-        internal ProtoCompatibilitySettings ProtoCompatibility { get; } = new ProtoCompatibilitySettings();
+        internal ProtoCompatibilitySettings ProtoCompatibility { get; private set; } = new ProtoCompatibilitySettings();
+        internal bool IsFrozen => GetOption(OPTIONS_Frozen);
 
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
@@ -267,7 +269,7 @@ namespace AqlaSerializer.Meta
 
         internal RuntimeTypeModel(bool isDefault, ProtoCompatibilitySettings protoCompatibility)
         {
-            ProtoCompatibility = protoCompatibility;
+            ProtoCompatibility = protoCompatibility.Clone();
 #if FEAT_COMPILER
 #if FEAT_IKVM
             universe = new IKVM.Reflection.Universe();
@@ -805,7 +807,7 @@ namespace AqlaSerializer.Meta
             SetOption(OPTIONS_Frozen, true);
         }
 
-        private readonly BasicList types = new BasicList();
+        private BasicList types = new BasicList();
 
         /// <summary>
         /// Provides the key that represents a given type in the current model.
@@ -841,6 +843,10 @@ namespace AqlaSerializer.Meta
                 throw new ProtoException(ex.Message + " (" + type.FullName + ")", ex);
             }
         }
+
+
+        internal static event Action<string> ValidateDll;
+
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream.
         /// </summary>
@@ -1112,7 +1118,59 @@ namespace AqlaSerializer.Meta
             this[MapType(typeof(T))].CompileInPlace();
 #endif
         }
+        
+        /// <summary>
+        /// Returns a full deep copy of a model with all settings and added types
+        /// </summary>
+        public RuntimeTypeModel CloneAsUnfrozen(ProtoCompatibilitySettings compatibilitySettings = null)
+        {
+            var m = (RuntimeTypeModel)MemberwiseClone();
+            m.SetOption(OPTIONS_Frozen, false);
+            m.SetOption(OPTIONS_IsDefaultModel, false);
+            m.types = new BasicList();
+            m.AutoAddStrategy = AutoAddStrategy.Clone(this);
+            m.ProtoCompatibility = compatibilitySettings ?? ProtoCompatibility.Clone();
+            m.basicTypes = new BasicList();
+            var cache = new MetaTypeCloneCache(m);
+            m.types = new BasicList(types.Cast<MetaType>().Select(cache.CloneMetaTypeWithoutDerived).Select(mt => (object)mt));
+            for (int i = 0; i < m.types.Count; i++)
+            {
+                var original = (MetaType)types[i];
+                var cloned = (MetaType)m.types[i];
 
+                foreach (SubType st in original.GetSubtypes())
+                    cloned.AddSubType(st.FieldNumber, st.DerivedType.Type, st.DataFormat);
+            }
+            return m;
+        }
+
+        class MetaTypeCloneCache
+        {
+            readonly RuntimeTypeModel _clonedModelInstance;
+
+            readonly Dictionary<MetaType, MetaType> _oldToNew = new Dictionary<MetaType, MetaType>();
+
+            public MetaTypeCloneCache(RuntimeTypeModel clonedModelInstance)
+            {
+                if (clonedModelInstance == null) throw new ArgumentNullException(nameof(clonedModelInstance));
+                _clonedModelInstance = clonedModelInstance;
+            }
+
+            public MetaType CloneMetaTypeWithoutDerived(MetaType type)
+            {
+                var model = _clonedModelInstance;
+                MetaType cloned;
+                if (_oldToNew.TryGetValue(type, out cloned)) return cloned;
+
+                var baseType = type.BaseType;
+                if (baseType != null)
+                    baseType = CloneMetaTypeWithoutDerived(baseType);
+
+                if (!_oldToNew.TryGetValue(type, out cloned))
+                    _oldToNew.Add(type, cloned = type.CloneAsUnfrozenWithoutDerived(model, baseType));
+                return cloned;
+            }
+        }
     }
     /// <summary>
     /// Contains the stack-trace of the owning code when a lock-contention scenario is detected

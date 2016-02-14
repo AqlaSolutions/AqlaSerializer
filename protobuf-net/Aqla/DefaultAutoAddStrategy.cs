@@ -1072,7 +1072,7 @@ namespace AqlaSerializer
             return null;
         }
 
-        readonly RuntimeTypeModel _model;
+        RuntimeTypeModel _model;
         protected RuntimeTypeModel Model { get { return _model; } }
 
         static bool CanUse(AttributeType check, AttributeType required)
@@ -1150,6 +1150,13 @@ namespace AqlaSerializer
             _model = model;
         }
 
+        public virtual IAutoAddStrategy Clone(RuntimeTypeModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var s = (DefaultAutoAddStrategy)MemberwiseClone();
+            s._model = model;
+            return s;
+        }
     }
 }
 #endif

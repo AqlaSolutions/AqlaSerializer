@@ -28,6 +28,7 @@ namespace AqlaSerializer
         bool GetAsReferenceDefault(Type type, bool isProtobufNetLegacyMember);
         void ApplyDefaultBehaviour(MetaType type);
         MetaType.AttributeFamily GetContractFamily(Type type);
+        IAutoAddStrategy Clone(RuntimeTypeModel model);
     }
 }
 #endif
