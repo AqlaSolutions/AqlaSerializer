@@ -38,7 +38,7 @@ using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
 using AltLinq;
-
+// TODO сделать обяхательное создание dll и проверку peverify даже в compileinplace
 namespace AqlaSerializer.Meta
 {
 #if !NO_GENERiCS
@@ -68,8 +68,10 @@ namespace AqlaSerializer.Meta
             int code = 0;
             foreach (MetaType type in types)
             {
+                // not optimize
                 code += type.Serializer.GetHashCode() + type.RootSerializer.GetHashCode();
             }
+            // not optimize
             code.GetHashCode();
             foreach (MetaType type in types)
             {

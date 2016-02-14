@@ -65,7 +65,7 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        private readonly RuntimeTypeModel model;
+        private RuntimeTypeModel model;
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
@@ -891,7 +891,15 @@ namespace AqlaSerializer.Meta
             return model.GetSchemaTypeName(effectiveType, DataFormat, applyNetObjectProxy && AsReference, applyNetObjectProxy && dynamicType, ref requiresBclImport);
         }
 
-        
+        internal ValueMember CloneAsUnfrozen(RuntimeTypeModel model)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var vm = (ValueMember)MemberwiseClone();
+            vm.model = model;
+            vm.serializer = null;
+            return vm;
+        }
+
         internal sealed class Comparer : System.Collections.IComparer
 #if !NO_GENERICS
 , System.Collections.Generic.IComparer<ValueMember>

@@ -5,7 +5,7 @@ namespace AqlaSerializer.Meta
     /// <summary>
     /// Settings of a Protocol Buffers compatibility mode
     /// </summary>
-    public class ProtoCompatibilitySettings
+    public class ProtoCompatibilitySettings:ICloneable
     {
         bool _enableCompatibility;
 
@@ -63,5 +63,15 @@ namespace AqlaSerializer.Meta
             AllowExtensionDefinitions = NetObjectExtensionTypes.None,
             UseOwnFormat = false
         };
+
+        object ICloneable.Clone()
+        {
+            return MemberwiseClone();
+        }
+
+        public ProtoCompatibilitySettings Clone()
+        {
+            return (ProtoCompatibilitySettings)MemberwiseClone();
+        }
     }
 }

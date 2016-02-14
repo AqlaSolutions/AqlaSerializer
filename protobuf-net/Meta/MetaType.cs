@@ -5,6 +5,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using AltLinq;
 using AqlaSerializer;
 using AqlaSerializer.Serializers;
 
@@ -86,15 +87,7 @@ namespace AqlaSerializer.Meta
         }
         internal TypeModel Model { get { return model; } }
 
-        /// <summary>
-        /// When used to compile a model, should public serialization/deserialzation methods
-        /// be included for this type?
-        /// </summary>
-        public bool IncludeSerializerMethod
-        {   // negated to minimize common-case / initializer
-            get { return !HasFlag(OPTIONS_PrivateOnApi); }
-            set { SetFlag(OPTIONS_PrivateOnApi, !value, true); }
-        }
+        internal bool IsFrozen => HasFlag(OPTIONS_Frozen);
 
         /// <summary>
         /// Should this type be treated as a reference by default FOR MISSING TYPE MEMBERS ONLY?
@@ -437,7 +430,7 @@ namespace AqlaSerializer.Meta
             return instance ? Helpers.GetInstanceMethod(type, name) : Helpers.GetStaticMethod(type, name);
 #endif
         }
-        private readonly RuntimeTypeModel model;
+        private RuntimeTypeModel model;
         internal static Exception InbuiltType(Type type)
         {
             return new ArgumentException("Data of this type has inbuilt behaviour, and cannot be added to a model in this way: " + type.FullName);
@@ -1290,7 +1283,7 @@ namespace AqlaSerializer.Meta
                 return null;
             }
         }
-        private readonly BasicList fields = new BasicList();
+        private BasicList fields = new BasicList();
 
         /// <summary>
         /// Returns the ValueMember instances associated with this type
@@ -1326,6 +1319,7 @@ namespace AqlaSerializer.Meta
         {
             var s = Serializer;
             var r = RootSerializer;
+            if (s is CompiledSerializer) return;
 #if FAKE_COMPILE
             return;
 #endif
@@ -1608,6 +1602,25 @@ namespace AqlaSerializer.Meta
                 }
                 NewLine(builder, indent).Append('}');
             }
+        }
+
+        /// <summary>
+        /// Derived types are not cloned!
+        /// </summary>
+        internal MetaType CloneAsUnfrozenWithoutDerived(RuntimeTypeModel model, MetaType baseType)
+        {
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            var mt = (MetaType)MemberwiseClone();
+            mt.serializer = null;
+            mt.rootSerializer = null;
+            mt.model = model;
+            mt.SetFlag(OPTIONS_Frozen, false, false);
+            mt.SetFlag(OPTIONS_Pending, false, false);
+            mt.baseType = baseType;
+            mt.subTypes = new BasicList();
+            mt.subTypesSimple = new BasicList();
+            mt.fields = new BasicList(fields.Cast<ValueMember>().Select(f => (object)f.CloneAsUnfrozen(model)));
+            return mt;
         }
     }
 }
