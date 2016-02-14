@@ -54,9 +54,10 @@ namespace AqlaSerializer.Serializers
             }
             else if (asLateReference) throw new ArgumentException("Can't serialize as late reference when asReference = false", "asReference");
 
-            int key = model.GetKey(type, false, true);
-            if (!Helpers.IsValueType(type) && key >= 0)
-                _lateReferenceTail = new LateReferenceSerializer(type, key, model);
+            int baseKey = model.GetKey(type, false, true);
+            int key = model.GetKey(type, false, false);
+            if (!Helpers.IsValueType(type) && key >= 0 && baseKey>=0)
+                _lateReferenceTail = new LateReferenceSerializer(type, key, baseKey, model);
             else if (asLateReference) throw new ArgumentException("Can't use late reference with non-model or value type " + type.Name);
 
             ProtoTypeCode typeCode = Helpers.GetTypeCode(type);

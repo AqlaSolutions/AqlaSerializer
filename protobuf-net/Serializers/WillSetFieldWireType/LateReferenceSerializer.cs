@@ -24,10 +24,11 @@ namespace AqlaSerializer.Serializers
         public bool DemandWireTypeStabilityStatus() => false;
         readonly RuntimeTypeModel _model;
         readonly int _typeKey;
+        readonly int _baseTypeKey;
         readonly SubTypeHelpers _subTypeHelpers = new SubTypeHelpers();
         public Type ExpectedType { get; }
         
-        public LateReferenceSerializer(Type type, int baseTypeKey, RuntimeTypeModel model)
+        public LateReferenceSerializer(Type type, int typeKey, int baseTypeKey, RuntimeTypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (model == null) throw new ArgumentNullException(nameof(model));
@@ -35,7 +36,8 @@ namespace AqlaSerializer.Serializers
             _model = model;
             if (Helpers.IsValueType(type))
                 throw new ArgumentException("Can't create " + this.GetType().Name + " for non-reference type " + type.Name + "!");
-            _typeKey = baseTypeKey;
+            _typeKey = typeKey;
+            _baseTypeKey = baseTypeKey;
         }
 
 #if !FEAT_IKVM
@@ -45,7 +47,7 @@ namespace AqlaSerializer.Serializers
             Debug.Assert(value != null);
 #endif
             _subTypeHelpers.Write(_model[_typeKey], value.GetType(), dest);
-            ProtoWriter.NoteLateReference(_typeKey, value, dest);
+            ProtoWriter.NoteLateReference(_baseTypeKey, value, dest);
         }
 
         public object Read(object value, ProtoReader source)
@@ -58,7 +60,7 @@ namespace AqlaSerializer.Serializers
                 ProtoReader.NoteObject(value, source);
             else throw new ProtoException(CantCreateInstanceMessage);
             // each CreateInstance notes object
-            ProtoReader.NoteLateReference(_typeKey, value, source);
+            ProtoReader.NoteLateReference(_baseTypeKey, value, source);
             return value;
         }
 
@@ -78,7 +80,7 @@ namespace AqlaSerializer.Serializers
                 using (var value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
                 {
                     _subTypeHelpers.EmitWrite(ctx.G, _model[_typeKey], value);
-                    ctx.G.Writer.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+                    ctx.G.Writer.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_baseTypeKey), value);
                 }
             }
         }
@@ -112,7 +114,7 @@ namespace AqlaSerializer.Serializers
                                         r.Serializer.EmitCreateInstance(ctx);
                                         ctx.StoreValue(value);
                                     }
-                                    g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_typeKey), value);
+                                    g.Reader.NoteLateReference(ctx.MapMetaKeyToCompiledKey(_baseTypeKey), value);
                                 }
                             });
 

@@ -44,14 +44,14 @@ namespace AqlaSerializer.unittest.Aqla
         }
     }
 
-    public class Test
+    class Test
     {
         public int Data;
         public Test Parent;
     }
 
     [ProtoContract(AsReferenceDefault = true)]
-    public class TestSurrogate
+    class TestSurrogate
     {
         [ProtoMember(1)]
         int Data;
