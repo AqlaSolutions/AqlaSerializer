@@ -1,29 +1,90 @@
 ﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 using System;
 using AqlaSerializer;
+using AqlaSerializer.Settings;
 
 namespace AqlaSerializer
 {
     /// <summary>
-    /// Indicates that a type is defined for protocol-buffer serialization.
+    /// Indicates that a type is defined for protocol-buffer serialization. Settings specified here are inherited by members of this type if not explicitely specified for them.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Interface,
         AllowMultiple = false, Inherited = false)]
     public sealed class SerializableTypeAttribute : Attribute
     {
-        Type _constructType;
-        // TODO store collection subtype!!!
+        internal TypeSettingsValue TypeSettings;
+
         /// <summary>
-        /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
-        /// with dynamic proxies, or with interface-based APIs; for collections this is a default collection type.
+        /// Allows to use multiple attributes with different settings for each model
         /// </summary>
-        public Type ConstructType { get { return _constructType; } set { _constructType = value; } }
+        public object ModelId { get; set; }
 
         /// <summary>
         /// Gets or sets the defined name of the type.
         /// </summary>
-        public string Name { get { return name; } set { name = value; } }
-        private string name;
+        public string Name { get { return TypeSettings.Name; } set { TypeSettings.Name = value; } }
+
+        /// <summary>
+        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel settings.
+        /// </summary>
+        public MemberFormat DefaultMemberFormat { get { return TypeSettings.Member.MemberFormat; } set { TypeSettings.Member.MemberFormat = value; } }
+
+        /// <summary>
+        /// Applies only to enums (not to DTO classes themselves); gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
+        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
+        /// </summary>
+        public bool EnumPassthru { get { return TypeSettings.EnumPassthru; } set { TypeSettings.EnumPassthru = value; } }
+
+        /// <summary>
+        /// If true, the constructor for the type is bypassed during deserialization, meaning any field initializers
+        /// or other initialization code is skipped. 
+        /// This settings can't be controlled per member.
+        /// </summary>
+        public bool SkipConstructor { get { return TypeSettings.SkipConstructor; } set { TypeSettings.SkipConstructor = value; } }
+
+        /// <summary>
+        /// Indicates whether the value should be prefixed with length instead of using StartGroup-EndGroup tags. If set to true makes skipping removed field faster when deserializing but slows down writing.
+        /// This settings can't be controlled per member.
+        /// </summary>
+        public bool? PrefixLength { get { return TypeSettings.PrefixLength; } set { TypeSettings.PrefixLength = value; } }
+
+        /// <summary>
+        /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
+        /// with dynamic proxies, or with interface-based APIs; for collections this is a default collection type.
+        /// </summary>
+        public Type ConcreteType
+        {
+            get { return TypeSettings.ConcreteType; }
+            set
+            {
+                // sets both for member and for type
+                // because member can only have ConcreteType specified for collection but not normal types
+                // while TypeSettings.ConcreteType may used for not collections too
+                TypeSettings.Member.CollectionConcreteType = value;
+                TypeSettings.ConcreteType = value;
+            }
+        }
+
+        /// <summary>
+        /// Indicates that the value should not be traversed recursively
+        /// </summary>
+        public bool? WriteAsLateReference { get { return TypeSettings.Member.WriteAsLateReference; } set { TypeSettings.Member.WriteAsLateReference = value; } }
+
+        /// <summary>
+        /// The data-format to be used when encoding this value.
+        /// </summary>
+        public BinaryDataFormat? ContentBinaryFormat { get { return TypeSettings.Member.ContentBinaryFormat; } set { TypeSettings.Member.ContentBinaryFormat = value; } }
+
+        /// <summary>
+        /// Supported collection features
+        /// </summary>
+        public CollectionFormat CollectionFormat { get { return TypeSettings.Member.Collection.Format; } set { TypeSettings.Member.Collection.Format = value; } }
+
+        /// <summary>
+        /// The type of object for each item in the list (especially useful with ArrayList)
+        /// </summary>
+        public Type CollectionItemType { get { return TypeSettings.Member.Collection.ItemType; } set { TypeSettings.Member.Collection.ItemType = value; } }
 
         /// <summary>
         /// Gets or sets the fist offset to use with implicit field tags;
@@ -38,26 +99,13 @@ namespace AqlaSerializer
                 implicitFirstTag = value;
             }
         }
+
         private int implicitFirstTag;
 
         /// <summary>
         /// If specified, alternative contract markers (such as markers for XmlSerailizer or DataContractSerializer) are ignored.
         /// </summary>
-        public bool UseAqlaMembersOnly
-        {
-            get { return HasFlag(OPTIONS_UseAqlaMembersOnly); }
-            set {SetFlag(OPTIONS_UseAqlaMembersOnly, value); }
-        }
-
-        /// <summary>
-        /// If specified, do NOT treat this type as a list, even if it looks like one.
-        /// </summary>
-        public bool IgnoreListHandling
-        {
-            get { return HasFlag(OPTIONS_IgnoreListHandling); }
-            set { SetFlag(OPTIONS_IgnoreListHandling, value); }
-        }
-
+        public bool UseAqlaMembersOnly { get { return HasFlag(OPTIONS_UseAqlaMembersOnly); } set { SetFlag(OPTIONS_UseAqlaMembersOnly, value); } }
 
         /// <summary>
         /// Gets or sets the mechanism used to automatically infer field tags
@@ -65,16 +113,17 @@ namespace AqlaSerializer
         /// Please review the important notes against the ImplicitFields enumeration.
         /// </summary>
         public ImplicitFieldsMode ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
+
         private ImplicitFieldsMode implicitFields = ImplicitFieldsMode.PublicProperties;
 
 
         private bool _explicitPropertiesContract = true;
-        
+
         /// <summary>
         /// Property is treated as public only if both get and set accessors are public
         /// </summary>
         public bool ExplicitPropertiesContract { get { return _explicitPropertiesContract; } set { _explicitPropertiesContract = value; } }
-        
+
         /// <summary>
         /// Enables/disables automatic tag generation based on the existing name / order
         /// of the defined members. This option is not used for members marked
@@ -111,83 +160,24 @@ namespace AqlaSerializer
         /// 
         /// This value is added to the Order of each member.
         /// </summary>
-        public int DataMemberOffset
+        public int DataMemberOffset { get { return dataMemberOffset; } set { dataMemberOffset = value; } }
+
+        private bool HasFlag(byte flag)
         {
-            get { return dataMemberOffset; }
-            set { dataMemberOffset = value; }
+            return (flags & flag) == flag;
         }
 
-
-        /// <summary>
-        /// If true, the constructor for the type is bypassed during deserialization, meaning any field initializers
-        /// or other initialization code is skipped.
-        /// </summary>
-        public bool SkipConstructor
-        {
-            get { return HasFlag(OPTIONS_SkipConstructor); }
-            set { SetFlag(OPTIONS_SkipConstructor, value); }
-        }
-
-        /// <summary>
-        /// Should this type be treated as a reference by default? Please also see the implications of this,
-        /// as recorded on ProtoMemberAttribute.AsReference
-        /// </summary>
-        [Obsolete("Use NotAsReferenceDefault")]
-        public bool AsReferenceDefault
-        {
-            get { return !NotAsReferenceDefault; }
-            set { NotAsReferenceDefault = !value; }
-        }
-
-        /// <summary>
-        /// Should not this type be treated as a reference by default? Please also see the implications of this,
-        /// as recorded on ProtoMemberAttribute.AsReference
-        /// </summary>
-        public bool NotAsReferenceDefault
-        {
-            get { return !HasFlag(OPTIONS_AsReferenceDefault); }
-            set { SetFlag(OPTIONS_AsReferenceDefault, !value); }
-        }
-
-        private bool HasFlag(byte flag) { return (flags & flag) == flag; }
         private void SetFlag(byte flag, bool value)
         {
             if (value) flags |= flag;
             else flags = (byte)(flags & ~flag);
         }
 
-        private byte flags = OPTIONS_AsReferenceDefault;
-        
+        private byte flags;
+
         private const byte
             OPTIONS_InferTagFromName = 1,
             OPTIONS_InferTagFromNameHasValue = 2,
-            OPTIONS_UseAqlaMembersOnly = 4,
-            OPTIONS_SkipConstructor = 8,
-            OPTIONS_IgnoreListHandling = 16,
-            OPTIONS_AsReferenceDefault = 32,
-            OPTIONS_EnumPassthru = 64,
-            OPTIONS_EnumPassthruHasValue = 128;
-
-        /// <summary>
-        /// Applies only to enums (not to DTO classes themselves); gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
-        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
-        /// </summary>
-        public bool EnumPassthru
-        {
-            get { return HasFlag(OPTIONS_EnumPassthru); }
-            set
-            {
-                SetFlag(OPTIONS_EnumPassthru, value);
-                SetFlag(OPTIONS_EnumPassthruHasValue, true);
-            }
-        }
-
-        /// <summary>
-        /// Has a EnumPassthru value been explicitly set?
-        /// </summary>
-        internal bool EnumPassthruHasValue
-        { // note that this property is accessed via reflection and should not be removed
-            get { return HasFlag(OPTIONS_EnumPassthruHasValue); }
-        }
+            OPTIONS_UseAqlaMembersOnly = 4;
     }
 }
