@@ -1,6 +1,6 @@
 ﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
-
+using AqlaSerializer.Settings;
 #if FEAT_IKVM
 using AqlaSerializer;
 using Type = IKVM.Reflection.Type;
@@ -20,8 +20,8 @@ namespace AqlaSerializer
     /// fixed-length encoding for large values.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
-        AllowMultiple = false, Inherited = true)]
-    public class SerializableMemberAttribute : Attribute
+        AllowMultiple = true, Inherited = true)]
+    public class SerializableMemberAttribute : SerializableMemberBaseAttribute
         , IComparable
 #if !NO_GENERICS
 , IComparable<SerializableMemberAttribute>
@@ -39,8 +39,8 @@ namespace AqlaSerializer
         {
             if (other == null) return -1;
             if ((object)this == (object)other) return 0;
-            int result = this.tag.CompareTo(other.tag);
-            if (result == 0) result = string.CompareOrdinal(this.name, other.name);
+            int result = this.MemberSettings.Tag.CompareTo(other.MemberSettings.Tag);
+            if (result == 0) result = string.CompareOrdinal(this.Name, other.Name);
             return result;
         }
 
@@ -48,184 +48,50 @@ namespace AqlaSerializer
         /// Creates a new ProtoMemberAttribute instance.
         /// </summary>
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
-        public SerializableMemberAttribute(int tag)
-            : this(tag, false)
-        { }
-
-        internal SerializableMemberAttribute(int tag, bool forced)
+        public SerializableMemberAttribute(int tag, MemberFormat format = 0)
+            : this(tag, false, format)
         {
-            if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
-            this.tag = tag;
+            
         }
 
+        internal SerializableMemberAttribute(int tag, bool forced, MemberFormat format = 0)
+            : base(0, format)
+        {
+            if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
+            this.MemberSettings.Tag = tag;
+        }
+        
+        internal MemberMainSettingsValue MemberSettings;
+        
 #if !NO_RUNTIME
-        internal MemberInfo Member;
+        internal MemberInfo Member { get { return MemberSettings.Member; } set { MemberSettings.Member = value; } }
         internal bool TagIsPinned;
 #endif
         /// <summary>
         /// Gets or sets the original name defined in the .proto; not used
         /// during serialization.
         /// </summary>
-        public string Name { get { return name; } set { name = value; } }
-        private string name;
-
-        /// <summary>
-        /// Gets or sets the data-format to be used when encoding this value.
-        /// </summary>
-        public BinaryDataFormat DataFormat { get { return dataFormat; } set { dataFormat = value; } }
-        private BinaryDataFormat dataFormat;
-
+        public string Name { get { return MemberSettings.Name; } set { MemberSettings.Name = value; } }
+        
         /// <summary>
         /// Gets the unique tag used to identify this member within the type.
         /// </summary>
-        public int Tag { get { return tag; } }
-        private int tag;
-        internal void Rebase(int tag) { this.tag = tag; }
+        public int Tag => MemberSettings.Tag;
 
-        /// <summary>
-        /// Gets or sets a value indicating whether this member is mandatory.
-        /// </summary>
-        public bool IsRequired
+        internal void Rebase(int tag)
         {
-            get { return (options & MemberSerializationOptions.Required) == MemberSerializationOptions.Required; }
-            set
-            {
-                if (value) options |= MemberSerializationOptions.Required;
-                else options &= ~MemberSerializationOptions.Required;
-            }
+            this.MemberSettings.Tag = tag;
         }
 
         /// <summary>
-        /// Gets a value indicating whether this member is packed.
-        /// This option only applies to list/array data of primitive types (int, double, etc).
+        /// Gets or sets a value indicating whether this member should be considered not optional when generating Protocol Buffers schema.
         /// </summary>
-        public bool IsPacked
-        {
-            get { return (options & MemberSerializationOptions.Packed) == MemberSerializationOptions.Packed; }
-            set
-            {
-                if (value) options |= MemberSerializationOptions.Packed;
-                else options &= ~MemberSerializationOptions.Packed;
-            }
-        }
+        public bool IsRequiredInSchema { get { return MemberSettings.IsRequiredInSchema; } set { MemberSettings.IsRequiredInSchema = value; } }
 
         /// <summary>
-        /// Indicates whether this field should *append* to existing values (the default is true, meaning *replace*).
-        /// This option only applies to list/array data.
+        /// Default value will be skipped when writing; null means not specified.
         /// </summary>
-        public bool AppendCollection
-        {
-            get { return (options & MemberSerializationOptions.AppendCollection) == MemberSerializationOptions.AppendCollection; }
-            set
-            {
-                if (value) options |= MemberSerializationOptions.AppendCollection;
-                else options &= ~MemberSerializationOptions.AppendCollection;
-            }
-        }
-
-        /// <summary>
-        /// Enables full object-tracking/full-graph support.
-        /// </summary>
-        [Obsolete("In AqlaSerializer use NotAsReference")]
-        public bool AsReference
-        {
-            get { return !NotAsReference; }
-            set
-            {
-                NotAsReference = !value;
-            }
-        }
-
-        /// <summary>
-        /// Disables full object-tracking/full-graph support.
-        /// </summary>
-        public bool NotAsReference
-        {
-            get { return (options & MemberSerializationOptions.NotAsReference) == MemberSerializationOptions.NotAsReference; }
-            set
-            {
-                if (value) options |= MemberSerializationOptions.NotAsReference;
-                else options &= ~MemberSerializationOptions.NotAsReference;
-
-                options |= MemberSerializationOptions.NotAsReferenceHasValue;
-            }
-        }
-
-        internal bool NotAsReferenceHasValue
-        {
-            get { return (options & MemberSerializationOptions.NotAsReferenceHasValue) == MemberSerializationOptions.NotAsReferenceHasValue; }
-            set
-            {
-                if (value) options |= MemberSerializationOptions.NotAsReferenceHasValue;
-                else options &= ~MemberSerializationOptions.NotAsReferenceHasValue;
-            }
-        }
-
-        /// <summary>
-        /// Embeds the type information into the stream, allowing usage with types not known in advance.
-        /// </summary>
-        public bool DynamicType
-        {
-            get { return (options & MemberSerializationOptions.DynamicType) == MemberSerializationOptions.DynamicType; }
-            set
-            {
-                if (value) options |= MemberSerializationOptions.DynamicType;
-                else options &= ~MemberSerializationOptions.DynamicType;
-            }
-        }
-
-        Type _collectionConcreteType;
-
-        // TODO store collection subtype!!!
-        /// <summary>
-        /// Specifies default collection implementation
-        /// </summary>
-        public Type CollectionConcreteType { get { return _collectionConcreteType; } set { _collectionConcreteType = value; } }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether this member is packed (lists/arrays).
-        /// </summary>
-        public MemberSerializationOptions Options { get { return options; } set { options = value; } }
-        private MemberSerializationOptions options;
-
-        /// <summary>
-        /// Additional (optional) settings that control serialization of members
-        /// </summary>
-        [Flags]
-        public enum MemberSerializationOptions
-        {
-            /// <summary>
-            /// Default; no additional options
-            /// </summary>
-            None = 0,
-            /// <summary>
-            /// Indicates that repeated elements should use packed (length-prefixed) encoding
-            /// </summary>
-            Packed = 1,
-            /// <summary>
-            /// Indicates that the given item is required
-            /// </summary>
-            Required = 2,
-            /// <summary>
-            /// Disable full object-tracking/full-graph support
-            /// </summary>
-            NotAsReference = 4,
-            /// <summary>
-            /// Embeds the type information into the stream, allowing usage with types not known in advance
-            /// </summary>
-            DynamicType = 8,
-            /// <summary>
-            /// Indicates whether this field should *repace* existing values (the default is false, meaning *append*).
-            /// This option only applies to list/array data.
-            /// </summary>
-            AppendCollection = 16,
-            /// <summary>
-            /// Determines whether the types AsReferenceDefault value is used, or whether this member's AsReference should be used
-            /// </summary>
-            NotAsReferenceHasValue = 32
-        }
-
-
+        public object DefaultValue { get { return MemberSettings.DefaultValue; } set { MemberSettings.DefaultValue = value; } }
     }
 
     /// <summary>

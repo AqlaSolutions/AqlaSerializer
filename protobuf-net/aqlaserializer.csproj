@@ -309,7 +309,16 @@
     <Compile Include="Aqla\DefaultAutoAddStrategy.cs" />
     <Compile Include="Aqla\CallbackAttributes.cs" />
     <Compile Include="Aqla\IAutoAddStrategy.cs" />
+    <Compile Include="Aqla\CollectionFormat.cs" />
+    <Compile Include="Aqla\SerializableMemberBaseAttribute.cs" />
+    <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />
+    <Compile Include="Aqla\Settings\Inheritable\CollectionSettingsValue.cs" />
+    <Compile Include="Aqla\Settings\Inheritable\MemberLevelSettingsValue.cs" />
+    <Compile Include="Aqla\Settings\Example.cs" />
     <Compile Include="Aqla\SerializeDerivedTypeAttribute.cs" />
+    <Compile Include="Aqla\MemberFormat.cs" />
+    <Compile Include="Aqla\Settings\MemberMainSettingsValue.cs" />
+    <Compile Include="Aqla\Settings\TypeSettingsValue.cs" />
     <Compile Include="Aqla\SurrogateConverterAttribute.cs" />
     <Compile Include="Aqla\EnumSerializableValueAttribute.cs" />
     <Compile Include="Aqla\NonSerializableMemberAttribute.cs" />
@@ -436,6 +445,7 @@
     <None Include="..\AqlaSerializer2Key.snk" />
     <None Include="aqlaserializer.licenseheader" />
     <Compile Include="Meta\RuntimeTypeModel.Compilation.cs" />
+    <None Include="Aqla\Settings\readme.md" />
     <None Include="packages.config" />
     <None Include="Web\TODO.txt" />
   </ItemGroup>

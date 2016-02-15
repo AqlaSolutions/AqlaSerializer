@@ -886,7 +886,7 @@ namespace AqlaSerializer
             var result = CreateNormalizedAttrbute(fieldNumber, forceTag);
             result.NotAsReference = notAsReference;
             result.NotAsReferenceHasValue = notAsReferenceHasValue;
-            result.DataFormat = dataFormat;
+            result.ContentBinaryFormat = dataFormat;
             result.DynamicType = dynamicType;
             result.IsPacked = isPacked;
             if (readOnly && !appendCollection)

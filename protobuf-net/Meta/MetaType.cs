@@ -1215,7 +1215,7 @@ namespace AqlaSerializer.Meta
                 throw new ProtoException("Specified default type " + defaultType.Name + " is not assignable to member " + this.Type.Name + "." + member.Name);
             
 
-            var vm = new ValueMember(model, this.Type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.DataFormat, defaultValue);
+            var vm = new ValueMember(model, this.Type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.ContentBinaryFormat, defaultValue);
 #if WINRT
                 TypeInfo finalType = typeInfo;
 #else

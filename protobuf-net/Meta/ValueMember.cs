@@ -288,6 +288,7 @@ namespace AqlaSerializer.Meta
             set { SetFlag(OPTIONS_AppendCollection, value, true); }
         }
 
+        // TODO used only to disable WRITING default value but can just not specify default value at all!, remove this
         /// <summary>
         /// Indicates whether this field is mandatory.
         /// </summary>
