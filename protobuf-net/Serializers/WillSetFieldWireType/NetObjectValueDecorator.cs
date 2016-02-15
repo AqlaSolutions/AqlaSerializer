@@ -77,7 +77,7 @@ namespace AqlaSerializer.Serializers
             : this(type: MakeReturnNullable(tail.ExpectedType, returnNullable, model), asReference: asReference, asLateReference: asLateReference, model: model)
         {
             _tail = tail;
-            RequiresOldValue = _tail.RequiresOldValue;
+            RequiresOldValue = _tail.RequiresOldValue || (_lateReferenceTail?.RequiresOldValue ?? false);
         }
 
         static Type MakeReturnNullable(Type type, bool make, TypeModel model)
@@ -89,8 +89,8 @@ namespace AqlaSerializer.Serializers
         /// <summary>
         /// Dynamic type
         /// </summary>
-        public NetObjectValueDecorator(bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, RuntimeTypeModel model)
-            : this(type: model.MapType(typeof(object)), asReference: asReference, asLateReference: false, model: model)
+        public NetObjectValueDecorator(Type dynamicBase, bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, RuntimeTypeModel model)
+            : this(type: dynamicBase, asReference: asReference, asLateReference: false, model: model)
         {
             _dataFormatForDynamicBuiltins = dataFormatForDynamicBuiltins;
             _options |= BclHelpers.NetObjectOptions.DynamicType;

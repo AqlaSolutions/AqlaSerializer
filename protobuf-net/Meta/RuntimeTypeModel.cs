@@ -994,14 +994,14 @@ namespace AqlaSerializer.Meta
                         var invType = rtm[key];
                         var invSer = invType.RootSerializer;
                         
-                        var copy = invSer.Read(value, pr);
+                        var copy = invSer.Read(null, pr);
 
                         if (copy == null || result == null)
                         {
                             if ((copy == null) != (result == null))
                                 throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, copy is null");
                         }
-                        else if (copy.GetType() != result.GetType())
+                        else if (value == null && copy.GetType() != result.GetType())
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, types " + copy.GetType() + ", " + result.GetType());
                         else if (copy.GetType().IsPrimitive && !result.Equals(copy))
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, values " + copy + ", " + result);

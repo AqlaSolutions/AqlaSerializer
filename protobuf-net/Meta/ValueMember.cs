@@ -713,13 +713,13 @@ namespace AqlaSerializer.Meta
                 if (key >= 0 || dynamicType)
                 {
                     if (dynamicType)
-                        return new NetObjectValueDecorator(tryAsReference, dataFormat, model);
+                        return new NetObjectValueDecorator(originalType, tryAsReference, dataFormat, model);
                     else if (tryAsLateRef && tryAsReference && CanBeAsLateReference(key, model))
                     {
-                        return new NetObjectValueDecorator(type, key, tryAsReference, true, model[type], model);
+                        return new NetObjectValueDecorator(originalType, key, tryAsReference, true, model[type], model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
-                        return new NetObjectValueDecorator(type, key, tryAsReference, false, model[type], model);
+                        return new NetObjectValueDecorator(originalType, key, tryAsReference, false, model[type], model);
                     else
                         return new ModelTypeSerializer(type, key, model[type]);
                 }
@@ -825,7 +825,7 @@ namespace AqlaSerializer.Meta
 #endif
             if (dynamicTypeDataFormat != null)
             {
-                ser = new NetObjectValueDecorator(asReference, dynamicTypeDataFormat.Value, model);
+                ser = new NetObjectValueDecorator(type, asReference, dynamicTypeDataFormat.Value, model);
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(model, type, asReference))
             {

@@ -117,7 +117,7 @@ namespace Examples
         public float Value { get; set; }
     }
     [ProtoBuf.ProtoContract]
-    public class ExplicitDefaultFivePrivateField : IOptionalData
+    class ExplicitDefaultFivePrivateField : IOptionalData
     {
         public ExplicitDefaultFivePrivateField() { value = 5F; }
         [ProtoBuf.ProtoMember(1), DefaultValue(5F)]

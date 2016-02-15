@@ -108,9 +108,11 @@ namespace AqlaSerializer.Serializers
                 }
                 else
                 {
-                    ctx.EmitCall(ctx.MapType(typeof(object)).GetMethod("ToString"));
+                    ctx.LoadValue(valueFrom);
+                    if (valueFrom.Type != ctx.MapType(typeof(string)))
+                        ctx.EmitCall(ctx.MapType(typeof(object)).GetMethod("ToString"));
                 }
-                ctx.EmitBasicWrite("WriteString", valueFrom);
+                ctx.EmitBasicWrite("WriteString", null);
             }
         }
 

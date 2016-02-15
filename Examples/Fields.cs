@@ -48,7 +48,7 @@ namespace Examples
     }
 
     [DataContract]
-    public class WcfWithFields
+    class WcfWithFields
     {
         [DataMember(Order = 1)]
         private int foo;

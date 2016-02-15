@@ -25,7 +25,7 @@ namespace Examples.Dictionary
     [ProtoBuf.ProtoContract]
     public class SimpleData : IEquatable<SimpleData>
     {
-        private SimpleData() {}
+        public SimpleData() {}
         public SimpleData(int value) {
             Value = value;}
 
