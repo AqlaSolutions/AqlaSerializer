@@ -189,7 +189,13 @@ namespace Examples
             where TCreate : T, new()
             where T : ICallbackTest
         {
-            var model = RuntimeTypeModel.Create();
+            Test<T, TCreate>(RuntimeTypeModel.Create(), compile, extraTypes);
+        }
+
+        public static void Test<T, TCreate>(RuntimeTypeModel model, bool compile = false, params Type[] extraTypes)
+            where TCreate : T, new()
+            where T : ICallbackTest
+        {
             model.Add(typeof (TCreate), true);
             if(extraTypes != null)
             {
@@ -279,7 +285,9 @@ namespace Examples
         {
             int beforeSer = CallbackStructSimple.BeforeSerializeCount,
                 afterSer = CallbackStructSimple.AfterSerializeCount;
-            Test<CallbackStructSimple, CallbackStructSimple>(true, typeof(CallbackStructSimpleNoCallbacks));
+            var m = RuntimeTypeModel.Create();
+            m.SkipCompiledVsNotCheck = true;
+            Test<CallbackStructSimple, CallbackStructSimple>(m, true, typeof(CallbackStructSimpleNoCallbacks));
 
             Assert.AreEqual(6, CallbackStructSimple.BeforeSerializeCount - beforeSer);
             Assert.AreEqual(6, CallbackStructSimple.AfterSerializeCount - afterSer);
@@ -319,6 +327,7 @@ namespace Examples
         public void CallbacksWithContext()
         {
             var model = TypeModel.Create();
+            model.SkipCompiledVsNotCheck = true;
             model.AutoCompile = false;
             Test(model);
 

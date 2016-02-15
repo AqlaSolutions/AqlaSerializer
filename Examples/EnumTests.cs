@@ -179,13 +179,13 @@ enum blah {
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestConflictingKeys()
         {
-            Serializer.Serialize(Stream.Null, new TypeDuffKeys { Value = HasConflictingKeys.Foo });
+            TypeModel.Create().Serialize(Stream.Null, new TypeDuffKeys { Value = HasConflictingKeys.Foo });
         }
 
         [Test, ExpectedException(typeof(ProtoException))]
         public void TestConflictingValues()
         {
-            Serializer.Serialize(Stream.Null, new TypeDuffValues { Value = HasConflictingValues.Foo });
+            TypeModel.Create().Serialize(Stream.Null, new TypeDuffValues { Value = HasConflictingValues.Foo });
         }
 
         [Test]
@@ -292,7 +292,7 @@ enum blah {
         private static void TestNegEnum(NegEnum value)
         {
             NegEnumType obj = new NegEnumType { Value = value },
-                clone = Serializer.DeepClone(obj);
+                clone = TypeModel.Create().DeepClone(obj);
             Assert.AreEqual(obj.Value, clone.Value, value.ToString());
         }
 
