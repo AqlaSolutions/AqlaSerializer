@@ -851,6 +851,9 @@ namespace AqlaSerializer.Meta
 
         internal static event Action<string> ValidateDll;
 
+        /// <summary>
+        /// Turn off this when each (de)serialization has side effects like changing static field
+        /// </summary>
         internal bool SkipCompiledVsNotCheck { get; set; }
 
         /// <summary>
@@ -886,7 +889,7 @@ namespace AqlaSerializer.Meta
 
                 using (var ms = new MemoryStream())
                 {
-                    using (var wr = new ProtoWriter(ms, this, null))
+                    using (var wr = new ProtoWriter(ms, this, dest.Context))
                     {
                         var invType = rtm[key];
                         var invSer = invType.RootSerializer;
@@ -966,8 +969,11 @@ namespace AqlaSerializer.Meta
 
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 #if CHECK_COMPILED_VS_NOT
-            long initialStreamPosition = source.Position + source.InitialUnderlyingStreamPosition;
+            int initialSourcePosition = source.Position;
+            long initialStreamPosition = initialSourcePosition + source.InitialUnderlyingStreamPosition;
             var refState = source.StoreReferenceState();
+            int initialNumber = source.FieldNumber;
+            var initialWireType = source.WireType;
 #endif
             object result;
             if (value == null && Helpers.IsValueType(ser.ExpectedType))
@@ -988,8 +994,12 @@ namespace AqlaSerializer.Meta
                 {
                     long positionAfterRead = stream.Position;
                     stream.Position = initialStreamPosition;
-                    using (var pr = ProtoReader.Create(stream, this, null, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
+                    using (var pr = ProtoReader.Create(stream, this, source.Context, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
                     {
+                        if (initialWireType != WireType.None)
+                        {
+                            if (!ProtoReader.HasSubValue(initialWireType, pr)) throw new Exception();
+                        }
                         pr.LoadReferenceState(refState);
                         var invType = rtm[key];
                         var invSer = invType.RootSerializer;
@@ -1005,8 +1015,22 @@ namespace AqlaSerializer.Meta
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, types " + copy.GetType() + ", " + result.GetType());
                         else if (copy.GetType().IsPrimitive && !result.Equals(copy))
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, values " + copy + ", " + result);
-                        else if (stream.Position != positionAfterRead)
+                        else if (source.Position - initialSourcePosition != pr.Position)
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, wrong position after read");
+                    }
+                    if (1.Equals(2))
+                    {
+                        stream.Position = initialStreamPosition;
+                        using (var pr = ProtoReader.Create(stream, this, source.Context, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
+                        {
+                            if (initialWireType != WireType.None)
+                            {
+                                if (!ProtoReader.HasSubValue(initialWireType, pr)) throw new Exception();
+                            }
+                            pr.LoadReferenceState(refState);
+                            var copy2 = ser.Read(null, pr);
+                        }
+
                     }
                     stream.Position = positionAfterRead;
                 }

@@ -28,6 +28,7 @@ namespace Examples.Issues
         public void LockContention_DTO()
         {
             var model = TypeModel.Create();
+            model.SkipCompiledVsNotCheck = true;
             Func<object, byte[]> serialize = obj =>
             {
                 using (var ms = new MemoryStream())

@@ -48,6 +48,7 @@ namespace Examples.Issues
             for(int test = 0 ; test < LOOP ; test++)
             {
                 var model = RuntimeTypeModel.Create();
+                model.SkipCompiledVsNotCheck = true;
                 Thread[] threads = new Thread[20];
 
                 Interlocked.Exchange(ref success, 0);

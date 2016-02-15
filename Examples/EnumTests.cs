@@ -157,8 +157,9 @@ enum blah {
         [Test]
         public void TestNullValues()
         {
-
-            string proto = Serializer.GetProto<NullValues>();
+            RuntimeTypeModel tm = TypeModel.Create();
+            tm.SkipCompiledVsNotCheck = true;
+            string proto = tm.GetSchema(typeof(NullValues));
 
             Assert.AreEqual(@"package Examples.DesignIdeas;
 

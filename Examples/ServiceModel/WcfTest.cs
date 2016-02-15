@@ -257,7 +257,12 @@ namespace Examples.ServiceModel
         {
             // generate some data:
             MyData data = new MyData();
-            for (int i = 0; i < 5000; i++)
+#if DEBUG
+            const int count = 100;
+#else
+            const int count = 5000;
+#endif
+            for (int i = 0; i < count; i++)
             {
                 data.SubData.Add(new MySubData { Number = i, Name = "item " + i.ToString() });
             }

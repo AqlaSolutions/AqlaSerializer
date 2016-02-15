@@ -239,7 +239,7 @@ namespace AqlaSerializer.Serializers
         protected virtual bool RequireAdd => true;
 
         public override Type ExpectedType => declaredType;
-        public override bool RequiresOldValue => AppendToCollection;
+        public override bool RequiresOldValue => true;
 
         protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;
 

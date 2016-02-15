@@ -504,6 +504,10 @@ namespace AqlaSerializer
 
         protected virtual AttributeFamily GetContractFamily(Type type, AttributeMap[] attributes)
         {
+            if (type.Name == "RefPair`2")
+            {
+
+            }
             if (Helpers.GetNullableUnderlyingType(type) != null) return AttributeFamily.None;
             if (!Helpers.IsEnum(type) && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
             AttributeFamily family = AttributeFamily.None;

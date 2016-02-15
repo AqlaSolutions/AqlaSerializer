@@ -21,7 +21,7 @@ namespace Examples
         [Test]
         public void ShouldRoundtripTypeWithoutEvent()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             var orig = new MyModel {Type = typeof (SqlCommand)};
 
@@ -49,7 +49,7 @@ namespace Examples
         [Test]
         public void ShouldRoundtripTypeWithEvent()
         {
-            var model = RuntimeTypeModel.Create();
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.AutoCompile = false;
             model.DynamicTypeFormatting += new TypeFormatEventHandler(model_DynamicTypeFormatting);
             var orig = new MyModel { Type = typeof(SqlCommand) };
