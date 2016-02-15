@@ -88,7 +88,11 @@ namespace AqlaSerializer.Meta
         internal TypeModel Model { get { return model; } }
 
         internal bool IsFrozen => HasFlag(OPTIONS_Frozen);
+#if FEAT_IKVM || !FEAT_COMPILER
+        internal bool IsCompiledInPlace => false;
+#else
         internal bool IsCompiledInPlace => serializer is CompiledSerializer;
+#endif
 
         /// <summary>
         /// Should this type be treated as a reference by default FOR MISSING TYPE MEMBERS ONLY?
@@ -1320,13 +1324,13 @@ namespace AqlaSerializer.Meta
         {
             var s = Serializer;
             var r = RootSerializer;
-            if (s is CompiledSerializer) return;
 #if FAKE_COMPILE
             return;
 #endif
 #if FEAT_IKVM
             // just no nothing, quietely; don't want to break the API
 #else
+            if (s is CompiledSerializer) return;
             serializer = CompiledSerializer.Wrap(s, model);
             rootSerializer = CompiledSerializer.Wrap(r, model);
 #endif

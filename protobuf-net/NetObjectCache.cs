@@ -284,8 +284,10 @@ namespace AqlaSerializer
             var c = (NetObjectCache)MemberwiseClone();
             if (stringKeys != null)
                 c.stringKeys = new Dictionary<string, int>(stringKeys);
+#if !CF && !PORTABLE
             if (objectKeys != null)
                 c.objectKeys = new Dictionary<object, int>(objectKeys);
+#endif
             if (underlyingList != null)
                 c.underlyingList = new MutableList(underlyingList.Cast<object>());
             return c;
