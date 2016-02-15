@@ -11,7 +11,7 @@ using AqlaSerializer.Meta;
 namespace Examples
 {
     [ProtoBuf.ProtoContract]
-    public class FieldData
+    class FieldData
     {
         public FieldData() {}
         public FieldData(object value) {
@@ -52,7 +52,7 @@ namespace Examples
     }
 
     [ProtoBuf.ProtoContract]
-    public class FieldDataViaNullable
+    class FieldDataViaNullable
     {
         public FieldDataViaNullable() { }
         public FieldDataViaNullable(object value)
@@ -125,7 +125,7 @@ namespace Examples
         public void TestRaw()
         {
             Assert.IsTrue(Program.CheckBytes(new FieldData()), "Empty");
-            Assert.AreEqual(null, Serializer.DeepClone(new FieldData()).Value);
+            Assert.AreEqual(null, TypeModel.Create().DeepClone(new FieldData()).Value);
 
         }
         [Test]

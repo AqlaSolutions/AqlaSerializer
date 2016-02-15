@@ -56,7 +56,7 @@ namespace Examples.Issues
         }
 
         [ProtoBuf.ProtoContract]
-        public struct RefPair<TKey,TValue> {
+        struct RefPair<TKey,TValue> {
             [ProtoBuf.ProtoMember(1)]
             public TKey Key {get; private set;}
             [ProtoBuf.ProtoMember(2, AsReference = true)]
@@ -130,7 +130,9 @@ namespace Examples.Issues
         [Test]
         public void ExecuteHackedViaFields()
         {
-            ExecuteAllModes(CreateFieldsModel(false), standalone: false);
+            RuntimeTypeModel tm = CreateFieldsModel(false);
+            tm.SkipCompiledVsNotCheck = true;
+            ExecuteAllModes(tm, standalone: false);
         }
 
         static RuntimeTypeModel CreateDefaultRefModel(bool aFirst, bool comp)
@@ -159,6 +161,7 @@ namespace Examples.Issues
             var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
             model.AutoCompile = false;
             var type = model.Add(typeof(KeyValuePair<int, A>), false);
+            model.SkipCompiledVsNotCheck = true;
             type.Add(1, "key");
             type.AddField(2, "value").AsReference = true;
 

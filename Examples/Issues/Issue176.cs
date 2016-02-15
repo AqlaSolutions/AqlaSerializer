@@ -18,15 +18,18 @@ namespace Examples.Issues
     public class Issue176
     {
         [Test]
-        public void TestOrderLineGetDeserializedAndAttachedToOrder()
+        public void TestOrderLineGetDeserializedAndAttachedToOrder([Values(false,true)] bool compile)
         {
             byte[] fileBytes = File.ReadAllBytes(@"NWind\nwind.proto.bin");
 
             RuntimeTypeModel ordersModel = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             ordersModel.AutoCompile = false;
-
+            
             Database database = (Database)ordersModel.Deserialize(new MemoryStream(fileBytes), null, typeof(Database));
             List<Order> orders = database.Orders;
+
+            ordersModel.AutoCompile = compile;
+            ordersModel.SkipCompiledVsNotCheck = true;
 
             DbMetrics("From File", orders);
 

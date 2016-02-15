@@ -16,8 +16,8 @@ namespace Examples.Issues
             
             var model = TypeModel.Create();
             model.AutoCompile = false;
+            model.SkipCompiledVsNotCheck = true;
             model.SetDefaultFactory(typeof(SO14532116).GetMethod("ObjectMaker"));
-
             int oldCount = Count;
             Test(model, "Runtime");
             model.CompileInPlace();

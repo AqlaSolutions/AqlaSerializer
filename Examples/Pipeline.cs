@@ -16,7 +16,9 @@ namespace Examples
         public void TestEnumerable()
         {
             EnumWrapper obj = new EnumWrapper();
-            EnumWrapper clone = Serializer.DeepClone(obj);
+            var tm = TypeModel.Create();
+            tm.SkipCompiledVsNotCheck = true;
+            EnumWrapper clone = tm.DeepClone(obj);
 
             // the source object should have been read once, but not had any data added
             Assert.AreEqual(1, obj.SubData.IteratorCount, "obj IteratorCount");
@@ -48,7 +50,9 @@ message EnumWrapper {
         public void TestEnumerableGroup()
         {
             EnumParentGroupWrapper obj = new EnumParentGroupWrapper();
-            EnumParentGroupWrapper clone = Serializer.DeepClone(obj);
+            var tm = TypeModel.Create();
+            tm.SkipCompiledVsNotCheck = true;
+            EnumParentGroupWrapper clone = tm.DeepClone(obj);
 
             // the source object should have been read once, but not had any data added
             Assert.AreEqual(1, obj.Wrapper.SubData.IteratorCount, "obj IteratorCount");
@@ -78,7 +82,9 @@ message EnumWrapper {
         public void TestEnumerableStandard()
         {
             EnumParentStandardWrapper obj = new EnumParentStandardWrapper();
-            EnumParentStandardWrapper clone = Serializer.DeepClone(obj);
+            var tm = TypeModel.Create();
+            tm.SkipCompiledVsNotCheck = true;
+            EnumParentStandardWrapper clone = tm.DeepClone(obj);
 
             // old: the source object should have been read twice
             // old: once to get the length-prefix, and once for the data
