@@ -145,7 +145,7 @@ namespace AqlaSerializer.Serializers
         {
             int reservedTrap = -1;
 
-            if (!ExpectedType.IsValueType)
+            if (!Helpers.IsValueType(ExpectedType))
                 reservedTrap = ProtoReader.ReserveNoteObject(source);
             // convert the incoming value
             object[] args = { value };
@@ -154,7 +154,7 @@ namespace AqlaSerializer.Serializers
             args[0] = rootTail.Read(value, source);
             var r = fromTail.Invoke(null, args);
 
-            if (!ExpectedType.IsValueType)
+            if (!Helpers.IsValueType(ExpectedType))
                 ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
             return r;
         }

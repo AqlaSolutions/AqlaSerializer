@@ -33,7 +33,9 @@ public class MainSetUpFixture
 
         if (_validateInitialized) return;
         _validateInitialized = true;
+#if !PRECOMPILE_PROJECT
         RuntimeTypeModel.ValidateDll += RuntimeTypeModel_ValidateDll;
+#endif
     }
 
     void RuntimeTypeModel_ValidateDll(string obj)
