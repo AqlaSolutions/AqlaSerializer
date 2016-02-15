@@ -1,6 +1,9 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
+using System.Diagnostics;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -12,7 +15,18 @@ namespace Examples.Issues
         public void Test()
         {
             var orig = new SomeWrapper {Value = new SubType { Foo = 123, Bar = "abc"}};
-            var clone = Serializer.DeepClone(orig);
+            var tm = TypeModel.Create();
+            tm.SkipCompiledVsNotCheck = true;
+            tm.AutoCompile = false;
+            Trace.WriteLine("1");
+            var clone = tm.DeepClone(orig);
+            Assert.AreEqual(123, orig.Value.Foo);
+            Assert.AreEqual("abc", ((SubType) clone.Value).Bar);
+            Trace.WriteLine("2");
+            tm.CompileInPlace();
+            Trace.WriteLine("3");
+            clone = tm.DeepClone(orig);
+            Trace.WriteLine("4");
             Assert.AreEqual(123, orig.Value.Foo);
             Assert.AreEqual("abc", ((SubType) clone.Value).Bar);
         }
