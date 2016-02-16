@@ -570,6 +570,28 @@ namespace AqlaSerializer
             return method;
 #endif
         }
+#if FEAT_IKVM
+        internal static System.Reflection.MethodInfo GetGetMethod(System.Reflection.PropertyInfo property, bool nonPublic, bool allowInternal)
+        {
+            if (property == null) return null;
+#if WINRT
+            var method = property.GetMethod;
+            if (!nonPublic && method != null && !method.IsPublic) method = null;
+            return method;
+#else
+            var method = property.GetGetMethod(nonPublic);
+            if (method == null && !nonPublic && allowInternal)
+            { // could be "internal" or "protected internal"; look for a non-public, then back-check
+                method = property.GetGetMethod(true);
+                if (method != null && !(method.IsAssembly || method.IsFamilyOrAssembly))
+                {
+                    method = null;
+                }
+            }
+            return method;
+#endif
+        }
+#endif
         internal static MethodInfo GetSetMethod(PropertyInfo property, bool nonPublic, bool allowInternal)
         {
             if (property == null) return null;
@@ -590,6 +612,28 @@ namespace AqlaSerializer
             return method;
 #endif
         }
+#if FEAT_IKVM
+        internal static System.Reflection.MethodInfo GetSetMethod(System.Reflection.PropertyInfo property, bool nonPublic, bool allowInternal)
+        {
+            if (property == null) return null;
+#if WINRT
+            var method = property.SetMethod;
+            if (!nonPublic && method != null && !method.IsPublic) method = null;
+            return method;
+#else
+            var method = property.GetSetMethod(nonPublic);
+            if (method == null && !nonPublic && allowInternal)
+            { // could be "internal" or "protected internal"; look for a non-public, then back-check
+                method = property.GetSetMethod(true);
+                if (method != null && !(method.IsAssembly || method.IsFamilyOrAssembly))
+                {
+                    method = null;
+                }
+            }
+            return method;
+#endif
+        }
+#endif
 
 #if FEAT_IKVM
         internal static bool IsMatch(IKVM.Reflection.ParameterInfo[] parameters, IKVM.Reflection.Type[] parameterTypes)
@@ -705,7 +749,34 @@ namespace AqlaSerializer
             return members;
 #endif
         }
-
+#if FEAT_IKVM
+        internal static System.Reflection.MemberInfo[] GetInstanceFieldsAndProperties(System.Type type, bool publicOnly)
+        {
+#if WINRT
+            var members = new System.Collections.Generic.List<System.Reflection.MemberInfo>();
+            foreach(var field in type.GetRuntimeFields())
+            {
+                if(field.IsStatic) continue;
+                if(field.IsPublic || !publicOnly) members.Add(field);
+            }
+            foreach(var prop in type.GetRuntimeProperties())
+            {
+                var getter = Helpers.GetGetMethod(prop, true, true);
+                if(getter == null || getter.IsStatic) continue;
+                if(getter.IsPublic || !publicOnly) members.Add(prop);
+            }
+            return members.ToArray();
+#else
+            var flags = publicOnly ? System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance : System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var props = type.GetProperties(flags);
+            var fields = type.GetFields(flags);
+            var members = new System.Reflection.MemberInfo[fields.Length + props.Length];
+            props.CopyTo(members, 0);
+            fields.CopyTo(members, props.Length);
+            return members;
+#endif
+        }
+#endif
         internal static Type GetMemberType(MemberInfo member)
         {
 #if WINRT || PORTABLE

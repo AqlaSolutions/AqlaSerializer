@@ -1,6 +1,7 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using AltLinq;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -59,6 +60,21 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
+        internal static ReflectionObjectMap[] CreateRuntime(TypeModel model, MemberInfo member, System.Type attributeType, bool inherit)
+        {
+#if FEAT_IKVM
+            return CreateRuntime(model, member, model.MapType(attributeType), inherit);
+#else
+            return member.GetCustomAttributes(attributeType, inherit).Select(attr => new ReflectionObjectMap(attr)).ToArray();
+#endif
+        }
+
+#if FEAT_IKVM
+        internal static ReflectionObjectMap[] CreateRuntime(TypeModel model, MemberInfo member, Type attributeType, bool inherit)
+        {
+            return member.__GetCustomAttributes(attributeType, inherit).Select(attr => new ReflectionObjectMap(IKVMAttributeFactory.Create(attr))).ToArray();
+        }
+#endif
         public static AttributeMap[] Create(TypeModel model, MemberInfo member, bool inherit)
         {
 #if FEAT_IKVM
@@ -112,6 +128,7 @@ namespace AqlaSerializer.Meta
             return result;
 #endif
         }
+
 #if FEAT_IKVM
         private sealed class AttributeDataMap : AttributeMap
         {
@@ -152,48 +169,22 @@ namespace AqlaSerializer.Meta
         }
 #else
         public abstract object Target { get; }
-        private sealed class ReflectionAttributeMap : AttributeMap
+
+        public sealed class ReflectionAttributeMap : AttributeMap
         {
-            public override object Target
-            {
-                get { return attribute; }
-            }
-            public override Type AttributeType
-            {
-                get { return attribute.GetType(); }
-            }
+            readonly ReflectionObjectMap _impl;
+            public override object Target => _impl.Target;
+
+            public override Type AttributeType => Target.GetType();
+
             public override bool TryGet(string key, bool publicOnly, out object value)
             {
-                MemberInfo[] members = Helpers.GetInstanceFieldsAndProperties(attribute.GetType(), publicOnly);
-                foreach (MemberInfo member in members)
-                {
-#if FX11
-                    if (member.Name.ToUpper() == key.ToUpper())
-#else
-                    if (string.Equals(member.Name, key, StringComparison.OrdinalIgnoreCase))
-#endif
-                    {
-                        PropertyInfo prop = member as PropertyInfo;
-                        if (prop != null) {
-                            value = Helpers.GetPropertyValue(prop, attribute);
-                            return true;
-                        }
-                        FieldInfo field = member as FieldInfo;
-                        if (field != null) {
-                            value = field.GetValue(attribute);
-                            return true;
-                        }
-
-                        throw new NotSupportedException(member.GetType().Name);
-                    }
-                }
-                value = null;
-                return false;
+                return _impl.TryGet(key, publicOnly, out value);
             }
-            private readonly Attribute attribute;
+
             public ReflectionAttributeMap(Attribute attribute)
             {
-                this.attribute = attribute;
+                _impl = new ReflectionObjectMap(attribute);
             }
         }
 #endif

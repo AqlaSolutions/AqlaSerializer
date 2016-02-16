@@ -1,8 +1,15 @@
 ﻿// Used protobuf-net source code modified by Vladyslav Taranov for AqlaSerializer, 2016
-
 using System;
-using AqlaSerializer;
 using AqlaSerializer.Settings;
+#if FEAT_IKVM
+using AqlaSerializer;
+using Type = IKVM.Reflection.Type;
+using IKVM.Reflection;
+#else
+using System.Reflection;
+using AqlaSerializer;
+
+#endif
 
 namespace AqlaSerializer
 {
