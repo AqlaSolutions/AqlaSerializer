@@ -17,22 +17,22 @@ namespace AqlaSerializer.Settings
         /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
-        public CollectionFormat Format { get; set; }
+        public CollectionFormat Format;
 
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public Type ItemType { get; set; }
+        public Type ItemType;
 
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public WireType? PackedWireTypeForRead { get; set; }
+        public WireType? PackedWireTypeForRead;
         
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public bool? Append { get; set; }
+        public bool? Append;
 
         public static CollectionSettingsValue Merge(CollectionSettingsValue baseValue, CollectionSettingsValue derivedValue)
         {

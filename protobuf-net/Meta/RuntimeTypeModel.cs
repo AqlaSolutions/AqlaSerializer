@@ -173,6 +173,11 @@ namespace AqlaSerializer.Meta
             set { SetOption(OPTIONS_AllowParseableTypes, value); }
         }
 
+        /// <summary>
+        /// See <see cref="SerializableMemberBaseAttribute.ModelId"/>
+        /// </summary>
+        public object ModelId { get; set; }
+
         IAutoAddStrategy _autoAddStrategy;
         public IAutoAddStrategy AutoAddStrategy
         {

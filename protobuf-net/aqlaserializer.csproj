@@ -306,10 +306,30 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aqla\AttributeType.cs" />
     <Compile Include="Aqla\DefaultAutoAddStrategy.cs" />
     <Compile Include="Aqla\CallbackAttributes.cs" />
     <Compile Include="Aqla\IAutoAddStrategy.cs" />
     <Compile Include="Aqla\CollectionFormat.cs" />
+    <Compile Include="Aqla\Meta\Mapping\IMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberAttributeReader.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberArgsValue.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaEnumMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaPartialMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\DataContractMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\EnumMemberHandlerBase.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\IMemberAttributeHandlerStrategy.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\MemberMappingHandlerBase.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlerResult.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetEnumMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetMemberHandlerStrategy.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\SystemNonSerializableHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\XmlContractMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberState.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetPartialMemberHandler.cs" />
+    <Compile Include="Aqla\NormalizedProtoMember.cs" />
     <Compile Include="Aqla\SerializableMemberBaseAttribute.cs" />
     <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />
     <Compile Include="Aqla\Settings\Inheritable\CollectionSettingsValue.cs" />

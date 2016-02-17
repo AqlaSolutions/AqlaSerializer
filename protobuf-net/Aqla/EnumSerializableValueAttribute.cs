@@ -13,19 +13,12 @@ namespace AqlaSerializer
         /// <summary>
         /// Gets or sets the specific value to use for this enum during serialization.
         /// </summary>
-        public int Value
-        {
-            get { return enumValue; }
-            set { this.enumValue = value; hasValue = true; }
-        }
+        public int Value { get; set; }
 
-        /// <summary>
-        /// Indicates whether this instance has a customised value mapping
-        /// </summary>
-        /// <returns>true if a specific value is set</returns>
-        public bool HasValue() { return hasValue; }
+        public string Name { get; set; }
 
-        private bool hasValue;
-        private int enumValue;
+        public object ModelId { get; set; }
+
+        // it's used on enums, no need for levels
     }
 }

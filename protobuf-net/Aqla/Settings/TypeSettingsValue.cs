@@ -14,12 +14,11 @@ namespace AqlaSerializer.Settings
 {
     public struct TypeSettingsValue
     {
-        public string Name { get; set; }
-        public bool EnumPassthru { get; set; }
-        public bool SkipConstructor { get; set; }
-        public bool? PrefixLength { get; set; }
-        public Type ConcreteType { get; set; }
+        public string Name;
+        public bool EnumPassthru;
+        public bool SkipConstructor;
+        public bool? PrefixLength;
+        public Type ConcreteType;
         public MemberLevelSettingsValue Member;
-
     }
 }
