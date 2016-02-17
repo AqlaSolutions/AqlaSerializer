@@ -17,27 +17,27 @@ namespace AqlaSerializer.Settings
         /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
-        public MemberFormat MemberFormat { get; set; }
+        public MemberFormat MemberFormat;
 
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public bool? WriteAsLateReference { get; set; }
-        
+        public bool? WriteAsLateReference;
+
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public BinaryDataFormat? ContentBinaryFormat { get; set; }
-        
+        public BinaryDataFormat? ContentBinaryFormat;
+
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public Type CollectionConcreteType { get; set; }
-        
+        public Type CollectionConcreteType;
+
         /// <summary>
         /// Not inherited
         /// </summary>
-        public bool DynamicType { get; set; }
+        public bool DynamicType;
 
         public CollectionSettingsValue Collection;
 

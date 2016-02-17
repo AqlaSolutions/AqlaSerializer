@@ -107,21 +107,21 @@ namespace AqlaSerializer
             AllowMultiple = true, Inherited = false)]
     public sealed class SerializablePartialMemberAttribute : SerializableMemberAttribute
     {
+        // TODO nested levels?
         /// <summary>
         /// Creates a new ProtoMemberAttribute instance.
         /// </summary>
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
         /// <param name="memberName">Specifies the member to be serialized.</param>
-        public SerializablePartialMemberAttribute(int tag, string memberName)
-            : base(tag)
+        public SerializablePartialMemberAttribute(int tag, string memberName, MemberFormat format = 0)
+            : base(tag, format)
         {
             if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException("memberName");
-            this.memberName = memberName;
+            this.MemberName = memberName;
         }
         /// <summary>
         /// The name of the member to be serialized.
         /// </summary>
-        public string MemberName { get { return memberName; } }
-        private readonly string memberName;
+        public string MemberName { get; }
     }
 }

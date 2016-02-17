@@ -14,12 +14,12 @@ namespace AqlaSerializer.Settings
 {
     public struct MemberMainSettingsValue
     {
-        public int Tag { get; set; }
-        public string Name { get; set; }
-        public bool IsRequiredInSchema { get; set; }
-        public object DefaultValue { get; set; }
+        public int Tag;
+        public string Name;
+        public bool IsRequiredInSchema;
+        public object DefaultValue;
 #if !NO_RUNTIME
-        public MemberInfo Member { get; set; }
+        public MemberInfo Member;
 #endif
     }
 }

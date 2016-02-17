@@ -37,6 +37,22 @@ namespace AqlaSerializer
     {
         private Helpers() { }
 
+        public static int GetEnumMemberUnderlyingValue(MemberInfo member)
+        {
+
+#if WINRT || PORTABLE || CF || FX11
+            return Convert.ToInt32(((FieldInfo)member).GetValue(null));
+#else
+            return Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
+#endif
+        }
+
+#if FEAT_IKVM
+        public static int GetEnumMemberUnderlyingValue(System.Reflection.MemberInfo member)
+        {
+            return Convert.ToInt32(((System.Reflection.FieldInfo)member).GetRawConstantValue());
+        }
+#endif
         public static bool IsInstanceOfType(Type type, object obj)
         {
 #if WINRT

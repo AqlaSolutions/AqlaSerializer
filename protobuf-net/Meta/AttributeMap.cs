@@ -14,9 +14,30 @@ namespace AqlaSerializer.Meta
     public abstract class AttributeMap
     {
 #if DEBUG
-        [Obsolete("Please use AttributeType instead")]
+        [Obsolete("Please use AttributeType instead", true)]
         new public Type GetType() { return AttributeType; }
 #endif
+
+        public bool TryGetNotDefault<T>(string memberName, ref T value, T notSpecifiedValue = default(T), bool publicOnly = true)
+        {
+            object obj;
+            if (!this.TryGet(memberName, publicOnly, out obj) || obj == null) return false;
+            var newValue = (T)obj;
+            if (Equals(newValue, notSpecifiedValue)) return false;
+            value = newValue;
+            return true;
+        }
+        
+        public bool TryGetNotDefault(string memberName, ref string value, bool publicOnly = true)
+        {
+            object obj;
+            if (!this.TryGet(memberName, publicOnly, out obj) || obj == null) return false;
+            var newValue = (string)obj;
+            if (string.IsNullOrEmpty(newValue)) return false;
+            value = newValue;
+            return true;
+        }
+        
         public abstract bool TryGet(string key, bool publicOnly, out object value);
         public bool TryGet(string key, out object value)
         {
@@ -60,21 +81,20 @@ namespace AqlaSerializer.Meta
             return null;
         }
 
-        internal static ReflectionObjectMap[] CreateRuntime(TypeModel model, MemberInfo member, System.Type attributeType, bool inherit)
+        public static AttributeMap[] GetAttributes(AttributeMap[] attribs, string fullName)
         {
-#if FEAT_IKVM
-            return CreateRuntime(model, member, model.MapType(attributeType), inherit);
-#else
-            return member.GetCustomAttributes(attributeType, inherit).Select(attr => new ReflectionObjectMap(attr)).ToArray();
-#endif
+            return attribs.Where(a => a != null && a.AttributeType.FullName == fullName).ToArray();
         }
 
-#if FEAT_IKVM
-        internal static ReflectionObjectMap[] CreateRuntime(TypeModel model, MemberInfo member, Type attributeType, bool inherit)
+        internal static T[] CreateRuntime<T>(TypeModel model, MemberInfo member, bool inherit)
         {
-            return member.__GetCustomAttributes(attributeType, inherit).Select(attr => new ReflectionObjectMap(IKVMAttributeFactory.Create(attr))).ToArray();
-        }
+#if FEAT_IKVM
+            return member.__GetCustomAttributes(model.MapType(typeof(T)), inherit).Select(attr => (T)IKVMAttributeFactory.Create(attr)).ToArray();
+#else
+            return member.GetCustomAttributes(typeof(T), inherit).Select(attr => attr).Select(a => (T)a).ToArray();
 #endif
+        }
+        
         public static AttributeMap[] Create(TypeModel model, MemberInfo member, bool inherit)
         {
 #if FEAT_IKVM
@@ -129,18 +149,19 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
+        public abstract T GetRuntimeAttribute<T>(TypeModel model);
+
 #if FEAT_IKVM
         private sealed class AttributeDataMap : AttributeMap
         {
-            public override Type AttributeType
-            {
-                get { return attribute.Constructor.DeclaringType; }
-            }
+            public override Type AttributeType { get { return attribute.Constructor.DeclaringType; } }
             private readonly CustomAttributeData attribute;
+
             public AttributeDataMap(CustomAttributeData attribute)
             {
                 this.attribute = attribute;
             }
+
             public override bool TryGet(string key, bool publicOnly, out object value)
             {
                 foreach (CustomAttributeNamedArgument arg in attribute.NamedArguments)
@@ -152,7 +173,7 @@ namespace AqlaSerializer.Meta
                     }
                 }
 
-                    
+
                 int index = 0;
                 ParameterInfo[] parameters = attribute.Constructor.GetParameters();
                 foreach (CustomAttributeTypedArgument arg in attribute.ConstructorArguments)
@@ -166,6 +187,14 @@ namespace AqlaSerializer.Meta
                 value = null;
                 return false;
             }
+
+            volatile object _runtime;
+
+            public override T GetRuntimeAttribute<T>(TypeModel model)
+            {
+                return (T)(_runtime ?? (_runtime = IKVMAttributeFactory.Create(attribute)));
+
+            }
         }
 #else
         public abstract object Target { get; }
@@ -173,6 +202,11 @@ namespace AqlaSerializer.Meta
         public sealed class ReflectionAttributeMap : AttributeMap
         {
             readonly ReflectionObjectMap _impl;
+            public override T GetRuntimeAttribute<T>(TypeModel model)
+            {
+                return (T)Target;
+            }
+
             public override object Target => _impl.Target;
 
             public override Type AttributeType => Target.GetType();
