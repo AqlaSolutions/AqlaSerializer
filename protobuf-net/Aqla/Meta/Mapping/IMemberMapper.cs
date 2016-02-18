@@ -1,3 +1,4 @@
+#if !NO_RUNTIME
 namespace AqlaSerializer.Meta.Mapping
 {
     public interface IMemberMapper
@@ -5,3 +6,4 @@ namespace AqlaSerializer.Meta.Mapping
         NormalizedMappedMember Map(ref MemberArgsValue args);
     }
 }
+#endif

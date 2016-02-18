@@ -91,7 +91,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             return member.__GetCustomAttributes(model.MapType(typeof(T)), inherit).Select(attr => (T)IKVMAttributeFactory.Create(attr)).ToArray();
 #else
-            return member.GetCustomAttributes(typeof(T), inherit).Select(attr => attr).Select(a => (T)a).ToArray();
+            return member.GetCustomAttributes(typeof(T), inherit).Select(attr => (T)(object)attr).ToArray();
 #endif
         }
         
