@@ -50,12 +50,33 @@ namespace AqlaSerializer.Meta
 
         public bool UseOwnFormat { get; set; } = true;
 
-        public static ProtoCompatibilitySettings Default => new ProtoCompatibilitySettings();
-
-        public static ProtoCompatibilitySettings None => new ProtoCompatibilitySettings()
+        public static ProtoCompatibilitySettings Default
         {
-            EnableCompatibility = false
-        };
+            get
+            {
+                var r = new ProtoCompatibilitySettings();
+#if !FORCE_ADVANCED_VERSIONING
+                r.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.AdvancedVersioning;
+#endif
+                return r;
+            }
+        }
+
+        public static ProtoCompatibilitySettings None
+        {
+            get
+            {
+                var r = new ProtoCompatibilitySettings()
+                {
+                    EnableCompatibility = false,
+
+                };
+#if !FORCE_ADVANCED_VERSIONING
+            r.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.AdvancedVersioning;
+#endif
+                return r;
+            }
+        }
 
         public static ProtoCompatibilitySettings FullCompatibility => new ProtoCompatibilitySettings()
         {
