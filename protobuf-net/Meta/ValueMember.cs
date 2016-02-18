@@ -74,7 +74,7 @@ namespace AqlaSerializer.Meta
         {
             // temp to ensure mapping correctness
             MemberInfo member = mappedMember.Member;
-            Type memberType=mappedMember.MappingState.Input.EffectiveMemberType;
+            Type memberType = mappedMember.MappingState.Input.EffectiveMemberType;
             object defaultValue = mappedMember.MappingState.MainValue.DefaultValue;
             int fieldNumber = mappedMember.Tag;
 
@@ -95,18 +95,22 @@ namespace AqlaSerializer.Meta
                 defaultValue = ParseDefaultValue(memberType, defaultValue);
             }
             this.defaultValue = defaultValue;
-             asReference =  GetAsReferenceDefault(model, memberType, false, IsDeterminatedAsAutoTuple);
-            AppendCollection = !Helpers.CanWrite(model, member);
+            this.asReference = GetAsReferenceDefault(model, memberType, false, IsDeterminatedAsAutoTuple);
             
             if (!Helpers.IsNullOrEmpty(mappedMember.Name)) SetName(mappedMember.Name);
             if (mappedMember[0].Collection.Format == CollectionFormat.Google) IsPacked = true;
             IsRequired = mappedMember.MainValue.IsRequiredInSchema;
             AppendCollection = mappedMember[0].Collection.Append.GetValueOrDefault();
+            if (!AppendCollection && !Helpers.CanWrite(model, member)) AppendCollection = true;
             EnhancedMode wm = mappedMember[0].EnhancedWriteMode;
-            AsReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference || wm == EnhancedMode.NotSpecified;
-            DynamicType = mappedMember[0].WriteAsDynamicType.GetValueOrDefault();
+            if (mappedMember[0].MemberFormat == MemberFormat.Compact) wm = EnhancedMode.NotSpecified;
+            if (wm != EnhancedMode.NotSpecified)
+                AsReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
+            bool dynamicTypeLocal = mappedMember[0].WriteAsDynamicType.GetValueOrDefault();
+            if (dynamicTypeLocal && mappedMember[0].MemberFormat == MemberFormat.Compact) throw new ArgumentException("Dynamic type write mode strictly requires not Compact MemberFormat");
+            DynamicType = dynamicTypeLocal;
         }
-        
+
         // autotuple is determinated when building serializer
         // AsReference is re-checked in Serializer property
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 
 namespace Examples
@@ -33,6 +34,8 @@ namespace Examples
         [Test]
         public void TestIgnore()
         {
+            var serializer = TypeModel.Create();
+            serializer.SkipCompiledVsNotCheck = true;
             IgnorePOCO foo = new IgnorePOCO
                              {
                                  IgnoreDirect = 1,
@@ -40,7 +43,7 @@ namespace Examples
                                  IncludeDirect = 3,
                                  IncludeIndirect = 4
                              },
-                       bar = Serializer.DeepClone(foo);
+                       bar = serializer.DeepClone(foo);
             Assert.AreEqual(0, bar.IgnoreDirect, "IgnoreDirect");
             Assert.AreEqual(0, bar.IgnoreIndirect, "IgnoreIndirect");
             Assert.AreEqual(foo.IncludeDirect, bar.IncludeDirect, "IncludeDirect");
@@ -126,7 +129,9 @@ namespace Examples
             Assert.AreEqual(105, foo.X_explicitField, "X: pre");
             Assert.AreEqual(106, foo.Z_explicitProperty, "Z: pre");
 
-            ImplicitFieldPOCO bar = Serializer.DeepClone(foo);
+            var s = TypeModel.Create();
+            s.SkipCompiledVsNotCheck = true;
+            ImplicitFieldPOCO bar = s.DeepClone(foo);
             Assert.AreEqual(100, bar.D_public, "D: post");
             Assert.AreEqual(101, bar.E_private, "E: post");
             Assert.AreEqual(0, bar.F_ignoreDirect, "F: post");
@@ -135,7 +140,7 @@ namespace Examples
             Assert.AreEqual(105, bar.X_explicitField, "X: post");
             Assert.AreEqual(106, bar.Z_explicitProperty, "Z: post");
 
-            ImplicitFieldPOCOEquiv equiv = Serializer.ChangeType<ImplicitFieldPOCO, ImplicitFieldPOCOEquiv>(foo);
+            ImplicitFieldPOCOEquiv equiv = s.ChangeType<ImplicitFieldPOCO, ImplicitFieldPOCOEquiv>(foo);
             Assert.AreEqual(100, equiv.D, "D: equiv");
             Assert.AreEqual(101, equiv.E, "E: equiv");
             Assert.AreEqual(105, equiv.X, "X: equiv");
@@ -172,7 +177,9 @@ namespace Examples
             Assert.AreEqual(105, foo.ImplicitNonPublic, "ImplicitNonPublic: pre");
             Assert.AreEqual(106, foo.ImplicitProperty, "ImplicitProperty: pre");
 
-            ImplicitPublicPOCO bar = Serializer.DeepClone(foo);
+            var serializer = TypeModel.Create();
+            serializer.SkipCompiledVsNotCheck = true;
+            ImplicitPublicPOCO bar = serializer.DeepClone(foo);
 
             Assert.AreEqual(101, bar.ImplicitField, "ImplicitField: post");
             Assert.AreEqual(102, bar.ExplicitNonPublic, "ExplicitNonPublic: post");
@@ -181,7 +188,7 @@ namespace Examples
             Assert.AreEqual(0, bar.ImplicitNonPublic, "ImplicitNonPublic: post");
             Assert.AreEqual(106, bar.ImplicitProperty, "ImplicitProperty: post");
 
-            ImplicitPublicPOCOEquiv equiv = Serializer.ChangeType<ImplicitPublicPOCO, ImplicitPublicPOCOEquiv>(foo);
+            ImplicitPublicPOCOEquiv equiv = serializer.ChangeType<ImplicitPublicPOCO, ImplicitPublicPOCOEquiv>(foo);
             Assert.AreEqual(101, equiv.ImplicitField, "ImplicitField: equiv");
             Assert.AreEqual(102, equiv.ExplicitNonPublic, "ExplicitNonPublic: equiv");
             Assert.AreEqual(106, equiv.ImplicitProperty, "ImplicitProperty: equiv");

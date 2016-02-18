@@ -50,6 +50,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 while (lvl.Level >= levels.Count)
                     levels.Add(null);
                 if (levels[lvl.Level] != null) throw new InvalidOperationException("Level " + lvl.Level + " settings for member " + member + " has been already initialized");
+                levels[lvl.Level] = lvl.LevelSettings;
             }
 
             s.TagIsPinned = memberRtAttrs.Tag > 0;

@@ -45,7 +45,13 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             var attrib = AttributeMap.GetAttribute(s.Input.Attributes, "ProtoBuf.ProtoMemberAttribute");
 
             if (attrib != null)
-                return _strategy.TryRead(attrib, s, member, model);
+            {
+                var r = _strategy.TryRead(attrib, s, member, model);
+                // we have ref!
+                main = s.MainValue;
+                levels = s.LevelValues;
+                return r;
+            }
             return MemberHandlerResult.NotFound;
         }
     }

@@ -45,13 +45,18 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             foreach (AttributeMap ppma in s.Input.PartialMembers)
             {
                 object tmp;
-                if (!ppma.TryGet("MemberName", out tmp) || tmp as string != main.Name) continue;
+                if (!ppma.TryGet("MemberName", out tmp) || tmp as string != member.Name) continue;
 
                 if (ppma.AttributeType.FullName == "ProtoBuf.ProtoPartialIgnoreAttribute") return MemberHandlerResult.Ignore;
 
                 MemberHandlerResult newResult;
                 if (ppma.AttributeType.FullName == "ProtoBuf.ProtoPartialMemberAttribute")
+                {
                     newResult = _strategy.TryRead(ppma, s, member, model);
+                    // we have ref!
+                    main = s.MainValue;
+                    levels = s.LevelValues;
+                }
                 else newResult = MemberHandlerResult.NotFound;
 
                 if (newResult == MemberHandlerResult.Done) return MemberHandlerResult.Done;

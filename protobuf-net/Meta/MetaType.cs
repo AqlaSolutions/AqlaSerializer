@@ -1033,7 +1033,7 @@ namespace AqlaSerializer.Meta
             m.Tag = fieldNumber;
             m.DefaultValue = defaultValue;
             s.MainValue = m;
-            var mappedMember=new NormalizedMappedMember(s);
+            var mappedMember = new NormalizedMappedMember(s);
             var level0 = mappedMember[0];
             level0.CollectionConcreteType = defaultType;
             level0.Collection.ItemType = itemType;

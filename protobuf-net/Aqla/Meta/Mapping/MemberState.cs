@@ -39,6 +39,11 @@ namespace AqlaSerializer.Meta.Mapping
         {
             Input = input;
         }
+
+        public override string ToString()
+        {
+            return MainValue.ToString() + " (" + Input.Member + ")";
+        }
     }
 }
 #endif

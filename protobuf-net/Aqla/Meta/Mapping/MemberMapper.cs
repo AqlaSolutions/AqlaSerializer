@@ -38,6 +38,11 @@ namespace AqlaSerializer.Meta.Mapping
         public virtual NormalizedMappedMember Map(ref MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.AsEnum)) return null;
+
+            if (args.Member.Name == "Wrapper")
+            {
+
+            }
             var model = args.Model;
             var member = args.Member;
             
@@ -57,10 +62,7 @@ namespace AqlaSerializer.Meta.Mapping
                 switch (result = handler.TryRead(state))
                 {
                     case MemberHandlerResult.Ignore:
-                        {
-                            if (!state.Input.IsForced) return null;
-                            break;
-                        }
+                        return null;
                     case MemberHandlerResult.Done:
                         break;
                 }

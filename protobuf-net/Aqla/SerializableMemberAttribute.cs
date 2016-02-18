@@ -22,27 +22,7 @@ namespace AqlaSerializer
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         AllowMultiple = true, Inherited = true)]
     public class SerializableMemberAttribute : SerializableMemberAttributeBase
-        , IComparable
-#if !NO_GENERICS
-, IComparable<SerializableMemberAttribute>
-#endif
-
     {
-        /// <summary>
-        /// Compare with another ProtoMemberAttribute for sorting purposes
-        /// </summary>
-        public int CompareTo(object other) { return CompareTo(other as SerializableMemberAttribute); }
-        /// <summary>
-        /// Compare with another ProtoMemberAttribute for sorting purposes
-        /// </summary>
-        public int CompareTo(SerializableMemberAttribute other)
-        {
-            if (other == null) return -1;
-            if ((object)this == (object)other) return 0;
-            int result = this.MemberSettings.Tag.CompareTo(other.MemberSettings.Tag);
-            if (result == 0) result = string.CompareOrdinal(this.Name, other.Name);
-            return result;
-        }
 
         /// <summary>
         /// Creates a new ProtoMemberAttribute instance.
@@ -63,10 +43,6 @@ namespace AqlaSerializer
         
         internal MemberMainSettingsValue MemberSettings;
         
-#if !NO_RUNTIME
-        internal MemberInfo Member { get { return MemberSettings.Member; } set { MemberSettings.Member = value; } }
-        internal bool TagIsPinned;
-#endif
         /// <summary>
         /// Gets or sets the original name defined in the .proto; not used
         /// during serialization.
@@ -77,12 +53,7 @@ namespace AqlaSerializer
         /// Gets the unique tag used to identify this member within the type.
         /// </summary>
         public int Tag => MemberSettings.Tag;
-
-        internal void Rebase(int tag)
-        {
-            this.MemberSettings.Tag = tag;
-        }
-
+        
         /// <summary>
         /// Gets or sets a value indicating whether this member should be considered not optional when generating Protocol Buffers schema.
         /// </summary>

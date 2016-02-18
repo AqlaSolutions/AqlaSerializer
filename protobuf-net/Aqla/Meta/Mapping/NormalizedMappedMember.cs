@@ -27,7 +27,7 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer
 {
-    public class NormalizedMappedMember
+    public class NormalizedMappedMember : IComparable<NormalizedMappedMember>
     {
         public bool IsReadOnly { get; set; }
         public bool ForcedTag { get; set; }
@@ -52,6 +52,7 @@ namespace AqlaSerializer
         }
 
         public MemberInfo Member => MappingState.Input.Member;
+
         public string Name => MappingState.MainValue.Name;
 
         public MemberLevelSettingsValue this[int nestedLevel]
@@ -68,6 +69,23 @@ namespace AqlaSerializer
 
                 MappingState.LevelValues[nestedLevel] = value;
             }
+        }
+
+        /// <summary>
+        /// Compare with another NormalizedMappedMember for sorting purposes
+        /// </summary>
+        int IComparable<NormalizedMappedMember>.CompareTo(NormalizedMappedMember other)
+        {
+            if (other == null) return -1;
+            if ((object)this == (object)other) return 0;
+            int result = Tag.CompareTo(other.Tag);
+            if (result == 0) result = string.CompareOrdinal(this.Name, other.Name);
+            return result;
+        }
+
+        public override string ToString()
+        {
+            return MappingState?.ToString() ?? base.ToString();
         }
     }
 }

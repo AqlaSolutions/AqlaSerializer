@@ -44,9 +44,9 @@ namespace Examples.Issues
         [ProtoBuf.ProtoContract()]
         public class Child
         {
-            [ProtoBuf.ProtoMember(1, AsReference = true)] internal Parent Parent;
+            [ProtoBuf.ProtoMember(1, AsReference = true)] public Parent Parent;
 
-            private Child()
+            public Child()
             {
             }
 
@@ -59,18 +59,18 @@ namespace Examples.Issues
         public class Parent
         {
             [ProtoBuf.ProtoMember(1)]
-            protected List<Child> m_Children;
+            public List<Child> m_Children;
 
             /// <summary>
             /// ProtoBuf deserialization constructor (fails here)
             /// </summary>
-            private Parent()
+            public Parent()
             {
                 Initialize();
             }
 
             [ProtoBuf.ProtoBeforeDeserialization] // could also use OnDeserializing
-            private void Initialize()
+            public void Initialize()
             {
                 m_Children = new List<Child>();
             }
@@ -85,7 +85,7 @@ namespace Examples.Issues
         [ProtoBuf.ProtoContract()]
         public class Family
         {
-            [ProtoBuf.ProtoMember(1)] protected List<Parent> m_Parents;
+            [ProtoBuf.ProtoMember(1)] public List<Parent> m_Parents;
 
             public void Add(Parent parent)
             {
