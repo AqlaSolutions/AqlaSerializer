@@ -23,24 +23,32 @@ namespace AqlaSerializer
         AllowMultiple = true, Inherited = true)]
     public class SerializableMemberAttribute : SerializableMemberAttributeBase
     {
-
         /// <summary>
         /// Creates a new ProtoMemberAttribute instance.
         /// </summary>
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
         public SerializableMemberAttribute(int tag, MemberFormat format = 0, EnhancedMode enchancedWriteMode = 0)
-            : this(tag, false, format, enchancedWriteMode)
+            : base(0, format, enchancedWriteMode)
         {
-            
+            Init(tag);
         }
 
-        internal SerializableMemberAttribute(int tag, bool forced, MemberFormat format = 0, EnhancedMode enchancedWriteAs = 0)
-            : base(0, format, enchancedWriteAs)
+        /// <summary>
+        /// Creates a new ProtoMemberAttribute instance.
+        /// </summary>
+        /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
+        public SerializableMemberAttribute(int tag, EnhancedMode enchancedWriteMode)
+            : base(tag, enchancedWriteMode)
         {
-            if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
+            Init(tag);
+        }
+
+        void Init(int tag)
+        {
+
             this.MemberSettings.Tag = tag;
         }
-        
+
         internal MemberMainSettingsValue MemberSettings;
         
         /// <summary>
@@ -84,15 +92,33 @@ namespace AqlaSerializer
         /// </summary>
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
         /// <param name="memberName">Specifies the member to be serialized.</param>
-        public SerializablePartialMemberAttribute(int tag, string memberName, MemberFormat format = 0)
-            : base(tag, format)
+        public SerializablePartialMemberAttribute(int tag, string memberName, EnhancedMode enchancedWriteMode)
+            : base(tag, enchancedWriteMode)
         {
+            Init(memberName);
+        }
+
+        /// <summary>
+        /// Creates a new ProtoMemberAttribute instance.
+        /// </summary>
+        /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
+        /// <param name="memberName">Specifies the member to be serialized.</param>
+        public SerializablePartialMemberAttribute(int tag, string memberName, MemberFormat format = 0, EnhancedMode enchancedWriteMode = 0)
+            : base(tag, format, enchancedWriteMode)
+        {
+            Init(memberName);
+        }
+
+        void Init(string memberName)
+        {
+
             if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException("memberName");
             this.MemberName = memberName;
         }
+
         /// <summary>
         /// The name of the member to be serialized.
         /// </summary>
-        public string MemberName { get; }
+        public string MemberName { get; private set; }
     }
 }

@@ -19,6 +19,11 @@ namespace AqlaSerializer
     {
         internal MemberLevelSettingsValue LevelSettings;
 
+        protected SerializableMemberAttributeBase(int level, EnhancedMode enchancedWriteAs)
+            : this(level, enchancedWriteAs == EnhancedMode.NotSpecified ? MemberFormat.NotSpecified : MemberFormat.Enhanced, enchancedWriteAs)
+        {
+        }
+
         protected SerializableMemberAttributeBase(int level, MemberFormat format = 0, EnhancedMode enchancedWriteAs = 0)
         {
             Level = level;
