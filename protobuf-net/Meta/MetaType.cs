@@ -82,7 +82,8 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Gets the base-type for this type
         /// </summary>
-        public MetaType BaseType {
+        public MetaType BaseType
+        {
             get { return baseType; }
         }
         internal TypeModel Model { get { return model; } }
@@ -98,15 +99,15 @@ namespace AqlaSerializer.Meta
         /// Should this type be treated as a reference by default FOR MISSING TYPE MEMBERS ONLY?
         /// </summary>
         public bool AsReferenceDefault
-        { 
+        {
             get { return HasFlag(OPTIONS_AsReferenceDefault); }
             set { SetFlag(OPTIONS_AsReferenceDefault, value, true); }
         }
-        
+
         public bool PrefixLength { get; set; } = true;
 
         public BinaryDataFormat CollectionDataFormat { get; set; }
-        
+
         private BasicList subTypes;
         private BasicList subTypesSimple;
 
@@ -183,7 +184,8 @@ namespace AqlaSerializer.Meta
 #if WINRT
             if (!CanHaveSubType(typeInfo)) {
 #else
-            if (!CanHaveSubType(type)) {
+            if (!CanHaveSubType(type))
+            {
 #endif
                 throw new InvalidOperationException("Sub-types can only be added to non-sealed classes");
             }
@@ -192,8 +194,8 @@ namespace AqlaSerializer.Meta
                 throw new ArgumentException(derivedType.Name + " is not a valid sub-type of " + type.Name, "derivedType");
             }
 
-            if (subTypesSimple !=null && subTypesSimple.Contains(derivedType)) return this; // already exists
-            
+            if (subTypesSimple != null && subTypesSimple.Contains(derivedType)) return this; // already exists
+
             if (subTypesSimple == null) subTypesSimple = new BasicList();
             subTypesSimple.Add(derivedType);
 
@@ -206,7 +208,7 @@ namespace AqlaSerializer.Meta
             derivedMeta.SetBaseType(this); // includes ThrowIfFrozen
             if (subTypes == null) subTypes = new BasicList();
             subTypes.Add(subType);
-            
+
             return this;
         }
 
@@ -376,7 +378,7 @@ namespace AqlaSerializer.Meta
                     MetaType mt;
                     if (key >= 0 && (mt = model[tmp]) != null && mt.surrogate == null) // <=== need to exclude surrogate to avoid chance of infinite loop
                     {
-                        
+
                         sb.Append(mt.GetSchemaTypeName());
                     }
                     else
@@ -445,7 +447,7 @@ namespace AqlaSerializer.Meta
             this.factory = factory;
             if (model == null) throw new ArgumentNullException("model");
             if (type == null) throw new ArgumentNullException("type");
-            
+
             if (model.AutoAddStrategy.GetAsReferenceDefault(type, false))
                 AsReferenceDefault = true;
 
@@ -454,13 +456,13 @@ namespace AqlaSerializer.Meta
             {
                 throw InbuiltType(type);
             }
-            
+
             this.type = type;
 #if WINRT
             this.typeInfo = type.GetTypeInfo();
 #endif
             this.model = model;
-            
+
             if (Helpers.IsEnum(type))
             {
 #if WINRT
@@ -478,7 +480,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         protected internal void ThrowIfFrozen()
         {
-            if ((flags & OPTIONS_Frozen)!=0) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + type.FullName);
+            if ((flags & OPTIONS_Frozen) != 0) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + type.FullName);
         }
         //internal void Freeze() { flags |= OPTIONS_Frozen; }
 
@@ -490,8 +492,10 @@ namespace AqlaSerializer.Meta
         private IProtoTypeSerializer serializer;
         [DebuggerHidden]
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        internal IProtoTypeSerializer Serializer {
-            get {
+        internal IProtoTypeSerializer Serializer
+        {
+            get
+            {
                 if (serializer == null)
                 {
                     int opaqueToken = 0;
@@ -621,7 +625,7 @@ namespace AqlaSerializer.Meta
                 if (fields.Count != 0)
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
-                var ser =  (IProtoTypeSerializer)
+                var ser = (IProtoTypeSerializer)
                        ValueMember.BuildValueFinalSerializer(
                            type,
                            new ValueMember.CollectionSettings(itemType)
@@ -636,6 +640,7 @@ namespace AqlaSerializer.Meta
                            CollectionDataFormat,
                            false, // #1
                            null,
+                           false,
                            model);
 
                 // standard root decorator won't start any field
@@ -662,10 +667,10 @@ namespace AqlaSerializer.Meta
             {
                 MemberInfo[] mapping;
                 ConstructorInfo ctor = ResolveTupleConstructor(type, out mapping);
-                if(ctor == null) throw new InvalidOperationException();
+                if (ctor == null) throw new InvalidOperationException();
                 return new TupleSerializer(model, ctor, mapping, PrefixLength);
             }
-            
+
 
             fields.Trim();
             int fieldCount = fields.Count;
@@ -700,7 +705,7 @@ namespace AqlaSerializer.Meta
 
             BasicList baseCtorCallbacks = null;
             MetaType tmp = BaseType;
-            
+
             while (tmp != null)
             {
                 MethodInfo method = tmp.HasCallbacks ? tmp.Callbacks.BeforeDeserialize : null;
@@ -726,7 +731,7 @@ namespace AqlaSerializer.Meta
         {
             None = 0, ProtoBuf = 1, DataContractSerialier = 2, XmlSerializer = 4, AutoTuple = 8, Aqla = 16, ImplicitFallback = 32, SystemSerializable = 64
         }
-        
+
         public Type GetBaseType()
         {
 #if WINRT
@@ -795,7 +800,7 @@ namespace AqlaSerializer.Meta
 
                 for (int j = 0; j < parameters.Length; j++)
                 {
-                    for(int k = 0 ; k < members.Length ; k++)
+                    for (int k = 0; k < members.Length; k++)
                     {
                         if (string.Compare(parameters[j].Name, members[k].Name, StringComparison.OrdinalIgnoreCase) != 0) continue;
                         Type memberType = Helpers.GetMemberType(members[k]);
@@ -904,8 +909,9 @@ namespace AqlaSerializer.Meta
             if (surrogate != null) return model[surrogate];
             return this;
         }
-        internal MetaType GetSurrogateOrBaseOrSelf(bool deep) {
-            if(surrogate != null) return model[surrogate];
+        internal MetaType GetSurrogateOrBaseOrSelf(bool deep)
+        {
+            if (surrogate != null) return model[surrogate];
             MetaType snapshot = this.baseType;
             if (snapshot != null)
             {
@@ -916,14 +922,14 @@ namespace AqlaSerializer.Meta
                     {
                         tmp = snapshot;
                         snapshot = snapshot.baseType;
-                    } while(snapshot != null);
+                    } while (snapshot != null);
                     return tmp;
                 }
                 return snapshot;
             }
             return this;
         }
-        
+
         private int GetNextFieldNumber()
         {
             int maxField = 0;
@@ -981,7 +987,7 @@ namespace AqlaSerializer.Meta
         {
             return AddField(fieldNumber, memberName, itemType, defaultType, null);
         }
-        
+
         private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue)
         {
             if (type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
@@ -991,7 +997,7 @@ namespace AqlaSerializer.Meta
 
 #else
             MemberInfo[] members = type.GetMember(memberName, Helpers.IsEnum(type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if(members != null && members.Length == 1) mi = members[0];
+            if (members != null && members.Length == 1) mi = members[0];
 #endif
             if (mi == null) throw new ArgumentException("Unable to determine member: " + memberName, "memberName");
 
@@ -1037,7 +1043,7 @@ namespace AqlaSerializer.Meta
             var level0 = mappedMember[0];
             level0.CollectionConcreteType = defaultType;
             level0.Collection.ItemType = itemType;
-            level0.ContentBinaryFormatHint=BinaryDataFormat.Default;
+            level0.ContentBinaryFormatHint = BinaryDataFormat.Default;
             mappedMember[0] = level0;
 
             ValueMember newField = new ValueMember(model, type, mappedMember);
@@ -1069,7 +1075,7 @@ namespace AqlaSerializer.Meta
             }
             // handle lists
             if (itemType == null) { itemType = TypeModel.GetListItemType(model, type); }
-            
+
             if (itemType != null && defaultType == null)
             {
 #if WINRT
@@ -1151,9 +1157,9 @@ namespace AqlaSerializer.Meta
             var s = normalizedMember.MappingState;
             var m = s.MainValue;
             Type effectiveType = s.Input.EffectiveMemberType;
-            
+
             // implicit zero default
-            if (m.DefaultValue==null)
+            if (m.DefaultValue == null)
             {
                 m.DefaultValue = null;
                 if (model.UseImplicitZeroDefaults)
@@ -1216,7 +1222,7 @@ namespace AqlaSerializer.Meta
             }
 
             s.MainValue = m;
-            
+
             var vm = new ValueMember(model, this.Type, normalizedMember);
 #if WINRT
             TypeInfo finalType = typeInfo;
@@ -1241,13 +1247,16 @@ namespace AqlaSerializer.Meta
             Add(vm);
         }
 
-        private void Add(ValueMember member) {
+        private void Add(ValueMember member)
+        {
             int opaqueToken = 0;
-            try {
+            try
+            {
                 model.TakeLock(ref opaqueToken);
                 ThrowIfFrozen();
                 fields.Add(member);
-            } finally
+            }
+            finally
             {
                 model.ReleaseLock(opaqueToken);
             }
@@ -1286,7 +1295,8 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Returns the ValueMember instances associated with this type
         /// </summary>
-        public ValueMember[] GetFields() {
+        public ValueMember[] GetFields()
+        {
             ValueMember[] arr = new ValueMember[fields.Count];
             fields.CopyTo(arr, 0);
             Array.Sort(arr, ValueMember.Comparer.Default);
@@ -1352,7 +1362,7 @@ namespace AqlaSerializer.Meta
             EnumSerializer.EnumPair[] result = new EnumSerializer.EnumPair[fields.Count];
             for (int i = 0; i < result.Length; i++)
             {
-                ValueMember member = (ValueMember) fields[i];
+                ValueMember member = (ValueMember)fields[i];
                 int wireValue = member.FieldNumber;
                 object value = member.GetRawEnumValue();
                 result[i] = new EnumSerializer.EnumPair(wireValue, value, member.MemberType);
@@ -1418,7 +1428,7 @@ namespace AqlaSerializer.Meta
 
         internal static MetaType GetRootType(MetaType source)
         {
-           
+
             while (source.serializer != null)
             {
                 MetaType tmp = source.baseType;
@@ -1429,14 +1439,17 @@ namespace AqlaSerializer.Meta
             // now we get into uncertain territory
             RuntimeTypeModel model = source.model;
             int opaqueToken = 0;
-            try {
+            try
+            {
                 model.TakeLock(ref opaqueToken);
 
                 MetaType tmp;
                 while ((tmp = source.baseType) != null) source = tmp;
                 return source;
 
-            } finally {
+            }
+            finally
+            {
                 model.ReleaseLock(opaqueToken);
             }
         }
@@ -1454,7 +1467,7 @@ namespace AqlaSerializer.Meta
 
         internal static System.Text.StringBuilder NewLine(System.Text.StringBuilder builder, int indent)
         {
-            return Helpers.AppendLine(builder).Append(' ', indent*3);
+            return Helpers.AppendLine(builder).Append(' ', indent * 3);
         }
         internal bool IsAutoTuple
         {
@@ -1480,32 +1493,35 @@ namespace AqlaSerializer.Meta
             else if (IsAutoTuple)
             { // key-value-pair etc
                 MemberInfo[] mapping;
-                if(ResolveTupleConstructor(type, out mapping) != null)
+                if (ResolveTupleConstructor(type, out mapping) != null)
                 {
                     NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(" {");
-                    for(int i = 0 ; i < mapping.Length ; i++)
+                    for (int i = 0; i < mapping.Length; i++)
                     {
                         Type effectiveType;
-                        if(mapping[i] is PropertyInfo)
+                        if (mapping[i] is PropertyInfo)
                         {
-                            effectiveType = ((PropertyInfo) mapping[i]).PropertyType;
-                        } else if (mapping[i] is FieldInfo)
+                            effectiveType = ((PropertyInfo)mapping[i]).PropertyType;
+                        }
+                        else if (mapping[i] is FieldInfo)
                         {
-                            effectiveType = ((FieldInfo) mapping[i]).FieldType;
-                        } else
+                            effectiveType = ((FieldInfo)mapping[i]).FieldType;
+                        }
+                        else
                         {
                             throw new NotSupportedException("Unknown member type: " + mapping[i].GetType().Name);
                         }
-                        NewLine(builder, indent + 1).Append("optional ").Append(model.GetSchemaTypeName(effectiveType, BinaryDataFormat.Default, false, false, ref requiresBclImport).Replace('.','_'))
+                        NewLine(builder, indent + 1).Append("optional ").Append(model.GetSchemaTypeName(effectiveType, BinaryDataFormat.Default, false, false, ref requiresBclImport).Replace('.', '_'))
                             .Append(' ').Append(mapping[i].Name).Append(" = ").Append(i + 1).Append(';');
                     }
                     NewLine(builder, indent).Append('}');
                 }
             }
-            else if(Helpers.IsEnum(type))
+            else if (Helpers.IsEnum(type))
             {
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
-                if (fieldsArr.Length == 0 && EnumPassthru) {
+                if (fieldsArr.Length == 0 && EnumPassthru)
+                {
                     if (type
 #if WINRT
                     .GetTypeInfo()
@@ -1518,16 +1534,16 @@ namespace AqlaSerializer.Meta
                     {
                         NewLine(builder, indent + 1).Append("// this enumeration will be passed as a raw value");
                     }
-                    foreach(FieldInfo field in
+                    foreach (FieldInfo field in
 #if WINRT
                         type.GetRuntimeFields()
 #else
                         type.GetFields()
 #endif
-                        
+
                         )
                     {
-                        if(field.IsStatic && field.IsLiteral)
+                        if (field.IsStatic && field.IsLiteral)
                         {
                             object enumVal;
 #if WINRT || PORTABLE || CF || FX11
@@ -1538,7 +1554,7 @@ namespace AqlaSerializer.Meta
                             NewLine(builder, indent + 1).Append(field.Name).Append(" = ").Append(enumVal).Append(";");
                         }
                     }
-                    
+
                 }
                 else
                 {
@@ -1548,7 +1564,8 @@ namespace AqlaSerializer.Meta
                     }
                 }
                 NewLine(builder, indent).Append('}');
-            } else
+            }
+            else
             {
                 NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(" {");
                 foreach (ValueMember member in fieldsArr)
@@ -1560,13 +1577,13 @@ namespace AqlaSerializer.Meta
                     builder.Append(schemaTypeName).Append(" ")
                          .Append(member.Name).Append(" = ").Append(member.FieldNumber);
 
-                    if(member.DefaultValue != null && member.IsRequired == false)
+                    if (member.DefaultValue != null && member.IsRequired == false)
                     {
                         if (member.DefaultValue is string)
                         {
                             builder.Append(" [default = \"").Append(member.DefaultValue).Append("\"]");
                         }
-                        else if(member.DefaultValue is bool)
+                        else if (member.DefaultValue is bool)
                         {   // need to be lower case (issue 304)
                             builder.Append((bool)member.DefaultValue ? " [default = true]" : " [default = false]");
                         }
@@ -1575,7 +1592,7 @@ namespace AqlaSerializer.Meta
                             builder.Append(" [default = ").Append(member.DefaultValue).Append(']');
                         }
                     }
-                    if(member.ItemType != null && member.IsPacked)
+                    if (member.ItemType != null && member.IsPacked)
                     {
                         builder.Append(" [packed=true]");
                     }

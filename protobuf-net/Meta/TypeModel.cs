@@ -3,6 +3,7 @@ using System;
 using System.IO;
 
 using System.Collections;
+using System.Text;
 using AqlaSerializer.Internal;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -35,9 +36,19 @@ namespace AqlaSerializer.Meta
 
         public int RecursionDepthLimit { get; set; } = DefaultRecursionDepthLimit;
 
-        internal static void ThrowRecursionDepthLimitExceeded()
+        internal static void ThrowRecursionDepthLimitExceeded(IEnumerable recursionStack = null)
         {
-            throw new ProtoException("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit");
+            var sb = new StringBuilder("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit.");
+            if (recursionStack != null)
+            {
+                sb.AppendLine("\r\n\r\nObjects in stack:");
+                foreach (object el in recursionStack)
+                {
+                    if (el == null) continue;
+                    sb.AppendLine(el.GetType().Name);
+                }
+            }
+            throw new ProtoException(sb.ToString());
         }
 
         protected TypeModel()
@@ -69,7 +80,7 @@ namespace AqlaSerializer.Meta
             return type;
 #endif
         }
-        
+
         internal WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format, ref Type type, out int modelKey)
         {
             modelKey = -1;
@@ -88,7 +99,7 @@ namespace AqlaSerializer.Meta
             }
             return WireType.None;
         }
-        
+
 #if !FEAT_IKVM
         /// <summary>
         /// This is the more "complete" version of Serialize, which handles single instances of mapped types.
@@ -139,7 +150,8 @@ namespace AqlaSerializer.Meta
                 }
             }
 
-            if(wireType != WireType.None) {
+            if (wireType != WireType.None)
+            {
                 ProtoWriter.WriteFieldHeader(tag, wireType, writer);
             }
             if (ProtoWriter.TryWriteBuiltinTypeValue(value, typecode, false, writer)) return true;
@@ -159,7 +171,8 @@ namespace AqlaSerializer.Meta
             if (sequence != null)
             {
                 if (isInsideList) throw new ProtoException("TrySerializeAuxiliaryType should not be called for nested lists, instead they should be registered in model");
-                foreach (object item in sequence) {
+                foreach (object item in sequence)
+                {
                     if (item == null) { throw new NullReferenceException(); }
                     if (!TrySerializeAuxiliaryType(writer, null, format, tag, item, true, isRoot))
                     {
@@ -472,7 +485,8 @@ namespace AqlaSerializer.Meta
             public new T Current { get { return (T)base.Current; } }
             void IDisposable.Dispose() { }
             public DeserializeItemsIterator(TypeModel model, Stream source, PrefixStyle style, int expectedField, SerializationContext context)
-                : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context) { }
+                : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context)
+            { }
         }
 #endif
         private class DeserializeItemsIterator : IEnumerator, IEnumerable
@@ -558,7 +572,7 @@ namespace AqlaSerializer.Meta
         {
             if (type == null)
             {
-                if(value == null) throw new ArgumentNullException("value");
+                if (value == null) throw new ArgumentNullException("value");
                 type = MapType(value.GetType());
             }
             int key = GetKey(ref type);
@@ -759,7 +773,7 @@ namespace AqlaSerializer.Meta
             TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, noAutoCreate, false, isRoot);
             return value;
         }
-        
+
         /// <summary>
         /// This is the more "complete" version of Deserialize, which handles single instances of mapped types.
         /// The value is read as a complete field, including field-header and (for sub-objects) a
@@ -903,9 +917,9 @@ namespace AqlaSerializer.Meta
         }
 #endif
 
-            /// <summary>
-            /// Applies common proxy scenarios, resolving the actual type to consider
-            /// </summary>
+        /// <summary>
+        /// Applies common proxy scenarios, resolving the actual type to consider
+        /// </summary>
         protected internal static Type ResolveProxies(Type type)
         {
             if (type == null) return null;
@@ -923,9 +937,9 @@ namespace AqlaSerializer.Meta
 
             // NHibernate
             Type[] interfaces = type.GetInterfaces();
-            for(int i = 0 ; i < interfaces.Length ; i++)
+            for (int i = 0; i < interfaces.Length; i++)
             {
-                switch(interfaces[i].FullName)
+                switch (interfaces[i].FullName)
                 {
                     case "NHibernate.Proxy.INHibernateProxy":
                     case "NHibernate.Proxy.DynamicProxy.IProxy":
@@ -961,7 +975,8 @@ namespace AqlaSerializer.Meta
             if (key < 0)
             {
                 Type normalized = ResolveProxies(type);
-                if (normalized != null) {
+                if (normalized != null)
+                {
                     type = normalized; // hence ref
                     key = GetKeyImpl(type);
                 }
@@ -1019,7 +1034,7 @@ namespace AqlaSerializer.Meta
             /// </summary>
             AfterDeserialize
         }
-        
+
         public bool ForceSerializationDuringClone { get; set; }
 
 #if !NO_GENERICS && !IOS
@@ -1031,7 +1046,7 @@ namespace AqlaSerializer.Meta
             return (T)DeepClone(value: (object)genericValue);
         }
 #endif
-        
+
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
@@ -1043,7 +1058,7 @@ namespace AqlaSerializer.Meta
             if (value == null) return null;
 
             Type type = value.GetType();
-            
+
             if (ForceSerializationDuringClone)
             {
                 using (MemoryStream ms = new MemoryStream())
@@ -1072,7 +1087,7 @@ namespace AqlaSerializer.Meta
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    using(ProtoWriter writer = new ProtoWriter(ms, this, null))
+                    using (ProtoWriter writer = new ProtoWriter(ms, this, null))
                     {
                         writer.SetRootObject(value);
                         Serialize(key, value, writer, true);
@@ -1092,7 +1107,8 @@ namespace AqlaSerializer.Meta
                 }
             }
             int modelKey;
-            if (type == typeof(byte[])) {
+            if (type == typeof(byte[]))
+            {
                 byte[] orig = (byte[])value, clone = new byte[orig.Length];
                 Helpers.BlockCopy(orig, 0, clone, 0, orig.Length);
                 return clone;
@@ -1238,7 +1254,7 @@ namespace AqlaSerializer.Meta
 
             // is it a basic type?
             ProtoTypeCode typeCode = Helpers.GetTypeCode(type);
-            switch(typeCode)
+            switch (typeCode)
             {
                 case ProtoTypeCode.Empty:
                 case ProtoTypeCode.Unknown:

@@ -46,7 +46,7 @@ namespace AqlaSerializer.Meta
         /// For abstract types (IList etc), the type of concrete object to create (if required)
         /// </summary>
         public Type DefaultType { get { return defaultType; } }
-        
+
         /// <summary>
         /// The type the defines the member
         /// </summary>
@@ -69,7 +69,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        public ValueMember(RuntimeTypeModel model, Type parentType, NormalizedMappedMember mappedMember) 
+        public ValueMember(RuntimeTypeModel model, Type parentType, NormalizedMappedMember mappedMember)
             : this(model, mappedMember.Tag, mappedMember.MappingState.Input.EffectiveMemberType, mappedMember[0].Collection.ItemType, mappedMember[0].CollectionConcreteType, mappedMember[0].ContentBinaryFormatHint.GetValueOrDefault())
         {
             // temp to ensure mapping correctness
@@ -86,17 +86,17 @@ namespace AqlaSerializer.Meta
             this.member = member;
             this.parentType = parentType;
             if (fieldNumber < 1 && !Helpers.IsEnum(parentType)) throw new ArgumentOutOfRangeException("fieldNumber");
-//#if WINRT
+            //#if WINRT
             if (defaultValue != null && model.MapType(defaultValue.GetType()) != memberType)
-//#else
-//            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
-//#endif
+            //#else
+            //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
+            //#endif
             {
                 defaultValue = ParseDefaultValue(memberType, defaultValue);
             }
             this.defaultValue = defaultValue;
             this.asReference = GetAsReferenceDefault(model, memberType, false, IsDeterminatedAsAutoTuple);
-            
+
             if (!Helpers.IsNullOrEmpty(mappedMember.Name)) SetName(mappedMember.Name);
             if (mappedMember[0].Collection.Format == CollectionFormat.Google) IsPacked = true;
             IsRequired = mappedMember.MainValue.IsRequiredInSchema;
@@ -104,12 +104,16 @@ namespace AqlaSerializer.Meta
             if (!AppendCollection && !Helpers.CanWrite(model, member)) AppendCollection = true;
             EnhancedMode wm = mappedMember[0].EnhancedWriteMode;
             if (mappedMember[0].MemberFormat == MemberFormat.Compact)
+            {
                 AsReference = false;
+                wm = EnhancedMode.NotSpecified;
+            }
             else if (wm != EnhancedMode.NotSpecified)
                 AsReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
             bool dynamicTypeLocal = mappedMember[0].WriteAsDynamicType.GetValueOrDefault();
             if (dynamicTypeLocal && mappedMember[0].MemberFormat == MemberFormat.Compact) throw new ArgumentException("Dynamic type write mode strictly requires not Compact MemberFormat");
             DynamicType = dynamicTypeLocal;
+            if (wm == EnhancedMode.LateReference) AsLateReference = true;
         }
 
         // autotuple is determinated when building serializer
@@ -121,7 +125,7 @@ namespace AqlaSerializer.Meta
             {
                 if (RuntimeTypeModel.CheckTypeDoesntRequireContract(model, memberType))
                     isProtobufNetLegacyMember = false; // inbuilt behavior types doesn't depend on member legacy behavior
-                
+
                 MetaType type = model.FindWithoutAdd(memberType);
                 if (type != null)
                 {
@@ -151,7 +155,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat) 
+        ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat)
         {
 
             if (memberType == null) throw new ArgumentNullException("memberType");
@@ -167,7 +171,7 @@ namespace AqlaSerializer.Meta
             // it will use ListDecorator with returnList = false
             // because it doesn't have writable member
             // so consider it read only for now
-            this.AppendCollection = true; 
+            this.AppendCollection = true;
         }
         internal object GetRawEnumValue()
         {
@@ -193,7 +197,7 @@ namespace AqlaSerializer.Meta
         private static object ParseDefaultValue(Type type, object value)
         {
             {
-                Type tmp = Helpers.GetNullableUnderlyingType( type);
+                Type tmp = Helpers.GetNullableUnderlyingType(type);
                 if (tmp != null) type = tmp;
             }
             if (value is string)
@@ -228,7 +232,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             if (Helpers.IsEnum(type)) return value; // return the underlying type instead
             System.Type convertType = null;
-            switch(Helpers.GetTypeCode(type))
+            switch (Helpers.GetTypeCode(type))
             {
                 case ProtoTypeCode.SByte: convertType = typeof(sbyte); break;
                 case ProtoTypeCode.Int16: convertType = typeof(short); break;
@@ -242,7 +246,7 @@ namespace AqlaSerializer.Meta
                 case ProtoTypeCode.Double: convertType = typeof(double); break;
                 case ProtoTypeCode.Decimal: convertType = typeof(decimal); break;
             }
-            if(convertType != null) return Convert.ChangeType(value, convertType, CultureInfo.InvariantCulture);
+            if (convertType != null) return Convert.ChangeType(value, convertType, CultureInfo.InvariantCulture);
             throw new ArgumentException("Unable to process default value: " + value + ", " + type.FullName);
 #else
             if (Helpers.IsEnum(type)) return Enum.ToObject(type, value);
@@ -325,10 +329,31 @@ namespace AqlaSerializer.Meta
         public bool AsReference
         {
             get { return asReference; }
-            set {
+            set
+            {
                 ThrowIfFrozen();
                 if (!CheckCanThisBeAsReference()) value = false;
                 asReference = value;
+            }
+        }
+
+        bool _asLateReference;
+
+        public bool AsLateReference
+        {
+            get
+            {
+                return _asLateReference;
+            }
+            set
+            {
+                ThrowIfFrozen();
+                if (value)
+                {
+                    AsReference = true;
+                    if (!AsReference) value = false;
+                }
+                _asLateReference = value;
             }
         }
 
@@ -377,7 +402,7 @@ namespace AqlaSerializer.Meta
             ThrowIfFrozen();
             this.getSpecified = getSpecified;
             this.setSpecified = setSpecified;
-            
+
         }
         private void ThrowIfFrozen()
         {
@@ -402,7 +427,7 @@ namespace AqlaSerializer.Meta
                     // as does "IsRequired"
                     finalDefaultValue = defaultValue;
                 }
-                
+
                 var ser = BuildValueFinalSerializer(
                     memberType,
                     new CollectionSettings(itemType)
@@ -418,8 +443,13 @@ namespace AqlaSerializer.Meta
                     true,
                     // real type members always handle references if applicable
                     finalDefaultValue,
+#if FORCE_LATE_REFERENCE
+                    true,
+#else
+                    AsLateReference,
+#endif
                     model);
-                
+                // TODO test aqlaattribute with IKVM
                 if (member != null)
                 {
                     PropertyInfo prop = member as PropertyInfo;
@@ -473,13 +503,13 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        internal static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, RuntimeTypeModel model)
+        internal static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, bool tryAsLateRef, RuntimeTypeModel model)
         {
             WireType wireType;
-            return BuildValueFinalSerializer(objectType, collection, dynamicType, tryAsReference, dataFormat, isMemberOrNested, defaultValue, model, out wireType);
+            return BuildValueFinalSerializer(objectType, collection, dynamicType, tryAsReference, dataFormat, isMemberOrNested, defaultValue, tryAsLateRef, model, out wireType);
         }
 
-        static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, RuntimeTypeModel model, out WireType wireType)
+        static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, bool tryAsLateRef, RuntimeTypeModel model, out WireType wireType)
         {
             Type collectionItemType = collection.ItemType;
             wireType = 0;
@@ -488,14 +518,14 @@ namespace AqlaSerializer.Meta
             Type itemType = collectionItemType ?? objectType;
 
             IProtoSerializerWithWireType ser = null;
-            
+
             bool originalAsReference = tryAsReference;
             bool itemTypeCanBeNull = !Helpers.IsValueType(itemType) || Helpers.GetNullableUnderlyingType(itemType) != null;
 
             if (collectionItemType != null)
             {
                 isPacked = isPacked && !itemTypeCanBeNull && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(collectionItemType), dataFormat)); // TODO warn?
-                
+
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
                 MetaType.ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
@@ -503,11 +533,11 @@ namespace AqlaSerializer.Meta
                 bool itemIsNestedCollection = nestedItemType != null;
                 bool tryHandleAsRegistered = !isMemberOrNested || !itemIsNestedCollection;
 
-                
+
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
-                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, true, ref dummy);
+                    ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, tryAsLateRef, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -549,6 +579,7 @@ namespace AqlaSerializer.Meta
                         dataFormat,
                         true,
                         null,
+                        tryAsLateRef,
                         model,
                         out wireType);
 
@@ -559,15 +590,15 @@ namespace AqlaSerializer.Meta
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
-                ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, true, ref defaultValue);
+                ser = TryGetCoreSerializer(model, dataFormat, itemType, out wireType, ref tryAsReference, dynamicType, !collection.Append, isPacked, true, tryAsLateRef, ref defaultValue);
             }
-            
+
             if (ser == null)
             {
                 throw new InvalidOperationException("No serializer defined for type: " + itemType.FullName);
             }
 
-            if (itemTypeCanBeNull && 
+            if (itemTypeCanBeNull &&
                 (
                 (Helpers.GetNullableUnderlyingType(itemType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
                 // TODO get rid of ugly casting, maybe use builder pattern
@@ -580,7 +611,7 @@ namespace AqlaSerializer.Meta
 
             if (itemType != ser.ExpectedType && (!dynamicType || !Helpers.IsAssignableFrom(ser.ExpectedType, itemType)))
                 throw new ProtoException(string.Format("Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, itemType));
-            
+
 
             // apply lists if appropriate
             if (collectionItemType != null)
@@ -675,7 +706,7 @@ namespace AqlaSerializer.Meta
             Type originalType = type;
 #if !NO_GENERICS
             {
-                Type tmp = Helpers.GetNullableUnderlyingType( type);
+                Type tmp = Helpers.GetNullableUnderlyingType(type);
                 if (tmp != null) type = tmp;
             }
 #endif
@@ -728,9 +759,9 @@ namespace AqlaSerializer.Meta
             if (allowComplexTypes)
             {
                 int key = model.GetKey(type, false, true);
-                
+
                 defaultWireType = WireType.StartGroup;
-                
+
                 if (key >= 0 || dynamicType)
                 {
                     if (dynamicType)
