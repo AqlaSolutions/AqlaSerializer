@@ -39,7 +39,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             if (attrib == null) return MemberHandlerResult.NotFound;
 
             if (main.Tag <= 0) attrib.TryGetNotDefault("Order", ref main.Tag);
-            if (string.IsNullOrEmpty(main.Name)) attrib.TryGetNotDefault("Name", ref main.Name);
+            if (string.IsNullOrEmpty(main.Name)) attrib.TryGetNotEmpty("Name", ref main.Name);
             if (!main.IsRequiredInSchema) attrib.TryGetNotDefault("IsRequired", ref main.IsRequiredInSchema);
             bool done = main.Tag >= s.MinAcceptFieldNumber;
             if (done)

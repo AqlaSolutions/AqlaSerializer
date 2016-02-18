@@ -35,7 +35,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             {
                 MemberLevelSettingsValue level = levels[0].GetValueOrDefault();
                 if (main.Tag <= 0) attribute.TryGetNotDefault("Tag", ref main.Tag);
-                if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotDefault("Name", ref main.Name);
+                if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotEmpty("Name", ref main.Name);
                 if (!main.IsRequiredInSchema) attribute.TryGetNotDefault("IsRequired", ref main.IsRequiredInSchema);
 
                 bool isPacked = false;

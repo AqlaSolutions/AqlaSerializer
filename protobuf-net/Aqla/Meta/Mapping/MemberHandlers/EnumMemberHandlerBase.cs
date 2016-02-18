@@ -45,7 +45,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             AttributeMap attrib = GetAttribute(s);
             if (attrib == null) return MemberHandlerResult.NotFound;
 
-            if (string.IsNullOrEmpty(main.Name)) attrib.TryGetNotDefault("Name", ref main.Name);
+            if (string.IsNullOrEmpty(main.Name)) attrib.TryGetNotEmpty("Name", ref main.Name);
 
             object tmp;
             main.Tag = attrib.TryGet("Value", out tmp) ? (int)tmp : Helpers.GetEnumMemberUnderlyingValue(member);

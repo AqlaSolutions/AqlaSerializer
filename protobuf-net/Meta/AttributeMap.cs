@@ -28,7 +28,7 @@ namespace AqlaSerializer.Meta
             return true;
         }
         
-        public bool TryGetNotDefault(string memberName, ref string value, bool publicOnly = true)
+        public bool TryGetNotEmpty(string memberName, ref string value, bool publicOnly = true)
         {
             object obj;
             if (!this.TryGet(memberName, publicOnly, out obj) || obj == null) return false;

@@ -49,7 +49,7 @@ namespace AqlaSerializer.Settings
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
             if (r.CollectionConcreteType == null) r.CollectionConcreteType = baseValue.CollectionConcreteType;
-            r.Collection = CollectionSettingsValue.Merge(baseValue, derivedValue);
+            r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
         }
     }
