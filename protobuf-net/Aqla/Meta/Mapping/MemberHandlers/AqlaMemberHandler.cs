@@ -32,6 +32,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
         {
             // always consider SerializableMember if not strict ProtoBuf
+            // even if no [SerializableType] was declared!
             if (!s.Input.CanUse(AttributeType.Aqla)) return MemberHandlerResult.NotFound;
             if (HasAqlaIgnore(s.Input.Attributes, model)) return MemberHandlerResult.Ignore;
             var memberRtAttrs = AttributeMap.CreateRuntime<SerializableMemberAttribute>(model, member, true).FirstOrDefault(attr => CheckAqlaModelId(attr, model));
