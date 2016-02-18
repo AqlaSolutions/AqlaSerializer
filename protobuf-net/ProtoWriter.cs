@@ -521,7 +521,7 @@ namespace AqlaSerializer
             if (++writer.depth > RecursionCheckDepth)
             {
                 writer.CheckRecursionStackAndPush(instance);
-                if (writer.depth > (writer.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit)) TypeModel.ThrowRecursionDepthLimitExceeded();
+                if (writer.depth > (writer.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit)) TypeModel.ThrowRecursionDepthLimitExceeded(writer.recursionStack);
             }
             writer.expectRoot = false;
             switch (writer.wireType)
