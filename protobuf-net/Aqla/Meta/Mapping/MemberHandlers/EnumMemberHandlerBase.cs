@@ -39,16 +39,29 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
         {
             // always consider SerializableMember if not strict ProtoBuf
             if (!s.Input.AsEnum) return MemberHandlerResult.NotFound;
-            if (!s.Input.CanUse(RequiredAttributeType)) return MemberHandlerResult.NotFound;
+            if (main.Tag <= 0) main.Tag = Helpers.GetEnumMemberUnderlyingValue(member);
+            if (!s.Input.CanUse(RequiredAttributeType)) return MemberHandlerResult.Partial;
             if (HasIgnore(s)) return MemberHandlerResult.Ignore;
 
             AttributeMap attrib = GetAttribute(s);
-            if (attrib == null) return MemberHandlerResult.NotFound;
+            if (attrib == null) return MemberHandlerResult.Partial;
 
             if (string.IsNullOrEmpty(main.Name)) attrib.TryGetNotEmpty("Name", ref main.Name);
 
-            object tmp;
-            main.Tag = attrib.TryGet("Value", out tmp) ? (int)tmp : Helpers.GetEnumMemberUnderlyingValue(member);
+#if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
+            if ((bool)Helpers.GetInstanceMethod(
+                attrib.AttributeType
+#if WINRT
+                             .GetTypeInfo()
+#endif
+                ,
+                "HasValue").Invoke(attrib.Target, null))
+#endif
+            {
+
+                object tmp;
+                if (attrib.TryGet("Value", out tmp)) main.Tag = (int)tmp;
+            }
 
             s.TagIsPinned = main.Tag > 0;
 

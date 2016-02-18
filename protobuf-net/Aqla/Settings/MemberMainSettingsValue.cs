@@ -4,6 +4,7 @@ using AqlaSerializer.Settings;
 using AqlaSerializer;
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
+
 #else
 using System.Reflection;
 using AqlaSerializer;
@@ -18,8 +19,11 @@ namespace AqlaSerializer.Settings
         public string Name;
         public bool IsRequiredInSchema;
         public object DefaultValue;
-#if !NO_RUNTIME
-        public MemberInfo Member;
-#endif
+
+        public override string ToString()
+        {
+            string tag = Tag == int.MinValue ? "" : (Tag.ToString() + " ");
+            return "Member " + tag + Name;
+        }
     }
 }

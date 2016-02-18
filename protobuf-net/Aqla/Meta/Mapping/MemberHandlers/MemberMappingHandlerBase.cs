@@ -9,6 +9,7 @@ using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;
 using AqlaSerializer.Settings;
 using System.Collections.Generic;
+using System.Diagnostics;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -27,6 +28,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 {
     public abstract class MemberMappingHandlerBase : IMemberHandler
     {
+        [DebuggerStepThrough]
         public MemberHandlerResult TryRead(MemberState state)
         {
             var main = state.MainValue;
@@ -63,6 +65,11 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             // TODO multiple
             object actual;
             return attrib.TryGet(nameof(NonSerializableMemberAttribute.ModelId), out actual) && CheckAqlaModelId(actual, model);
+        }
+
+        protected virtual bool CheckAqlaModelId(SerializableMemberAttribute attr, RuntimeTypeModel model)
+        {
+            return CheckAqlaModelId(attr.ModelId, model);
         }
 
         protected virtual bool CheckAqlaModelId(object actualId, RuntimeTypeModel model)

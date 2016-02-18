@@ -55,17 +55,16 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 bool notAsReference = false;
 #if !FEAT_IKVM
                 // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
-                attribute.TryGetNotDefault("AsReferenceHasValue", ref asRefHasValue);
+                attribute.TryGetNotDefault("AsReferenceHasValue", ref asRefHasValue, publicOnly: false);
                 if (asRefHasValue)
 #endif
                 {
                     bool value = false;
-                    attribute.TryGetNotDefault("AsReferenceHasValue", ref asRefHasValue);
                     asRefHasValue = attribute.TryGetNotDefault("AsReference", ref value);
-                    if (asRefHasValue && !value) // if AsReference = true - use defaults
+                    if (asRefHasValue) // if AsReference = true - use defaults
                     {
                         notAsReferenceHasValue = true;
-                        notAsReference = true;
+                        notAsReference = !value;
                     }
                 }
                 Type memberType = Helpers.GetMemberType(member);
@@ -82,15 +81,26 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (notAsReference)
                     {
-                        bool isNullable = !Helpers.IsValueType(memberType) || Helpers.GetNullableUnderlyingType(memberType) != null;
-                        // supports null is also affected so we don't change anything or ref type: with compatibility mode Compact will be used otherwise Enhanced
-                        if (!isNullable)
-                            level.MemberFormat = MemberFormat.Compact;
+                        level.EnhancedWriteMode = EnhancedMode.NotSpecified;
+                        // -x-
+                        //bool isNullable = !Helpers.IsValueType(memberType) || Helpers.GetNullableUnderlyingType(memberType) != null;
+                        //// supports null is also affected so we don't change anything or ref type: with compatibility mode Compact will be used otherwise Enhanced
+                        //if (!isNullable)
+                        // -x-
+                        level.MemberFormat = MemberFormat.Compact;
                     }
-                    else level.MemberFormat = MemberFormat.Enhanced;
+                    else
+                    {
+                        level.EnhancedWriteMode = EnhancedMode.Reference;
+                        level.MemberFormat = MemberFormat.Enhanced;
+                    }
                 }
 
-                if (!level.WriteAsDynamicType.GetValueOrDefault()) attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);
+                if (!level.WriteAsDynamicType.GetValueOrDefault())
+                {
+                    if (attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType) && level.WriteAsDynamicType.Value)
+                        level.MemberFormat = MemberFormat.Enhanced;
+                }
                 s.TagIsPinned = main.Tag > 0;
                 levels[0] = level;
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto

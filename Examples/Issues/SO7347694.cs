@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.Issues
 {
@@ -36,16 +37,18 @@ namespace Examples.Issues
         {
             var list = GetListOfThings();
 
+            var s = TypeModel.Create();
+            s.SkipCompiledVsNotCheck = true;
             using (var fs = File.Create(@"things.bin"))
             {
-                AqlaSerializer.Serializer.Serialize(fs, list);
+                s.Serialize(fs, list);
 
                 fs.Close();
             }
 
             using (var fs = File.OpenRead(@"things.bin"))
             {
-                list = AqlaSerializer.Serializer.Deserialize<MyDto>(fs);
+                list = s.Deserialize<MyDto>(fs);
 
                 Assert.AreEqual(3, list.Things.Count);
                 Assert.AreNotSame(list.Things[0], list.Things[1]);

@@ -38,7 +38,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             foreach (AttributeMap ppma in s.Input.PartialMembers)
             {
                 object tmp;
-                if (!ppma.TryGet("MemberName", out tmp) || tmp as string != main.Name) continue;
+                if (!ppma.TryGet("MemberName", out tmp) || tmp as string != member.Name) continue;
 
                 if (ppma.AttributeType.FullName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && CheckAqlaModelId(ppma, model)) return MemberHandlerResult.Ignore;
 

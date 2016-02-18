@@ -295,8 +295,10 @@ namespace AqlaSerializer.Meta
             Add(MapType(typeof(ModelTypeRelationsData)), true);
 #endif
             _serviceTypesCount = types.Count;
+            IsInitialized = true;
         }
 
+        internal bool IsInitialized { get; }
         readonly int _serviceTypesCount;
 
 

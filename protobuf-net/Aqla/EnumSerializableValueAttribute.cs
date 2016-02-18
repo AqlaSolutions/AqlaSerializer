@@ -10,10 +10,14 @@ namespace AqlaSerializer
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public sealed class EnumSerializableValueAttribute : Attribute
     {
+        int? _value;
+
         /// <summary>
         /// Gets or sets the specific value to use for this enum during serialization.
         /// </summary>
-        public int Value { get; set; }
+        public int Value { get { return _value.Value; } set { _value = value; } }
+
+        public bool HasValue() => _value.HasValue;
 
         public string Name { get; set; }
 
