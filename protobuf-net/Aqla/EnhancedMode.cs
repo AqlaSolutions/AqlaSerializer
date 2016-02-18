@@ -9,9 +9,9 @@ namespace AqlaSerializer
         /// </summary>
         NotSpecified = 0,
         /// <summary>
-        /// Still has null support
+        /// Has null support if appropriate but no reference tracking. Can deserialize data stored using any other EnhancedMode.
         /// </summary>
-        Nullable,
+        Minimal,
         /// <summary>
         /// Standard mode for reference types, includes Nullable
         /// </summary>

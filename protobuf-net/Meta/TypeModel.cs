@@ -65,7 +65,12 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Resolve a System.Type to the compiler-specific type
         /// </summary>
-        protected internal Type MapType(System.Type type)
+#if FEAT_IKVM
+        public
+#else
+        protected internal
+#endif
+        Type MapType(System.Type type)
         {
             return MapType(type, true);
         }

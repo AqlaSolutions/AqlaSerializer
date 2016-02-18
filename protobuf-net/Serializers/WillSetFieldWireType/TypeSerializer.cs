@@ -62,7 +62,7 @@ namespace AqlaSerializer.Serializers
             for (int i = 1; i < fieldNumbers.Length; i++)
             {
                 if (fieldNumbers[i] == fieldNumbers[i - 1]) throw new InvalidOperationException("Duplicate field-number detected; " +
-                           fieldNumbers[i].ToString() + " on: " + forType.FullName);
+                           fieldNumbers[i].ToString() + " on: " + forType.FullName+", forgot to specify SerializableType.ImplicitFirstTag?");
                 if (!hasSubTypes && serializers[i].ExpectedType != forType)
                 {
                     hasSubTypes = true;
