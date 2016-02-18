@@ -48,14 +48,14 @@ namespace AqlaSerializer
         /// Creates a new ProtoMemberAttribute instance.
         /// </summary>
         /// <param name="tag">Specifies the unique tag used to identify this member within the type.</param>
-        public SerializableMemberAttribute(int tag, MemberFormat format = 0)
-            : this(tag, false, format)
+        public SerializableMemberAttribute(int tag, MemberFormat format = 0, EnhancedMode enchancedWriteMode = 0)
+            : this(tag, false, format, enchancedWriteMode)
         {
             
         }
 
-        internal SerializableMemberAttribute(int tag, bool forced, MemberFormat format = 0)
-            : base(0, format)
+        internal SerializableMemberAttribute(int tag, bool forced, MemberFormat format = 0, EnhancedMode enchancedWriteAs = 0)
+            : base(0, format, enchancedWriteAs)
         {
             if (tag <= 0 && !forced) throw new ArgumentOutOfRangeException("tag");
             this.MemberSettings.Tag = tag;

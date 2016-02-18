@@ -90,7 +90,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                     else level.MemberFormat = MemberFormat.Enhanced;
                 }
 
-                if (!level.DynamicType) attribute.TryGetNotDefault("DynamicType", ref level.DynamicType);
+                if (!level.WriteAsDynamicType.GetValueOrDefault()) attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);
                 s.TagIsPinned = main.Tag > 0;
                 levels[0] = level;
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto

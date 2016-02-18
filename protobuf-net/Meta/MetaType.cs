@@ -1026,7 +1026,21 @@ namespace AqlaSerializer.Meta
             }
 #endif
             ResolveListTypes(model, miType, ref itemType, ref defaultType);
-            ValueMember newField = new ValueMember(model, type, fieldNumber, mi, miType, itemType, defaultType, BinaryDataFormat.Default, defaultValue);
+
+            var input = new MemberArgsValue(mi, miType, new AttributeMap[0], AttributeType.None, model);
+            var s = new MemberState(input);
+            var m = s.MainValue;
+            m.Tag = fieldNumber;
+            m.DefaultValue = defaultValue;
+            s.MainValue = m;
+            var mappedMember=new NormalizedMappedMember(s);
+            var level0 = mappedMember[0];
+            level0.CollectionConcreteType = defaultType;
+            level0.Collection.ItemType = itemType;
+            level0.ContentBinaryFormatHint=BinaryDataFormat.Default;
+            mappedMember[0] = level0;
+
+            ValueMember newField = new ValueMember(model, type, mappedMember);
             Add(newField);
             return newField;
         }
