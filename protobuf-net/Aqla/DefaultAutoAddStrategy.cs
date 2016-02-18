@@ -285,7 +285,7 @@ namespace AqlaSerializer
 
 #if WINRT
             System.Collections.Generic.IEnumerable<MemberInfo> foundList;
-            if(isEnum) {
+            if (asEnum) {
                 foundList = type.GetRuntimeFields();
             }
             else
