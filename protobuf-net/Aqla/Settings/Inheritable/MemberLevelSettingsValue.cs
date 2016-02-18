@@ -20,24 +20,24 @@ namespace AqlaSerializer.Settings
         public MemberFormat MemberFormat;
 
         /// <summary>
+        /// Has value if != NotSpecified
+        /// </summary>
+        public EnhancedMode EnhancedWriteMode;
+        
+        /// <summary>
         /// Has value if != null
         /// </summary>
-        public bool? WriteAsLateReference;
+        public bool? WriteAsDynamicType;
 
         /// <summary>
         /// Has value if != null
         /// </summary>
-        public BinaryDataFormat? ContentBinaryFormat;
+        public BinaryDataFormat? ContentBinaryFormatHint;
 
         /// <summary>
         /// Has value if != null
         /// </summary>
         public Type CollectionConcreteType;
-
-        /// <summary>
-        /// Not inherited
-        /// </summary>
-        public bool DynamicType;
 
         public CollectionSettingsValue Collection;
 
@@ -45,8 +45,9 @@ namespace AqlaSerializer.Settings
         {
             var r = derivedValue;
             if (r.MemberFormat == MemberFormat.NotSpecified) r.MemberFormat = baseValue.MemberFormat;
-            if (r.WriteAsLateReference == null) r.WriteAsLateReference = baseValue.WriteAsLateReference;
-            if (r.ContentBinaryFormat == null) r.ContentBinaryFormat = baseValue.ContentBinaryFormat;
+            if (r.EnhancedWriteMode == EnhancedMode.NotSpecified) r.EnhancedWriteMode = baseValue.EnhancedWriteMode;
+            if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
+            if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
             if (r.CollectionConcreteType == null) r.CollectionConcreteType = baseValue.CollectionConcreteType;
             r.Collection = CollectionSettingsValue.Merge(baseValue, derivedValue);
             return r;

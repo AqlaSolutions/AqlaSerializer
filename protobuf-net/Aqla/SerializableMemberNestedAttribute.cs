@@ -13,7 +13,7 @@ using AqlaSerializer;
 namespace AqlaSerializer
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
-    public class SerializableMemberNestedAttribute : SerializableMemberBaseAttribute
+    public class SerializableMemberNestedAttribute : SerializableMemberAttributeBase
     {
         public SerializableMemberNestedAttribute(int level, MemberFormat format = 0)
             : base(level, format)

@@ -35,7 +35,7 @@ namespace AqlaSerializer.Meta.Mapping
             Handlers = handlersCollection.ToList();
         }
 
-        public virtual NormalizedProtoMember Read(MemberArgsValue args)
+        public virtual NormalizedMappedMember Map(ref MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.AsEnum)) return null;
             var model = args.Model;
@@ -44,11 +44,11 @@ namespace AqlaSerializer.Meta.Mapping
             if (args.AsEnum) args.IsForced = true;
 
             var state = new MemberState(args);
-            MemberMainSettingsValue m = state.Main;
+            MemberMainSettingsValue m = state.MainValue;
             m.Tag = int.MinValue;
-            state.Main = m;
+            state.MainValue = m;
 
-            state.Levels.Add(new MemberLevelSettingsValue());
+            state.LevelValues.Add(new MemberLevelSettingsValue());
 
             MemberHandlerResult result = MemberHandlerResult.NotFound;
 
@@ -66,15 +66,15 @@ namespace AqlaSerializer.Meta.Mapping
                 }
             }
 
-            if (result == MemberHandlerResult.Ignore || (state.Main.Tag < state.MinAcceptFieldNumber && !state.Input.IsForced)) return null;
+            if (result == MemberHandlerResult.Ignore || (state.MainValue.Tag < state.MinAcceptFieldNumber && !state.Input.IsForced)) return null;
 
             bool readOnly = !Helpers.CanWrite(model, member);
 
             if (readOnly)
             {
-                for (int i = 0; i < state.Levels.Count; i++)
+                for (int i = 0; i < state.LevelValues.Count; i++)
                 {
-                    var s = state.Levels[i].GetValueOrDefault();
+                    var s = state.LevelValues[i].GetValueOrDefault();
                     if (s.Collection.Append != null)
                     {
                         if (!s.Collection.Append.Value)
@@ -87,18 +87,18 @@ namespace AqlaSerializer.Meta.Mapping
                     }
                     else s.Collection.Append = true;
 
-                    state.Levels[i] = s;
+                    state.LevelValues[i] = s;
                 }
             }
 
-            if (Helpers.IsNullOrEmpty(state.Main.Name))
+            if (Helpers.IsNullOrEmpty(state.MainValue.Name))
             {
-                m = state.Main;
+                m = state.MainValue;
                 m.Name = member.Name;
-                state.Main = m;
+                state.MainValue = m;
             }
 
-            return new NormalizedProtoMember
+            return new NormalizedMappedMember
             {
                 ForcedTag = state.Input.IsForced || state.Input.InferTagByName,
                 IsReadOnly = readOnly,

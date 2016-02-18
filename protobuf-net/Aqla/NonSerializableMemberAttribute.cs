@@ -36,6 +36,9 @@ namespace AqlaSerializer
             if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException("memberName");
             this.memberName = memberName;
         }
+
+        public object ModelId { get; set; }
+
         /// <summary>
         /// The name of the member to be ignored.
         /// </summary>

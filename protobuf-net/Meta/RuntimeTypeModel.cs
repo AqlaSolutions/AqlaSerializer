@@ -174,7 +174,7 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// See <see cref="SerializableMemberBaseAttribute.ModelId"/>
+        /// See <see cref="SerializableMemberAttributeBase.ModelId"/>
         /// </summary>
         public object ModelId { get; set; }
 
