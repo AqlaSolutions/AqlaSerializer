@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading;
 using AltLinq;
 using AqlaSerializer;
+using AqlaSerializer.Meta.Mapping;
 using AqlaSerializer.Serializers;
-
-
+using AqlaSerializer.Settings;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -1132,92 +1132,80 @@ namespace AqlaSerializer.Meta
 
         }
 
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue)
+        public void Add(NormalizedMappedMember normalizedMember)
         {
-            Add(normalizedAttribute, member, defaultValue, null);
-        }
-
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, object defaultValue, Type defaultType)
-        {
-            Add(normalizedAttribute, member, true, defaultValue, defaultType);
-        }
-
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member)
-        {
-            Add(normalizedAttribute, member, null);
-        }
-
-        public void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, Type defaultType)
-        {
-            Add(normalizedAttribute, member, false, null, defaultType);
-        }
-
-        private void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue)
-        {
-            Add(normalizedAttribute, member, defaultValueSpecified, defaultValue, null);
-        }
-
-        void Add(SerializableMemberAttribute normalizedAttribute, MemberInfo member, bool defaultValueSpecified, object defaultValue, Type defaultType)
-        {
-            Type effectiveType = Helpers.GetMemberType(member);
+            var s = normalizedMember.MappingState;
+            var m = s.MainValue;
+            Type effectiveType = s.Input.EffectiveMemberType;
             
             // implicit zero default
-            if (!defaultValueSpecified)
+            if (m.DefaultValue==null)
             {
-                defaultValue = null;
+                m.DefaultValue = null;
                 if (model.UseImplicitZeroDefaults)
                 {
                     switch (Helpers.GetTypeCode(effectiveType))
                     {
-                        case ProtoTypeCode.Boolean: defaultValue = false; break;
-                        case ProtoTypeCode.Decimal: defaultValue = (decimal)0; break;
-                        case ProtoTypeCode.Single: defaultValue = (float)0; break;
-                        case ProtoTypeCode.Double: defaultValue = (double)0; break;
-                        case ProtoTypeCode.Byte: defaultValue = (byte)0; break;
-                        case ProtoTypeCode.Char: defaultValue = (char)0; break;
-                        case ProtoTypeCode.Int16: defaultValue = (short)0; break;
-                        case ProtoTypeCode.Int32: defaultValue = (int)0; break;
-                        case ProtoTypeCode.Int64: defaultValue = (long)0; break;
-                        case ProtoTypeCode.SByte: defaultValue = (sbyte)0; break;
-                        case ProtoTypeCode.UInt16: defaultValue = (ushort)0; break;
-                        case ProtoTypeCode.UInt32: defaultValue = (uint)0; break;
-                        case ProtoTypeCode.UInt64: defaultValue = (ulong)0; break;
-                        case ProtoTypeCode.TimeSpan: defaultValue = TimeSpan.Zero; break;
-                        case ProtoTypeCode.Guid: defaultValue = Guid.Empty; break;
+                        case ProtoTypeCode.Boolean: m.DefaultValue = false; break;
+                        case ProtoTypeCode.Decimal: m.DefaultValue = (decimal)0; break;
+                        case ProtoTypeCode.Single: m.DefaultValue = (float)0; break;
+                        case ProtoTypeCode.Double: m.DefaultValue = (double)0; break;
+                        case ProtoTypeCode.Byte: m.DefaultValue = (byte)0; break;
+                        case ProtoTypeCode.Char: m.DefaultValue = (char)0; break;
+                        case ProtoTypeCode.Int16: m.DefaultValue = (short)0; break;
+                        case ProtoTypeCode.Int32: m.DefaultValue = (int)0; break;
+                        case ProtoTypeCode.Int64: m.DefaultValue = (long)0; break;
+                        case ProtoTypeCode.SByte: m.DefaultValue = (sbyte)0; break;
+                        case ProtoTypeCode.UInt16: m.DefaultValue = (ushort)0; break;
+                        case ProtoTypeCode.UInt32: m.DefaultValue = (uint)0; break;
+                        case ProtoTypeCode.UInt64: m.DefaultValue = (ulong)0; break;
+                        case ProtoTypeCode.TimeSpan: m.DefaultValue = TimeSpan.Zero; break;
+                        case ProtoTypeCode.Guid: m.DefaultValue = Guid.Empty; break;
                     }
                 }
             }
 
-            Type itemType = null;
-            
-            Type t = null;
-
-            // check for list types
-            ResolveListTypes(model, effectiveType, ref itemType, ref t);
-            // but take it back if it is explicitly excluded
-            if (itemType != null)
-            { // looks like a list, but double check for IgnoreListHandling
-                int idx = model.FindOrAddAuto(effectiveType, false, true, false);
-                if (idx >= 0 && model[effectiveType].IgnoreListHandling)
-                {
-                    itemType = null;
-                    t = null;
-                }
-            }
-
-            if (t != null)
             {
-                if (defaultType != t && defaultType != null)
-                    throw new ArgumentException("Specified defaultType " + defaultType.Name + " can't be used because found default list type " + t.Name);
-                defaultType = t;
-            }
-            else if (defaultType != null && !Helpers.IsAssignableFrom(effectiveType, defaultType))
-                throw new ProtoException("Specified default type " + defaultType.Name + " is not assignable to member " + this.Type.Name + "." + member.Name);
-            
+                Type t = null;
 
-            var vm = new ValueMember(model, this.Type, normalizedAttribute.Tag, member, effectiveType, itemType, defaultType, normalizedAttribute.ContentBinaryFormat, defaultValue);
+                Type itemType = null;
+
+                // check for list types
+                ResolveListTypes(model, effectiveType, ref itemType, ref t);
+                // but take it back if it is explicitly excluded
+                if (itemType != null)
+                { // looks like a list, but double check for IgnoreListHandling
+                    int idx = model.FindOrAddAuto(effectiveType, false, true, false);
+                    if (idx >= 0 && model[effectiveType].IgnoreListHandling)
+                    {
+                        itemType = null;
+                        t = null;
+                    }
+                }
+
+                var level0 = s.LevelValues[0].Value;
+                {
+                    if (level0.Collection.ItemType == null)
+                        level0.Collection.ItemType = itemType;
+
+                    if (t != null)
+                    {
+                        if (level0.CollectionConcreteType != t && level0.CollectionConcreteType != null)
+                            throw new ArgumentException("Specified defaultType " + level0.CollectionConcreteType.Name + " can't be used because found default list type " + t.Name);
+                        level0.CollectionConcreteType = t;
+                    }
+                    else if (level0.CollectionConcreteType != null && !Helpers.IsAssignableFrom(effectiveType, level0.CollectionConcreteType))
+                        throw new ProtoException(
+                            "Specified default type " + level0.CollectionConcreteType.Name + " is not assignable to member " + this.Type.Name + "." + normalizedMember.Member.Name);
+                }
+                s.LevelValues[0] = level0;
+            }
+
+            s.MainValue = m;
+            
+            var vm = new ValueMember(model, this.Type, normalizedMember);
 #if WINRT
-                TypeInfo finalType = typeInfo;
+            TypeInfo finalType = typeInfo;
 #else
             Type finalType = this.Type;
 #endif
@@ -1236,15 +1224,15 @@ namespace AqlaSerializer.Meta
                     vm.SetSpecified(method, null);
                 }
             }
-            if (!Helpers.IsNullOrEmpty(normalizedAttribute.Name)) vm.SetName(normalizedAttribute.Name);
-            vm.IsPacked = normalizedAttribute.IsPacked;
-            vm.IsRequired = normalizedAttribute.IsRequired;
-            vm.AppendCollection = normalizedAttribute.AppendCollection;
+            if (!Helpers.IsNullOrEmpty(normalizedMember.Name)) vm.SetName(normalizedMember.Name);
+            vm.IsPacked = normalizedMember.IsPacked;
+            vm.IsRequired = normalizedMember.IsRequired;
+            vm.AppendCollection = normalizedMember.AppendCollection;
             vm.AsReference = true;
-            if (normalizedAttribute.NotAsReferenceHasValue)
-                vm.AsReference = !normalizedAttribute.NotAsReference;
+            if (normalizedMember.NotAsReferenceHasValue)
+                vm.AsReference = !normalizedMember.NotAsReference;
 
-            vm.DynamicType = normalizedAttribute.DynamicType;
+            vm.DynamicType = normalizedMember.DynamicType;
             Add(vm);
         }
 

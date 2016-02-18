@@ -38,11 +38,12 @@ namespace AqlaSerializer.Meta.Mapping
         public bool IgnoreNonWritableForOverwriteCollection { get; set; }
         public RuntimeTypeModel Model { get; set; }
         public AttributeMap[] Attributes { get; set; }
-        public AttributeType AllowedAttributes { get; set; }
+        public AttributeType AcceptableAttributes { get; set; }
+        public Type EffectiveMemberType { get; set; }
 
         public bool CanUse(AttributeType type)
         {
-            return (AllowedAttributes & type) == type;
+            return (AcceptableAttributes & type) == type;
         }
 
         public bool HasFamily(MetaType.AttributeFamily value)
@@ -50,13 +51,14 @@ namespace AqlaSerializer.Meta.Mapping
             return (Family & value) == value;
         }
 
-        public MemberArgsValue(MemberInfo member, AttributeMap[] attributes, AttributeType allowedAttributes, RuntimeTypeModel model)
+        public MemberArgsValue(MemberInfo member, Type effectiveMemberType, AttributeMap[] attributes, AttributeType acceptableAttributes, RuntimeTypeModel model)
             : this()
         {
             Attributes = attributes;
             Member = member;
             Model = model;
-            AllowedAttributes = allowedAttributes;
+            EffectiveMemberType = effectiveMemberType;
+            AcceptableAttributes = acceptableAttributes;
         }
     }
 }

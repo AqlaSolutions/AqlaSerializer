@@ -81,7 +81,7 @@ namespace AqlaSerializer
         /// <summary>
         /// The data-format to be used when encoding this value.
         /// </summary>
-        public BinaryDataFormat? ContentBinaryFormat { get { return TypeSettings.Member.ContentBinaryFormat; } set { TypeSettings.Member.ContentBinaryFormat = value; } }
+        public BinaryDataFormat? ContentBinaryFormatHint { get { return TypeSettings.Member.ContentBinaryFormatHint; } set { TypeSettings.Member.ContentBinaryFormatHint = value; } }
 
         /// <summary>
         /// Supported collection features

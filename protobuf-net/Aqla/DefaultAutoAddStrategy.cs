@@ -67,9 +67,9 @@ namespace AqlaSerializer
                 {
                     metaType.IsAutoTuple = true;
                 }
-                bool isEnum = !metaType.EnumPassthru && Helpers.IsEnum(type);
-                if (family == AttributeFamily.None && !isEnum) return; // and you'd like me to do what, exactly?
-                BasicList partialIgnores = null, partialMembers = null;
+                bool asEnum = !metaType.EnumPassthru && Helpers.IsEnum(type);
+                if (family == AttributeFamily.None && !asEnum) return; // and you'd like me to do what, exactly?
+                var partialMembers = new List<AttributeMap>();
                 int dataMemberOffset = 0, implicitFirstTag = 1;
                 bool inferTagByName = _model.InferTagFromNameDefault;
                 ImplicitFieldsMode implicitMode = ImplicitFieldsMode.None;
@@ -93,13 +93,13 @@ namespace AqlaSerializer
                     // we check CanUse everywhere but not family because GetContractFamily is based on CanUse
                     // and CanUse is based on the settings
                     // except is for SerializableAttribute which family is not returned if other families are present
-                    if (!isEnum && fullAttributeTypeName == "System.SerializableAttribute" && HasFamily(family, AttributeFamily.SystemSerializable))
+                    if (!asEnum && fullAttributeTypeName == "System.SerializableAttribute" && HasFamily(family, AttributeFamily.SystemSerializable))
                     {
                         implicitMode = ImplicitFieldsMode.AllFields;
                         implicitAqla = true;
                     }
 
-                    if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" && CanUse(AttributeType.ProtoBuf))
+                    if (!asEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" && CanUse(AttributeType.ProtoBuf))
                     {
                         int tag = 0;
                         if (item.TryGet("tag", out tmp)) tag = (int)tmp;
@@ -125,7 +125,7 @@ namespace AqlaSerializer
                         if (metaType.IsValidSubType(knownType)) metaType.AddSubType(tag, knownType, dataFormat);
                     }
 
-                    if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializeDerivedTypeAttribute" && CanUse(AttributeType.Aqla))
+                    if (!asEnum && fullAttributeTypeName == "AqlaSerializer.SerializeDerivedTypeAttribute" && CanUse(AttributeType.Aqla))
                     {
                         int tag = 0;
                         if (item.TryGet("tag", out tmp)) tag = (int)tmp;
@@ -152,32 +152,13 @@ namespace AqlaSerializer
                     }
 
                     if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute" && CanUse(AttributeType.ProtoBuf))
-                    {
-                        if (item.TryGet("MemberName", out tmp) && tmp != null)
-                        {
-                            if (partialIgnores == null) partialIgnores = new BasicList();
-                            partialIgnores.Add((string)tmp);
-                        }
-                    }
+                        partialMembers.Add(item);
                     else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && CanUse(AttributeType.Aqla))
-                    {
-                        if (item.TryGet("MemberName", out tmp) && tmp != null)
-                        {
-                            if (partialIgnores == null) partialIgnores = new BasicList();
-                            partialIgnores.Add((string)tmp);
-                        }
-                    }
-
-                    if (!isEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute" && CanUse(AttributeType.ProtoBuf))
-                    {
-                        if (partialMembers == null) partialMembers = new BasicList();
                         partialMembers.Add(item);
-                    }
-                    else if (!isEnum && fullAttributeTypeName == "AqlaSerializer.SerializablePartialMemberAttribute" && CanUse(AttributeType.Aqla))
-                    {
-                        if (partialMembers == null) partialMembers = new BasicList();
+                    else if (!asEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute" && CanUse(AttributeType.ProtoBuf))
                         partialMembers.Add(item);
-                    }
+                    else if (!asEnum && fullAttributeTypeName == "AqlaSerializer.SerializablePartialMemberAttribute" && CanUse(AttributeType.Aqla))
+                        partialMembers.Add(item);
 
                     if (fullAttributeTypeName == "ProtoBuf.ProtoContractAttribute" && HasFamily(family, AttributeFamily.ProtoBuf))
                     {
@@ -192,7 +173,7 @@ namespace AqlaSerializer
                                 if (item.TryGet("EnumPassthru", out tmp))
                                 {
                                     metaType.EnumPassthru = (bool)tmp;
-                                    if (metaType.EnumPassthru) isEnum = false; // no longer treated as an enum
+                                    if (metaType.EnumPassthru) asEnum = false; // no longer treated as an enum
                                 }
                             }
                         }
@@ -236,7 +217,7 @@ namespace AqlaSerializer
                                 if (item.TryGet("EnumPassthru", out tmp))
                                 {
                                     metaType.EnumPassthru = (bool)tmp;
-                                    if (metaType.EnumPassthru) isEnum = false; // no longer treated as an enum
+                                    if (metaType.EnumPassthru) asEnum = false; // no longer treated as an enum
                                 }
                             }
                         }
@@ -300,7 +281,7 @@ namespace AqlaSerializer
                 }
                 MethodInfo[] callbacks = null;
 
-                BasicList members = new BasicList();
+                var members = new List<NormalizedMappedMember>();
 
 #if WINRT
             System.Collections.Generic.IEnumerable<MemberInfo> foundList;
@@ -319,47 +300,53 @@ namespace AqlaSerializer
                 foundList = list;
             }
 #else
-                MemberInfo[] foundList = type.GetMembers(isEnum ? BindingFlags.Public | BindingFlags.Static
+                MemberInfo[] foundList = type.GetMembers(asEnum ? BindingFlags.Public | BindingFlags.Static
                     : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 #endif
                 foreach (MemberInfo member in foundList)
                 {
                     if (member.DeclaringType != type) continue;
                     var map = AttributeMap.Create(_model, member, true);
-                    if (CanUse(AttributeType.ProtoBuf) && AttributeMap.GetAttribute(map, "ProtoBuf.ProtoIgnoreAttribute") != null) continue;
-                    if (CanUse(AttributeType.Aqla) && AttributeMap.GetAttribute(map, "AqlaSerializer.NonSerializableMemberAttribute") != null) continue;
-                    if (partialIgnores != null && partialIgnores.Contains(member.Name)) continue;
 
-                    bool forced = false, isPublic, isField;
-                    Type effectiveType;
+                    var args = new MemberArgsValue(member, Helpers.GetMemberType(member), map, AcceptableAttributes, Model)
+                    {
+                        AsEnum = asEnum,
+                        DataMemberOffset = dataMemberOffset,
+                        Family = family,
+                        InferTagByName = inferTagByName,
+                        PartialMembers = partialMembers,
+                        IgnoreNonWritableForOverwriteCollection = explicitPropertiesContract,
+                    };
 
+                    bool isPublic, isField;
+                    
 
                     PropertyInfo property;
                     FieldInfo field;
                     MethodInfo method;
                     if ((property = member as PropertyInfo) != null)
                     {
-                        if (isEnum) continue; // wasn't expecting any props!
+                        if (asEnum) continue; // wasn't expecting any props!
 
-                        effectiveType = property.PropertyType;
                         isPublic = Helpers.GetGetMethod(property, false, false) != null;
                         isField = false;
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, explicitPropertiesContract, metaType.ConstructType);
+                        var r = ApplyDefaultBehaviour_AddMembers(ref args, implicitMode, isPublic, isField, metaType.ConstructType);
+                        if (r != null) members.Add(r);
                     }
                     else if ((field = member as FieldInfo) != null)
                     {
-                        effectiveType = field.FieldType;
                         isPublic = field.IsPublic;
                         isField = true;
-                        if (isEnum && !field.IsStatic)
+                        if (asEnum && !field.IsStatic)
                         { // only care about static things on enums; WinRT has a __value instance field!
                             continue;
                         }
-                        ApplyDefaultBehaviour_AddMembers(family, isEnum, partialMembers, dataMemberOffset, inferTagByName, implicitMode, members, member, ref forced, isPublic, isField, ref effectiveType, false, metaType.ConstructType);
+                        var r = ApplyDefaultBehaviour_AddMembers(ref args, implicitMode, isPublic, isField, metaType.ConstructType);
+                        if (r != null) members.Add(r);
                     }
                     else if ((method = member as MethodInfo) != null)
                     {
-                        if (isEnum) continue;
+                        if (asEnum) continue;
                         AttributeMap[] memberAttribs = AttributeMap.Create(_model, method, false);
                         if (memberAttribs != null && memberAttribs.Length > 0)
                         {
@@ -387,24 +374,19 @@ namespace AqlaSerializer
                         }
                     }
                 }
-                var arr = new AqlaSerializer.SerializableMemberAttribute[members.Count];
-                members.CopyTo(arr, 0);
-
                 if (inferTagByName || implicitMode != ImplicitFieldsMode.None)
                 {
-                    Array.Sort(arr);
-                    foreach (var normalizedAttribute in arr)
+                    members.Sort();
+                    foreach (var member in members)
                     {
-                        if (!normalizedAttribute.TagIsPinned) // if ProtoMember etc sets a tag, we'll trust it
-                        {
-                            normalizedAttribute.Rebase(-1);
-                        }
+                        if (!member.MappingState.TagIsPinned) // if ProtoMember etc sets a tag, we'll trust it
+                            member.Tag = -1;
                     }
                 }
 
-                foreach (var normalizedAttribute in arr)
+                foreach (var member in members)
                 {
-                    ApplyDefaultBehaviour(metaType, isEnum, normalizedAttribute,
+                    ApplyDefaultBehaviour(metaType, member,
                         (inferTagByName || implicitMode != ImplicitFieldsMode.None) ? (int?)implicitFirstTag : null);
                 }
 
@@ -415,11 +397,11 @@ namespace AqlaSerializer
                 }
 
                 if (!DisableAutoAddingMemberTypes)
-                    foreach (var normalizedAttribute in arr)
+                    foreach (var member in members)
                     {
-                        if (!isEnum && normalizedAttribute.Tag > 0)
+                        if (!asEnum && member.Tag > 0)
                         {
-                            Type memberType = Helpers.GetMemberType(normalizedAttribute.Member);
+                            Type memberType = Helpers.GetMemberType(member.Member);
                             memberType = Helpers.GetNullableUnderlyingType(memberType) ?? memberType;
                             if (memberType.IsArray)
                             {
@@ -461,41 +443,55 @@ namespace AqlaSerializer
             _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
-        protected virtual void ApplyDefaultBehaviour_AddMembers(AttributeFamily family, bool isEnum, IEnumerable<AttributeMap> partialMembers, int dataMemberOffset, bool inferTagByName, ImplicitFieldsMode implicitMode, IList members, MemberInfo member, ref bool forced, bool isPublic, bool isField, ref Type effectiveType, bool ignoreNonWritableForOverwriteCollection, Type defaultType)
+        protected virtual NormalizedMappedMember ApplyDefaultBehaviour_AddMembers(ref MemberArgsValue argsValue, ImplicitFieldsMode implicitMode, bool isPublic, bool isField, Type defaultType)
         {
             switch (implicitMode)
             {
                 case ImplicitFieldsMode.PublicFields:
-                    if (isField & isPublic) forced = true;
+                    if (isField & isPublic) argsValue.IsForced = true;
                     break;
                 case ImplicitFieldsMode.AllFields:
-                    if (isField) forced = true;
+                    if (isField) argsValue.IsForced = true;
                     break;
                 case ImplicitFieldsMode.AllProperties:
-                    if (!isField) forced = true;
+                    if (!isField) argsValue.IsForced = true;
                     break;
                 case ImplicitFieldsMode.PublicFieldsAndProperties:
-                    if (isPublic) forced = true;
+                    if (isPublic) argsValue.IsForced = true;
                     break;
                 case ImplicitFieldsMode.PublicProperties:
-                    if (isPublic && !isField) forced = true;
+                    if (isPublic && !isField) argsValue.IsForced = true;
                     break;
                 case ImplicitFieldsMode.AllFieldsAndProperties:
-                    forced = true;
+                    argsValue.IsForced = true;
                     break;
             }
 
             // we just don't like delegate types ;p
 #if WINRT
-            if (effectiveType.GetTypeInfo().IsSubclassOf(typeof(Delegate))) effectiveType = null;
+            if (argsValue.EffectiveMemberType.GetTypeInfo().IsSubclassOf(typeof(Delegate))) argsValue.EffectiveMemberType = null;
 #else
-            if (effectiveType.IsSubclassOf(_model.MapType(typeof(Delegate)))) effectiveType = null;
+            if (argsValue.EffectiveMemberType.IsSubclassOf(_model.MapType(typeof(Delegate)))) argsValue.EffectiveMemberType = null;
 #endif
-            if (effectiveType != null)
+            if (argsValue.EffectiveMemberType != null)
             {
-                var normalizedAttribute = NormalizeProtoMember(member, family, forced, isEnum, partialMembers, dataMemberOffset, inferTagByName, ignoreNonWritableForOverwriteCollection, defaultType);
-                if (normalizedAttribute != null) members.Add(normalizedAttribute);
+                var normalized = MemberMapper.Map(ref argsValue);
+                if (normalized != null)
+                {
+                    var levels = normalized.MappingState.LevelValues;
+                    if (levels.Count == 0)
+                        levels.Add(new MemberLevelSettingsValue());
+                    for (int i = 0; i < levels.Count; i++)
+                    {
+                        var level = levels[i].GetValueOrDefault();
+                        if (level.CollectionConcreteType == null) level.CollectionConcreteType = defaultType;
+                        levels[i] = level;
+                    }
+                    argsValue = normalized.MappingState.Input; // just to be sure
+                }
+                return normalized;
             }
+            return null;
         }
 
 
@@ -645,58 +641,42 @@ namespace AqlaSerializer
             return (value & required) == required;
         }
         
-        protected virtual void ApplyDefaultBehaviour(MetaType metaType, bool isEnum, AqlaSerializer.SerializableMemberAttribute normalizedAttribute, int? implicitFirstTag)
+        protected virtual void ApplyDefaultBehaviour(MetaType metaType, NormalizedMappedMember mappedMember, int? implicitFirstTag)
         {
             MemberInfo member;
-            if (normalizedAttribute == null || (member = normalizedAttribute.Member) == null) return; // nix
+            if (mappedMember == null || (member = mappedMember.Member) == null) return; // nix
+            var s = mappedMember.MappingState;
 
             AttributeMap[] attribs = AttributeMap.Create(_model, member, true);
             AttributeMap attrib;
-
-            bool defaultValueSpecified = false;
-
-            object defaultValue = null;
-            if ((attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
+            
+            if (s.MainValue.DefaultValue == null && (attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
             {
                 object tmp;
                 if (attrib.TryGet("Value", out tmp))
                 {
-                    defaultValue = tmp;
-                    defaultValueSpecified = true;
+                    var m = s.MainValue;
+                    m.DefaultValue = tmp;
+                    s.MainValue = m;
                 }
             }
 
-            var memberType = Helpers.GetMemberType(member);
-            Type defaultType = normalizedAttribute.CollectionConcreteType;
-            if (defaultType == null && Helpers.IsInterface(metaType.Type))
-                defaultType = FindDefaultInterfaceImplementation(memberType);
-
-            if (implicitFirstTag.HasValue && !normalizedAttribute.TagIsPinned)
             {
-                normalizedAttribute.Rebase(metaType.GetNextFreeFieldNumber(implicitFirstTag.Value));
+                var memberType = Helpers.GetMemberType(member);
+                var level0 = mappedMember.MappingState.LevelValues[0].Value;
+                {
+                    Type defaultType = level0.CollectionConcreteType;
+                    if (defaultType == null && Helpers.IsInterface(metaType.Type))
+                        level0.CollectionConcreteType = FindDefaultInterfaceImplementation(memberType);
+                    mappedMember.MappingState.LevelValues[0] = level0;
+                }
             }
 
-            if (isEnum || normalizedAttribute.Tag > 0)
-            {
-                if (defaultValueSpecified)
-                    metaType.Add(normalizedAttribute, member, defaultValue, defaultType);
-                else
-                    metaType.Add(normalizedAttribute, member, defaultType);
-            }
-        }
+            if (implicitFirstTag.HasValue && !s.TagIsPinned)
+                mappedMember.Tag = metaType.GetNextFreeFieldNumber(implicitFirstTag.Value);
 
-        protected static void GetDataFormat(ref BinaryDataFormat value, AttributeMap attrib, string memberName)
-        {
-            if ((attrib == null) || (value != BinaryDataFormat.Default)) return;
-            object obj;
-            if (attrib.TryGet(memberName, out obj) && obj != null) value = (BinaryDataFormat)obj;
-        }
-
-        protected static void GetIgnore(ref bool ignore, AttributeMap attrib, AttributeMap[] attribs, string fullName)
-        {
-            if (ignore) return;
-            ignore = AttributeMap.GetAttribute(attribs, fullName) != null;
-            return;
+            if (mappedMember.MappingState.Input.AsEnum || mappedMember.Tag > 0)
+                metaType.Add(mappedMember);
         }
 
         protected static void GetFieldBoolean(ref bool value, AttributeMap attrib, string memberName)
@@ -715,32 +695,7 @@ namespace AqlaSerializer
             }
             return false;
         }
-
-        protected static void GetField<T>(ref T value, AttributeMap attrib, string memberName, bool publicOnly = true)
-        {
-            if (attrib == null) return;
-            object obj;
-            if (attrib.TryGet(memberName, publicOnly, out obj) && obj != null)
-            {
-                value = (T)obj;
-                return;
-            }
-            return;
-        }
-
-        protected static void GetFieldNumber(ref int value, AttributeMap attrib, string memberName)
-        {
-            if (attrib == null || value > 0) return;
-            object obj;
-            if (attrib.TryGet(memberName, out obj) && obj != null) value = (int)obj;
-        }
-        protected static void GetFieldName(ref string name, AttributeMap attrib, string memberName)
-        {
-            if (attrib == null || !Helpers.IsNullOrEmpty(name)) return;
-            object obj;
-            if (attrib.TryGet(memberName, out obj) && obj != null) name = (string)obj;
-        }
-
+        
         public virtual bool GetAsReferenceDefault(Type type, bool isProtobufNetLegacyMember)
         {
             if (type == null) throw new ArgumentNullException("type");

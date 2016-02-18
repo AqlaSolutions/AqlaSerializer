@@ -15,11 +15,11 @@ using AqlaSerializer;
 namespace AqlaSerializer
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
-    public abstract class SerializableMemberBaseAttribute : Attribute
+    public abstract class SerializableMemberAttributeBase : Attribute
     {
         internal MemberLevelSettingsValue LevelSettings;
 
-        protected SerializableMemberBaseAttribute(int level, MemberFormat format = 0)
+        protected SerializableMemberAttributeBase(int level, MemberFormat format = 0)
         {
             Level = level;
             MemberFormat = format;
@@ -33,19 +33,21 @@ namespace AqlaSerializer
         public object ModelId { get; set; }
 
         /// <summary>
-        /// Embeds the type information into the stream, allowing usage with types not known in advance.
+        /// Embeds the type information into the stream, allowing usage with types not known in advance. Is not supported in LateReference mode.
         /// </summary>
-        public bool DynamicType { get { return LevelSettings.DynamicType; } set { LevelSettings.DynamicType = value; } }
+        public bool DynamicType { get { return LevelSettings.WriteAsDynamicType.Value; } set { LevelSettings.WriteAsDynamicType = value; } }
+
+        public bool DynamicTypeHasValue => LevelSettings.WriteAsDynamicType.HasValue;
 
         /// <summary>
         /// Supported features
         /// </summary>
         public MemberFormat MemberFormat { get { return LevelSettings.MemberFormat; } set { LevelSettings.MemberFormat = value; } }
-
+        
         /// <summary>
-        /// Indicates that the value should not be traversed recursively
+        /// Enhanced features
         /// </summary>
-        public bool? WriteAsLateReference { get { return LevelSettings.WriteAsLateReference; } set { LevelSettings.WriteAsLateReference = value; } }
+        public EnhancedMode EnhancedWriteAs { get { return LevelSettings.EnhancedWriteMode; } set { LevelSettings.EnhancedWriteMode = value; } }
         
         /// <summary>
         /// Default collection implementation
@@ -55,7 +57,9 @@ namespace AqlaSerializer
         /// <summary>
         /// The data-format to be used when encoding this value.
         /// </summary>
-        public BinaryDataFormat? ContentBinaryFormat { get { return LevelSettings.ContentBinaryFormat; } set { LevelSettings.ContentBinaryFormat = value; } }
+        public BinaryDataFormat ContentBinaryFormatHint { get { return LevelSettings.ContentBinaryFormatHint.Value; } set { LevelSettings.ContentBinaryFormatHint = value; } }
+
+        public bool ContentBinaryFormatHintHasValue => LevelSettings.ContentBinaryFormatHint.HasValue;
 
         /// <summary>
         /// Supported collection features
@@ -72,6 +76,8 @@ namespace AqlaSerializer
         /// This option only applies to list/array data.
         /// </summary>
         [Obsolete("Collection append may be not supported in later versions, overwrite mode is recommended")]
-        public bool? CollectionAppend { get { return LevelSettings.Collection.Append; } set { LevelSettings.Collection.Append = value; } }
+        public bool CollectionAppend { get { return LevelSettings.Collection.Append.Value; } set { LevelSettings.Collection.Append = value; } }
+
+        public bool CollectionAppendHasValue => LevelSettings.Collection.Append.HasValue;
     }
 }

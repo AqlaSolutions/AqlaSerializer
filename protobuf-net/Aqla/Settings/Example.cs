@@ -2,12 +2,11 @@
 
 namespace AqlaSerializer.Settings
 {
-    [SerializableType(DefaultMemberFormat = MemberFormat.Aqla, WriteLateReferenceDefault = true)]
+    //[SerializableType(DefaultMemberFormat = MemberFormat.Aqla, WriteLateReferenceDefault = true)]
     class X
     {
-        [SerializableMember(1, ForModel=, MemberFormat.NotSpecified, Nested = 0, WriteContentFormat = BinaryDataFormat.Default, WriteAsLateReference = true, PrefixLength)]
-        [SerializableMember(MemberFormat.Compact, Nested = 1, WritePacked, ConcreteType)]
-        [SerializableCollection(CollectionFormat.NotSpecified, Nested = 1, Append)] // NO IS PACKED
+        [SerializableMember(1, ModelId = 0, EnhancedWriteAs = EnhancedMode.LateReference, ContentBinaryFormatHint = BinaryDataFormat.Default)]
+        [SerializableMemberNested(2, MemberFormat.Compact, ModelId = 0, Level = 1, CollectionFormat = CollectionFormat.Google, CollectionAppend = true)]
         public int[][] Member { get; set; }
     }
 }

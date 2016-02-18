@@ -21,7 +21,7 @@ namespace AqlaSerializer
     /// </summary>
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field,
         AllowMultiple = true, Inherited = true)]
-    public class SerializableMemberAttribute : SerializableMemberBaseAttribute
+    public class SerializableMemberAttribute : SerializableMemberAttributeBase
         , IComparable
 #if !NO_GENERICS
 , IComparable<SerializableMemberAttribute>

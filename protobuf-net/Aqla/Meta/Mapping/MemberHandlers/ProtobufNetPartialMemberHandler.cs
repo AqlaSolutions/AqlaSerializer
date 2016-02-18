@@ -47,6 +47,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 object tmp;
                 if (!ppma.TryGet("MemberName", out tmp) || tmp as string != main.Name) continue;
 
+                if (ppma.AttributeType.FullName == "ProtoBuf.ProtoPartialIgnoreAttribute") return MemberHandlerResult.Ignore;
+
                 MemberHandlerResult newResult;
                 if (ppma.AttributeType.FullName == "ProtoBuf.ProtoPartialMemberAttribute")
                     newResult = _strategy.TryRead(ppma, s, member, model);

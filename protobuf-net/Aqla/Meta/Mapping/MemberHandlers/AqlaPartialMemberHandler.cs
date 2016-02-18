@@ -40,8 +40,10 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 object tmp;
                 if (!ppma.TryGet("MemberName", out tmp) || tmp as string != main.Name) continue;
 
+                if (ppma.AttributeType.FullName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && CheckAqlaModelId(ppma, model)) return MemberHandlerResult.Ignore;
+
                 MemberHandlerResult newResult;
-                if (Helpers.IsAssignableFrom(model.MapType(typeof(SerializablePartialMemberAttribute)), ppma.AttributeType)) // TODO ensure found
+                if (Helpers.IsAssignableFrom(model.MapType(typeof(SerializablePartialMemberAttribute)), ppma.AttributeType))
                 {
                     var attr = ppma.GetRuntimeAttribute<SerializablePartialMemberAttribute>(model);
                     main = attr.MemberSettings;

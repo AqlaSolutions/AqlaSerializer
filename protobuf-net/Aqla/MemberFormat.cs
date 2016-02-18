@@ -8,7 +8,7 @@ namespace AqlaSerializer
     public enum MemberFormat
     {
         /// <summary>
-        /// Peek format based on member type and <see cref="RuntimeTypeModel"/> settings. Will try to choose Aqla when its settings are enabled.
+        /// Peek format based on member type and <see cref="RuntimeTypeModel"/> settings. Will try to choose Enhanced when its settings are enabled.
         /// </summary>
         NotSpecified = 0,
         /// <summary>
@@ -22,7 +22,7 @@ namespace AqlaSerializer
         /// Supports <see cref="SerializableMemberAttribute.DynamicType"/>. 
         /// Not supported settings will be ignored.
         /// </summary>
-        /// <remarks>The reason why WriteAsLateReference and DynamicType are on properties is because they're considered compatible with </remarks>
+        /// <remarks>The reason why WriteAsLateReference and DynamicType are on properties is because they're both considered of the same Enhanced format</remarks>
         Enhanced,
     }
 }

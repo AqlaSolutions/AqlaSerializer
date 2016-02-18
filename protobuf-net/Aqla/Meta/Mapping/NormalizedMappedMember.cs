@@ -27,11 +27,25 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer
 {
-    public class NormalizedProtoMember
+    public class NormalizedMappedMember
     {
         public bool IsReadOnly { get; set; }
         public bool ForcedTag { get; set; }
         public MemberState MappingState { get; set; }
+
+        public int Tag
+        {
+            get { return MappingState.MainValue.Tag; }
+            set
+            {
+                var m = MappingState.MainValue;
+                m.Tag = value;
+                MappingState.MainValue = m;
+            }
+        }
+
+        public MemberInfo Member => MappingState.Input.Member;
+        public string Name => MappingState.MainValue.Name;
     }
 }
 #endif

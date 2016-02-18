@@ -29,8 +29,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
     {
         public MemberHandlerResult TryRead(MemberState state)
         {
-            var main = state.Main;
-            var levels = state.Levels;
+            var main = state.MainValue;
+            var levels = state.LevelValues;
             var model = state.Input.Model;
             try
             {
@@ -38,8 +38,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
             finally
             {
-                state.Main = main;
-                state.Levels = levels;
+                state.MainValue = main;
+                state.LevelValues = levels;
             }
         }
 

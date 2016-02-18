@@ -29,8 +29,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
     {
         public MemberHandlerResult TryRead(AttributeMap attribute, MemberState s, MemberInfo member, RuntimeTypeModel model)
         {
-            var main = s.Main;
-            var levels = s.Levels;
+            var main = s.MainValue;
+            var levels = s.LevelValues;
             try
             {
                 MemberLevelSettingsValue level = levels[0].GetValueOrDefault();
@@ -48,7 +48,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
                 BinaryDataFormat dataFormat = 0;
                 attribute.TryGetNotDefault("DataFormat", ref dataFormat);
-                level.ContentBinaryFormat = dataFormat;
+                level.ContentBinaryFormatHint = dataFormat;
 
                 bool asRefHasValue = false;
                 bool notAsReferenceHasValue = false;
@@ -97,7 +97,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
             finally
             {
-                s.Main = main;
+                s.MainValue = main;
             }
         }
     }

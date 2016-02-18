@@ -309,10 +309,12 @@
     <Compile Include="Aqla\AttributeType.cs" />
     <Compile Include="Aqla\DefaultAutoAddStrategy.cs" />
     <Compile Include="Aqla\CallbackAttributes.cs" />
+    <Compile Include="Aqla\EnhancedMode.cs" />
     <Compile Include="Aqla\IAutoAddStrategy.cs" />
     <Compile Include="Aqla\CollectionFormat.cs" />
     <Compile Include="Aqla\Meta\Mapping\IMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberAttributeReader.cs" />
+    <Compile Include="Aqla\Meta\Mapping\IMemberMapper.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberMapper.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberArgsValue.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaEnumMemberHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaMemberHandler.cs" />
@@ -329,8 +331,8 @@
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\XmlContractMemberHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberState.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetPartialMemberHandler.cs" />
-    <Compile Include="Aqla\NormalizedProtoMember.cs" />
-    <Compile Include="Aqla\SerializableMemberBaseAttribute.cs" />
+    <Compile Include="Aqla\Meta\Mapping\NormalizedMappedMember.cs" />
+    <Compile Include="Aqla\SerializableMemberAttributeBase.cs" />
     <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />
     <Compile Include="Aqla\Settings\Inheritable\CollectionSettingsValue.cs" />
     <Compile Include="Aqla\Settings\Inheritable\MemberLevelSettingsValue.cs" />
