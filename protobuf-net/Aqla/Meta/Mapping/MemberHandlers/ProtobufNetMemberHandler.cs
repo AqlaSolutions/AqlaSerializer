@@ -40,6 +40,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
         {
             // always consider ProtoMember if not strict Aqla
+            // even if no [ProtoContract] was declared!
             if (!s.Input.CanUse(AttributeType.ProtoBuf)) return MemberHandlerResult.NotFound;
             if (HasProtobufNetIgnore(s.Input.Attributes, model)) return MemberHandlerResult.Ignore;
             var attrib = AttributeMap.GetAttribute(s.Input.Attributes, "ProtoBuf.ProtoMemberAttribute");
