@@ -15,10 +15,12 @@ namespace AqlaSerializer.unittest.Aqla
             public Referenced Value { get; set; }
         }
 
-        [SerializableType]
+        [SerializableType(ImplicitFirstTag = 2)]
         public class Referenced
         {
             public int Data { get; set; }
+
+            [SerializableMember(1, EnhancedMode.LateReference)]
             public Referenced Next { get; set; }
         }
 
@@ -47,13 +49,13 @@ namespace AqlaSerializer.unittest.Aqla
         }
 
         [Test]
-        [ExpectedException(typeof(ProtoException), ExpectedMessage = "Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit")]
         public void VersioningNodesCantDeserializeFromNotLate()
         {
             var original = new Container { Value = GenerateNodes(4000) };
             original.Value.Data = 123;
-            var copy = DeepClone(original, true);
-            CheckNodes(original.Value, copy.Value);
+            Assert.That(
+                () => DeepClone(original, true),
+                Throws.TypeOf<ProtoException>().With.Message.StartsWith("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit"));
         }
 
         [Test]
