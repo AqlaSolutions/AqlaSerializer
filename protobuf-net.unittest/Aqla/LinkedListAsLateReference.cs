@@ -7,11 +7,15 @@ namespace AqlaSerializer.unittest.Aqla
     [TestFixture]
     public class LinkedListAsLateReference
     {
-        [SerializableType]
+        [SerializableType(ImplicitFirstTag = 3)]
         public class Node
         {
+            [SerializableMember(1, EnhancedMode.LateReference)]
             public Node Next { get; set; }
+
+            [SerializableMember(2, EnhancedMode.LateReference)]
             public Node Prev { get; set; }
+
             public int Value { get; set; }
 
             public Node(int value)
@@ -50,11 +54,11 @@ namespace AqlaSerializer.unittest.Aqla
 
             var comp = ProtoCompatibilitySettings.Default;
             if (late)
-            comp.AllowExtensionDefinitions |= NetObjectExtensionTypes.LateReference;
+                comp.AllowExtensionDefinitions |= NetObjectExtensionTypes.LateReference;
             else
-            comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
+                comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
             var tm = TypeModel.Create(false, comp);
-            
+
             Container copy;
 
             if (late)
@@ -63,7 +67,7 @@ namespace AqlaSerializer.unittest.Aqla
             {
                 Assert.That(
                     () => copy = tm.DeepClone(original),
-                    Throws.TypeOf<ProtoException>().With.Message.EqualTo("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit"));
+                    Throws.TypeOf<ProtoException>().With.Message.StartsWith("Recursion depth exceeded safe limit. See TypeModel.RecursionDepthLimit"));
                 return;
             }
 
