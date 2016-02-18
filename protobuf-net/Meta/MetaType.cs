@@ -1209,7 +1209,7 @@ namespace AqlaSerializer.Meta
 #else
             Type finalType = this.Type;
 #endif
-            PropertyInfo prop = Helpers.GetProperty(finalType, member.Name + "Specified", true);
+            PropertyInfo prop = Helpers.GetProperty(finalType, normalizedMember.Member.Name + "Specified", true);
             MethodInfo getMethod = Helpers.GetGetMethod(prop, true, true);
             if (getMethod == null || getMethod.IsStatic) prop = null;
             if (prop != null)
@@ -1218,21 +1218,12 @@ namespace AqlaSerializer.Meta
             }
             else
             {
-                MethodInfo method = Helpers.GetInstanceMethod(finalType, "ShouldSerialize" + member.Name, Helpers.EmptyTypes);
+                MethodInfo method = Helpers.GetInstanceMethod(finalType, "ShouldSerialize" + normalizedMember.Member.Name, Helpers.EmptyTypes);
                 if (method != null && method.ReturnType == model.MapType(typeof(bool)))
                 {
                     vm.SetSpecified(method, null);
                 }
             }
-            if (!Helpers.IsNullOrEmpty(normalizedMember.Name)) vm.SetName(normalizedMember.Name);
-            vm.IsPacked = normalizedMember.IsPacked;
-            vm.IsRequired = normalizedMember.IsRequired;
-            vm.AppendCollection = normalizedMember.AppendCollection;
-            vm.AsReference = true;
-            if (normalizedMember.NotAsReferenceHasValue)
-                vm.AsReference = !normalizedMember.NotAsReference;
-
-            vm.DynamicType = normalizedMember.DynamicType;
             Add(vm);
         }
 
