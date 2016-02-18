@@ -54,7 +54,9 @@ namespace AqlaSerializer
         /// Indicates whether the value should be prefixed with length instead of using StartGroup-EndGroup tags. If set to true makes skipping removed field faster when deserializing but slows down writing.
         /// This settings can't be controlled per member.
         /// </summary>
-        public bool? PrefixLength { get { return TypeSettings.PrefixLength; } set { TypeSettings.PrefixLength = value; } }
+        public bool PrefixLength { get { return TypeSettings.PrefixLength.Value; } set { TypeSettings.PrefixLength = value; } }
+
+        public bool PrefixLengthHasValue => TypeSettings.PrefixLength.HasValue;
 
         /// <summary>
         /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
@@ -74,14 +76,16 @@ namespace AqlaSerializer
         }
 
         /// <summary>
-        /// Indicates that the value should not be traversed recursively
+        /// Enhanced features
         /// </summary>
-        public bool? WriteAsLateReference { get { return TypeSettings.Member.WriteAsLateReference; } set { TypeSettings.Member.WriteAsLateReference = value; } }
-
+        public EnhancedMode EnhancedWriteAs { get { return TypeSettings.Member.EnhancedWriteMode; } set { TypeSettings.Member.EnhancedWriteMode = value; } }
+        
         /// <summary>
         /// The data-format to be used when encoding this value.
         /// </summary>
-        public BinaryDataFormat? ContentBinaryFormatHint { get { return TypeSettings.Member.ContentBinaryFormatHint; } set { TypeSettings.Member.ContentBinaryFormatHint = value; } }
+        public BinaryDataFormat ContentBinaryFormatHint { get { return TypeSettings.Member.ContentBinaryFormatHint.Value; } set { TypeSettings.Member.ContentBinaryFormatHint = value; } }
+
+        public bool ContentBinaryFormatHintHasValue => TypeSettings.Member.ContentBinaryFormatHint.HasValue;
 
         /// <summary>
         /// Supported collection features
