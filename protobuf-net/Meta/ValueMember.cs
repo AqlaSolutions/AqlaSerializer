@@ -69,9 +69,16 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        public ValueMember(RuntimeTypeModel model, Type parentType, int fieldNumber, MemberInfo member, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat, object defaultValue) 
-            : this(model, fieldNumber, memberType, itemType, defaultType, dataFormat)
+        public ValueMember(RuntimeTypeModel model, Type parentType, NormalizedMappedMember mappedMember) 
+            : this(model, mappedMember.Tag, mappedMember.MappingState.Input.EffectiveMemberType, mappedMember[0].Collection.ItemType, mappedMember[0].CollectionConcreteType, mappedMember[0].ContentBinaryFormatHint.GetValueOrDefault())
         {
+            // temp to ensure mapping correctness
+            MemberInfo member = mappedMember.Member;
+            Type memberType=mappedMember.MappingState.Input.EffectiveMemberType;
+            object defaultValue = mappedMember.MappingState.MainValue.DefaultValue;
+            int fieldNumber = mappedMember.Tag;
+
+
             if (member == null) throw new ArgumentNullException("member");
             if (parentType == null) throw new ArgumentNullException("parentType");
             if (fieldNumber < 1 && !Helpers.IsEnum(parentType)) throw new ArgumentOutOfRangeException("fieldNumber");
@@ -90,6 +97,14 @@ namespace AqlaSerializer.Meta
             this.defaultValue = defaultValue;
              asReference =  GetAsReferenceDefault(model, memberType, false, IsDeterminatedAsAutoTuple);
             AppendCollection = !Helpers.CanWrite(model, member);
+            
+            if (!Helpers.IsNullOrEmpty(mappedMember.Name)) SetName(mappedMember.Name);
+            if (mappedMember[0].Collection.Format == CollectionFormat.Google) IsPacked = true;
+            IsRequired = mappedMember.MainValue.IsRequiredInSchema;
+            AppendCollection = mappedMember[0].Collection.Append.GetValueOrDefault();
+            EnhancedMode wm = mappedMember[0].EnhancedWriteMode;
+            AsReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference || wm == EnhancedMode.NotSpecified;
+            DynamicType = mappedMember[0].WriteAsDynamicType.GetValueOrDefault();
         }
         
         // autotuple is determinated when building serializer
@@ -131,7 +146,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        internal ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat) 
+        ValueMember(RuntimeTypeModel model, int fieldNumber, Type memberType, Type itemType, Type defaultType, BinaryDataFormat dataFormat) 
         {
 
             if (memberType == null) throw new ArgumentNullException("memberType");

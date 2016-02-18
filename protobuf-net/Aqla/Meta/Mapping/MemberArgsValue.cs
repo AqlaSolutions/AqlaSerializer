@@ -51,6 +51,11 @@ namespace AqlaSerializer.Meta.Mapping
             return (Family & value) == value;
         }
 
+        public MemberArgsValue(MemberInfo member, Type effectiveMemberType, RuntimeTypeModel model)
+            : this(member, effectiveMemberType, new AttributeMap[0], AttributeType.None, model)
+        {
+        }
+
         public MemberArgsValue(MemberInfo member, Type effectiveMemberType, AttributeMap[] attributes, AttributeType acceptableAttributes, RuntimeTypeModel model)
             : this()
         {

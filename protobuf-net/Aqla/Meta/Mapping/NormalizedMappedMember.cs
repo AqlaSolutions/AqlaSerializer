@@ -33,6 +33,13 @@ namespace AqlaSerializer
         public bool ForcedTag { get; set; }
         public MemberState MappingState { get; set; }
 
+        public NormalizedMappedMember(MemberState mappingState)
+        {
+            MappingState = mappingState;
+        }
+
+        public MemberMainSettingsValue MainValue { get { return MappingState.MainValue; } set { MappingState.MainValue = value; } }
+
         public int Tag
         {
             get { return MappingState.MainValue.Tag; }
@@ -46,6 +53,23 @@ namespace AqlaSerializer
 
         public MemberInfo Member => MappingState.Input.Member;
         public string Name => MappingState.MainValue.Name;
+
+        public MemberLevelSettingsValue this[int nestedLevel]
+        {
+            get
+            {
+                if (nestedLevel >= MappingState.LevelValues.Count) return new MemberLevelSettingsValue();
+                return MappingState.LevelValues[nestedLevel].GetValueOrDefault();
+            }
+            set
+            {
+                while (nestedLevel >= MappingState.LevelValues.Count)
+                    MappingState.LevelValues.Add(new MemberLevelSettingsValue());
+
+                MappingState.LevelValues[nestedLevel] = value;
+            }
+        }
     }
 }
+
 #endif

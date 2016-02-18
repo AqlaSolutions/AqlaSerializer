@@ -19,10 +19,11 @@ namespace AqlaSerializer
     {
         internal MemberLevelSettingsValue LevelSettings;
 
-        protected SerializableMemberAttributeBase(int level, MemberFormat format = 0)
+        protected SerializableMemberAttributeBase(int level, MemberFormat format = 0, EnhancedMode enchancedWriteAs = 0)
         {
             Level = level;
             MemberFormat = format;
+            EnhancedWriteAs = enchancedWriteAs;
         }
 
         public int Level { get; set; }

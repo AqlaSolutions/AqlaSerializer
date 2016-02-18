@@ -98,11 +98,10 @@ namespace AqlaSerializer.Meta.Mapping
                 state.MainValue = m;
             }
 
-            return new NormalizedMappedMember
+            return new NormalizedMappedMember(state)
             {
                 ForcedTag = state.Input.IsForced || state.Input.InferTagByName,
                 IsReadOnly = readOnly,
-                MappingState = state
             };
         }
     }
