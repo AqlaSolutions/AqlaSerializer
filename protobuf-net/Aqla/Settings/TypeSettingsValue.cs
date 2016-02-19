@@ -15,7 +15,7 @@ namespace AqlaSerializer.Settings
     public struct TypeSettingsValue
     {
         public string Name;
-        public bool EnumPassthru;
+        public bool? EnumPassthru;
         public bool SkipConstructor;
         public bool IgnoreListHandling;
         public bool? PrefixLength;
