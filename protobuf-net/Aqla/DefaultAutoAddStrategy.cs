@@ -568,8 +568,9 @@ namespace AqlaSerializer
             {
                 if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && CanUse(AttributeType.Aqla))
                 {
-                    object tmp;
-                    if (typeAttribs[i].TryGet("IgnoreListHandling", out tmp)) return (bool)tmp;
+                    var attr = typeAttribs[i].GetRuntimeAttribute<SerializableTypeAttribute>(Model);
+                    var s = attr.TypeSettings;
+                    return s.IgnoreListHandling;
                 }
                 if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && CanUse(AttributeType.ProtoBuf))
                 {
