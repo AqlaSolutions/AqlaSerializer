@@ -27,13 +27,13 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer
 {
-    public class NormalizedMappedMember : IComparable<NormalizedMappedMember>
+    public class MappedMember : IComparable<MappedMember>
     {
         public bool IsReadOnly { get; set; }
         public bool ForcedTag { get; set; }
         public MemberState MappingState { get; set; }
 
-        public NormalizedMappedMember(MemberState mappingState)
+        public MappedMember(MemberState mappingState)
         {
             MappingState = mappingState;
         }
@@ -74,7 +74,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Compare with another NormalizedMappedMember for sorting purposes
         /// </summary>
-        int IComparable<NormalizedMappedMember>.CompareTo(NormalizedMappedMember other)
+        int IComparable<MappedMember>.CompareTo(MappedMember other)
         {
             if (other == null) return -1;
             if ((object)this == (object)other) return 0;

@@ -1039,7 +1039,7 @@ namespace AqlaSerializer.Meta
             m.Tag = fieldNumber;
             m.DefaultValue = defaultValue;
             s.MainValue = m;
-            var mappedMember = new NormalizedMappedMember(s);
+            var mappedMember = new MappedMember(s);
             var level0 = mappedMember[0];
             level0.CollectionConcreteType = defaultType;
             level0.Collection.ItemType = itemType;
@@ -1152,9 +1152,9 @@ namespace AqlaSerializer.Meta
 
         }
 
-        public void Add(NormalizedMappedMember normalizedMember)
+        public void Add(MappedMember member)
         {
-            var s = normalizedMember.MappingState;
+            var s = member.MappingState;
             var m = s.MainValue;
             Type effectiveType = s.Input.EffectiveMemberType;
 
@@ -1216,20 +1216,20 @@ namespace AqlaSerializer.Meta
                     }
                     else if (level0.CollectionConcreteType != null && !Helpers.IsAssignableFrom(effectiveType, level0.CollectionConcreteType))
                         throw new ProtoException(
-                            "Specified default type " + level0.CollectionConcreteType.Name + " is not assignable to member " + this.Type.Name + "." + normalizedMember.Member.Name);
+                            "Specified default type " + level0.CollectionConcreteType.Name + " is not assignable to member " + this.Type.Name + "." + member.Member.Name);
                 }
                 s.LevelValues[0] = level0;
             }
 
             s.MainValue = m;
 
-            var vm = new ValueMember(model, this.Type, normalizedMember);
+            var vm = new ValueMember(model, this.Type, member);
 #if WINRT
             TypeInfo finalType = typeInfo;
 #else
             Type finalType = this.Type;
 #endif
-            PropertyInfo prop = Helpers.GetProperty(finalType, normalizedMember.Member.Name + "Specified", true);
+            PropertyInfo prop = Helpers.GetProperty(finalType, member.Member.Name + "Specified", true);
             MethodInfo getMethod = Helpers.GetGetMethod(prop, true, true);
             if (getMethod == null || getMethod.IsStatic) prop = null;
             if (prop != null)
@@ -1238,7 +1238,7 @@ namespace AqlaSerializer.Meta
             }
             else
             {
-                MethodInfo method = Helpers.GetInstanceMethod(finalType, "ShouldSerialize" + normalizedMember.Member.Name, Helpers.EmptyTypes);
+                MethodInfo method = Helpers.GetInstanceMethod(finalType, "ShouldSerialize" + member.Member.Name, Helpers.EmptyTypes);
                 if (method != null && method.ReturnType == model.MapType(typeof(bool)))
                 {
                     vm.SetSpecified(method, null);

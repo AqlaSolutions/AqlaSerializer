@@ -331,6 +331,7 @@
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\XmlContractMemberHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberState.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetPartialMemberHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MappedMember.cs" />
     <Compile Include="Aqla\Meta\Mapping\NormalizedMappedMember.cs" />
     <Compile Include="Aqla\SerializableMemberAttributeBase.cs" />
     <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />

@@ -35,14 +35,10 @@ namespace AqlaSerializer.Meta.Mapping
             Handlers = handlersCollection.ToList();
         }
 
-        public virtual NormalizedMappedMember Map(ref MemberArgsValue args)
+        public virtual MappedMember Map(ref MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.AsEnum)) return null;
-
-            if (args.Member.Name == "Wrapper")
-            {
-
-            }
+            
             var model = args.Model;
             var member = args.Member;
             
@@ -55,20 +51,7 @@ namespace AqlaSerializer.Meta.Mapping
 
             state.LevelValues.Add(new MemberLevelSettingsValue());
 
-            MemberHandlerResult result = MemberHandlerResult.NotFound;
-
-            foreach (var handler in Handlers)
-            {
-                switch (result = handler.TryRead(state))
-                {
-                    case MemberHandlerResult.Ignore:
-                        return null;
-                    case MemberHandlerResult.Done:
-                        break;
-                }
-            }
-
-            if (result == MemberHandlerResult.Ignore || (state.MainValue.Tag < state.MinAcceptFieldNumber && !state.Input.IsForced)) return null;
+            if (ProcessHandlers(state) == MemberHandlerResult.Ignore || (state.MainValue.Tag < state.MinAcceptFieldNumber && !state.Input.IsForced)) return null;
 
             bool readOnly = !Helpers.CanWrite(model, member);
 
@@ -100,11 +83,27 @@ namespace AqlaSerializer.Meta.Mapping
                 state.MainValue = m;
             }
 
-            return new NormalizedMappedMember(state)
+            return new MappedMember(state)
             {
                 ForcedTag = state.Input.IsForced || state.Input.InferTagByName,
                 IsReadOnly = readOnly,
             };
+        }
+
+        protected virtual MemberHandlerResult ProcessHandlers(MemberState state)
+        {
+            MemberHandlerResult result=MemberHandlerResult.NotFound;
+            foreach (var handler in Handlers)
+            {
+                switch (result = handler.TryRead(state))
+                {
+                    case MemberHandlerResult.Ignore:
+                        return result;
+                    case MemberHandlerResult.Done:
+                        break;
+                }
+            }
+            return result;
         }
     }
 }

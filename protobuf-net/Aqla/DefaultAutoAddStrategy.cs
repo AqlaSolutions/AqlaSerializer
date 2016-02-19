@@ -281,7 +281,7 @@ namespace AqlaSerializer
                 }
                 MethodInfo[] callbacks = null;
 
-                var members = new List<NormalizedMappedMember>();
+                var members = new List<MappedMember>();
 
 #if WINRT
             System.Collections.Generic.IEnumerable<MemberInfo> foundList;
@@ -443,7 +443,7 @@ namespace AqlaSerializer
             _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
-        protected virtual NormalizedMappedMember ApplyDefaultBehaviour_AddMembers(ref MemberArgsValue argsValue, ImplicitFieldsMode implicitMode, bool isPublic, bool isField, Type defaultType)
+        protected virtual MappedMember ApplyDefaultBehaviour_AddMembers(ref MemberArgsValue argsValue, ImplicitFieldsMode implicitMode, bool isPublic, bool isField, Type defaultType)
         {
             switch (implicitMode)
             {
@@ -637,7 +637,7 @@ namespace AqlaSerializer
             return (value & required) == required;
         }
         
-        protected virtual void ApplyDefaultBehaviour(MetaType metaType, NormalizedMappedMember mappedMember, int? implicitFirstTag)
+        protected virtual void ApplyDefaultBehaviour(MetaType metaType, MappedMember mappedMember, int? implicitFirstTag)
         {
             MemberInfo member;
             if (mappedMember == null || (member = mappedMember.Member) == null) return; // nix
