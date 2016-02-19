@@ -32,10 +32,11 @@ namespace AqlaSerializer.Meta.Mapping
 
         public MemberMapper(IEnumerable<IMemberHandler> handlersCollection)
         {
+            if (handlersCollection == null) throw new ArgumentNullException(nameof(handlersCollection));
             Handlers = handlersCollection.ToList();
         }
 
-        public virtual MappedMember Map(ref MemberArgsValue args)
+        public virtual MappedMember Map(MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.AsEnum)) return null;
             
@@ -75,14 +76,7 @@ namespace AqlaSerializer.Meta.Mapping
                     state.LevelValues[i] = s;
                 }
             }
-
-            if (Helpers.IsNullOrEmpty(state.MainValue.Name))
-            {
-                m = state.MainValue;
-                m.Name = member.Name;
-                state.MainValue = m;
-            }
-
+            
             return new MappedMember(state)
             {
                 ForcedTag = state.Input.IsForced || state.Input.InferTagByName,

@@ -315,6 +315,7 @@
     <Compile Include="Aqla\Meta\Mapping\DerivedTypeCandidate.cs" />
     <Compile Include="Aqla\Meta\Mapping\IMemberHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\IMemberMapper.cs" />
+    <Compile Include="Aqla\Meta\Mapping\ITypeMapper.cs" />
     <Compile Include="Aqla\Meta\Mapping\MappingHandlerBase.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberMapper.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberArgsValue.cs" />
@@ -342,12 +343,13 @@
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\DerivedTypeHandlerStrategy.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\ProtoContractHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\ProtoPartialHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\SerializableTypeHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\AqlaSerializableHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\SerializeDerivedTypeHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\ProtoIncludeHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\SerializableHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\SystemSerializableHandler.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\TypeAttributeMappingHandlerBase.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\XmlContractHandler.cs" />
+    <Compile Include="Aqla\Meta\Mapping\TypeMapper.cs" />
     <Compile Include="Aqla\Meta\Mapping\TypeState.cs" />
     <Compile Include="Aqla\SerializableMemberAttributeBase.cs" />
     <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />

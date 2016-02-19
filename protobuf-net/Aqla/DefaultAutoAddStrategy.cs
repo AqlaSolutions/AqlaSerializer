@@ -8,6 +8,7 @@ using AqlaSerializer;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Meta.Mapping;
 using AqlaSerializer.Meta.Mapping.MemberHandlers;
+using AqlaSerializer.Meta.Mapping.TypeAttributeHandlers;
 using AqlaSerializer.Serializers;
 using AqlaSerializer.Settings;
 #if FEAT_IKVM
@@ -39,6 +40,18 @@ namespace AqlaSerializer
                 _memberMapper = value;
             }
         }
+     
+        ITypeMapper _typeMapper;
+
+        public ITypeMapper TypeMapper
+        {
+            get { return _typeMapper; }
+            set
+            {
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                _typeMapper = value;
+            }
+        }
         
         public virtual bool CanAutoAddType(Type type)
         {
@@ -61,67 +74,47 @@ namespace AqlaSerializer
 
             try
             {
-                AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
-                AttributeFamily family = GetContractFamily(type, typeAttribs);
-                if (family == AttributeFamily.AutoTuple)
-                {
-                    metaType.IsAutoTuple = true;
-                }
-                bool asEnum = !metaType.EnumPassthru && Helpers.IsEnum(type);
-                if (family == AttributeFamily.None && !asEnum) return; // and you'd like me to do what, exactly?
-                var partialMembers = new List<AttributeMap>();
-                int dataMemberOffset = 0, implicitFirstTag = 1;
-                bool inferTagByName = _model.InferTagFromNameDefault;
-                ImplicitFieldsMode implicitMode = ImplicitFieldsMode.None;
-                bool implicitAqla = false;
-                bool explicitPropertiesContract = false;
-                string name = null;
+                AttributeFamily family;
+                TypeState mapped;
 
-                if (family == AttributeFamily.ImplicitFallback)
                 {
-                    implicitMode = ImplicitFallbackMode;
-                    implicitAqla = true;
-                    explicitPropertiesContract = true;
-                }
-                for (int i = 0; i < typeAttribs.Length; i++)
-                {
-                    AttributeMap item = (AttributeMap)typeAttribs[i];
-                    object tmp;
-                    string fullAttributeTypeName = item.AttributeType.FullName;
+                    AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
+                    family = GetContractFamily(type, typeAttribs);
 
-                    // we check CanUse everywhere but not family because GetContractFamily is based on CanUse
-                    // and CanUse is based on the settings
-                    // except is for SerializableAttribute which family is not returned if other families are present
+                    mapped = TypeMapper.Map(
+                        new TypeArgsValue(type, typeAttribs, AcceptableAttributes, Model)
+                        {
+                            Family = family,
+                            ImplicitFallbackMode = ImplicitFallbackMode,
+                        });
 
-                    H1(asEnum, fullAttributeTypeName, family, ref implicitMode, ref implicitAqla);
-                    H2(asEnum, fullAttributeTypeName, metaType, item, type);
-                    H3(asEnum, fullAttributeTypeName, metaType, item, type);
-                    H4_Partial(fullAttributeTypeName, partialMembers, item, asEnum);
-                    H5(metaType, fullAttributeTypeName, family, item, ref name, type, ref asEnum, ref dataMemberOffset, ref inferTagByName, ref implicitMode, ref explicitPropertiesContract, ref implicitFirstTag);
-                    H6(metaType, fullAttributeTypeName, family, item, ref name, type, ref asEnum, ref dataMemberOffset, ref inferTagByName, ref implicitMode, ref implicitAqla, ref explicitPropertiesContract, ref implicitFirstTag);
-                    H7(fullAttributeTypeName, family, ref name, item);
-                    H8(fullAttributeTypeName, family, ref name, item);
+                    foreach (var candidate in mapped.DerivedTypes)
+                        if (metaType.IsValidSubType(candidate.Type)) metaType.AddSubType(candidate.Tag, candidate.Type, candidate.DataFormat);
+
+                    TypeSettingsValue sv = mapped.SettingsValue;
+                    metaType.AsReferenceDefault = sv.Member.MemberFormat != MemberFormat.Compact
+                                                  && (sv.Member.EnhancedWriteMode != EnhancedMode.Minimal)
+                                                  && !Helpers.IsValueType(type);
+                    if (string.IsNullOrEmpty(sv.Name)) sv.Name = type.Name;
+                    metaType.Name = sv.Name;
+                    metaType.CollectionDataFormat = sv.Member.ContentBinaryFormatHint.GetValueOrDefault();
+                    metaType.ConstructType = sv.ConcreteType;
+                    metaType.EnumPassthru = sv.EnumPassthru;
+                    metaType.IsAutoTuple = sv.IsAutoTuple;
+                    metaType.IgnoreListHandling = sv.IgnoreListHandling;
+                    metaType.UseConstructor = !sv.SkipConstructor;
+                    metaType.PrefixLength = sv.PrefixLength.GetValueOrDefault(metaType.PrefixLength);
                 }
 
-                if (!Helpers.IsNullOrEmpty(name)) metaType.Name = name;
-                if (implicitMode != ImplicitFieldsMode.None)
-                {
-                    if (family == AttributeFamily.ImplicitFallback)
-                    {
-                        family = AttributeFamily.None;
-                        if (CanUse(AttributeType.ProtoBuf))
-                            family |= AttributeFamily.ProtoBuf;
-                        if (CanUse(AttributeType.Aqla))
-                            family |= AttributeFamily.Aqla;
-                    }
-                    else if (HasFamily(family, AttributeFamily.Aqla) || HasFamily(family, AttributeFamily.ProtoBuf))
-                    {
-                        if (implicitAqla)
-                            family &= AttributeFamily.Aqla;
-                        else
-                            family &= AttributeFamily.ProtoBuf; // with implicit fields, **only** proto attributes are important
-                    }
-                }
+                var partialMembers = mapped.PartialMembers;
+                int dataMemberOffset = mapped.DataMemberOffset;
+                int implicitFirstTag = mapped.ImplicitFirstTag;
+                bool inferTagByName = mapped.InferTagByName;
+                ImplicitFieldsMode implicitMode = mapped.ImplicitMode;
+                bool explicitPropertiesContract = mapped.ExplicitPropertiesContract;
+                bool asEnum = mapped.AsEnum;
+                family = mapped.Input.Family;
+                
                 MethodInfo[] callbacks = null;
 
                 var members = new List<MappedMember>();
@@ -275,213 +268,7 @@ namespace AqlaSerializer
                 }
             }
         }
-
-        static void H8(string fullAttributeTypeName, AttributeFamily family, ref string name, AttributeMap item)
-        {
-
-            object tmp;
-            if (fullAttributeTypeName == "System.Xml.Serialization.XmlTypeAttribute" && HasFamily(family, AttributeFamily.XmlSerializer))
-            {
-                if (name == null && item.TryGet("TypeName", out tmp)) name = (string)tmp;
-            }
-        }
-
-        static void H7(string fullAttributeTypeName, AttributeFamily family, ref string name, AttributeMap item)
-        {
-            object tmp;
-
-            if (fullAttributeTypeName == "System.Runtime.Serialization.DataContractAttribute" && HasFamily(family, AttributeFamily.DataContractSerialier))
-            {
-                if (name == null && item.TryGet("Name", out tmp)) name = (string)tmp;
-            }
-        }
-
-        static void H6(
-            MetaType metaType, string fullAttributeTypeName, AttributeFamily family, AttributeMap item, ref string name, Type type, ref bool asEnum, ref int dataMemberOffset,
-            ref bool inferTagByName, ref ImplicitFieldsMode implicitMode, ref bool implicitAqla, ref bool explicitPropertiesContract, ref int implicitFirstTag)
-        {
-
-            object tmp;
-            if (fullAttributeTypeName == "AqlaSerializer.SerializableTypeAttribute" && HasFamily(family, AttributeFamily.Aqla))
-            {
-                if (item.TryGet("Name", out tmp)) name = (string)tmp;
-                if (Helpers.IsEnum(type)) // note this is subtly different to isEnum; want to do this even if [Flags]
-                {
-#if !FEAT_IKVM
-                    // IKVM can't access EnumPassthruHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
-                    if (item.TryGet("EnumPassthruHasValue", false, out tmp) && (bool)tmp)
-#endif
-                    {
-                        if (item.TryGet("EnumPassthru", out tmp))
-                        {
-                            metaType.EnumPassthru = (bool)tmp;
-                            if (metaType.EnumPassthru) asEnum = false; // no longer treated as an enum
-                        }
-                    }
-                }
-                else
-                {
-                    if (item.TryGet("DataMemberOffset", out tmp)) dataMemberOffset = (int)tmp;
-
-#if !FEAT_IKVM
-                    // IKVM can't access InferTagFromNameHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
-                    if (item.TryGet("InferTagFromNameHasValue", false, out tmp) && (bool)tmp)
-#endif
-                    {
-                        if (item.TryGet("InferTagFromName", out tmp)) inferTagByName = (bool)tmp;
-                    }
-
-                    if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
-                    {
-                        implicitMode = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
-                        if (implicitMode != ImplicitFieldsMode.None) implicitAqla = true;
-                    }
-                    if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
-                    {
-                        explicitPropertiesContract = (bool)tmp;
-                    }
-                    if (item.TryGet("SkipConstructor", out tmp)) metaType.UseConstructor = !(bool)tmp;
-                    if (item.TryGet("IgnoreListHandling", out tmp)) metaType.IgnoreListHandling = (bool)tmp;
-                    if (item.TryGet("NotAsReferenceDefault", out tmp)) metaType.AsReferenceDefault = !(bool)tmp;
-                    if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) implicitFirstTag = (int)tmp;
-                    if (item.TryGet("ConstructType", out tmp)) metaType.ConstructType = (Type)tmp;
-                }
-            }
-        }
-
-        static void H5(
-            MetaType metaType, string fullAttributeTypeName, AttributeFamily family, AttributeMap item, ref string name, Type type, ref bool asEnum, ref int dataMemberOffset,
-            ref bool inferTagByName, ref ImplicitFieldsMode implicitMode, ref bool explicitPropertiesContract, ref int implicitFirstTag)
-        {
-            object tmp;
-            if (fullAttributeTypeName == "ProtoBuf.ProtoContractAttribute" && HasFamily(family, AttributeFamily.ProtoBuf))
-            {
-                if (item.TryGet("Name", out tmp)) name = (string)tmp;
-                if (Helpers.IsEnum(type)) // note this is subtly different to isEnum; want to do this even if [Flags]
-                {
-#if !FEAT_IKVM
-                    // IKVM can't access EnumPassthruHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
-                    if (item.TryGet("EnumPassthruHasValue", false, out tmp) && (bool)tmp)
-#endif
-                    {
-                        if (item.TryGet("EnumPassthru", out tmp))
-                        {
-                            metaType.EnumPassthru = (bool)tmp;
-                            if (metaType.EnumPassthru) asEnum = false; // no longer treated as an enum
-                        }
-                    }
-                }
-                else
-                {
-                    if (item.TryGet("DataMemberOffset", out tmp)) dataMemberOffset = (int)tmp;
-
-#if !FEAT_IKVM
-                    // IKVM can't access InferTagFromNameHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
-                    if (item.TryGet("InferTagFromNameHasValue", false, out tmp) && (bool)tmp)
-#endif
-                    {
-                        if (item.TryGet("InferTagFromName", out tmp)) inferTagByName = (bool)tmp;
-                    }
-
-                    if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
-                    {
-                        implicitMode = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
-                    }
-                    if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
-                    {
-                        explicitPropertiesContract = (bool)tmp;
-                    }
-                    if (item.TryGet("SkipConstructor", out tmp)) metaType.UseConstructor = !(bool)tmp;
-                    if (item.TryGet("IgnoreListHandling", out tmp)) metaType.IgnoreListHandling = (bool)tmp;
-                    if (item.TryGet("AsReferenceDefault", out tmp)) metaType.AsReferenceDefault = (bool)tmp;
-                    if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) implicitFirstTag = (int)tmp;
-                }
-            }
-        }
-
-        void H4_Partial(string fullAttributeTypeName, List<AttributeMap> partialMembers, AttributeMap item, bool asEnum)
-        {
-
-            if (fullAttributeTypeName == "ProtoBuf.ProtoPartialIgnoreAttribute" && CanUse(AttributeType.ProtoBuf))
-                partialMembers.Add(item);
-            else if (fullAttributeTypeName == "AqlaSerializer.PartialNonSerializableMemberAttribute" && CanUse(AttributeType.Aqla))
-                partialMembers.Add(item);
-            else if (!asEnum && fullAttributeTypeName == "ProtoBuf.ProtoPartialMemberAttribute" && CanUse(AttributeType.ProtoBuf))
-                partialMembers.Add(item);
-            else if (!asEnum && fullAttributeTypeName == "AqlaSerializer.SerializablePartialMemberAttribute" && CanUse(AttributeType.Aqla))
-                partialMembers.Add(item);
-        }
-
-        static void H1(bool asEnum, string fullAttributeTypeName, AttributeFamily family, ref ImplicitFieldsMode implicitMode, ref bool implicitAqla)
-        {
-            if (!asEnum && fullAttributeTypeName == "System.SerializableAttribute" && HasFamily(family, AttributeFamily.SystemSerializable))
-            {
-                implicitMode = ImplicitFieldsMode.AllFields;
-                implicitAqla = true;
-            }
-        }
-
-        void H2(bool asEnum, string fullAttributeTypeName, MetaType metaType, AttributeMap item, Type type)
-        {
-            object tmp;
-            if (!asEnum && fullAttributeTypeName == "ProtoBuf.ProtoIncludeAttribute" && CanUse(AttributeType.ProtoBuf))
-            {
-                int tag = 0;
-                if (item.TryGet("tag", out tmp)) tag = (int)tmp;
-                BinaryDataFormat dataFormat = BinaryDataFormat.Default;
-                if (item.TryGet("DataFormat", out tmp))
-                {
-                    dataFormat = (BinaryDataFormat)(int)tmp;
-                }
-                Type knownType = null;
-                try
-                {
-                    if (item.TryGet("knownTypeName", out tmp)) knownType = _model.GetType((string)tmp, Helpers.GetAssembly(type));
-                    else if (item.TryGet("knownType", out tmp)) knownType = (Type)tmp;
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException("Unable to resolve sub-type of: " + type.FullName, ex);
-                }
-                if (knownType == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve sub-type of: " + type.FullName);
-                }
-                if (metaType.IsValidSubType(knownType)) metaType.AddSubType(tag, knownType, dataFormat);
-            }
-        }
-
-        void H3(bool asEnum, string fullAttributeTypeName, MetaType metaType, AttributeMap item, Type type)
-        {
-            object tmp;
-            if (!asEnum && fullAttributeTypeName == "AqlaSerializer.SerializeDerivedTypeAttribute" && CanUse(AttributeType.Aqla))
-            {
-                int tag = 0;
-                if (item.TryGet("tag", out tmp)) tag = (int)tmp;
-                BinaryDataFormat dataFormat = BinaryDataFormat.Default;
-                if (item.TryGet("DataFormat", out tmp))
-                {
-                    dataFormat = (BinaryDataFormat)(int)tmp;
-                }
-                Type knownType = null;
-                try
-                {
-                    if (item.TryGet("knownTypeName", out tmp)) knownType = _model.GetType((string)tmp, Helpers.GetAssembly(type));
-                    else if (item.TryGet("knownType", out tmp)) knownType = (Type)tmp;
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException("Unable to resolve sub-type of: " + type.FullName, ex);
-                }
-                if (knownType == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve sub-type of: " + type.FullName);
-                }
-                if (metaType.IsValidSubType(knownType)) metaType.AddSubType(tag, knownType, dataFormat);
-            }
-
-        }
-
+        
         protected virtual MetaType FindMetaTypeWithoutAdd(Type baseType)
         {
             return _model.FindWithoutAdd(baseType);
@@ -524,9 +311,14 @@ namespace AqlaSerializer
 #endif
             if (argsValue.EffectiveMemberType != null)
             {
-                var normalized = MemberMapper.Map(ref argsValue);
+                var normalized = MemberMapper.Map(argsValue);
                 if (normalized != null)
                 {
+                    var m = normalized.MappingState.MainValue;
+                    if (string.IsNullOrEmpty(m.Name)) m.Name = normalized.Member.Name;
+                    normalized.MappingState.MainValue = m;
+
+                    argsValue = normalized.MappingState.Input; // just to be sure
                     var levels = normalized.MappingState.LevelValues;
                     if (levels.Count == 0)
                         levels.Add(new MemberLevelSettingsValue());
@@ -536,7 +328,6 @@ namespace AqlaSerializer
                         if (level.CollectionConcreteType == null) level.CollectionConcreteType = defaultType;
                         levels[i] = level;
                     }
-                    argsValue = normalized.MappingState.Input; // just to be sure
                 }
                 return normalized;
             }
@@ -871,11 +662,12 @@ namespace AqlaSerializer
 
         public bool DisableAutoAddingMemberTypes { get; set; }
 
-        public DefaultAutoAddStrategy(RuntimeTypeModel model, IMemberMapper memberMapper = null)
+        public DefaultAutoAddStrategy(RuntimeTypeModel model)
         {
             if (model == null) throw new ArgumentNullException("model");
             _model = model;
-            MemberMapper = memberMapper ?? CreateDefaultMemberMapper();
+            MemberMapper = CreateDefaultMemberMapper();
+            TypeMapper = CreateDefaultTypeMapper();
         }
 
         public static IMemberMapper CreateDefaultMemberMapper()
@@ -892,6 +684,25 @@ namespace AqlaSerializer
                     new ProtobufNetPartialMemberHandler(new ProtobufNetMemberHandlerStrategy()),
                     new DataContractMemberHandler(),
                     new XmlContractMemberHandler(),
+                });
+        }
+
+        public static ITypeMapper CreateDefaultTypeMapper()
+        {
+            return new TypeMapper(
+                new[]
+                {
+                    new TypeMapper.Handler("System.SerializableAttribute", new SystemSerializableHandler()),
+                    new TypeMapper.Handler("AqlaSerializer.SerializableTypeAttribute", new AqlaSerializableHandler()),
+                    new TypeMapper.Handler("ProtoBuf.ProtoContractAttribute", new ProtoContractHandler()),
+                    new TypeMapper.Handler("ProtoBuf.ProtoIncludeAttribute", new ProtoIncludeHandler(new DerivedTypeHandlerStrategy())),
+                    new TypeMapper.Handler("AqlaSerializer.SerializeDerivedTypeAttribute", new SerializeDerivedTypeHandler(new DerivedTypeHandlerStrategy())),
+                    new TypeMapper.Handler("AqlaSerializer.PartialNonSerializableMemberAttribute", new AqlaPartialHandler()),
+                    new TypeMapper.Handler("AqlaSerializer.SerializablePartialMemberAttribute", new AqlaPartialHandler()),
+                    new TypeMapper.Handler("ProtoBuf.ProtoPartialIgnoreAttribute", new ProtoPartialHandler()),
+                    new TypeMapper.Handler("ProtoBuf.ProtoPartialMemberAttribute", new ProtoPartialHandler()),
+                    new TypeMapper.Handler("System.Runtime.Serialization.DataContractAttribute", new DataContractHandler()),
+                    new TypeMapper.Handler("System.Xml.Serialization.XmlTypeAttribute", new XmlContractHandler()),
                 });
         }
 

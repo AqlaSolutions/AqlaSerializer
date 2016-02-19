@@ -26,18 +26,22 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
 {
-    public class SerializableTypeHandler : TypeAttributeMappingHandlerBase
+    public class SystemSerializableHandler : TypeAttributeMappingHandlerBase
     {
         protected override TypeAttributeHandlerResult TryMap(AttributeMap item, TypeState s, TypeArgsValue a, RuntimeTypeModel model)
         {
-            if (a.HasFamily(MetaType.AttributeFamily.Aqla) && CheckAqlaModelId(a, model))
+            // we check CanUse everywhere but not family because GetContractFamily is based on CanUse
+            // and CanUse is based on the settings
+            // except is for SerializableAttribute which family is not returned if other families are present
+            if (!s.AsEnum && a.HasFamily(MetaType.AttributeFamily.SystemSerializable))
             {
-                var attr = item.GetRuntimeAttribute<SerializableTypeAttribute>(model);
-                s.SettingsValue = attr.TypeSettings;
-                return TypeAttributeHandlerResult.Done;
+                s.ImplicitMode = ImplicitFieldsMode.AllFields;
+                s.ImplicitAqla = true;
             }
-            return TypeAttributeHandlerResult.Continue;
+            return TypeAttributeHandlerResult.Done;
         }
+
+
     }
 }
 
