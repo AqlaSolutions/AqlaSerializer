@@ -97,6 +97,12 @@ namespace AqlaSerializer
         /// </summary>
         public Type CollectionItemType { get { return TypeSettings.Member.Collection.ItemType; } set { TypeSettings.Member.Collection.ItemType = value; } }
 
+
+        /// <summary>
+        /// If specified, do NOT treat this type as a list, even if it looks like one.
+        /// </summary>
+        public bool IgnoreListHandling { get { return TypeSettings.IgnoreListHandling; } set { TypeSettings.IgnoreListHandling = value; } }
+
         /// <summary>
         /// Gets or sets the fist offset to use with implicit field tags;
         /// only uesd if ImplicitFields is set.

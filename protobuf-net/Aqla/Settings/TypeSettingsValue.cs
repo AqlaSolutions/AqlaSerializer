@@ -17,6 +17,7 @@ namespace AqlaSerializer.Settings
         public string Name;
         public bool EnumPassthru;
         public bool SkipConstructor;
+        public bool IgnoreListHandling { get; set; }
         public bool? PrefixLength;
         public Type ConcreteType;
         public MemberLevelSettingsValue Member;
