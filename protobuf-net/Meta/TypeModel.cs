@@ -286,6 +286,25 @@ namespace AqlaSerializer.Meta
             return DeserializeWithLengthPrefix(source, value, type, style, fieldNumber, null, out bytesRead);
         }
 
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
+        /// data - useful with network IO.
+        /// </summary>
+        /// <param name="type">The type being merged.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="style">How to encode the length prefix.</param>
+        /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int fieldNumber, SerializationContext context)
+        {
+            int dummy;
+            bool dummy2;
+            return DeserializeWithLengthPrefix(source, value, type, style, fieldNumber, null, out dummy, out dummy2, context);
+        }
+
 
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
@@ -326,7 +345,21 @@ namespace AqlaSerializer.Meta
             return DeserializeWithLengthPrefix(source, value, type, style, expectedField, resolver, out bytesRead, out haveObject, null);
         }
 
-        private object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, out int bytesRead, out bool haveObject, SerializationContext context)
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
+        /// data - useful with network IO.
+        /// </summary>
+        /// <param name="type">The type being merged.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="style">How to encode the length prefix.</param>
+        /// <param name="expectedField">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        /// <param name="resolver">Used to resolve types on a per-field basis.</param>
+        /// <param name="bytesRead">Returns the number of bytes consumed by this operation (includes length-prefix overheads and any skipped data).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, out int bytesRead, out bool haveObject, SerializationContext context)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
