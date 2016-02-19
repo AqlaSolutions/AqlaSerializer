@@ -268,10 +268,7 @@ namespace AqlaSerializer.Meta
                 return r;
             }
         }
-
-#if FEAT_COMPILER
-#endif
-
+        
         internal RuntimeTypeModel(bool isDefault, ProtoCompatibilitySettings protoCompatibility)
         {
             ProtoCompatibility = protoCompatibility.Clone();
