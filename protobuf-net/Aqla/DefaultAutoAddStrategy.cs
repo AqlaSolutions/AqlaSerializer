@@ -92,14 +92,12 @@ namespace AqlaSerializer
                         if (metaType.IsValidSubType(candidate.Type)) metaType.AddSubType(candidate.Tag, candidate.Type, candidate.DataFormat);
 
                     TypeSettingsValue sv = mapped.SettingsValue;
-                    metaType.AsReferenceDefault = sv.Member.MemberFormat != MemberFormat.Compact
-                                                  && (sv.Member.EnhancedWriteMode != EnhancedMode.Minimal)
-                                                  && !Helpers.IsValueType(type);
-                    if (string.IsNullOrEmpty(sv.Name)) sv.Name = type.Name;
-                    metaType.Name = sv.Name;
+                    metaType.AsReferenceDefault = GetAsReferenceDefault(sv.Member, type);
+                    metaType.Name = sv.Name; // can be null, see MetaType.Name getter
                     metaType.CollectionDataFormat = sv.Member.ContentBinaryFormatHint.GetValueOrDefault();
                     metaType.ConstructType = sv.ConcreteType;
-                    metaType.EnumPassthru = sv.EnumPassthru;
+                    if (sv.EnumPassthru != null)
+                        metaType.EnumPassthru = sv.EnumPassthru.Value;
                     metaType.IsAutoTuple = sv.IsAutoTuple;
                     metaType.IgnoreListHandling = sv.IgnoreListHandling;
                     metaType.UseConstructor = !sv.SkipConstructor;
@@ -112,7 +110,7 @@ namespace AqlaSerializer
                 bool inferTagByName = mapped.InferTagByName;
                 ImplicitFieldsMode implicitMode = mapped.ImplicitMode;
                 bool explicitPropertiesContract = mapped.ExplicitPropertiesContract;
-                bool asEnum = mapped.AsEnum;
+                bool asEnum = mapped.AsEnum && !metaType.EnumPassthru;
                 family = mapped.Input.Family;
                 
                 MethodInfo[] callbacks = null;
@@ -542,8 +540,9 @@ namespace AqlaSerializer
             {
                 if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && CanUse(AttributeType.Aqla))
                 {
-                    object tmp;
-                    if (typeAttribs[i].TryGet("NotAsReferenceDefault", out tmp)) return !(bool)tmp;
+                    var attr = typeAttribs[i].GetRuntimeAttribute<SerializableTypeAttribute>(Model);
+                    MemberLevelSettingsValue m = attr.TypeSettings.Member;
+                    return GetAsReferenceDefault(m, type);
                 }
                 if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && CanUse(AttributeType.ProtoBuf))
                 {
@@ -554,6 +553,11 @@ namespace AqlaSerializer
 
             bool ignoreAddSettings = RuntimeTypeModel.CheckTypeDoesntRequireContract(_model, type);
             return ignoreAddSettings || (!isProtobufNetLegacyMember && !_model.AddNotAsReferenceDefault);
+        }
+
+        static bool GetAsReferenceDefault(MemberLevelSettingsValue m, Type type)
+        {
+            return m.MemberFormat != MemberFormat.Compact && m.EnhancedWriteMode != EnhancedMode.Minimal && !Helpers.IsValueType(type);
         }
 
         public virtual bool GetIgnoreListHandling(Type type)
