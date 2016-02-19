@@ -135,6 +135,8 @@
     <Compile Include="Aqla\Issue103DictionaryTest.cs" />
     <Compile Include="Aqla\Issue106ReferenceTest.cs" />
     <Compile Include="Aqla\Issue30SurrogateTest.cs" />
+    <Compile Include="Aqla\Issue7ListHandlingCallbacks.cs" />
+    <Compile Include="Aqla\Issue7ListHandlingCallbacksProto.cs" />
     <Compile Include="Aqla\Issue90ReadOnly.cs" />
     <Compile Include="Aqla\Issue91Converter.cs" />
     <Compile Include="Aqla\LateReferenceVersioning.cs" />
