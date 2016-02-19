@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>2.0.0.35</version>
+    <version>2.0.0.37</version>
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2016, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>

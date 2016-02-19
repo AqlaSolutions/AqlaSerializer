@@ -97,7 +97,8 @@ namespace AqlaSerializer.Meta.Mapping
             TypeArgsValue a = s.Input;
 
             // sort attributes with handlers order!!! because isEnum may change
-            foreach (var item in a.Attributes.OrderBy(x => Handlers.FindIndex(h => h.Attribute == x.AttributeType.FullName)).ToArray())
+            foreach (
+                var item in a.Attributes.OrderBy(x => Handlers.Select((h, i) => new { h, i }).FirstOrDefault(h => h.h.Attribute == x.AttributeType.FullName)?.i ?? -1).ToArray())
             {
                 ProcessAttributeHandler(item, s);
             }
