@@ -32,7 +32,8 @@ namespace AqlaSerializer.Meta.Mapping
         public RuntimeTypeModel Model { get; set; }
         public AttributeMap[] Attributes { get; set; }
         public AttributeType AcceptableAttributes { get; set; }
-        
+        public ImplicitFieldsMode ImplicitFallbackMode { get; set; }
+
         public bool CanUse(AttributeType type)
         {
             return (AcceptableAttributes & type) == type;

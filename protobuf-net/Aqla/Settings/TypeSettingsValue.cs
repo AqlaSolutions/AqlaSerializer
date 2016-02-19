@@ -20,6 +20,7 @@ namespace AqlaSerializer.Settings
         public bool IgnoreListHandling;
         public bool? PrefixLength;
         public Type ConcreteType;
+        public bool IsAutoTuple;
         public MemberLevelSettingsValue Member;
     }
 }
