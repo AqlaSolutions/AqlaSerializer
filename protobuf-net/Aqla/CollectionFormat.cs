@@ -12,10 +12,6 @@ namespace AqlaSerializer
         /// </summary>
         NotSpecified = 0,
         /// <summary>
-        /// If specified, do NOT treat this type as a list, even if it looks like one.
-        /// </summary>
-        DisableHandling,
-        /// <summary>
         /// Doesn't support some scenarios, use only for compatibility with Google Protocol Buffers. Versioning won't support switching to other formats. 
         /// </summary>
         Google,

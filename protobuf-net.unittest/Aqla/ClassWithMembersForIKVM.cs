@@ -9,7 +9,7 @@
         [SerializableMember(2, EnhancedMode.Reference)]
         public int Enum { get; set; }
 
-        [SerializableMember(3, EnhancedMode.Reference, DefaultValue = 5, CollectionFormat = CollectionFormat.DisableHandling)]
+        [SerializableMember(3, EnhancedMode.Reference, DefaultValue = 5, CollectionFormat = CollectionFormat.Google)]
         public int Named { get; set; }
     }
 }
