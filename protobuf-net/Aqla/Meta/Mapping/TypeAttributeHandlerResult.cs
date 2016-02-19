@@ -1,4 +1,4 @@
-#if !NO_RUNTIME
+﻿#if !NO_RUNTIME
 using System;
 using System.Collections;
 using System.Text;
@@ -23,9 +23,11 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Meta.Mapping
 {
-    public interface IMemberHandler
+    public enum TypeAttributeHandlerResult
     {
-        MemberHandlerResult TryMap(MemberState state);
+        Continue = 0,
+        Done,
     }
 }
+
 #endif

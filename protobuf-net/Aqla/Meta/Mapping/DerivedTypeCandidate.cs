@@ -1,6 +1,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using AltLinq;
 using AqlaSerializer;
@@ -23,9 +24,18 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Meta.Mapping
 {
-    public interface IMemberHandler
+    public class DerivedTypeCandidate
     {
-        MemberHandlerResult TryMap(MemberState state);
+        public int Tag { get; set; }
+        public Type Type { get; set; }
+        public BinaryDataFormat DataFormat { get; set; }
+
+        public DerivedTypeCandidate(int tag, Type type, BinaryDataFormat dataFormat)
+        {
+            DataFormat = dataFormat;
+            Tag = tag;
+            Type = type;
+        }
     }
 }
 #endif

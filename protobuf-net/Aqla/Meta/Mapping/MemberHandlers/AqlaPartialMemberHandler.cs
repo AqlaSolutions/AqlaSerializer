@@ -29,7 +29,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 {
     public class AqlaPartialMemberHandler : MemberMappingHandlerBase
     {
-        protected override MemberHandlerResult TryRead(
+        protected override MemberHandlerResult TryMap(
             MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
         {
             if (!s.Input.CanUse(AttributeType.Aqla)) return MemberHandlerResult.NotFound;
