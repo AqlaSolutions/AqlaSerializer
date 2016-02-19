@@ -69,7 +69,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Creates a new ValueMember instance
         /// </summary>
-        public ValueMember(RuntimeTypeModel model, Type parentType, NormalizedMappedMember mappedMember)
+        public ValueMember(RuntimeTypeModel model, Type parentType, MappedMember mappedMember)
             : this(model, mappedMember.Tag, mappedMember.MappingState.Input.EffectiveMemberType, mappedMember[0].Collection.ItemType, mappedMember[0].CollectionConcreteType, mappedMember[0].ContentBinaryFormatHint.GetValueOrDefault())
         {
             // temp to ensure mapping correctness

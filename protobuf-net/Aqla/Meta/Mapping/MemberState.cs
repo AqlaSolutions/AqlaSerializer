@@ -30,6 +30,8 @@ namespace AqlaSerializer.Meta.Mapping
     public class MemberState
     {
         public MemberArgsValue Input { get; }
+        public RuntimeTypeModel Model => Input.Model;
+        public MemberInfo Member => Input.Member;
         public int MinAcceptFieldNumber => Input.InferTagByName ? -1 : 1;
         public bool TagIsPinned { get; set; }
         public MemberMainSettingsValue MainValue { get; set; } = new MemberMainSettingsValue();
