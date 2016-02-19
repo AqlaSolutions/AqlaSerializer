@@ -26,17 +26,17 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 {
-    public abstract class MemberMappingHandlerBase : IMemberHandler
+    public abstract class MemberMappingHandlerBase : MappingHandlerBase, IMemberHandler
     {
         [DebuggerStepThrough]
-        public MemberHandlerResult TryRead(MemberState state)
+        public MemberHandlerResult TryMap(MemberState state)
         {
             var main = state.MainValue;
             var levels = state.LevelValues;
             var model = state.Input.Model;
             try
             {
-                return TryRead(state, ref main, ref levels, state.Input.Member, model);
+                return TryMap(state, ref main, ref levels, state.Input.Member, model);
             }
             finally
             {
@@ -45,7 +45,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
         }
 
-        protected abstract MemberHandlerResult TryRead(
+        protected abstract MemberHandlerResult TryMap(
             MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model);
 
 
@@ -57,24 +57,6 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
         protected virtual bool HasProtobufNetIgnore(AttributeMap[] map, RuntimeTypeModel model)
         {
             return AttributeMap.GetAttribute(map, "ProtoBuf.ProtoIgnoreAttribute") != null;
-        }
-        
-        protected virtual bool CheckAqlaModelId(AttributeMap attrib, RuntimeTypeModel model)
-        {
-            if (attrib == null) return false;
-            // TODO multiple
-            object actual;
-            return attrib.TryGet(nameof(NonSerializableMemberAttribute.ModelId), out actual) && CheckAqlaModelId(actual, model);
-        }
-
-        protected virtual bool CheckAqlaModelId(SerializableMemberAttribute attr, RuntimeTypeModel model)
-        {
-            return CheckAqlaModelId(attr.ModelId, model);
-        }
-
-        protected virtual bool CheckAqlaModelId(object actualId, RuntimeTypeModel model)
-        {
-            return object.Equals(model.ModelId, actualId);
         }
     }
 }

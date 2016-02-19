@@ -20,7 +20,7 @@ namespace AqlaSerializer
         AllowMultiple = false, Inherited = false)]
     public sealed class SerializableTypeAttribute : Attribute
     {
-        internal TypeSettingsValue TypeSettings;
+        public TypeSettingsValue TypeSettings;
 
         /// <summary>
         /// Allows to use multiple attributes with different settings for each model

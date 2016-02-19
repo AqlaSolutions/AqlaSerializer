@@ -36,7 +36,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             _strategy = strategy;
         }
 
-        protected override MemberHandlerResult TryRead(
+        protected override MemberHandlerResult TryMap(
             MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
         {
             if (!s.Input.CanUse(AttributeType.ProtoBuf)) return MemberHandlerResult.NotFound;

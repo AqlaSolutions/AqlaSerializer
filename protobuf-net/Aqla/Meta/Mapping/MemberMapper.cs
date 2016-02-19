@@ -95,7 +95,7 @@ namespace AqlaSerializer.Meta.Mapping
             MemberHandlerResult result=MemberHandlerResult.NotFound;
             foreach (var handler in Handlers)
             {
-                switch (result = handler.TryRead(state))
+                switch (result = handler.TryMap(state))
                 {
                     case MemberHandlerResult.Ignore:
                         return result;

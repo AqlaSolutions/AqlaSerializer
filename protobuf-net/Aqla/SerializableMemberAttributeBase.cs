@@ -17,7 +17,7 @@ namespace AqlaSerializer
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public abstract class SerializableMemberAttributeBase : Attribute
     {
-        internal MemberLevelSettingsValue LevelSettings;
+        public MemberLevelSettingsValue LevelSettings;
 
         protected SerializableMemberAttributeBase(int level, EnhancedMode enchancedWriteAs)
             : this(level, enchancedWriteAs == EnhancedMode.NotSpecified ? MemberFormat.NotSpecified : MemberFormat.Enhanced, enchancedWriteAs)

@@ -41,6 +41,8 @@ namespace AqlaSerializer
             this.knownTypeName = knownTypeName;
         }
 
+        public object ModelId { get; set; }
+
         /// <summary>
         /// Gets the unique index (within the type) that will identify this data.
         /// </summary>
