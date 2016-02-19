@@ -512,6 +512,20 @@ namespace AqlaSerializer.Meta
         static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, bool tryAsLateRef, RuntimeTypeModel model, out WireType wireType)
         {
             Type collectionItemType = collection.ItemType;
+            if (collectionItemType != null)
+            {
+                // we should re-check list handling on this stage!
+                // because it can be changed after setting up the member
+                // TODO when changing collection element settings consider that IgnoreListHandling may be also disabled after making member
+                // TODO postpone all checks for types when adding member till BuildSerializer, resolve everything only on buildserializer! till that have only local not inherited settings.
+                // TODO do not allow EnumPassthru and other settings to affect anything until buildling serializer
+                int k = model.GetKey(objectType, false, false);
+                if (k != -1 && model[k].IgnoreListHandling)
+                {
+                    collection.ItemType = collectionItemType = null;
+                }
+            }
+
             wireType = 0;
             bool isPacked = collection.IsPacked;
             bool isPackedOriginal = isPacked;
