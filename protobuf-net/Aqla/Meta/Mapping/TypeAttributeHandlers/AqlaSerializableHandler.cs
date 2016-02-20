@@ -51,15 +51,15 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                     }
 
                     if (item.TryGet("ImplicitFields", out tmp) && tmp != null)
-                    {
                         s.ImplicitMode = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
-                        
-                    }
+                    else
+                        s.ImplicitMode = ImplicitFieldsMode.PublicProperties;
+
                     if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
-                    {
                         s.ExplicitPropertiesContract = (bool)tmp;
-                    }
-                    
+                    else
+                        s.ExplicitPropertiesContract = true;
+
                     if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) s.ImplicitFirstTag = (int)tmp;
 
                     if (s.ImplicitMode != ImplicitFieldsMode.None) s.ImplicitAqla = true;
