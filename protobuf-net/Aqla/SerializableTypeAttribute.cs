@@ -20,6 +20,25 @@ namespace AqlaSerializer
         AllowMultiple = false, Inherited = false)]
     public sealed class SerializableTypeAttribute : Attribute
     {
+        public SerializableTypeAttribute()
+        {
+            
+        }
+
+        public SerializableTypeAttribute(MemberFormat defaultMemberFormat, EnhancedMode defaultEnchancedWriteAs = 0)
+        {
+            DefaultMemberFormat = defaultMemberFormat;
+            DefaultEnhancedWriteAs = defaultEnchancedWriteAs;
+        }
+
+        public SerializableTypeAttribute(EnhancedMode defaultEnchancedWriteAs)
+        {
+            DefaultEnhancedWriteAs = defaultEnchancedWriteAs;
+            DefaultMemberFormat = defaultEnchancedWriteAs != EnhancedMode.NotSpecified ? MemberFormat.Enhanced : MemberFormat.NotSpecified;
+        }
+
+
+
         public TypeSettingsValue TypeSettings;
 
         /// <summary>
@@ -80,7 +99,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Enhanced features
         /// </summary>
-        public EnhancedMode EnhancedWriteAs { get { return TypeSettings.Member.EnhancedWriteMode; } set { TypeSettings.Member.EnhancedWriteMode = value; } }
+        public EnhancedMode DefaultEnhancedWriteAs { get { return TypeSettings.Member.EnhancedWriteMode; } set { TypeSettings.Member.EnhancedWriteMode = value; } }
         
         /// <summary>
         /// The data-format to be used when encoding this value.
@@ -131,17 +150,13 @@ namespace AqlaSerializer
         /// for members. This option should be used in advanced scenarios only.
         /// Please review the important notes against the ImplicitFields enumeration.
         /// </summary>
-        public ImplicitFieldsMode ImplicitFields { get { return implicitFields; } set { implicitFields = value; } }
+        public ImplicitFieldsMode ImplicitFields { get; set; } = ImplicitFieldsMode.PublicProperties;
 
-        private ImplicitFieldsMode implicitFields = ImplicitFieldsMode.PublicProperties;
-
-
-        private bool _explicitPropertiesContract = true;
 
         /// <summary>
         /// Property is treated as public only if both get and set accessors are public
         /// </summary>
-        public bool ExplicitPropertiesContract { get { return _explicitPropertiesContract; } set { _explicitPropertiesContract = value; } }
+        public bool ExplicitPropertiesContract { get; set; } = true;
 
         /// <summary>
         /// Enables/disables automatic tag generation based on the existing name / order

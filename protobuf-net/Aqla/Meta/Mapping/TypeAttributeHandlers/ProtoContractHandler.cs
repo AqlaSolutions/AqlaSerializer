@@ -65,10 +65,6 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                     {
                         s.ImplicitMode = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
                     }
-                    if (item.TryGet("ExplicitPropertiesContract", out tmp) && tmp != null)
-                    {
-                        s.ExplicitPropertiesContract = (bool)tmp;
-                    }
                     if (item.TryGet("SkipConstructor", out tmp)) main.SkipConstructor = (bool)tmp;
                     if (item.TryGet("IgnoreListHandling", out tmp)) main.IgnoreListHandling = (bool)tmp;
                     if (item.TryGet("AsReferenceDefault", out tmp))
