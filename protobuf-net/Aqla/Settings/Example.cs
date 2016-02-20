@@ -6,7 +6,7 @@ namespace AqlaSerializer.Settings
     class X
     {
         [SerializableMember(1, ModelId = 0, EnhancedWriteAs = EnhancedMode.LateReference, ContentBinaryFormatHint = BinaryDataFormat.Default)]
-        [SerializableMemberNested(2, MemberFormat.Compact, ModelId = 0, Level = 1, CollectionFormat = CollectionFormat.Google, CollectionAppend = true)]
+        [SerializableMemberNested(2, false, ModelId = 0, Level = 1, CollectionFormat = CollectionFormat.Google, CollectionAppend = true)]
         public int[][] Member { get; set; }
     }
 }

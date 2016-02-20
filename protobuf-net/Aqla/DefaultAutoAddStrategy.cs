@@ -557,7 +557,7 @@ namespace AqlaSerializer
 
         static bool GetAsReferenceDefault(MemberLevelSettingsValue m, Type type)
         {
-            return m.MemberFormat != MemberFormat.Compact && m.EnhancedWriteMode != EnhancedMode.Minimal && !Helpers.IsValueType(type);
+            return m.EnhancedFormat != false && m.EnhancedWriteMode != EnhancedMode.Minimal && !Helpers.IsValueType(type);
         }
 
         public virtual bool GetIgnoreListHandling(Type type)

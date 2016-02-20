@@ -17,7 +17,7 @@ namespace AqlaSerializer.Settings
         /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
-        public MemberFormat MemberFormat;
+        public bool? EnhancedFormat;
 
         /// <summary>
         /// Has value if != NotSpecified
@@ -44,7 +44,7 @@ namespace AqlaSerializer.Settings
         public static MemberLevelSettingsValue Merge(MemberLevelSettingsValue baseValue, MemberLevelSettingsValue derivedValue)
         {
             var r = derivedValue;
-            if (r.MemberFormat == MemberFormat.NotSpecified) r.MemberFormat = baseValue.MemberFormat;
+            if (r.EnhancedFormat == null) r.EnhancedFormat = baseValue.EnhancedFormat;
             if (r.EnhancedWriteMode == EnhancedMode.NotSpecified) r.EnhancedWriteMode = baseValue.EnhancedWriteMode;
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;

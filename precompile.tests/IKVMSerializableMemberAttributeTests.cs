@@ -27,6 +27,15 @@ namespace precompile.tests
         }
 
         [Test]
+        public void TestBool()
+        {
+            var rtm = TypeModel.Create();
+            Type t = LoadType(rtm);
+            var runtime = MakeRuntime(rtm, t, "Bool");
+            Assert.That(runtime.EnhancedWriteAs, Is.EqualTo(true));
+        }
+
+        [Test]
         public void TestNamed()
         {
             var rtm = TypeModel.Create();

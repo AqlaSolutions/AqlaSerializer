@@ -15,8 +15,13 @@ namespace AqlaSerializer
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public class SerializableMemberNestedAttribute : SerializableMemberAttributeBase
     {
-        public SerializableMemberNestedAttribute(int level, MemberFormat format = 0, EnhancedMode enhancedWriteAs = 0)
-            : base(level, format, enhancedWriteAs)
+        public SerializableMemberNestedAttribute(int level)
+            : base(level, null, 0)
+        {
+        }
+
+        public SerializableMemberNestedAttribute(int level, bool enchancedFormat, EnhancedMode enhancedWriteAs = 0)
+            : base(level, enchancedFormat, enhancedWriteAs)
         {
         }
     }

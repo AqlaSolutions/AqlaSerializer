@@ -15,7 +15,7 @@ namespace AqlaSerializer.unittest.Aqla
 
             //I apply AsReference decoration in run-time while configuring the model.
             //Don't think the moment really matters.
-            [SerializableMember(2, MemberFormat.Enhanced, EnhancedMode.Reference)]
+            [SerializableMember(2, true, EnhancedMode.Reference)]
             public object Value;
         }
 

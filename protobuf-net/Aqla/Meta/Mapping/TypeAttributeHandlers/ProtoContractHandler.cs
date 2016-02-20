@@ -71,12 +71,12 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                     {
                         if ((bool)tmp)
                         {
-                            main.Member.MemberFormat = MemberFormat.Enhanced;
+                            main.Member.EnhancedFormat = true;
                             main.Member.EnhancedWriteMode = EnhancedMode.Reference;
                         }
                         else
                         {
-                            main.Member.MemberFormat = MemberFormat.Compact;
+                            main.Member.EnhancedFormat = false;
                             main.Member.EnhancedWriteMode = EnhancedMode.NotSpecified;
                         }
                     }

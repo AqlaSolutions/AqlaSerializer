@@ -87,20 +87,19 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                         //// supports null is also affected so we don't change anything or ref type: with compatibility mode Compact will be used otherwise Enhanced
                         //if (!isNullable)
                         // -x-
-                        level.MemberFormat = MemberFormat.Compact;
+                        level.EnhancedFormat = false;
                     }
                     else
                     {
                         level.EnhancedWriteMode = EnhancedMode.Reference;
-                        level.MemberFormat = MemberFormat.Enhanced;
+                        level.EnhancedFormat = true;
                     }
                 }
 
                 if (!level.WriteAsDynamicType.GetValueOrDefault())
-                {
-                    if (attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType) && level.WriteAsDynamicType.Value)
-                        level.MemberFormat = MemberFormat.Enhanced;
-                }
+                    attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);
+                if (level.WriteAsDynamicType.GetValueOrDefault()) level.EnhancedFormat = true;
+
                 s.TagIsPinned = main.Tag > 0;
                 levels[0] = level;
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto
