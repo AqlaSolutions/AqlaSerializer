@@ -20,14 +20,14 @@ namespace AqlaSerializer
         public MemberLevelSettingsValue LevelSettings;
 
         protected SerializableMemberAttributeBase(int level, EnhancedMode enchancedWriteAs)
-            : this(level, enchancedWriteAs == EnhancedMode.NotSpecified ? MemberFormat.NotSpecified : MemberFormat.Enhanced, enchancedWriteAs)
+            : this(level, enchancedWriteAs == EnhancedMode.NotSpecified ? (bool?)null : true, enchancedWriteAs)
         {
         }
 
-        protected SerializableMemberAttributeBase(int level, MemberFormat format = 0, EnhancedMode enchancedWriteAs = 0)
+        protected SerializableMemberAttributeBase(int level, bool? enchancedFormat, EnhancedMode enchancedWriteAs = 0)
         {
             Level = level;
-            MemberFormat = format;
+            LevelSettings.EnhancedFormat = enchancedFormat;
             EnhancedWriteAs = enchancedWriteAs;
         }
 
@@ -46,10 +46,27 @@ namespace AqlaSerializer
         public bool DynamicTypeHasValue => LevelSettings.WriteAsDynamicType.HasValue;
 
         /// <summary>
-        /// Supported features
+        /// Used to specify member format which affects supported features and output size
         /// </summary>
-        public MemberFormat MemberFormat { get { return LevelSettings.MemberFormat; } set { LevelSettings.MemberFormat = value; } }
-        
+        /// <remarks>
+        /// <para>default - null: <br/>
+        /// Peek format based on member type and <see cref="RuntimeTypeModel"/> settings. Will try to choose Enhanced when its settings are enabled.
+        /// </para>
+        /// <para>false: <br/>
+        /// Write and read as plain field without advanced features. <br/>
+        /// Versioning won't support switching to <see cref="Enhanced"/> format. <br/>
+        /// Not supported settings will be ignored.
+        /// </para>
+        /// <para>true: <br/>
+        /// Use reference and null support if applicable. Versioning won't support switching to <see cref="Compact"/> format.<br/>
+        /// Supports <see cref="SerializableMemberAttribute.DynamicType"/>. <br/>
+        /// Not supported settings will be ignored.</para>
+        /// The reason why DynamicType is on properties is because it's considered of the same EnhancedMode.Reference format.
+        /// </remarks>
+        public bool EnhancedFormat { get { return LevelSettings.EnhancedFormat.Value; } set { LevelSettings.EnhancedFormat = value; } }
+
+        public bool EnhancedFormaHasValue => LevelSettings.EnhancedFormat.HasValue;
+
         /// <summary>
         /// Enhanced features
         /// </summary>

@@ -103,7 +103,7 @@ namespace AqlaSerializer.Meta
             AppendCollection = mappedMember[0].Collection.Append.GetValueOrDefault();
             if (!AppendCollection && !Helpers.CanWrite(model, member)) AppendCollection = true;
             EnhancedMode wm = mappedMember[0].EnhancedWriteMode;
-            if (mappedMember[0].MemberFormat == MemberFormat.Compact)
+            if (mappedMember[0].EnhancedFormat == false)
             {
                 AsReference = false;
                 wm = EnhancedMode.NotSpecified;
@@ -111,7 +111,7 @@ namespace AqlaSerializer.Meta
             else if (wm != EnhancedMode.NotSpecified)
                 AsReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
             bool dynamicTypeLocal = mappedMember[0].WriteAsDynamicType.GetValueOrDefault();
-            if (dynamicTypeLocal && mappedMember[0].MemberFormat == MemberFormat.Compact) throw new ArgumentException("Dynamic type write mode strictly requires not Compact MemberFormat");
+            if (dynamicTypeLocal && mappedMember[0].EnhancedFormat == false) throw new ArgumentException("Dynamic type write mode strictly requires not Compact MemberFormat");
             DynamicType = dynamicTypeLocal;
             if (wm == EnhancedMode.LateReference) AsLateReference = true;
         }

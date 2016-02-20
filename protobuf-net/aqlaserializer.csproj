@@ -357,7 +357,6 @@
     <Compile Include="Aqla\Settings\Inheritable\MemberLevelSettingsValue.cs" />
     <Compile Include="Aqla\Settings\Example.cs" />
     <Compile Include="Aqla\SerializeDerivedTypeAttribute.cs" />
-    <Compile Include="Aqla\MemberFormat.cs" />
     <Compile Include="Aqla\Settings\MemberMainSettingsValue.cs" />
     <Compile Include="Aqla\Settings\TypeSettingsValue.cs" />
     <Compile Include="Aqla\SurrogateConverterAttribute.cs" />

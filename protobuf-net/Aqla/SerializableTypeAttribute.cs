@@ -25,19 +25,17 @@ namespace AqlaSerializer
             
         }
 
-        public SerializableTypeAttribute(MemberFormat defaultMemberFormat, EnhancedMode defaultEnchancedWriteAs = 0)
+        public SerializableTypeAttribute(bool defaultEnhancedFormat, EnhancedMode defaultEnchancedWriteAs = 0)
         {
-            DefaultMemberFormat = defaultMemberFormat;
+            DefaultEnhancedFormat = defaultEnhancedFormat;
             DefaultEnhancedWriteAs = defaultEnchancedWriteAs;
         }
 
         public SerializableTypeAttribute(EnhancedMode defaultEnchancedWriteAs)
         {
             DefaultEnhancedWriteAs = defaultEnchancedWriteAs;
-            DefaultMemberFormat = defaultEnchancedWriteAs != EnhancedMode.NotSpecified ? MemberFormat.Enhanced : MemberFormat.NotSpecified;
+            TypeSettings.Member.EnhancedFormat = defaultEnchancedWriteAs != EnhancedMode.NotSpecified ? true : (bool?)null;
         }
-
-
 
         public TypeSettingsValue TypeSettings;
 
@@ -52,9 +50,11 @@ namespace AqlaSerializer
         public string Name { get { return TypeSettings.Name; } set { TypeSettings.Name = value; } }
 
         /// <summary>
-        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel settings.
+        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel settings. See <see cref="SerializableMemberAttributeBase.EnhancedFormat"/>
         /// </summary>
-        public MemberFormat DefaultMemberFormat { get { return TypeSettings.Member.MemberFormat; } set { TypeSettings.Member.MemberFormat = value; } }
+        public bool DefaultEnhancedFormat { get { return TypeSettings.Member.EnhancedFormat.Value; } set { TypeSettings.Member.EnhancedFormat = value; } }
+
+        public bool DefaultEnhancedFormatHasValue => TypeSettings.Member.EnhancedFormat.HasValue;
 
         /// <summary>
         /// Applies only to enums (not to DTO classes themselves); gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
