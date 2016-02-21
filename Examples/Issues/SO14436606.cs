@@ -78,7 +78,8 @@ namespace Examples.Issues
         {
             var model = CreateDefaultRefModel(true, false);
             Assert.IsTrue(model[typeof(A_WithDefaultRef)].AsReferenceDefault, "A:AsReferenceDefault - A first");
-            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].AsReference, "B.A:AsReference  - A first");
+            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedWriteMode == EnhancedMode.Reference, "B.A:AsReference  - A first");
+            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedFormat.GetValueOrDefault(), "B.A:AsReference  - A first");
 
         }
         [Test]
@@ -86,7 +87,8 @@ namespace Examples.Issues
         {
             var model = CreateDefaultRefModel(false, false);
             Assert.IsTrue(model[typeof(A_WithDefaultRef)].AsReferenceDefault, "A:AsReferenceDefault - B first");
-            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].AsReference, "B.A:AsReference  - B first");
+            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedWriteMode == EnhancedMode.Reference, "B.A:AsReference  - B first");
+            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedFormat.GetValueOrDefault(), "B.A:AsReference  - B first");
         }
 
         [Test]
