@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using AltLinq;
 using AqlaSerializer;
+using AqlaSerializer.Internal;
 using AqlaSerializer.Meta.Mapping;
 using AqlaSerializer.Serializers;
 using AqlaSerializer.Settings;
@@ -1576,9 +1577,11 @@ namespace AqlaSerializer.Meta
                 NewLine(builder, indent).Append("message ").Append(GetSchemaTypeName()).Append(" {");
                 foreach (ValueMember member in fieldsArr)
                 {
-                    string ordinality = member.ItemType != null ? "repeated" : member.IsRequired ? "required" : "optional";
+                    member.Serializer.GetHashCode();
+                    MemberLevelSettingsValue s = member.GetSettingsCopy(0);
+                    string ordinality = s.Collection.ItemType != null ? "repeated" : member.IsRequired ? "required" : "optional";
                     NewLine(builder, indent + 1).Append(ordinality).Append(' ');
-                    if (member.DataFormat == BinaryDataFormat.Group) builder.Append("group ");
+                    if (s.ContentBinaryFormatHint.GetValueOrDefault() == BinaryDataFormat.Group) builder.Append("group ");
                     string schemaTypeName = member.GetSchemaTypeName(true, ref requiresBclImport);
                     builder.Append(schemaTypeName).Append(" ")
                          .Append(member.Name).Append(" = ").Append(member.FieldNumber);
@@ -1598,12 +1601,14 @@ namespace AqlaSerializer.Meta
                             builder.Append(" [default = ").Append(member.DefaultValue).Append(']');
                         }
                     }
-                    if (member.ItemType != null && member.IsPacked)
+                    if (s.Collection.ItemType != null && s.Collection.Format == CollectionFormat.Google &&
+                        ListDecorator.CanPack(HelpersInternal.GetWireType(Helpers.GetTypeCode(member.MemberType), s.ContentBinaryFormatHint.GetValueOrDefault())))
                     {
                         builder.Append(" [packed=true]");
                     }
                     builder.Append(';');
-                    if (schemaTypeName == "bcl.NetObjectProxy" && member.AsReference && !member.DynamicType) // we know what it is; tell the user
+                    if (schemaTypeName == "bcl.NetObjectProxy" && s.EnhancedFormat.GetValueOrDefault() && s.EnhancedWriteMode != EnhancedMode.Minimal &&
+                        s.EnhancedWriteMode != EnhancedMode.NotSpecified && !s.WriteAsDynamicType.GetValueOrDefault()) // we know what it is; tell the user
                     {
                         builder.Append(" // reference-tracked ").Append(member.GetSchemaTypeName(false, ref requiresBclImport));
                     }

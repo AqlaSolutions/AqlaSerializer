@@ -31,7 +31,7 @@ namespace AqlaSerializer.Meta
         MethodInfo getSpecified, setSpecified;
         RuntimeTypeModel _model;
 
-        private IProtoSerializerWithWireType _serializer;
+        private volatile IProtoSerializerWithWireType _serializer;
         internal IProtoSerializerWithWireType Serializer => _serializer ?? (_serializer = BuildSerializer());
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace AqlaSerializer.Meta
         /// Gets the logical name for this member in the schema (this is not critical for binary serialization, but may be used
         /// when inferring a schema).
         /// </summary>
-        public string Name => _main.Name;
+        public string Name => !string.IsNullOrEmpty(_main.Name) ? _main.Name : Member.Name;
         
         // TODO used only to disable WRITING default value but can just not specify default value at all!, remove this
         /// <summary>
@@ -96,104 +96,119 @@ namespace AqlaSerializer.Meta
             int opaqueToken = 0;
             try
             {
-                _model.TakeLock(ref opaqueToken);// check nobody is still adding this type
+                _model.TakeLock(ref opaqueToken); // check nobody is still adding this type
 
-                MemberInfo member = mappedMember.Member;
-                Type memberType = mappedMember.MappingState.Input.EffectiveMemberType;
-                object defaultValue = mappedMember.MappingState.MainValue.DefaultValue;
-                int fieldNumber = mappedMember.Tag;
+                if (FieldNumber < 1 && !Helpers.IsEnum(ParentType)) throw new ProtoException("FieldNumber < 1 for member " + Member);
 
+                MemberLevelSettingsValue level0 = GetSettingsCopy(0);
 
-                if (fieldNumber < 1 && !Helpers.IsEnum(ParentType)) throw new ArgumentOutOfRangeException("fieldNumber");
+                // TODO merge type settings
+                //int memberTypeMetaKey = _model.GetKey(MemberType, false, false);
+                //if (memberTypeMetaKey >= 0)
+                //{
+                //    var typeSettings = _model[memberTypeMetaKey].GetSettings());
+                //    level0 = MemberLevelSettingsValue.Merge(typeSettings, level0);
+                //}
+
+                if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
                 //#if WINRT
-                if (defaultValue != null && _model.MapType(defaultValue.GetType()) != memberType)
-                //#else
-                //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
-                //#endif
+                if (_main.DefaultValue != null && _model.MapType(_main.DefaultValue.GetType()) != MemberType)
+                    //#else
+                    //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
+                    //#endif
                 {
-                    defaultValue = ParseDefaultValue(memberType, defaultValue);
+                    _main.DefaultValue = ParseDefaultValue(MemberType, _main.DefaultValue);
                 }
-                this.defaultValue = defaultValue;
-                this.asReference = GetAsReferenceDefault(_model, memberType, false, this._serializer is TupleSerializer);
 
-                //if (!Helpers.IsNullOrEmpty(mappedMember.Name)) _main.Name=member.Name;
-                if (mappedMember[0].Collection.Format == CollectionFormat.Google) IsPacked = true;
-                IsRequired = mappedMember.MainValue.IsRequiredInSchema;
-                AppendCollection = mappedMember[0].Collection.Append.GetValueOrDefault();
-                if (!AppendCollection && !Helpers.CanWrite(_model, member)) AppendCollection = true;
-                EnhancedMode wm = mappedMember[0].EnhancedWriteMode;
-                if (mappedMember[0].EnhancedFormat == false)
+
+                bool isPacked = level0.Collection.Format == CollectionFormat.Google;
+                // TODO strict check, exception
+                if (!level0.Collection.Append.GetValueOrDefault() && !Helpers.CanWrite(_model, Member)) level0.Collection.Append = true;
+
+
+                bool asReference;
+                bool asLateReference = false;
+
+                #region Reference and dynamic type
+
                 {
-                    AsReference = false;
-                    wm = EnhancedMode.NotSpecified;
+                    asReference = GetAsReferenceDefault(_model, MemberType, false, this._serializer is TupleSerializer);
+
+                    EnhancedMode wm = level0.EnhancedWriteMode;
+                    if (level0.EnhancedFormat == false)
+                    {
+                        asReference = false;
+                        wm = EnhancedMode.NotSpecified;
+                    }
+                    else if (wm != EnhancedMode.NotSpecified)
+                        asReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
+
+
+                    bool dynamicType = level0.WriteAsDynamicType.GetValueOrDefault();
+                    if (dynamicType && level0.EnhancedFormat == false) throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat: " + Member);
+                    if (wm == EnhancedMode.LateReference) asLateReference = true;
+
+                    if (asReference)
+                    {
+                        level0.EnhancedFormat = true;
+                        level0.EnhancedWriteMode = wm = asLateReference ? EnhancedMode.LateReference : EnhancedMode.Reference;
+                        if (asLateReference && dynamicType)
+                            throw new ProtoException("Dynamic type write mode is not available for LateReference enhanced mode: " + Member);
+                    }
                 }
-                else if (wm != EnhancedMode.NotSpecified)
-                    AsReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
-                bool dynamicTypeLocal = mappedMember[0].WriteAsDynamicType.GetValueOrDefault();
-                if (dynamicTypeLocal && mappedMember[0].EnhancedFormat == false) throw new ArgumentException("Dynamic type write mode strictly requires not Compact MemberFormat");
-                DynamicType = dynamicTypeLocal;
-                if (wm == EnhancedMode.LateReference) AsLateReference = true;
 
+                #endregion
 
-                if (IsPacked && itemType != null && !RuntimeTypeModel.CheckTypeIsCollection(_model, itemType)
-                    && !ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(itemType), BinaryDataFormat.Default)))
+                if (isPacked && level0.Collection.ItemType != null && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
+                    && !ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)))
                 {
                     throw new InvalidOperationException("Only simple data-types can use packed encoding");
                 }
                 object finalDefaultValue = null;
-                if (defaultValue != null && !IsRequired && getSpecified == null)
-                {   // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
+                if (_main.DefaultValue != null && !IsRequired && getSpecified == null)
+                { // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
                     // as does "IsRequired"
-                    finalDefaultValue = defaultValue;
+                    finalDefaultValue = _main.DefaultValue;
                 }
 
+                SetSettings(level0, 0, true);
+
                 var ser = ValueSerializerBuilder.BuildValueFinalSerializer(
-                    memberType,
-                    new ValueSerializerBuilder.CollectionSettings(itemType)
+                    MemberType,
+                    new ValueSerializerBuilder.CollectionSettings(level0.Collection.ItemType)
                     {
-                        Append = AppendCollection,
-                        DefaultType = DefaultType,
-                        IsPacked = IsPacked,
-                        ReturnList = member != null && Helpers.CanWrite(_model, member)
+                        Append = level0.Collection.Append.GetValueOrDefault(),
+                        DefaultType = level0.CollectionConcreteType,
+                        IsPacked = isPacked,
+                        ReturnList = Helpers.CanWrite(_model, Member)
                     },
-                    DynamicType,
+                    level0.WriteAsDynamicType.GetValueOrDefault(),
                     asReference,
-                    DataFormat,
+                    level0.ContentBinaryFormatHint.GetValueOrDefault(),
                     true,
                     // real type members always handle references if applicable
                     finalDefaultValue,
 #if FORCE_LATE_REFERENCE
                     true,
 #else
-                    AsLateReference,
+                    asLateReference,
 #endif
                     _model);
-                // TODO test aqlaattribute with IKVM
-                if (member != null)
+
+                PropertyInfo prop = Member as PropertyInfo;
+                if (prop != null)
+                    ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
+                else
                 {
-                    PropertyInfo prop = member as PropertyInfo;
-                    if (prop != null)
-                    {
-                        ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)member, ser);
-                    }
+                    FieldInfo fld = Member as FieldInfo;
+                    if (fld != null)
+                        ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
                     else
-                    {
-                        FieldInfo fld = member as FieldInfo;
-                        if (fld != null)
-                        {
-                            ser = new FieldDecorator(ParentType, (FieldInfo)member, ser);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException();
-                        }
-                    }
-                    if (getSpecified != null || setSpecified != null)
-                    {
-                        ser = new MemberSpecifiedDecorator(getSpecified, setSpecified, ser);
-                    }
+                        throw new InvalidOperationException();
                 }
+                if (getSpecified != null || setSpecified != null)
+                    ser = new MemberSpecifiedDecorator(getSpecified, setSpecified, ser);
                 return ser;
             }
             finally
@@ -203,7 +218,7 @@ namespace AqlaSerializer.Meta
         }
 
         #region Setting accessors
-
+        // TODO wrapper
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
             MemberLevelSettingsValue? result = (_levels.Count <= level ? null : _levels[level])
@@ -214,7 +229,12 @@ namespace AqlaSerializer.Meta
         
         public void SetSettings(MemberLevelSettingsValue value, int level = 0)
         {
-            ThrowIfFrozen();
+            SetSettings(value, level, false);
+        }
+
+        void SetSettings(MemberLevelSettingsValue value, int level, bool bypassFrozenCheck)
+        {
+            if (!bypassFrozenCheck) ThrowIfFrozen();
             while (level >= _levels.Count)
                 _levels.Add(null);
             _levels[level] = value;
@@ -223,7 +243,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Allows to set EnhancedFormat and EnhancedWriteMode for all levels
         /// </summary>
-        [Obsolete("Use EnhancedFormat and EnchancedWriteMode")]
+        [Obsolete("Use EnhancedFormat and EnhancedWriteMode")]
         public bool AsReference
         {
             set
@@ -244,6 +264,7 @@ namespace AqlaSerializer.Meta
                             {
                                 x.EnhancedWriteMode = EnhancedMode.Minimal;
                             }
+                            return x;
                         });
             }
         }
@@ -382,7 +403,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Allows to set enchanced write mode for all levels
         /// </summary>
-        public EnhancedMode EnchancedWriteMode
+        public EnhancedMode EnhancedWriteMode
         {
             set
             {
@@ -398,7 +419,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Allows to set enchanced mode for all levels
         /// </summary>
-        [Obsolete("Use EnhancedFormat and EnchancedWriteMode")]
+        [Obsolete("Use EnhancedFormat and EnhancedWriteMode")]
         public bool SupportNull
         {
             set
@@ -436,6 +457,7 @@ namespace AqlaSerializer.Meta
                             {
                                 x.WriteAsDynamicType = false;
                             }
+                            return x;
                         });
             }
         }
@@ -612,12 +634,19 @@ namespace AqlaSerializer.Meta
             else
                 flags = (byte)(flags & ~flag);
         }
-        
+
         internal string GetSchemaTypeName(bool applyNetObjectProxy, ref bool requiresBclImport)
         {
+            var s = Serializer;
+            s.GetHashCode();
             Type effectiveType = GetSettingsCopy(0).Collection.ItemType;
             if (effectiveType == null) effectiveType = MemberType;
-            return _model.GetSchemaTypeName(effectiveType, GetSettingsCopy(0).ContentBinaryFormatHint.GetValueOrDefault(), applyNetObjectProxy && AsReference, applyNetObjectProxy && dynamicType, ref requiresBclImport);
+            return _model.GetSchemaTypeName(
+                effectiveType,
+                GetSettingsCopy(0).ContentBinaryFormatHint.GetValueOrDefault(),
+                applyNetObjectProxy && GetSettingsCopy().EnhancedFormat.GetValueOrDefault(),
+                applyNetObjectProxy && GetSettingsCopy().EnhancedFormat.GetValueOrDefault() && GetSettingsCopy().WriteAsDynamicType.GetValueOrDefault(),
+                ref requiresBclImport);
         }
 
         internal ValueMember CloneAsUnfrozen(RuntimeTypeModel model)
