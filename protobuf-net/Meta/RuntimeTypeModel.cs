@@ -378,7 +378,7 @@ namespace AqlaSerializer.Meta
                 WireType defaultWireType;
                 MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
                 IProtoSerializer ser = family == MetaType.AttributeFamily.None
-                    ? ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false)
+                    ? ValueSerializerBuilder.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false)
                     : null;
 
                 if (ser != null) basicTypes.Add(new BasicType(type, ser));

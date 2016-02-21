@@ -43,7 +43,7 @@ namespace Examples.Issues
             var model = TypeModel.Create();
             var member = model[typeof(Foo)][1];
             Assert.AreEqual(typeof(Bar), member.ItemType);
-            Assert.AreEqual(typeof(List<Bar>), member.DefaultType);
+            Assert.AreEqual(typeof(List<Bar>), member.CollectionConcreteType);
         }
         [Test]
         public void DefaultToListT()

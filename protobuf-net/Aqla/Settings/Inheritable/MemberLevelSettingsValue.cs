@@ -23,19 +23,22 @@ namespace AqlaSerializer.Settings
         /// Has value if != NotSpecified
         /// </summary>
         public EnhancedMode EnhancedWriteMode;
-        
+
         /// <summary>
-        /// Has value if != null
+        /// Embeds the type information into the stream, allowing usage with types not known in advance.
+        /// Has value if != null.
         /// </summary>
         public bool? WriteAsDynamicType;
 
         /// <summary>
-        /// Has value if != null
+        /// Specifies the rules used to process the field; this is used to determine the most appropriate
+        /// wite-type, but also to describe subtypes <i>within</i> that wire-type (such as SignedVariant).
+        /// Has value if != null.
         /// </summary>
         public BinaryDataFormat? ContentBinaryFormatHint;
-
+        
         /// <summary>
-        /// Has value if != null
+        /// For abstract types (IList etc), the type of concrete object to create (if required). Has value if != null.
         /// </summary>
         public Type CollectionConcreteType;
 

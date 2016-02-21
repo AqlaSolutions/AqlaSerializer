@@ -101,7 +101,7 @@ namespace Examples
         {
             var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
             model.Add(typeof(Naked), true);
-            model.Add(typeof(CanHazData), true)[3].IsStrict = true;
+            model.Add(typeof(CanHazData), true);//[3].IsStrict = true;
 
             MakeFromScratch(model, "Runtime");
             model.CompileInPlace();

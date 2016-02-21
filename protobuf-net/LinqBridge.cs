@@ -1,3 +1,4 @@
+#if !NO_RUNTIME
 #region License, Terms and Author(s)
 //
 // LINQBridge
@@ -3137,3 +3138,4 @@ namespace AltLinq
         }
     }
 }
+#endif

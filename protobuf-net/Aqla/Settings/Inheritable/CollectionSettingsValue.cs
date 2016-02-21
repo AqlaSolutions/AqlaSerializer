@@ -20,7 +20,8 @@ namespace AqlaSerializer.Settings
         public CollectionFormat Format;
 
         /// <summary>
-        /// Has value if != null
+        /// Within a list / array / etc, the type of object for each item in the list (especially useful with ArrayList).
+        /// Has value if != null.
         /// </summary>
         public Type ItemType;
 
@@ -29,7 +30,9 @@ namespace AqlaSerializer.Settings
         /// </summary>
         public WireType? PackedWireTypeForRead;
         
-        /// <summary>
+        /// /// <summary>
+        /// Indicates whether this field should *repace* existing values (the default is false, meaning *append*).
+        /// This option only applies to list/array data.
         /// Has value if != null
         /// </summary>
         public bool? Append;
