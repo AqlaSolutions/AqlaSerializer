@@ -133,7 +133,7 @@ namespace AqlaSerializer.Meta
                 #region Reference and dynamic type
 
                 {
-                    asReference = GetAsReferenceDefault(_model, MemberType, false, this._serializer is TupleSerializer);
+                    asReference = GetAsReferenceDefault(_model, MemberType, false, false);
 
                     EnhancedMode wm = level0.EnhancedWriteMode;
                     if (level0.EnhancedFormat == false)
@@ -147,10 +147,19 @@ namespace AqlaSerializer.Meta
 
                     bool dynamicType = level0.WriteAsDynamicType.GetValueOrDefault();
                     if (dynamicType && level0.EnhancedFormat == false) throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat: " + Member);
-                    if (wm == EnhancedMode.LateReference) asLateReference = true;
+                    if (wm == EnhancedMode.LateReference)
+                    {
+                        if (!ValueSerializerBuilder.CanBeAsLateReference(_model.GetKey(MemberType, false, false), _model))
+                            throw new ProtoException(Member + " can't be written as late reference because of its type.");
+
+                        asLateReference = true;
+                    }
 
                     if (asReference)
-                    {
+                   {
+                        if (!ValueSerializerBuilder.CheckCanBeAsReference(MemberType, false))
+                            throw new ProtoException(Member + " can't be written as reference because of its type.");
+
                         level0.EnhancedFormat = true;
                         level0.EnhancedWriteMode = wm = asLateReference ? EnhancedMode.LateReference : EnhancedMode.Reference;
                         if (asLateReference && dynamicType)
