@@ -292,7 +292,9 @@ namespace AqlaSerializer.Meta
                 {
                     foreach (ValueMember member in metaType.Fields)
                     {
-                        Type type = member.ItemType;
+                        member.Serializer.GetHashCode();
+                        var s = member.GetSettingsCopy(0);
+                        Type type = s.Collection.ItemType;
                         if (type == null) type = member.MemberType;
                         var fieldMetaType = FindWithoutAdd(type);
                         if (fieldMetaType != null)
