@@ -14,6 +14,10 @@ namespace AqlaSerializer
         /// <summary>
         /// Doesn't support some scenarios, use only for compatibility with Google Protocol Buffers. Versioning won't support switching to other formats. 
         /// </summary>
+        /// <remarks>
+        /// Writes in packed encoding when appropriate which can save lots of space for repeated primitive values but only applies 
+        /// to list/array data of primitive types (int, double, etc). 
+        /// </remarks>
         Google,
         /// <summary>
         /// The same as <see cref="Google"/> but less size efficient for primitive types (int, double, etc), use only for compatibility reasons. Versioning won't support switching to others formats. 

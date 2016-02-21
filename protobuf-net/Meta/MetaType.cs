@@ -626,9 +626,9 @@ namespace AqlaSerializer.Meta
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
                 var ser = (IProtoTypeSerializer)
-                       ValueMember.BuildValueFinalSerializer(
+                       ValueSerializerBuilder.BuildValueFinalSerializer(
                            type,
-                           new ValueMember.CollectionSettings(itemType)
+                           new ValueSerializerBuilder.CollectionSettings(itemType)
                            {
                                Append = false,
                                DefaultType = ConstructType ?? defaultType,
@@ -1046,7 +1046,13 @@ namespace AqlaSerializer.Meta
             level0.ContentBinaryFormatHint = BinaryDataFormat.Default;
             mappedMember[0] = level0;
 
-            ValueMember newField = new ValueMember(model, type, mappedMember);
+            ValueMember newField = new ValueMember(
+                mappedMember.MainValue,
+                mappedMember.MappingState.LevelValues,
+                mappedMember.Member,
+                mappedMember.MappingState.Input.EffectiveMemberType,
+                type,
+                model);
             Add(newField);
             return newField;
         }
@@ -1223,7 +1229,7 @@ namespace AqlaSerializer.Meta
 
             s.MainValue = m;
 
-            var vm = new ValueMember(model, this.Type, member);
+            var vm = new ValueMember(member.MainValue, member.MappingState.LevelValues, member.Member, member.MappingState.Input.EffectiveMemberType, this.Type, model);
 #if WINRT
             TypeInfo finalType = typeInfo;
 #else

@@ -49,7 +49,7 @@ namespace AqlaSerializer.Serializers
                 {
                     asReference = model[tmp].AsReferenceDefault;
                 }
-                IProtoSerializerWithWireType tail = ValueMember.TryGetCoreSerializer(model, BinaryDataFormat.Default, tmp, out wireType, asReference, false, false, true), serializer;
+                IProtoSerializerWithWireType tail = ValueSerializerBuilder.TryGetCoreSerializer(model, BinaryDataFormat.Default, tmp, out wireType, asReference, false, false, true), serializer;
                 if (tail == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + tmp.FullName);

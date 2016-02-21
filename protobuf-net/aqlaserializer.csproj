@@ -377,6 +377,7 @@
     <Compile Include="ICloneable.cs" />
     <Compile Include="Meta\IKVMAttributeFactory.cs" />
     <Compile Include="Meta\ReflectionObjectMap.cs" />
+    <Compile Include="Meta\ValueSerializerBuilder.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\AccessorsCache.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\DynamicMethodCompiler.cs" />
     <Compile Include="LateReferencesCache.cs" />
