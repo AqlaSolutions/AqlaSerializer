@@ -510,6 +510,7 @@ namespace Examples
             CheckLists(arr, clone);
         }
 
+        [Ignore("Not relevant for Aqla")]
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
         public void TestPackedArrayString()
         {
@@ -521,6 +522,7 @@ namespace Examples
             [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public string[] Items { get; set; }
         }
+        [Ignore("Not relevant for Aqla")]
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
         public void TestPackedListDateTime()
         {
@@ -532,6 +534,7 @@ namespace Examples
             [ProtoBuf.ProtoMember(1, Options = ProtoBuf.MemberSerializationOptions.Packed)]
             public List<DateTime> Items { get; set; }
         }
+        [Ignore("Not relevant for Aqla")]
         [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
         public void TestPackedCustomOfSubMessage()
         {

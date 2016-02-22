@@ -112,6 +112,70 @@ namespace AqlaSerializer.Meta
 
                 if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
+                #region Default value
+
+                if (_main.DefaultValue != null && getSpecified != null)
+                    throw new ProtoException("Can't use default value \"" + _main.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
+
+                if (_main.DefaultValue != null && IsRequired)
+                    throw new ProtoException("Can't use default value \"" + _main.DefaultValue + "\" on Required member " + Member);
+
+                if (getSpecified == null && !IsRequired && _main.DefaultValue == null)
+                {
+                    if (_model.UseImplicitZeroDefaults)
+                    {
+                        switch (Helpers.GetTypeCode(MemberType))
+                        {
+                            case ProtoTypeCode.Boolean:
+                                _main.DefaultValue = false;
+                                break;
+                            case ProtoTypeCode.Decimal:
+                                _main.DefaultValue = (decimal)0;
+                                break;
+                            case ProtoTypeCode.Single:
+                                _main.DefaultValue = (float)0;
+                                break;
+                            case ProtoTypeCode.Double:
+                                _main.DefaultValue = (double)0;
+                                break;
+                            case ProtoTypeCode.Byte:
+                                _main.DefaultValue = (byte)0;
+                                break;
+                            case ProtoTypeCode.Char:
+                                _main.DefaultValue = (char)0;
+                                break;
+                            case ProtoTypeCode.Int16:
+                                _main.DefaultValue = (short)0;
+                                break;
+                            case ProtoTypeCode.Int32:
+                                _main.DefaultValue = (int)0;
+                                break;
+                            case ProtoTypeCode.Int64:
+                                _main.DefaultValue = (long)0;
+                                break;
+                            case ProtoTypeCode.SByte:
+                                _main.DefaultValue = (sbyte)0;
+                                break;
+                            case ProtoTypeCode.UInt16:
+                                _main.DefaultValue = (ushort)0;
+                                break;
+                            case ProtoTypeCode.UInt32:
+                                _main.DefaultValue = (uint)0;
+                                break;
+                            case ProtoTypeCode.UInt64:
+                                _main.DefaultValue = (ulong)0;
+                                break;
+                            case ProtoTypeCode.TimeSpan:
+                                _main.DefaultValue = TimeSpan.Zero;
+                                break;
+                            case ProtoTypeCode.Guid:
+                                _main.DefaultValue = Guid.Empty;
+                                break;
+                        }
+                    }
+
+                }
+
                 //#if WINRT
                 if (_main.DefaultValue != null && _model.MapType(_main.DefaultValue.GetType()) != MemberType)
                     //#else
@@ -121,8 +185,8 @@ namespace AqlaSerializer.Meta
                     _main.DefaultValue = ParseDefaultValue(MemberType, _main.DefaultValue);
                 }
 
+                #endregion
 
-                bool isPacked = level0.Collection.Format == CollectionFormat.Google;
                 // TODO strict check, exception
                 if (!level0.Collection.Append.GetValueOrDefault() && !Helpers.CanWrite(_model, Member)) level0.Collection.Append = true;
 
@@ -149,7 +213,9 @@ namespace AqlaSerializer.Meta
                     if (dynamicType && level0.EnhancedFormat == false) throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat: " + Member);
                     if (wm == EnhancedMode.LateReference)
                     {
-                        if (!ValueSerializerBuilder.CanBeAsLateReference(_model.GetKey(MemberType, false, false), _model))
+                        int key = _model.GetKey(MemberType, false, false);
+                        // we check here only theoretical possibility for type but not whether it's enabled on model level
+                        if (key <= 0 || !ValueSerializerBuilder.CanTypeBeAsLateReference(_model[key]))
                             throw new ProtoException(Member + " can't be written as late reference because of its type.");
 
                         asLateReference = true;
@@ -157,7 +223,8 @@ namespace AqlaSerializer.Meta
 
                     if (asReference)
                    {
-                        if (!ValueSerializerBuilder.CheckCanBeAsReference(MemberType, false))
+                        // we check here only theoretical possibility for type but not whether it's enabled on model level
+                        if (!ValueSerializerBuilder.CanTypeBeAsReference(MemberType, false))
                             throw new ProtoException(Member + " can't be written as reference because of its type.");
 
                         level0.EnhancedFormat = true;
@@ -169,18 +236,6 @@ namespace AqlaSerializer.Meta
 
                 #endregion
 
-                if (isPacked && level0.Collection.ItemType != null && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
-                    && !ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)))
-                {
-                    throw new InvalidOperationException("Only simple data-types can use packed encoding");
-                }
-                object finalDefaultValue = null;
-                if (_main.DefaultValue != null && !IsRequired && getSpecified == null)
-                { // note: "ShouldSerialize*" / "*Specified" / etc ^^^^ take precedence over defaultValue,
-                    // as does "IsRequired"
-                    finalDefaultValue = _main.DefaultValue;
-                }
-
                 SetSettings(level0, 0, true);
 
                 var ser = ValueSerializerBuilder.BuildValueFinalSerializer(
@@ -189,7 +244,11 @@ namespace AqlaSerializer.Meta
                     {
                         Append = level0.Collection.Append.GetValueOrDefault(),
                         DefaultType = level0.CollectionConcreteType,
-                        IsPacked = isPacked,
+                        IsPacked =
+                            level0.Collection.ItemType != null 
+                            && level0.Collection.Format == CollectionFormat.Google 
+                            && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
+                            && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)),
                         ReturnList = Helpers.CanWrite(_model, Member)
                     },
                     level0.WriteAsDynamicType.GetValueOrDefault(),
@@ -197,7 +256,7 @@ namespace AqlaSerializer.Meta
                     level0.ContentBinaryFormatHint.GetValueOrDefault(),
                     true,
                     // real type members always handle references if applicable
-                    finalDefaultValue,
+                    _main.DefaultValue,
 #if FORCE_LATE_REFERENCE
                     true,
 #else
@@ -487,7 +546,7 @@ namespace AqlaSerializer.Meta
 
         internal static bool GetAsReferenceDefault(RuntimeTypeModel model, Type memberType, bool isProtobufNetLegacyMember, bool isDeterminatedAsAutoTuple)
         {
-            if (ValueSerializerBuilder.CheckCanBeAsReference(memberType, isDeterminatedAsAutoTuple))
+            if (ValueSerializerBuilder.CanTypeBeAsReference(memberType, isDeterminatedAsAutoTuple))
             {
                 if (RuntimeTypeModel.CheckTypeDoesntRequireContract(model, memberType))
                     isProtobufNetLegacyMember = false; // inbuilt behavior types doesn't depend on member legacy behavior
@@ -623,25 +682,15 @@ namespace AqlaSerializer.Meta
             this.setSpecified = setSpecified;
 
         }
-        private void ThrowIfFrozen()
+
+        void ThrowIfFrozen()
         {
             if (_serializer != null) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
         }
-        private const byte
-           OPTIONS_IsStrict = 1;
-
-        private byte flags;
-        private bool HasFlag(byte flag) { return (flags & flag) == flag; }
-        private void SetFlag(byte flag, bool value, bool throwIfFrozen)
+        
+        public override string ToString()
         {
-            if (throwIfFrozen && HasFlag(flag) != value)
-            {
-                ThrowIfFrozen();
-            }
-            if (value)
-                flags |= flag;
-            else
-                flags = (byte)(flags & ~flag);
+            return Member.ToString();
         }
 
         internal string GetSchemaTypeName(bool applyNetObjectProxy, ref bool requiresBclImport)

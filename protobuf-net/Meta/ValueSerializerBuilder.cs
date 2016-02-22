@@ -17,7 +17,7 @@ using System.Reflection;
 
 namespace AqlaSerializer.Meta
 {
-    public class ValueSerializerBuilder
+    internal class ValueSerializerBuilder
     {
         internal static IProtoSerializerWithWireType BuildValueFinalSerializer(Type objectType, CollectionSettings collection, bool dynamicType, bool tryAsReference, BinaryDataFormat dataFormat, bool isMemberOrNested, object defaultValue, bool tryAsLateRef, RuntimeTypeModel model)
         {
@@ -80,7 +80,7 @@ namespace AqlaSerializer.Meta
                             nestedDefaultType = metaType.ConstructType ?? metaType.Type;
                     }
 
-                    if (tryAsReference && !CheckCanBeAsReference(collectionItemType, false))
+                    if (tryAsReference && !CanTypeBeAsReference(collectionItemType, false))
                         tryAsReference = false;
 
                     //if (appendCollection) throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
@@ -181,7 +181,7 @@ namespace AqlaSerializer.Meta
                             ser,
                             Helpers.GetNullableUnderlyingType(objectType) != null,
                             tryAsReference,
-                            tryAsReference && CanBeAsLateReference(model.GetKey(objectType, false, true), model),
+                            tryAsReference && CanReallyBeAsLateReference(model.GetKey(objectType, false, true), model),
                             model);
                     }
                     else if (!Helpers.IsValueType(objectType) || Helpers.GetNullableUnderlyingType(objectType) != null)
@@ -218,7 +218,7 @@ namespace AqlaSerializer.Meta
                 if (tmp != null) type = tmp;
             }
 #endif
-            if (tryAsReference && !CheckCanBeAsReference(type, false))
+            if (tryAsReference && !CanTypeBeAsReference(type, false))
                 tryAsReference = false;
 
             defaultWireType = WireType.None;
@@ -274,7 +274,7 @@ namespace AqlaSerializer.Meta
                 {
                     if (dynamicType)
                         return new NetObjectValueDecorator(originalType, tryAsReference, dataFormat, model);
-                    else if (tryAsLateRef && tryAsReference && CanBeAsLateReference(key, model))
+                    else if (tryAsLateRef && tryAsReference && CanReallyBeAsLateReference(key, model))
                     {
                         return new NetObjectValueDecorator(originalType, key, tryAsReference, true, model[type], model);
                     }
@@ -312,7 +312,7 @@ namespace AqlaSerializer.Meta
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(model, type, asReference))
             {
-                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef & asReference && CanBeAsLateReference(model.GetKey(type, false, true), model), model);
+                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef & asReference && CanReallyBeAsLateReference(model.GetKey(type, false, true), model), model);
             }
             else
             {
@@ -322,14 +322,20 @@ namespace AqlaSerializer.Meta
             return ser;
         }
 
-        internal static bool CanBeAsLateReference(int key, RuntimeTypeModel model, bool forRead = false)
+        internal static bool CanReallyBeAsLateReference(int key, RuntimeTypeModel model, bool forRead = false)
         {
             if (key < 0) return false;
             MetaType mt = model[key];
-            return !mt.Type.IsArray && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !Helpers.IsValueType(mt.Type) &&
+            return CanTypeBeAsLateReference(mt) &&
                    (forRead || model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.LateReference));
         }
-        internal static bool CheckCanBeAsReference(Type type, bool autoTuple)
+
+        internal static bool CanTypeBeAsLateReference(MetaType mt)
+        {
+            return mt != null && !mt.Type.IsArray && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !Helpers.IsValueType(mt.Type);
+        }
+
+        internal static bool CanTypeBeAsReference(Type type, bool autoTuple)
         {
             return !autoTuple && !Helpers.IsValueType(type);// && Helpers.GetTypeCode(type) != ProtoTypeCode.String;
         }

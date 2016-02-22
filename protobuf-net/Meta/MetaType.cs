@@ -1165,33 +1165,6 @@ namespace AqlaSerializer.Meta
             var m = s.MainValue;
             Type effectiveType = s.Input.EffectiveMemberType;
 
-            // implicit zero default
-            if (m.DefaultValue == null)
-            {
-                m.DefaultValue = null;
-                if (model.UseImplicitZeroDefaults)
-                {
-                    switch (Helpers.GetTypeCode(effectiveType))
-                    {
-                        case ProtoTypeCode.Boolean: m.DefaultValue = false; break;
-                        case ProtoTypeCode.Decimal: m.DefaultValue = (decimal)0; break;
-                        case ProtoTypeCode.Single: m.DefaultValue = (float)0; break;
-                        case ProtoTypeCode.Double: m.DefaultValue = (double)0; break;
-                        case ProtoTypeCode.Byte: m.DefaultValue = (byte)0; break;
-                        case ProtoTypeCode.Char: m.DefaultValue = (char)0; break;
-                        case ProtoTypeCode.Int16: m.DefaultValue = (short)0; break;
-                        case ProtoTypeCode.Int32: m.DefaultValue = (int)0; break;
-                        case ProtoTypeCode.Int64: m.DefaultValue = (long)0; break;
-                        case ProtoTypeCode.SByte: m.DefaultValue = (sbyte)0; break;
-                        case ProtoTypeCode.UInt16: m.DefaultValue = (ushort)0; break;
-                        case ProtoTypeCode.UInt32: m.DefaultValue = (uint)0; break;
-                        case ProtoTypeCode.UInt64: m.DefaultValue = (ulong)0; break;
-                        case ProtoTypeCode.TimeSpan: m.DefaultValue = TimeSpan.Zero; break;
-                        case ProtoTypeCode.Guid: m.DefaultValue = Guid.Empty; break;
-                    }
-                }
-            }
-
             {
                 Type t = null;
 
