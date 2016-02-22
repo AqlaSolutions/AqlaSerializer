@@ -75,7 +75,7 @@ namespace AqlaSerializer.Meta
         /// Creates a new ValueMember instance
         /// </summary>
         public ValueMember(
-            MemberMainSettingsValue mainSettings, IEnumerable<MemberLevelSettingsValue?> levels, MemberInfo member, Type memberType, Type parentType, RuntimeTypeModel model)
+            MemberMainSettingsValue mainSettings, IEnumerable<MemberLevelSettingsValue?> levels, MemberLevelSettingsValue defaultLevel, MemberInfo member, Type memberType, Type parentType, RuntimeTypeModel model)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
             if (memberType == null) throw new ArgumentNullException(nameof(memberType));
@@ -87,8 +87,10 @@ namespace AqlaSerializer.Meta
             this._model = model;
             _main = mainSettings;
             _levels = new List<MemberLevelSettingsValue?>(levels ?? new MemberLevelSettingsValue?[0]);
-            if (_levels.Count > 0 && _levels[0] != null)
-                _defaultLevel = _levels[0].Value;
+            _defaultLevel = defaultLevel;
+            // this doesn't depend on anything so can check right now 
+            if (MemberType.IsArray && MemberType.GetArrayRank() != 1)
+                throw new NotSupportedException("Multi-dimension arrays are not supported");
         }
 
         IProtoSerializerWithWireType BuildSerializer()
@@ -188,7 +190,7 @@ namespace AqlaSerializer.Meta
                 #endregion
 
                 // TODO strict check, exception
-                if (!level0.Collection.Append.GetValueOrDefault() && !Helpers.CanWrite(_model, Member)) level0.Collection.Append = true;
+                if (level0.Collection.Append == null || (!level0.Collection.Append.Value && !Helpers.CanWrite(_model, Member))) level0.Collection.Append = true;
 
 
                 bool asReference;
@@ -235,6 +237,45 @@ namespace AqlaSerializer.Meta
                 }
 
                 #endregion
+
+                #region Collections
+                {
+                    int idx = _model.FindOrAddAuto(MemberType, false, true, false);
+                    if (idx >= 0 && _model[MemberType].IgnoreListHandling)
+                        ResetCollectionSettings(ref level0);
+                    else
+                    {
+                        Type newCollectionConcreteType = null;
+                        Type newItemType = null;
+
+                        MetaType.ResolveListTypes(_model, MemberType, ref newItemType, ref newCollectionConcreteType);
+
+                        if (level0.Collection.ItemType == null)
+                            level0.Collection.ItemType = newItemType;
+
+                        // should not override with default because what if specified something like List<string> for IList? 
+                        if (level0.CollectionConcreteType == null)
+                            level0.CollectionConcreteType = newCollectionConcreteType;
+                        else if (!Helpers.IsAssignableFrom(MemberType, level0.CollectionConcreteType))
+                        {
+                            throw new ProtoException(
+                                "Specified CollectionConcreteType " + level0.CollectionConcreteType.Name + " is not assignable to member " + Member);
+                        }
+
+                        if (level0.Collection.ItemType == null)
+                            ResetCollectionSettings(ref level0);
+                        else if (!level0.Collection.Append.GetValueOrDefault() && !Helpers.CanWrite(_model, Member))
+                        {
+                            if (level0.Collection.Append == null)
+                                level0.Collection.Append = true;
+                            else
+                                throw new ProtoException("The property " + Member + " is not writable but AppendCollection was set to false");
+                        }
+                    }
+                }
+
+                #endregion
+
 
                 SetSettings(level0, 0, true);
 
@@ -285,14 +326,20 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        static void ResetCollectionSettings(ref MemberLevelSettingsValue level0)
+        {
+
+            level0.Collection.ItemType = null;
+            level0.Collection.PackedWireTypeForRead = null;
+            level0.Collection.Format = CollectionFormat.NotSpecified;
+            level0.CollectionConcreteType = null;
+        }
+
         #region Setting accessors
         // TODO wrapper
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
-            MemberLevelSettingsValue? result = (_levels.Count <= level ? null : _levels[level])
-                                               ?? (level == 0 ? _defaultLevel : MemberLevelSettingsValue.Merge(GetSettingsCopy(0), _defaultLevel));
-
-            return result.Value;
+            return (_levels.Count <= level ? null : _levels[level]) ?? _defaultLevel;
         }
         
         public void SetSettings(MemberLevelSettingsValue value, int level = 0)

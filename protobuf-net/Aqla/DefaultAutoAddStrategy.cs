@@ -322,7 +322,8 @@ namespace AqlaSerializer
                         levels.Add(new MemberLevelSettingsValue());
                     for (int i = 0; i < levels.Count; i++)
                     {
-                        var level = levels[i].GetValueOrDefault();
+                        if (levels[i] == null) continue;
+                        var level = levels[i].Value;
                         if (level.CollectionConcreteType == null) level.CollectionConcreteType = defaultType;
                         levels[i] = level;
                     }

@@ -42,6 +42,7 @@ namespace Examples.Issues
         {
             var model = TypeModel.Create();
             var member = model[typeof(Foo)][1];
+            member.Serializer.GetHashCode();
             Assert.AreEqual(typeof(Bar), member.GetSettingsCopy().Collection.ItemType);
             Assert.AreEqual(typeof(List<Bar>), member.GetSettingsCopy().CollectionConcreteType);
         }
