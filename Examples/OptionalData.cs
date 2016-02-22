@@ -47,6 +47,7 @@ namespace Examples
             Test<RequiredImplicitZero>(3F, 5);
             Test<RequiredImplicitZero>(5F, 5);
         }
+        [ExpectedException(typeof(ProtoException), ExpectedMessage = "Can't use default value \"0\" on Required member Single Value")]
         [Test]
         public void TestRequiredExplicitZero()
         {
@@ -55,6 +56,7 @@ namespace Examples
             Test<RequiredExplicitZero>(5F, 5);
         }
         [Test]
+        [ExpectedException(typeof(ProtoException), ExpectedMessage = "Can't use default value \"5\" on Required member Single Value")]
         public void TestRequiredExplicitFive()
         {
             Test<RequiredExplicitFive>(0F, 5);
