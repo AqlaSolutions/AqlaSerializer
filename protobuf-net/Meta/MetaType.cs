@@ -1044,12 +1044,12 @@ namespace AqlaSerializer.Meta
             var level0 = mappedMember[0];
             level0.CollectionConcreteType = defaultType;
             level0.Collection.ItemType = itemType;
-            level0.ContentBinaryFormatHint = BinaryDataFormat.Default;
             mappedMember[0] = level0;
 
             ValueMember newField = new ValueMember(
                 mappedMember.MainValue,
                 mappedMember.MappingState.LevelValues,
+                mappedMember[0],
                 mappedMember.Member,
                 mappedMember.MappingState.Input.EffectiveMemberType,
                 type,
@@ -1067,9 +1067,8 @@ namespace AqlaSerializer.Meta
             if (type.IsArray)
             {
                 if (type.GetArrayRank() != 1)
-                {
-                    throw new NotSupportedException("Multi-dimension arrays are supported");
-                }
+                    return;
+                
                 itemType = type.GetElementType();
                 if (itemType == model.MapType(typeof(byte)))
                 {
@@ -1161,49 +1160,7 @@ namespace AqlaSerializer.Meta
 
         public void Add(MappedMember member)
         {
-            var s = member.MappingState;
-            var m = s.MainValue;
-            Type effectiveType = s.Input.EffectiveMemberType;
-
-            {
-                Type t = null;
-
-                Type itemType = null;
-
-                // check for list types
-                ResolveListTypes(model, effectiveType, ref itemType, ref t);
-                // but take it back if it is explicitly excluded
-                if (itemType != null)
-                { // looks like a list, but double check for IgnoreListHandling
-                    int idx = model.FindOrAddAuto(effectiveType, false, true, false);
-                    if (idx >= 0 && model[effectiveType].IgnoreListHandling)
-                    {
-                        itemType = null;
-                        t = null;
-                    }
-                }
-
-                var level0 = s.LevelValues[0].Value;
-                {
-                    if (level0.Collection.ItemType == null)
-                        level0.Collection.ItemType = itemType;
-
-                    if (t != null)
-                    {
-                        if (level0.CollectionConcreteType != t && level0.CollectionConcreteType != null)
-                            throw new ArgumentException("Specified defaultType " + level0.CollectionConcreteType.Name + " can't be used because found default list type " + t.Name);
-                        level0.CollectionConcreteType = t;
-                    }
-                    else if (level0.CollectionConcreteType != null && !Helpers.IsAssignableFrom(effectiveType, level0.CollectionConcreteType))
-                        throw new ProtoException(
-                            "Specified default type " + level0.CollectionConcreteType.Name + " is not assignable to member " + this.Type.Name + "." + member.Member.Name);
-                }
-                s.LevelValues[0] = level0;
-            }
-
-            s.MainValue = m;
-
-            var vm = new ValueMember(member.MainValue, member.MappingState.LevelValues, member.Member, member.MappingState.Input.EffectiveMemberType, this.Type, model);
+            var vm = new ValueMember(member.MainValue, member.MappingState.LevelValues, member[0], member.Member, member.MappingState.Input.EffectiveMemberType, this.Type, model);
 #if WINRT
             TypeInfo finalType = typeInfo;
 #else

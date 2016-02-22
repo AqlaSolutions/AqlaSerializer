@@ -176,7 +176,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// See <see cref="SerializableMemberAttributeBase.ModelId"/>
         /// </summary>
-        public object ModelId { get; set; }
+        public object ModelId { get; set; } // TODO equality provider
 
         IAutoAddStrategy _autoAddStrategy;
         public IAutoAddStrategy AutoAddStrategy

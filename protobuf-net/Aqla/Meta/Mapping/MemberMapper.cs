@@ -60,13 +60,15 @@ namespace AqlaSerializer.Meta.Mapping
             {
                 for (int i = 0; i < state.LevelValues.Count; i++)
                 {
-                    var s = state.LevelValues[i].GetValueOrDefault();
+                    if (state.LevelValues[i] == null) continue;
+                    var s = state.LevelValues[i].Value;
                     if (s.Collection.Append != null)
                     {
                         if (!s.Collection.Append.Value)
                         {
+                            // TODO do checks on mapping stage for already set values
                             if (!state.Input.IgnoreNonWritableForOverwriteCollection)
-                                throw new ProtoException("The property " + member.Name + " of " + member.DeclaringType.Name + " is not writable but AppendCollection is true!");
+                                throw new ProtoException("The property " + member.Name + " of " + member.DeclaringType.Name + " is not writable but AppendCollection was set to false!");
 
                             s.Collection.Append = true;
                         }
