@@ -29,7 +29,6 @@ namespace AqlaSerializer
 {
     public class MappedMember : IComparable<MappedMember>
     {
-        public bool IsReadOnly { get; set; }
         public bool ForcedTag { get; set; }
         public MemberState MappingState { get; set; }
 
@@ -54,23 +53,7 @@ namespace AqlaSerializer
         public MemberInfo Member => MappingState.Input.Member;
 
         public string Name => MappingState.MainValue.Name;
-
-        public MemberLevelSettingsValue this[int nestedLevel]
-        {
-            get
-            {
-                if (nestedLevel >= MappingState.LevelValues.Count) return new MemberLevelSettingsValue();
-                return MappingState.LevelValues[nestedLevel].GetValueOrDefault();
-            }
-            set
-            {
-                while (nestedLevel >= MappingState.LevelValues.Count)
-                    MappingState.LevelValues.Add(new MemberLevelSettingsValue());
-
-                MappingState.LevelValues[nestedLevel] = value;
-            }
-        }
-
+        
         /// <summary>
         /// Compare with another NormalizedMappedMember for sorting purposes
         /// </summary>

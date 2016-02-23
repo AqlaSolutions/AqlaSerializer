@@ -1032,27 +1032,21 @@ namespace AqlaSerializer.Meta
             }
 #endif
             ResolveListTypes(model, miType, ref itemType, ref defaultType);
-
-            var input = new MemberArgsValue(mi, miType, new AttributeMap[0], AttributeType.None, model);
-            var s = new MemberState(input);
-            var m = s.MainValue;
-            m.Tag = fieldNumber;
-            m.DefaultValue = defaultValue;
-            s.MainValue = m;
-            var mappedMember = new MappedMember(s);
-            var level0 = mappedMember[0];
+            
+            var serializationSettings = new ValueSerializationSettings();
+            var memberSettings = new MemberMainSettingsValue { Tag = fieldNumber };
+            
+            var level0 = serializationSettings.GetSettingsCopy(0);
             level0.CollectionConcreteType = defaultType;
             level0.Collection.ItemType = itemType;
-            mappedMember[0] = level0;
+            
+            serializationSettings.SetSettings(level0, 0);
 
-            ValueMember newField = new ValueMember(
-                mappedMember.MainValue,
-                mappedMember.MappingState.LevelValues,
-                mappedMember[0],
-                mappedMember.Member,
-                mappedMember.MappingState.Input.EffectiveMemberType,
-                type,
-                model);
+            serializationSettings.DefaultValue = defaultValue;
+
+            serializationSettings.IsMemberOrNested = true;
+
+            ValueMember newField = new ValueMember(memberSettings, serializationSettings, mi, type, model);
             Add(newField);
             return newField;
         }
@@ -1159,7 +1153,9 @@ namespace AqlaSerializer.Meta
 
         public void Add(MappedMember member)
         {
-            var vm = new ValueMember(member.MainValue, member.MappingState.LevelValues, member[0], member.Member, member.MappingState.Input.EffectiveMemberType, this.Type, model);
+            var serializationSettings = member.MappingState.SerializationSettings.Clone();
+            serializationSettings.IsMemberOrNested = true;
+            var vm = new ValueMember(member.MainValue, serializationSettings, member.Member, this.Type, model);
 #if WINRT
             TypeInfo finalType = typeInfo;
 #else

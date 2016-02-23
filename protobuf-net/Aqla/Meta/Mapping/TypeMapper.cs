@@ -55,9 +55,9 @@ namespace AqlaSerializer.Meta.Mapping
             s.AsEnum = Helpers.IsEnum(args.Type);
             if (args.Family == MetaType.AttributeFamily.ImplicitFallback)
             {
-                s.ImplicitMode = args.ImplicitFallbackMode;
+                s.ImplicitFields = args.ImplicitFallbackMode;
                 s.ImplicitAqla = true;
-                s.ExplicitPropertiesContract = true;
+                s.ImplicitOnlyWriteable = true;
             }
             ProcessAttributeHandlers(s);
             var m = s.SettingsValue;
@@ -67,7 +67,7 @@ namespace AqlaSerializer.Meta.Mapping
             if (args.Family == MetaType.AttributeFamily.AutoTuple)
                 m.IsAutoTuple = true;
             
-            if (s.ImplicitMode != ImplicitFieldsMode.None)
+            if (s.ImplicitFields != ImplicitFieldsMode.None)
             {
                 if (args.Family == MetaType.AttributeFamily.ImplicitFallback)
                 {

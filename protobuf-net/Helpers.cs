@@ -73,6 +73,15 @@ namespace AqlaSerializer
 #endif
         }
 
+        public static bool IsAbstract(Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsAbstract;
+#else
+            return type.IsAbstract;
+#endif
+        }
+
         public static Assembly GetAssembly(Type type)
         {
 #if WINRT

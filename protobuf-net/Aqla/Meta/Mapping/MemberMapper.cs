@@ -39,50 +39,20 @@ namespace AqlaSerializer.Meta.Mapping
         public virtual MappedMember Map(MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.AsEnum)) return null;
-            
-            var model = args.Model;
-            var member = args.Member;
-            
             if (args.AsEnum) args.IsForced = true;
-
             var state = new MemberState(args);
             MemberMainSettingsValue m = state.MainValue;
             m.Tag = int.MinValue;
             state.MainValue = m;
-
-            state.LevelValues.Add(new MemberLevelSettingsValue());
-
+            
             if (ProcessHandlers(state) == MemberHandlerResult.Ignore || (state.MainValue.Tag < state.MinAcceptFieldNumber && !state.Input.IsForced)) return null;
 
-            bool readOnly = !Helpers.CanWrite(model, member);
+            if (state.SerializationSettings.DefaultLevel == null)
+                state.SerializationSettings.DefaultLevel = state.SerializationSettings.GetSettingsCopy(0);
 
-            if (readOnly)
-            {
-                for (int i = 0; i < state.LevelValues.Count; i++)
-                {
-                    if (state.LevelValues[i] == null) continue;
-                    var s = state.LevelValues[i].Value;
-                    if (s.Collection.Append != null)
-                    {
-                        if (!s.Collection.Append.Value)
-                        {
-                            // TODO do checks on mapping stage for already set values
-                            if (!state.Input.IgnoreNonWritableForOverwriteCollection)
-                                throw new ProtoException("The property " + member.Name + " of " + member.DeclaringType.Name + " is not writable but AppendCollection was set to false!");
-
-                            s.Collection.Append = true;
-                        }
-                    }
-                    else s.Collection.Append = true;
-
-                    state.LevelValues[i] = s;
-                }
-            }
-            
             return new MappedMember(state)
             {
-                ForcedTag = state.Input.IsForced || state.Input.InferTagByName,
-                IsReadOnly = readOnly,
+                ForcedTag = state.Input.IsForced || state.Input.InferTagByName
             };
         }
 

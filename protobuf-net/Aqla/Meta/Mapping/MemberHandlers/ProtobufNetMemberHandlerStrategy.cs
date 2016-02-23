@@ -30,10 +30,9 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
         public MemberHandlerResult TryRead(AttributeMap attribute, MemberState s, MemberInfo member, RuntimeTypeModel model)
         {
             var main = s.MainValue;
-            var levels = s.LevelValues;
             try
             {
-                MemberLevelSettingsValue level = levels[0].GetValueOrDefault();
+                MemberLevelSettingsValue level = s.SerializationSettings.GetSettingsCopy(0);
                 if (main.Tag <= 0) attribute.TryGetNotDefault("Tag", ref main.Tag);
                 if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotEmpty("Name", ref main.Name);
                 if (!main.IsRequiredInSchema) attribute.TryGetNotDefault("IsRequired", ref main.IsRequiredInSchema);
@@ -101,7 +100,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 if (level.WriteAsDynamicType.GetValueOrDefault()) level.EnhancedFormat = true;
 
                 s.TagIsPinned = main.Tag > 0;
-                levels[0] = level;
+                s.SerializationSettings.SetSettings(level, 0);
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto
             }
             finally

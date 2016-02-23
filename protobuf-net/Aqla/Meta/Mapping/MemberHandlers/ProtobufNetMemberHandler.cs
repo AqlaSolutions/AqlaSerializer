@@ -36,8 +36,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             _strategy = strategy;
         }
 
-        protected override MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
+        protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             // always consider ProtoMember if not strict Aqla
             // even if no [ProtoContract] was declared!
@@ -50,7 +49,6 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 var r = _strategy.TryRead(attrib, s, member, model);
                 // we have ref!
                 main = s.MainValue;
-                levels = s.LevelValues;
                 return r;
             }
             return MemberHandlerResult.NotFound;

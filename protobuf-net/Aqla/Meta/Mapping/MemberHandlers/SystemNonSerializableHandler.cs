@@ -28,8 +28,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 {
     public class SystemNonSerializableHandler : MemberMappingHandlerBase
     {
-        protected override MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
+        protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             if (!s.Input.CanUse(AttributeType.SystemNonSerialized)) return MemberHandlerResult.NotFound;
             var attrib = AttributeMap.GetAttribute(s.Input.Attributes, "System.NonSerializedAttribute");

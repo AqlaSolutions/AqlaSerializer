@@ -28,33 +28,33 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 {
     public class AqlaMemberHandler : MemberMappingHandlerBase
     {
-        protected override MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
+        protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             // always consider SerializableMember if not strict ProtoBuf
             // even if no [SerializableType] was declared!
             if (!s.Input.CanUse(AttributeType.Aqla)) return MemberHandlerResult.NotFound;
             if (HasAqlaIgnore(s.Input.Attributes, model)) return MemberHandlerResult.Ignore;
-            var memberRtAttrs = AttributeMap.CreateRuntime<SerializableMemberAttribute>(model, member, true).FirstOrDefault(attr => CheckAqlaModelId(attr, model));
-            if (memberRtAttrs == null) return MemberHandlerResult.NotFound;
+            var memberRtAttr = AttributeMap.CreateRuntime<SerializableMemberAttribute>(model, member, true).FirstOrDefault(attr => CheckAqlaModelId(attr, model));
+            if (memberRtAttr == null) return MemberHandlerResult.NotFound;
 
             SerializableMemberNestedAttribute[] nested = AttributeMap
                 .CreateRuntime<SerializableMemberNestedAttribute>(model, member, true)
                 .Where(a => a.ModelId == model.ModelId)
                 .ToArray();
 
-            main = memberRtAttrs.MemberSettings;
-            levels[0] = memberRtAttrs.LevelSettings;
+            main = memberRtAttr.MemberSettings;
+
+            s.SerializationSettings.SetSettings(memberRtAttr.LevelSettings, 0);
+
+            s.SerializationSettings.DefaultValue = memberRtAttr.DefaultValue;
 
             foreach (var lvl in nested)
             {
-                while (lvl.Level >= levels.Count)
-                    levels.Add(null);
-                if (levels[lvl.Level] != null) throw new InvalidOperationException("Level " + lvl.Level + " settings for member " + member + " has been already initialized");
-                levels[lvl.Level] = lvl.LevelSettings;
+                if (s.SerializationSettings.HasSettingsSpecified(lvl.Level)) throw new InvalidOperationException("Level " + lvl.Level + " settings for member " + member + " has been already initialized");
+                s.SerializationSettings.SetSettings(lvl.LevelSettings, lvl.Level);
             }
 
-            s.TagIsPinned = memberRtAttrs.Tag > 0;
+            s.TagIsPinned = memberRtAttr.Tag > 0;
             return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // TODO minAcceptFieldNumber only applies to non-proto?
         }
     }
