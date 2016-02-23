@@ -57,17 +57,20 @@ namespace Examples
             CheckChild(test.Child, clone.Child);
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void TestRoot()
         {
-            IMLTestRoot test = new IMLTestRoot {Root = CreateChild()},
-                        clone = Serializer.DeepClone(test);
+            var rtm = TypeModel.Create();
+            IMLTestRoot test = new IMLTestRoot { Root = CreateChild() };
+            Assert.That(() => rtm.DeepClone(test), Throws.TypeOf<InvalidOperationException>());
         }
+
         [Test, ExpectedException(typeof(InvalidOperationException))]
         public void TestRoots()
         {
-            IMLTestRoots test = new IMLTestRoots { Roots = {CreateChild()} },
-                        clone = Serializer.DeepClone(test);
+            var rtm = TypeModel.Create();
+            IMLTestRoots test = new IMLTestRoots { Roots = { CreateChild() } },
+                         clone = rtm.DeepClone(test);
         }
 
         [Test]
