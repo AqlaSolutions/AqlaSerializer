@@ -634,7 +634,6 @@ namespace AqlaSerializer.Meta
                                Append = false,
                                DefaultType = ConstructType ?? defaultType,
                                IsPacked = PrefixLength,
-                               ReturnList = true
                            },
                            false,
                            AsReferenceDefault,

@@ -52,7 +52,7 @@ namespace AqlaSerializer.Serializers
             bool asList = IsList && !SuppressIList;
 
             // can't call clear? => create new!
-            bool forceNewInstance = !AppendToCollection && ReturnList && !asList;
+            bool forceNewInstance = !AppendToCollection && EmitReadReturnsValue && !asList;
 
             Action subTypeHandler = () =>
                 {
@@ -135,7 +135,6 @@ namespace AqlaSerializer.Serializers
         const byte OPTIONS_IsList = 1;
         const byte OPTIONS_SuppressIList = 2;
         const byte OPTIONS_WritePacked = 4;
-        const byte OPTIONS_ReturnList = 8;
         const byte OPTIONS_OverwriteList = 16;
 
         readonly Type declaredType;
@@ -145,7 +144,6 @@ namespace AqlaSerializer.Serializers
         bool IsList => (options & OPTIONS_IsList) != 0;
         bool SuppressIList => (options & OPTIONS_SuppressIList) != 0;
         protected bool WritePacked => (options & OPTIONS_WritePacked) != 0;
-        bool ReturnList => (options & OPTIONS_ReturnList) != 0;
         protected readonly WireType _packedWireTypeForRead;
 
         readonly Type _itemType;
@@ -157,12 +155,12 @@ namespace AqlaSerializer.Serializers
         readonly MetaType _metaType;
 
         internal static ListDecorator Create(
-            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList,
+            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType,
             bool overwriteList, bool protoCompatibility, bool writeSubType)
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
-            if (returnList && ImmutableCollectionDecorator.IdentifyImmutable(model, declaredType, out builderFactory, out add, out addRange, out finish))
+            if (ImmutableCollectionDecorator.IdentifyImmutable(model, declaredType, out builderFactory, out add, out addRange, out finish))
             {
                 return new ImmutableCollectionDecorator(
                     model,
@@ -171,7 +169,6 @@ namespace AqlaSerializer.Serializers
                     tail,
                     writePacked,
                     packedWireType,
-                    returnList,
                     overwriteList,
                     builderFactory,
                     add,
@@ -180,16 +177,15 @@ namespace AqlaSerializer.Serializers
                     protoCompatibility);
             }
 #endif
-            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, returnList, overwriteList, protoCompatibility, writeSubType);
+            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, overwriteList, protoCompatibility, writeSubType);
         }
 
         protected ListDecorator(
-            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool returnList,
+            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType,
             bool overwriteList, bool protoCompatibility, bool writeSubType)
             : base(tail)
         {
             _itemType = tail.ExpectedType;
-            if (returnList) options |= OPTIONS_ReturnList;
             if (overwriteList) options |= OPTIONS_OverwriteList;
             if (!CanPack(packedWireType))
             {
@@ -244,7 +240,7 @@ namespace AqlaSerializer.Serializers
         protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;
 
 #if FEAT_COMPILER
-        public override bool EmitReadReturnsValue => ReturnList;
+        public override bool EmitReadReturnsValue => true;
 
         protected override void EmitRead(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
@@ -257,7 +253,7 @@ namespace AqlaSerializer.Serializers
                 bool asList = IsList && !SuppressIList;
 
                 // can't call clear? => create new!
-                bool forceNewInstance = !AppendToCollection && ReturnList && !asList;
+                bool forceNewInstance = !AppendToCollection && EmitReadReturnsValue && !asList;
 
                 Action subTypeHandler = () =>
                 {

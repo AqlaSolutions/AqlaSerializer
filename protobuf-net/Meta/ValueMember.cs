@@ -293,7 +293,6 @@ namespace AqlaSerializer.Meta
                                 && level0.Collection.Format == CollectionFormat.Google
                                 && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
                                 && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)),
-                            ReturnList = Helpers.CanWrite(_model, Member)
                         },
                         level0.WriteAsDynamicType.GetValueOrDefault(),
                         asReference,
