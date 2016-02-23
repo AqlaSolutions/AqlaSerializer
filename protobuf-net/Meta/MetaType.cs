@@ -1044,8 +1044,6 @@ namespace AqlaSerializer.Meta
 
             serializationSettings.DefaultValue = defaultValue;
 
-            serializationSettings.IsMemberOrNested = true;
-
             ValueMember newField = new ValueMember(memberSettings, serializationSettings, mi, type, model);
             Add(newField);
             return newField;
@@ -1154,7 +1152,6 @@ namespace AqlaSerializer.Meta
         public void Add(MappedMember member)
         {
             var serializationSettings = member.MappingState.SerializationSettings.Clone();
-            serializationSettings.IsMemberOrNested = true;
             var vm = new ValueMember(member.MainValue, serializationSettings, member.Member, this.Type, model);
 #if WINRT
             TypeInfo finalType = typeInfo;

@@ -24,7 +24,6 @@ namespace AqlaSerializer.Meta
         List<MemberLevelSettingsValue?> _levels;
         public object DefaultValue { get; set; }
         public MemberLevelSettingsValue? DefaultLevel { get; set; }
-        public bool IsMemberOrNested { get; set; }
 
         public ValueSerializationSettings()
         {
