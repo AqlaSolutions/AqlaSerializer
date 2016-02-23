@@ -278,52 +278,120 @@ namespace AqlaSerializer.Meta
 
 
                 SetSettings(level0, 0, true);
-
-                var ser = ValueSerializerBuilder.BuildValueFinalSerializer(
-                    MemberType,
-                    new ValueSerializerBuilder.CollectionSettings(level0.Collection.ItemType)
-                    {
-                        Append = level0.Collection.Append.GetValueOrDefault(),
-                        DefaultType = level0.CollectionConcreteType,
-                        IsPacked =
-                            level0.Collection.ItemType != null 
-                            && level0.Collection.Format == CollectionFormat.Google 
-                            && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
-                            && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)),
-                        ReturnList = Helpers.CanWrite(_model, Member)
-                    },
-                    level0.WriteAsDynamicType.GetValueOrDefault(),
-                    asReference,
-                    level0.ContentBinaryFormatHint.GetValueOrDefault(),
-                    true,
-                    // real type members always handle references if applicable
-                    _main.DefaultValue,
+#if !DEBUG
+                try
+#endif
+                {
+                    var ser = ValueSerializerBuilder.BuildValueFinalSerializer(
+                        MemberType,
+                        new ValueSerializerBuilder.CollectionSettings(level0.Collection.ItemType)
+                        {
+                            Append = level0.Collection.Append.GetValueOrDefault(),
+                            DefaultType = level0.CollectionConcreteType,
+                            IsPacked =
+                                level0.Collection.ItemType != null
+                                && level0.Collection.Format == CollectionFormat.Google
+                                && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
+                                && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)),
+                            ReturnList = Helpers.CanWrite(_model, Member)
+                        },
+                        level0.WriteAsDynamicType.GetValueOrDefault(),
+                        asReference,
+                        level0.ContentBinaryFormatHint.GetValueOrDefault(),
+                        true,
+                        // real type members always handle references if applicable
+                        _main.DefaultValue,
 #if FORCE_LATE_REFERENCE
-                    true,
+                        true,
 #else
                     asLateReference,
 #endif
-                    _model);
+                        _model);
 
-                PropertyInfo prop = Member as PropertyInfo;
-                if (prop != null)
-                    ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
-                else
-                {
-                    FieldInfo fld = Member as FieldInfo;
-                    if (fld != null)
-                        ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
+                    PropertyInfo prop = Member as PropertyInfo;
+                    if (prop != null)
+                        ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
                     else
-                        throw new InvalidOperationException();
+                    {
+                        FieldInfo fld = Member as FieldInfo;
+                        if (fld != null)
+                            ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
+                        else
+                            throw new InvalidOperationException();
+                    }
+                    if (getSpecified != null || setSpecified != null)
+                        ser = new MemberSpecifiedDecorator(getSpecified, setSpecified, ser);
+
+                    return ser;
                 }
-                if (getSpecified != null || setSpecified != null)
-                    ser = new MemberSpecifiedDecorator(getSpecified, setSpecified, ser);
-                return ser;
+#if !DEBUG
+                catch (ProtoException ex)
+                {
+                    throw new ProtoException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    throw new InvalidOperationException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (NotSupportedException ex)
+                {
+                    throw new InvalidOperationException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (NotImplementedException ex)
+                {
+                    throw new NotImplementedException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (ArgumentNullException ex)
+                {
+                    throw new ArgumentNullException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    throw new ArgumentOutOfRangeException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (ArgumentException ex)
+                {
+                    throw new ArgumentException(GetRethrowExceptionText(ex), ex.ParamName, ex);
+                }
+                catch (MissingMethodException ex)
+                {
+                    throw new MissingMethodException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (MissingFieldException ex)
+                {
+                    throw new MissingFieldException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (MissingMemberException ex)
+                {
+                    throw new MissingMemberException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (FieldAccessException ex)
+                {
+                    throw new FieldAccessException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (MethodAccessException ex)
+                {
+                    throw new MethodAccessException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (MemberAccessException ex)
+                {
+                    throw new MemberAccessException(GetRethrowExceptionText(ex), ex);
+                }
+                catch (Exception ex)
+                {
+                    throw new ProtoException(GetRethrowExceptionText(ex), ex);
+                }
+#endif
             }
             finally
             {
                 _model.ReleaseLock(opaqueToken);
             }
+        }
+
+        string GetRethrowExceptionText(Exception e)
+        {
+            return Member + ": " + (string.IsNullOrEmpty(e.Message) ? "serializer build problem" : e.Message);
         }
 
         static void ResetCollectionSettings(ref MemberLevelSettingsValue level0)
@@ -335,7 +403,7 @@ namespace AqlaSerializer.Meta
             level0.CollectionConcreteType = null;
         }
 
-        #region Setting accessors
+#region Setting accessors
         // TODO wrapper
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
@@ -589,7 +657,7 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        #endregion
+#endregion
 
         internal static bool GetAsReferenceDefault(RuntimeTypeModel model, Type memberType, bool isProtobufNetLegacyMember, bool isDeterminatedAsAutoTuple)
         {
