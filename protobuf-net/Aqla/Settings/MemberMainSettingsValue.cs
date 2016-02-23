@@ -18,8 +18,7 @@ namespace AqlaSerializer.Settings
         public int Tag;
         public string Name;
         public bool IsRequiredInSchema;
-        public object DefaultValue;
-
+        
         public override string ToString()
         {
             string tag = Tag == int.MinValue ? "" : (Tag.ToString() + " ");

@@ -154,9 +154,9 @@ namespace AqlaSerializer
 
 
         /// <summary>
-        /// Property is treated as public only if both get and set accessors are public
+        /// Implicit public property is added only when both get and set accessors are present and public; implicit private property is added only when both get and set accessors are present.
         /// </summary>
-        public bool ExplicitPropertiesContract { get; set; } = true;
+        public bool ImplicitOnlyWriteable { get; set; } = true;
 
         /// <summary>
         /// Enables/disables automatic tag generation based on the existing name / order

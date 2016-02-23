@@ -80,7 +80,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Default value will be skipped when writing; null means not specified.
         /// </summary>
-        public object DefaultValue { get { return MemberSettings.DefaultValue; } set { MemberSettings.DefaultValue = value; } }
+        public object DefaultValue { get; set; }
     }
 
     /// <summary>

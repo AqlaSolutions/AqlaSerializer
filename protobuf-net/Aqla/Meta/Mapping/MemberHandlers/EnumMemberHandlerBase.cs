@@ -34,8 +34,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
         protected abstract AttributeMap GetAttribute(MemberState s);
 
-        protected override MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
+        protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             // always consider SerializableMember if not strict ProtoBuf
             if (!s.Input.AsEnum) return MemberHandlerResult.NotFound;

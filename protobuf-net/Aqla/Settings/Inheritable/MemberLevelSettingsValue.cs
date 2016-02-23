@@ -14,6 +14,8 @@ namespace AqlaSerializer.Settings
 {
     public struct MemberLevelSettingsValue
     {
+        public Type EffectiveType;
+
         /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
@@ -38,7 +40,7 @@ namespace AqlaSerializer.Settings
         public BinaryDataFormat? ContentBinaryFormatHint;
         
         /// <summary>
-        /// For abstract types (IList etc), the type of concrete object to create (if required). Has value if != null.
+        /// For abstract types (IList etc), the type of concrete object to create (if required). Ignored for not collections. Has value if != null.
         /// </summary>
         public Type CollectionConcreteType;
 

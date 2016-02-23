@@ -32,21 +32,18 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
         public MemberHandlerResult TryMap(MemberState state)
         {
             var main = state.MainValue;
-            var levels = state.LevelValues;
             var model = state.Input.Model;
             try
             {
-                return TryMap(state, ref main, ref levels, state.Input.Member, model);
+                return TryMap(state, ref main, state.Input.Member, model);
             }
             finally
             {
                 state.MainValue = main;
-                state.LevelValues = levels;
             }
         }
 
-        protected abstract MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model);
+        protected abstract MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model);
 
 
         protected virtual bool HasAqlaIgnore(AttributeMap[] map, RuntimeTypeModel model)

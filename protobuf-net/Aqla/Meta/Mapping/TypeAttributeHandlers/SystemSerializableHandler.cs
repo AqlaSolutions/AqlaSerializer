@@ -35,7 +35,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             // except is for SerializableAttribute which family is not returned if other families are present
             if (!s.AsEnum && a.HasFamily(MetaType.AttributeFamily.SystemSerializable))
             {
-                s.ImplicitMode = ImplicitFieldsMode.AllFields;
+                s.ImplicitFields = ImplicitFieldsMode.AllFields;
                 s.ImplicitAqla = true;
             }
             return TypeAttributeHandlerResult.Done;

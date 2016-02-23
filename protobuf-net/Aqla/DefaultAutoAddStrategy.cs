@@ -108,8 +108,7 @@ namespace AqlaSerializer
                 int dataMemberOffset = mapped.DataMemberOffset;
                 int implicitFirstTag = mapped.ImplicitFirstTag;
                 bool inferTagByName = mapped.InferTagByName;
-                ImplicitFieldsMode implicitMode = mapped.ImplicitMode;
-                bool explicitPropertiesContract = mapped.ExplicitPropertiesContract;
+                ImplicitFieldsMode implicitMode = mapped.ImplicitFields;
                 bool asEnum = mapped.AsEnum && !metaType.EnumPassthru;
                 family = mapped.Input.Family;
                 
@@ -142,43 +141,91 @@ namespace AqlaSerializer
                     if (member.DeclaringType != type) continue;
                     var map = AttributeMap.Create(_model, member, true);
 
-                    var args = new MemberArgsValue(member, Helpers.GetMemberType(member), map, AcceptableAttributes, Model)
                     {
-                        AsEnum = asEnum,
-                        DataMemberOffset = dataMemberOffset,
-                        Family = family,
-                        InferTagByName = inferTagByName,
-                        PartialMembers = partialMembers,
-                        IgnoreNonWritableForOverwriteCollection = explicitPropertiesContract,
-                    };
+                        var args = new MemberArgsValue(member, map, AcceptableAttributes, Model)
+                        {
+                            AsEnum = asEnum,
+                            DataMemberOffset = dataMemberOffset,
+                            Family = family,
+                            InferTagByName = inferTagByName,
+                            PartialMembers = partialMembers,
+                        };
 
-                    bool isPublic, isField;
-                    
+                        PropertyInfo property;
+                        FieldInfo field;
+                        if ((property = member as PropertyInfo) != null)
+                        {
+                            if (asEnum) continue; // wasn't expecting any props!
 
-                    PropertyInfo property;
-                    FieldInfo field;
-                    MethodInfo method;
-                    if ((property = member as PropertyInfo) != null)
-                    {
-                        if (asEnum) continue; // wasn't expecting any props!
+                            bool isPublic = Helpers.GetGetMethod(property, false, false) != null;
 
-                        isPublic = Helpers.GetGetMethod(property, false, false) != null;
-                        isField = false;
-                        var r = ApplyDefaultBehaviour_AddMembers(ref args, implicitMode, isPublic, isField, metaType.ConstructType);
-                        if (r != null) members.Add(r);
-                    }
-                    else if ((field = member as FieldInfo) != null)
-                    {
-                        isPublic = field.IsPublic;
-                        isField = true;
-                        if (asEnum && !field.IsStatic)
-                        { // only care about static things on enums; WinRT has a __value instance field!
-                            continue;
+                            bool canBeMapped = isPublic || Helpers.GetGetMethod(property, true, true) != null;
+
+                            if (canBeMapped &&
+                                (!mapped.ImplicitOnlyWriteable ||
+                                 Helpers.CheckIfPropertyWritable
+                                     (
+                                         Model,
+                                         property,
+                                         implicitMode == ImplicitFieldsMode.AllProperties || implicitMode == ImplicitFieldsMode.AllFieldsAndProperties,
+                                         false)))
+                            {
+                                switch (implicitMode)
+                                {
+                                    case ImplicitFieldsMode.AllProperties:
+                                        args.IsForced = true;
+                                        break;
+                                    case ImplicitFieldsMode.PublicProperties:
+                                        if (isPublic)
+                                            args.IsForced = true;
+                                        break;
+                                    case ImplicitFieldsMode.PublicFieldsAndProperties:
+                                        if (isPublic) args.IsForced = true;
+                                        break;
+                                    case ImplicitFieldsMode.AllFieldsAndProperties:
+                                        args.IsForced = true;
+                                        break;
+                                }
+                            }
+
+                            var r = ApplyDefaultBehaviour_AddMembers(args);
+                            if (r != null)
+                            {
+                                if (!canBeMapped) throw new MethodAccessException("Property " + property + " should be readable to be mapped.");
+                                members.Add(r);
+                            }
                         }
-                        var r = ApplyDefaultBehaviour_AddMembers(ref args, implicitMode, isPublic, isField, metaType.ConstructType);
-                        if (r != null) members.Add(r);
+                        else if ((field = member as FieldInfo) != null)
+                        {
+                            bool isPublic = field.IsPublic;
+                            if (asEnum && !field.IsStatic)
+                            { // only care about static things on enums; WinRT has a __value instance field!
+                                continue;
+                            }
+
+                            switch (implicitMode)
+                            {
+                                case ImplicitFieldsMode.AllFields:
+                                    args.IsForced = true;
+                                    break;
+                                case ImplicitFieldsMode.PublicFields:
+                                    if (isPublic) args.IsForced = true;
+                                    break;
+                                case ImplicitFieldsMode.PublicFieldsAndProperties:
+                                    if (isPublic) args.IsForced = true;
+                                    break;
+                                case ImplicitFieldsMode.AllFieldsAndProperties:
+                                    args.IsForced = true;
+                                    break;
+                            }
+
+                            var r = ApplyDefaultBehaviour_AddMembers(args);
+                            if (r != null) members.Add(r);
+                        }
                     }
-                    else if ((method = member as MethodInfo) != null)
+
+                    MethodInfo method;
+                    if ((method = member as MethodInfo) != null)
                     {
                         if (asEnum) continue;
                         AttributeMap[] memberAttribs = AttributeMap.Create(_model, method, false);
@@ -277,60 +324,20 @@ namespace AqlaSerializer
             _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
-        protected virtual MappedMember ApplyDefaultBehaviour_AddMembers(ref MemberArgsValue argsValue, ImplicitFieldsMode implicitMode, bool isPublic, bool isField, Type defaultType)
+        protected virtual MappedMember ApplyDefaultBehaviour_AddMembers(MemberArgsValue argsValue)
         {
-            switch (implicitMode)
-            {
-                case ImplicitFieldsMode.PublicFields:
-                    if (isField & isPublic) argsValue.IsForced = true;
-                    break;
-                case ImplicitFieldsMode.AllFields:
-                    if (isField) argsValue.IsForced = true;
-                    break;
-                case ImplicitFieldsMode.AllProperties:
-                    if (!isField) argsValue.IsForced = true;
-                    break;
-                case ImplicitFieldsMode.PublicFieldsAndProperties:
-                    if (isPublic) argsValue.IsForced = true;
-                    break;
-                case ImplicitFieldsMode.PublicProperties:
-                    if (isPublic && !isField) argsValue.IsForced = true;
-                    break;
-                case ImplicitFieldsMode.AllFieldsAndProperties:
-                    argsValue.IsForced = true;
-                    break;
-            }
-
+            var memberType = Helpers.GetMemberType(argsValue.Member);
             // we just don't like delegate types ;p
-#if WINRT
-            if (argsValue.EffectiveMemberType.GetTypeInfo().IsSubclassOf(typeof(Delegate))) argsValue.EffectiveMemberType = null;
-#else
-            if (argsValue.EffectiveMemberType.IsSubclassOf(_model.MapType(typeof(Delegate)))) argsValue.EffectiveMemberType = null;
-#endif
-            if (argsValue.EffectiveMemberType != null)
-            {
-                var normalized = MemberMapper.Map(argsValue);
-                if (normalized != null)
-                {
-                    var m = normalized.MappingState.MainValue;
-                    if (string.IsNullOrEmpty(m.Name)) m.Name = normalized.Member.Name;
-                    normalized.MappingState.MainValue = m;
+            if (memberType == null || Helpers.IsSubclassOf(memberType, _model.MapType(typeof(Delegate)))) return null;
 
-                    argsValue = normalized.MappingState.Input; // just to be sure
-                    var levels = normalized.MappingState.LevelValues;
-                    if (levels.Count == 0)
-                        levels.Add(new MemberLevelSettingsValue());
-                    for (int i = 0; i < levels.Count; i++)
-                    {
-                        if (levels[i] == null) continue;
-                        var level = levels[i].Value;
-                        if (level.CollectionConcreteType == null) level.CollectionConcreteType = defaultType;
-                        levels[i] = level;
-                    }
-                }
-                return normalized;
+            var normalized= MemberMapper.Map(argsValue);
+            if (normalized != null)
+            {
+                var m = normalized.MappingState.MainValue;
+                if (string.IsNullOrEmpty(m.Name)) m.Name = normalized.Member.Name;
+                normalized.MappingState.MainValue = m;
             }
-            return null;
+            return normalized;
         }
 
 
@@ -485,29 +492,32 @@ namespace AqlaSerializer
             AttributeMap[] attribs = AttributeMap.Create(_model, member, true);
             AttributeMap attrib;
             
-            if (s.MainValue.DefaultValue == null && (attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
+            if (s.SerializationSettings.DefaultValue == null && (attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
             {
                 object tmp;
                 if (attrib.TryGet("Value", out tmp))
                 {
                     var m = s.MainValue;
-                    m.DefaultValue = tmp;
+                    s.SerializationSettings.DefaultValue = tmp;
                     s.MainValue = m;
                 }
             }
 
             {
-                var memberType = Helpers.GetMemberType(member);
-                var level0 = mappedMember.MappingState.LevelValues[0].Value;
+                var level0 = mappedMember.MappingState.SerializationSettings.GetSettingsCopy(0);
                 {
                     Type defaultType = level0.CollectionConcreteType;
-                    if (defaultType == null && Helpers.IsInterface(metaType.Type))
-                        level0.CollectionConcreteType = FindDefaultInterfaceImplementation(memberType);
-                    mappedMember.MappingState.LevelValues[0] = level0;
+                    if (defaultType == null)
+                    {
+                        var memberType = level0.EffectiveType ?? Helpers.GetMemberType(mappedMember.Member);
+                        if (Helpers.IsInterface(memberType) || Helpers.IsAbstract(memberType))
+                            level0.CollectionConcreteType = FindDefaultInterfaceImplementation(memberType);
+                    }
                 }
+                mappedMember.MappingState.SerializationSettings.SetSettings(level0, 0);
             }
 
-            if (implicitFirstTag.HasValue && !s.TagIsPinned)
+            if (implicitFirstTag != null && !s.TagIsPinned)
                 mappedMember.Tag = metaType.GetNextFreeFieldNumber(implicitFirstTag.Value);
 
             if (mappedMember.MappingState.Input.AsEnum || mappedMember.Tag > 0)
@@ -699,7 +709,7 @@ namespace AqlaSerializer
                 new[]
                 {
                     new TypeMapper.Handler("System.SerializableAttribute", new SystemSerializableHandler()),
-                    new TypeMapper.Handler("AqlaSerializer.SerializableTypeAttribute", new AqlaSerializableHandler()),
+                    new TypeMapper.Handler("AqlaSerializer.SerializableTypeAttribute", new AqlaContractHandler()),
                     new TypeMapper.Handler("ProtoBuf.ProtoContractAttribute", new ProtoContractHandler()),
                     new TypeMapper.Handler("ProtoBuf.ProtoIncludeAttribute", new ProtoIncludeHandler(new DerivedTypeHandlerStrategy())),
                     new TypeMapper.Handler("AqlaSerializer.SerializeDerivedTypeAttribute", new SerializeDerivedTypeHandler(new DerivedTypeHandlerStrategy())),

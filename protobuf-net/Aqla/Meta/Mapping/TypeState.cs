@@ -34,10 +34,10 @@ namespace AqlaSerializer.Meta.Mapping
         public TypeArgsValue Input { get; set; }
 
         public TypeSettingsValue SettingsValue { get; set; }
-        public ImplicitFieldsMode ImplicitMode { get; set; }
+        public ImplicitFieldsMode ImplicitFields { get; set; }
         public int DataMemberOffset { get; set; }
         public bool ImplicitAqla { get; set; }
-        public bool ExplicitPropertiesContract { get; set; }
+        public bool ImplicitOnlyWriteable { get; set; }
         public int ImplicitFirstTag { get; set; } = 1;
         public bool InferTagByName { get; set; }
         public bool AsEnum { get; set; }

@@ -24,9 +24,7 @@ namespace AqlaSerializer.Meta
     {
         MemberMainSettingsValue _main;
 
-        List<MemberLevelSettingsValue?> _levels;
-        // TODO default level used for not specified levels and overrides level[0] when creating
-        MemberLevelSettingsValue _defaultLevel;
+        ValueSerializationSettings _vs;
 
         MethodInfo getSpecified, setSpecified;
         RuntimeTypeModel _model;
@@ -54,7 +52,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// The default value of the item (members with this value will not be serialized)
         /// </summary>
-        public object DefaultValue { get { return _main.DefaultValue; } set { ThrowIfFrozen(); _main.DefaultValue = value; } }
+        public object DefaultValue { get { return _vs.DefaultValue; } set { ThrowIfFrozen(); _vs.DefaultValue = value; } }
 
         /// <summary>
         /// Gets the member (field/property) which this member relates to.
@@ -75,19 +73,17 @@ namespace AqlaSerializer.Meta
         /// Creates a new ValueMember instance
         /// </summary>
         public ValueMember(
-            MemberMainSettingsValue mainSettings, IEnumerable<MemberLevelSettingsValue?> levels, MemberLevelSettingsValue defaultLevel, MemberInfo member, Type memberType, Type parentType, RuntimeTypeModel model)
+            MemberMainSettingsValue memberSettings, ValueSerializationSettings valueSerializationSettings, MemberInfo member, Type parentType, RuntimeTypeModel model)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
-            if (memberType == null) throw new ArgumentNullException(nameof(memberType));
             if (parentType == null) throw new ArgumentNullException(nameof(parentType));
             if (model == null) throw new ArgumentNullException(nameof(model));
-            MemberType = memberType;
+            MemberType = valueSerializationSettings.GetSettingsCopy(0).EffectiveType ?? Helpers.GetMemberType(member);
             Member = member;
             ParentType = parentType;
-            this._model = model;
-            _main = mainSettings;
-            _levels = new List<MemberLevelSettingsValue?>(levels ?? new MemberLevelSettingsValue?[0]);
-            _defaultLevel = defaultLevel;
+            _model = model;
+            _main = memberSettings;
+            _vs = valueSerializationSettings.Clone();
             // this doesn't depend on anything so can check right now 
             if (MemberType.IsArray && MemberType.GetArrayRank() != 1)
                 throw new NotSupportedException("Multi-dimension arrays are not supported");
@@ -116,75 +112,74 @@ namespace AqlaSerializer.Meta
 
                 #region Default value
 
-                if (_main.DefaultValue != null && getSpecified != null)
-                    throw new ProtoException("Can't use default value \"" + _main.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
+                if (_vs.DefaultValue != null && getSpecified != null)
+                    throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
 
-                if (_main.DefaultValue != null && IsRequired)
-                    throw new ProtoException("Can't use default value \"" + _main.DefaultValue + "\" on Required member " + Member);
+                if (_vs.DefaultValue != null && IsRequired)
+                    throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on Required member " + Member);
 
-                if (getSpecified == null && !IsRequired && _main.DefaultValue == null)
+                if (getSpecified == null && !IsRequired && _vs.DefaultValue == null)
                 {
                     if (_model.UseImplicitZeroDefaults)
                     {
                         switch (Helpers.GetTypeCode(MemberType))
                         {
                             case ProtoTypeCode.Boolean:
-                                _main.DefaultValue = false;
+                                _vs.DefaultValue = false;
                                 break;
                             case ProtoTypeCode.Decimal:
-                                _main.DefaultValue = (decimal)0;
+                                _vs.DefaultValue = (decimal)0;
                                 break;
                             case ProtoTypeCode.Single:
-                                _main.DefaultValue = (float)0;
+                                _vs.DefaultValue = (float)0;
                                 break;
                             case ProtoTypeCode.Double:
-                                _main.DefaultValue = (double)0;
+                                _vs.DefaultValue = (double)0;
                                 break;
                             case ProtoTypeCode.Byte:
-                                _main.DefaultValue = (byte)0;
+                                _vs.DefaultValue = (byte)0;
                                 break;
                             case ProtoTypeCode.Char:
-                                _main.DefaultValue = (char)0;
+                                _vs.DefaultValue = (char)0;
                                 break;
                             case ProtoTypeCode.Int16:
-                                _main.DefaultValue = (short)0;
+                                _vs.DefaultValue = (short)0;
                                 break;
                             case ProtoTypeCode.Int32:
-                                _main.DefaultValue = (int)0;
+                                _vs.DefaultValue = (int)0;
                                 break;
                             case ProtoTypeCode.Int64:
-                                _main.DefaultValue = (long)0;
+                                _vs.DefaultValue = (long)0;
                                 break;
                             case ProtoTypeCode.SByte:
-                                _main.DefaultValue = (sbyte)0;
+                                _vs.DefaultValue = (sbyte)0;
                                 break;
                             case ProtoTypeCode.UInt16:
-                                _main.DefaultValue = (ushort)0;
+                                _vs.DefaultValue = (ushort)0;
                                 break;
                             case ProtoTypeCode.UInt32:
-                                _main.DefaultValue = (uint)0;
+                                _vs.DefaultValue = (uint)0;
                                 break;
                             case ProtoTypeCode.UInt64:
-                                _main.DefaultValue = (ulong)0;
+                                _vs.DefaultValue = (ulong)0;
                                 break;
                             case ProtoTypeCode.TimeSpan:
-                                _main.DefaultValue = TimeSpan.Zero;
+                                _vs.DefaultValue = TimeSpan.Zero;
                                 break;
                             case ProtoTypeCode.Guid:
-                                _main.DefaultValue = Guid.Empty;
+                                _vs.DefaultValue = Guid.Empty;
                                 break;
                         }
                     }
-
                 }
 
                 //#if WINRT
-                if (_main.DefaultValue != null && _model.MapType(_main.DefaultValue.GetType()) != MemberType)
+                if (_vs.DefaultValue != null && _model.MapType(_vs.DefaultValue.GetType()) != MemberType)
                     //#else
                     //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
                     //#endif
                 {
-                    _main.DefaultValue = ParseDefaultValue(MemberType, _main.DefaultValue);
+                    _vs.DefaultValue = ParseDefaultValue(MemberType, _vs.DefaultValue);
                 }
 
                 #endregion
@@ -253,6 +248,9 @@ namespace AqlaSerializer.Meta
                         if (level0.Collection.ItemType == null)
                             level0.Collection.ItemType = newItemType;
 
+                        if (level0.CollectionConcreteType == null && idx >= 0)
+                            level0.CollectionConcreteType = _model[MemberType].ConstructType;
+
                         // should not override with default because what if specified something like List<string> for IList? 
                         if (level0.CollectionConcreteType == null)
                             level0.CollectionConcreteType = newCollectionConcreteType;
@@ -273,7 +271,7 @@ namespace AqlaSerializer.Meta
                         }
                     }
                 }
-
+                
                 #endregion
 
 
@@ -299,11 +297,11 @@ namespace AqlaSerializer.Meta
                         level0.ContentBinaryFormatHint.GetValueOrDefault(),
                         true,
                         // real type members always handle references if applicable
-                        _main.DefaultValue,
+                        _vs.DefaultValue,
 #if FORCE_LATE_REFERENCE
                         true,
 #else
-                    asLateReference,
+                        asLateReference,
 #endif
                         _model);
 
@@ -406,7 +404,7 @@ namespace AqlaSerializer.Meta
         // TODO wrapper
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
-            return (_levels.Count <= level ? null : _levels[level]) ?? _defaultLevel;
+            return _vs.GetSettingsCopy(level);
         }
         
         public void SetSettings(MemberLevelSettingsValue value, int level = 0)
@@ -417,9 +415,7 @@ namespace AqlaSerializer.Meta
         void SetSettings(MemberLevelSettingsValue value, int level, bool bypassFrozenCheck)
         {
             if (!bypassFrozenCheck) ThrowIfFrozen();
-            while (level >= _levels.Count)
-                _levels.Add(null);
-            _levels[level] = value;
+            _vs.SetSettings(value, level);
         }
 
         /// <summary>
@@ -430,17 +426,14 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             if (value)
                             {
                                 x.EnhancedFormat = true;
-                                _defaultLevel.EnhancedFormat = true;
                                 if (x.EnhancedWriteMode != EnhancedMode.LateReference)
                                     x.EnhancedWriteMode = EnhancedMode.Reference;
-                                if (_defaultLevel.EnhancedWriteMode != EnhancedMode.LateReference)
-                                    _defaultLevel.EnhancedWriteMode = EnhancedMode.Reference;
                             }
                             else
                             {
@@ -459,7 +452,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.ContentBinaryFormatHint = value;
@@ -475,7 +468,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.ContentBinaryFormatHint = value;
@@ -492,7 +485,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.Collection.Append = value;
@@ -509,7 +502,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.Collection.Format = value ? CollectionFormat.Google : CollectionFormat.GoogleNotPacked;
@@ -525,7 +518,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.Collection.Format = value;
@@ -541,7 +534,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.Collection.ItemType = value;
@@ -557,7 +550,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.CollectionConcreteType = value;
@@ -573,7 +566,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.EnhancedFormat = value;
@@ -589,7 +582,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             x.EnhancedWriteMode = value;
@@ -606,7 +599,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             if (value)
@@ -625,7 +618,7 @@ namespace AqlaSerializer.Meta
         {
             set
             {
-                SetForAllLevel(
+                SetForAllLevels(
                     x =>
                         {
                             if (value)
@@ -644,16 +637,10 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        void SetForAllLevel(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter, bool bypassFrozenCheck = false)
+        void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter, bool bypassFrozenCheck = false)
         {
             if (!bypassFrozenCheck) ThrowIfFrozen();
-            _defaultLevel = setter(_defaultLevel);
-            for (int i = 0; i < _levels.Count; i++)
-            {
-                var level = _levels[i];
-                if (level == null) continue;
-                _levels[i] = setter(level.Value);
-            }
+            _vs.SetForAllLevels(setter);
         }
 
 #endregion
@@ -827,7 +814,7 @@ namespace AqlaSerializer.Meta
             var vm = (ValueMember)MemberwiseClone();
             vm._model = model;
             vm._serializer = null;
-            vm._levels = new List<MemberLevelSettingsValue?>(vm._levels);
+            vm._vs = vm._vs.Clone();
             return vm;
         }
 

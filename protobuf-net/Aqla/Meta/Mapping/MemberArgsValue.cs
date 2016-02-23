@@ -35,12 +35,10 @@ namespace AqlaSerializer.Meta.Mapping
         public bool InferTagByName { get; set; }
         public IEnumerable<AttributeMap> PartialMembers { get; set; }
         public int DataMemberOffset { get; set; }
-        public bool IgnoreNonWritableForOverwriteCollection { get; set; }
         public RuntimeTypeModel Model { get; set; }
         public AttributeMap[] Attributes { get; set; }
         public AttributeType AcceptableAttributes { get; set; }
-        public Type EffectiveMemberType { get; set; }
-
+        
         public bool CanUse(AttributeType type)
         {
             return (AcceptableAttributes & type) == type;
@@ -51,18 +49,17 @@ namespace AqlaSerializer.Meta.Mapping
             return (Family & value) == value;
         }
 
-        public MemberArgsValue(MemberInfo member, Type effectiveMemberType, RuntimeTypeModel model)
-            : this(member, effectiveMemberType, new AttributeMap[0], AttributeType.None, model)
+        public MemberArgsValue(MemberInfo member, RuntimeTypeModel model)
+            : this(member, new AttributeMap[0], AttributeType.None, model)
         {
         }
 
-        public MemberArgsValue(MemberInfo member, Type effectiveMemberType, AttributeMap[] attributes, AttributeType acceptableAttributes, RuntimeTypeModel model)
+        public MemberArgsValue(MemberInfo member, AttributeMap[] attributes, AttributeType acceptableAttributes, RuntimeTypeModel model)
             : this()
         {
             Attributes = attributes;
             Member = member;
             Model = model;
-            EffectiveMemberType = effectiveMemberType;
             AcceptableAttributes = acceptableAttributes;
         }
     }

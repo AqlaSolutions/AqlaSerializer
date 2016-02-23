@@ -29,8 +29,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 {
     public class AqlaPartialMemberHandler : MemberMappingHandlerBase
     {
-        protected override MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
+        protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             if (!s.Input.CanUse(AttributeType.Aqla)) return MemberHandlerResult.NotFound;
             if (HasAqlaIgnore(s.Input.Attributes, model)) return MemberHandlerResult.Ignore;
@@ -47,7 +46,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 {
                     var attr = ppma.GetRuntimeAttribute<SerializablePartialMemberAttribute>(model);
                     main = attr.MemberSettings;
-                    levels[0] = attr.LevelSettings;
+                    s.SerializationSettings.DefaultValue = attr.DefaultValue;
+                    s.SerializationSettings.SetSettings(attr.LevelSettings, 0);
 
                     s.TagIsPinned = main.Tag > 0;
                     newResult = s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial;

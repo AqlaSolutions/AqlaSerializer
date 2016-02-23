@@ -36,8 +36,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             _strategy = strategy;
         }
 
-        protected override MemberHandlerResult TryMap(
-            MemberState s, ref MemberMainSettingsValue main, ref List<MemberLevelSettingsValue?> levels, MemberInfo member, RuntimeTypeModel model)
+        protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             if (!s.Input.CanUse(AttributeType.ProtoBuf)) return MemberHandlerResult.NotFound;
             if (HasProtobufNetIgnore(s.Input.Attributes, model)) return MemberHandlerResult.Ignore;
@@ -55,7 +54,6 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                     newResult = _strategy.TryRead(ppma, s, member, model);
                     // we have ref!
                     main = s.MainValue;
-                    levels = s.LevelValues;
                 }
                 else newResult = MemberHandlerResult.NotFound;
 
