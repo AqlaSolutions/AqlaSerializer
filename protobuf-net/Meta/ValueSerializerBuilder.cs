@@ -90,7 +90,6 @@ namespace AqlaSerializer.Meta
 
                     var nestedColl = collection.Clone();
                     nestedColl.Append = false;
-                    nestedColl.ReturnList = true;
                     nestedColl.ItemType = nestedItemType;
                     nestedColl.DefaultType = nestedDefaultType;
 
@@ -161,7 +160,6 @@ namespace AqlaSerializer.Meta
                         ser,
                         isPacked,
                         wireType,
-                        collection.ReturnList,
                         !collection.Append,
                         !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection),
                         true);
@@ -433,7 +431,6 @@ namespace AqlaSerializer.Meta
             public Type DefaultType { get; set; }
             public Type ItemType { get; set; }
             public bool Append { get; set; }
-            public bool ReturnList { get; set; }
             public bool IsPacked { get; set; }
 
             public CollectionSettings Clone()
