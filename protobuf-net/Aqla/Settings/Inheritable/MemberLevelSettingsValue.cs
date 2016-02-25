@@ -46,6 +46,27 @@ namespace AqlaSerializer.Settings
 
         public CollectionSettingsValue Collection;
 
+        public MemberLevelSettingsValue GetInitializedToValueOrDefault()
+        {
+            var x = this;
+            x.Collection.Append = x.Collection.Append.GetValueOrDefault();
+            x.Collection.PackedWireTypeForRead = x.Collection.PackedWireTypeForRead.GetValueOrDefault();
+            x.ContentBinaryFormatHint = x.ContentBinaryFormatHint.GetValueOrDefault();
+            x.EnhancedFormat = x.EnhancedFormat.GetValueOrDefault();
+            x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
+            return x;
+        }
+
+        public MemberLevelSettingsValue MakeDefaultNestedLevel()
+        {
+            var x = this;
+            x.Collection.ItemType = null;
+            x.Collection.PackedWireTypeForRead = null;
+            x.CollectionConcreteType = null;
+            x.EffectiveType = null;
+            return x;
+        }
+
         public static MemberLevelSettingsValue Merge(MemberLevelSettingsValue baseValue, MemberLevelSettingsValue derivedValue)
         {
             var r = derivedValue;
@@ -56,6 +77,23 @@ namespace AqlaSerializer.Settings
             if (r.CollectionConcreteType == null) r.CollectionConcreteType = baseValue.CollectionConcreteType;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
+        }
+
+        public override string ToString()
+        {
+            string s = "LevelSettings of type " + EffectiveType;
+            if (EnhancedFormat == true)
+            {
+                s += ", enhanced format";
+                if (EnhancedWriteMode != EnhancedMode.NotSpecified)
+                    s += " " + Enum.GetName(typeof(EnhancedMode), EnhancedWriteMode);
+            }
+            else if (EnhancedFormat == false)
+                s += ", compact format";
+
+            if (Collection.ItemType != null)
+                s += ", itemType " + Collection.ItemType;
+            return s;
         }
     }
 }

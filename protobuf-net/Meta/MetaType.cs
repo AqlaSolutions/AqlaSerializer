@@ -626,20 +626,29 @@ namespace AqlaSerializer.Meta
                 if (fields.Count != 0)
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
+                var s = new MemberLevelSettingsValue
+                {
+                    EffectiveType = type,
+                    Collection =
+                    {
+                        Append = false,
+                        // TODO use type settings
+                        Format = PrefixLength ? CollectionFormat.Google : CollectionFormat.GoogleNotPacked
+                    },
+                    CollectionConcreteType = ConstructType ?? defaultType,
+
+                };
+                
+                if (AsReferenceDefault)
+                {
+                    s.EnhancedFormat = true;
+                    s.EnhancedWriteMode = EnhancedMode.Reference;
+                }
+                s.ContentBinaryFormatHint = CollectionDataFormat;
+                
                 var ser = (IProtoTypeSerializer)
                        ValueSerializerBuilder.BuildValueFinalSerializer(
-                           type,
-                           new ValueSerializerBuilder.CollectionSettings(itemType)
-                           {
-                               Append = false,
-                               DefaultType = ConstructType ?? defaultType,
-                               IsPacked = PrefixLength,
-                           },
-                           false,
-                           AsReferenceDefault,
-                           CollectionDataFormat,
-                           false, // #1
-                           null,
+                           new ValueSerializationSettings(new MemberLevelSettingsValue?[] { s }, s.MakeDefaultNestedLevel()), 
                            false,
                            model);
 
@@ -1036,13 +1045,17 @@ namespace AqlaSerializer.Meta
             var serializationSettings = new ValueSerializationSettings();
             var memberSettings = new MemberMainSettingsValue { Tag = fieldNumber };
             
-            var level0 = serializationSettings.GetSettingsCopy(0);
+            var level0 = serializationSettings.GetSettingsCopy(0).Basic;
             level0.CollectionConcreteType = defaultType;
             level0.Collection.ItemType = itemType;
             
             serializationSettings.SetSettings(level0, 0);
 
             serializationSettings.DefaultValue = defaultValue;
+
+            var def = serializationSettings.DefaultLevel.GetValueOrDefault();
+            def.Basic = level0.MakeDefaultNestedLevel();
+            serializationSettings.DefaultLevel = def;
 
             ValueMember newField = new ValueMember(memberSettings, serializationSettings, mi, type, model);
             Add(newField);
