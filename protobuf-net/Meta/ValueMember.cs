@@ -78,7 +78,7 @@ namespace AqlaSerializer.Meta
             if (member == null) throw new ArgumentNullException(nameof(member));
             if (parentType == null) throw new ArgumentNullException(nameof(parentType));
             if (model == null) throw new ArgumentNullException(nameof(model));
-            MemberType = valueSerializationSettings.GetSettingsCopy(0).EffectiveType ?? Helpers.GetMemberType(member);
+            MemberType = valueSerializationSettings.GetSettingsCopy(0).Basic.EffectiveType ?? Helpers.GetMemberType(member);
             Member = member;
             ParentType = parentType;
             _model = model;
@@ -98,20 +98,13 @@ namespace AqlaSerializer.Meta
 
                 if (FieldNumber < 1 && !Helpers.IsEnum(ParentType)) throw new ProtoException("FieldNumber < 1 for member " + Member);
 
-                MemberLevelSettingsValue level0 = GetSettingsCopy(0);
-
-                // TODO merge type settings
-                //int memberTypeMetaKey = _model.GetKey(MemberType, false, false);
-                //if (memberTypeMetaKey >= 0)
-                //{
-                //    var typeSettings = _model[memberTypeMetaKey].GetSettings());
-                //    level0 = MemberLevelSettingsValue.Merge(typeSettings, level0);
-                //}
-
                 if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
-                #region Default value
-
+                var level0 = _vs.GetSettingsCopy(0);
+                level0.Basic.EffectiveType = MemberType;
+                level0.IsNotAssignable = !Helpers.CanWrite(_model, Member);
+                _vs.SetSettings(level0, 0);
+                
                 if (_vs.DefaultValue != null && getSpecified != null)
                     throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
 
@@ -172,137 +165,14 @@ namespace AqlaSerializer.Meta
                         }
                     }
                 }
-
-                //#if WINRT
-                if (_vs.DefaultValue != null && _model.MapType(_vs.DefaultValue.GetType()) != MemberType)
-                    //#else
-                    //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
-                    //#endif
-                {
-                    _vs.DefaultValue = ParseDefaultValue(MemberType, _vs.DefaultValue);
-                }
-
-                #endregion
-
-                // TODO strict check, exception
-                if (level0.Collection.Append == null || (!level0.Collection.Append.Value && !Helpers.CanWrite(_model, Member))) level0.Collection.Append = true;
-
-
-                bool asReference;
-                bool asLateReference = false;
-
-                #region Reference and dynamic type
-
-                {
-                    asReference = GetAsReferenceDefault(_model, MemberType, false, false);
-
-                    EnhancedMode wm = level0.EnhancedWriteMode;
-                    if (level0.EnhancedFormat == false)
-                    {
-                        asReference = false;
-                        wm = EnhancedMode.NotSpecified;
-                    }
-                    else if (wm != EnhancedMode.NotSpecified)
-                        asReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
-
-
-                    bool dynamicType = level0.WriteAsDynamicType.GetValueOrDefault();
-                    if (dynamicType && level0.EnhancedFormat == false) throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat: " + Member);
-                    if (wm == EnhancedMode.LateReference)
-                    {
-                        int key = _model.GetKey(MemberType, false, false);
-                        // we check here only theoretical possibility for type but not whether it's enabled on model level
-                        if (key <= 0 || !ValueSerializerBuilder.CanTypeBeAsLateReference(_model[key]))
-                            throw new ProtoException(Member + " can't be written as late reference because of its type.");
-
-                        asLateReference = true;
-                    }
-
-                    if (asReference)
-                   {
-                        // we check here only theoretical possibility for type but not whether it's enabled on model level
-                        if (!ValueSerializerBuilder.CanTypeBeAsReference(MemberType, false))
-                            throw new ProtoException(Member + " can't be written as reference because of its type.");
-
-                        level0.EnhancedFormat = true;
-                        level0.EnhancedWriteMode = wm = asLateReference ? EnhancedMode.LateReference : EnhancedMode.Reference;
-                        if (asLateReference && dynamicType)
-                            throw new ProtoException("Dynamic type write mode is not available for LateReference enhanced mode: " + Member);
-                    }
-                }
-
-                #endregion
-
-                #region Collections
-                {
-                    int idx = _model.FindOrAddAuto(MemberType, false, true, false);
-                    if (idx >= 0 && _model[MemberType].IgnoreListHandling)
-                        ResetCollectionSettings(ref level0);
-                    else
-                    {
-                        Type newCollectionConcreteType = null;
-                        Type newItemType = null;
-
-                        MetaType.ResolveListTypes(_model, MemberType, ref newItemType, ref newCollectionConcreteType);
-
-                        if (level0.Collection.ItemType == null)
-                            level0.Collection.ItemType = newItemType;
-
-                        if (level0.CollectionConcreteType == null && idx >= 0)
-                            level0.CollectionConcreteType = _model[MemberType].ConstructType;
-
-                        // should not override with default because what if specified something like List<string> for IList? 
-                        if (level0.CollectionConcreteType == null)
-                            level0.CollectionConcreteType = newCollectionConcreteType;
-                        else if (!Helpers.IsAssignableFrom(MemberType, level0.CollectionConcreteType))
-                        {
-                            throw new ProtoException(
-                                "Specified CollectionConcreteType " + level0.CollectionConcreteType.Name + " is not assignable to member " + Member);
-                        }
-
-                        if (level0.Collection.ItemType == null)
-                            ResetCollectionSettings(ref level0);
-                        else if (!level0.Collection.Append.GetValueOrDefault() && !Helpers.CanWrite(_model, Member))
-                        {
-                            if (level0.Collection.Append == null)
-                                level0.Collection.Append = true;
-                            else
-                                throw new ProtoException("The property " + Member + " is not writable but AppendCollection was set to false");
-                        }
-                    }
-                }
                 
-                #endregion
-
-
-                SetSettings(level0, 0, true);
 #if !DEBUG
                 try
 #endif
                 {
                     var ser = ValueSerializerBuilder.BuildValueFinalSerializer(
-                        MemberType,
-                        new ValueSerializerBuilder.CollectionSettings(level0.Collection.ItemType)
-                        {
-                            Append = level0.Collection.Append.GetValueOrDefault(),
-                            DefaultType = level0.CollectionConcreteType,
-                            IsPacked =
-                                level0.Collection.ItemType != null
-                                && level0.Collection.Format == CollectionFormat.Google
-                                && !RuntimeTypeModel.CheckTypeIsCollection(_model, level0.Collection.ItemType)
-                                && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(level0.Collection.ItemType), BinaryDataFormat.Default)),
-                        },
-                        level0.WriteAsDynamicType.GetValueOrDefault(),
-                        asReference,
-                        level0.ContentBinaryFormatHint.GetValueOrDefault(),
+                        _vs,
                         true,
-                        // real type members always handle references if applicable
-                        _vs.DefaultValue,
-#if FORCE_LATE_REFERENCE
-                        true,
-#else
-                        asLateReference,
-#endif
                         _model);
 
                     PropertyInfo prop = Member as PropertyInfo;
@@ -391,20 +261,11 @@ namespace AqlaSerializer.Meta
             return Member + ": " + (string.IsNullOrEmpty(e.Message) ? "serializer build problem" : e.Message);
         }
 
-        static void ResetCollectionSettings(ref MemberLevelSettingsValue level0)
-        {
-
-            level0.Collection.ItemType = null;
-            level0.Collection.PackedWireTypeForRead = null;
-            level0.Collection.Format = CollectionFormat.NotSpecified;
-            level0.CollectionConcreteType = null;
-        }
-
 #region Setting accessors
         // TODO wrapper
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
-            return _vs.GetSettingsCopy(level);
+            return _vs.GetSettingsCopy(level).Basic;
         }
         
         public void SetSettings(MemberLevelSettingsValue value, int level = 0)
@@ -645,27 +506,6 @@ namespace AqlaSerializer.Meta
 
 #endregion
 
-        internal static bool GetAsReferenceDefault(RuntimeTypeModel model, Type memberType, bool isProtobufNetLegacyMember, bool isDeterminatedAsAutoTuple)
-        {
-            if (ValueSerializerBuilder.CanTypeBeAsReference(memberType, isDeterminatedAsAutoTuple))
-            {
-                if (RuntimeTypeModel.CheckTypeDoesntRequireContract(model, memberType))
-                    isProtobufNetLegacyMember = false; // inbuilt behavior types doesn't depend on member legacy behavior
-
-                MetaType type = model.FindWithoutAdd(memberType);
-                if (type != null)
-                {
-                    type = type.GetSurrogateOrSelf();
-                    return type.AsReferenceDefault;
-                }
-                else
-                { // we need to scan the hard way; can't risk recursion by fully walking it
-                    return model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
-                }
-            }
-            return false;
-        }
-
         internal object GetRawEnumValue()
         {
 #if WINRT || PORTABLE || CF || FX11
@@ -685,65 +525,6 @@ namespace AqlaSerializer.Meta
             }
 #else
             return ((FieldInfo)Member).GetRawConstantValue();
-#endif
-        }
-        private static object ParseDefaultValue(Type type, object value)
-        {
-            {
-                Type tmp = Helpers.GetNullableUnderlyingType(type);
-                if (tmp != null) type = tmp;
-            }
-            if (value is string)
-            {
-                string s = (string)value;
-                if (Helpers.IsEnum(type)) return Helpers.ParseEnum(type, s);
-
-                switch (Helpers.GetTypeCode(type))
-                {
-                    case ProtoTypeCode.Boolean: return bool.Parse(s);
-                    case ProtoTypeCode.Byte: return byte.Parse(s, NumberStyles.Integer, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Char: // char.Parse missing on CF/phone7
-                        if (s.Length == 1) return s[0];
-                        throw new FormatException("Single character expected: \"" + s + "\"");
-                    case ProtoTypeCode.DateTime: return DateTime.Parse(s, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Decimal: return decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Double: return double.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Int16: return short.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Int32: return int.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Int64: return long.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.SByte: return sbyte.Parse(s, NumberStyles.Integer, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.Single: return float.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.String: return s;
-                    case ProtoTypeCode.UInt16: return ushort.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.UInt32: return uint.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.UInt64: return ulong.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
-                    case ProtoTypeCode.TimeSpan: return TimeSpan.Parse(s);
-                    case ProtoTypeCode.Uri: return s; // Uri is decorated as string
-                    case ProtoTypeCode.Guid: return new Guid(s);
-                }
-            }
-#if FEAT_IKVM
-            if (Helpers.IsEnum(type)) return value; // return the underlying type instead
-            System.Type convertType = null;
-            switch (Helpers.GetTypeCode(type))
-            {
-                case ProtoTypeCode.SByte: convertType = typeof(sbyte); break;
-                case ProtoTypeCode.Int16: convertType = typeof(short); break;
-                case ProtoTypeCode.Int32: convertType = typeof(int); break;
-                case ProtoTypeCode.Int64: convertType = typeof(long); break;
-                case ProtoTypeCode.Byte: convertType = typeof(byte); break;
-                case ProtoTypeCode.UInt16: convertType = typeof(ushort); break;
-                case ProtoTypeCode.UInt32: convertType = typeof(uint); break;
-                case ProtoTypeCode.UInt64: convertType = typeof(ulong); break;
-                case ProtoTypeCode.Single: convertType = typeof(float); break;
-                case ProtoTypeCode.Double: convertType = typeof(double); break;
-                case ProtoTypeCode.Decimal: convertType = typeof(decimal); break;
-            }
-            if (convertType != null) return Convert.ChangeType(value, convertType, CultureInfo.InvariantCulture);
-            throw new ArgumentException("Unable to process default value: " + value + ", " + type.FullName);
-#else
-            if (Helpers.IsEnum(type)) return Enum.ToObject(type, value);
-            return Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
 #endif
         }
 

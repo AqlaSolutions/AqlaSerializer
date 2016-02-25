@@ -32,7 +32,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             var main = s.MainValue;
             try
             {
-                MemberLevelSettingsValue level = s.SerializationSettings.GetSettingsCopy(0);
+                MemberLevelSettingsValue level = s.SerializationSettings.GetSettingsCopy(0).Basic;
                 if (main.Tag <= 0) attribute.TryGetNotDefault("Tag", ref main.Tag);
                 if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotEmpty("Name", ref main.Name);
                 if (!main.IsRequiredInSchema) attribute.TryGetNotDefault("IsRequired", ref main.IsRequiredInSchema);
@@ -67,7 +67,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                     }
                 }
                 Type memberType = Helpers.GetMemberType(member);
-                if (!asRefHasValue && !ValueMember.GetAsReferenceDefault(model, memberType, true, false))
+                // TODO remove GetAsReferenceDefault from here? read on build serializer?
+                if (!asRefHasValue && !ValueSerializerBuilder.GetAsReferenceDefault(model, memberType, true, false))
                 {
                     // by default enable for ProtoMember
                     notAsReferenceHasValue = true;
@@ -101,6 +102,14 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
                 s.TagIsPinned = main.Tag > 0;
                 s.SerializationSettings.SetSettings(level, 0);
+
+                if (!asRefHasValue)
+                {
+                    var ds = s.SerializationSettings.DefaultLevel.GetValueOrDefault();
+                    ds.Basic.EnhancedFormat = false;
+                    s.SerializationSettings.DefaultLevel = ds;
+                }
+                
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto
             }
             finally

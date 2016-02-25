@@ -504,7 +504,7 @@ namespace AqlaSerializer
             }
 
             {
-                var level0 = mappedMember.MappingState.SerializationSettings.GetSettingsCopy(0);
+                var level0 = mappedMember.MappingState.SerializationSettings.GetSettingsCopy(0).Basic;
                 {
                     Type defaultType = level0.CollectionConcreteType;
                     if (defaultType == null)
