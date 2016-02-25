@@ -84,12 +84,13 @@ namespace AqlaSerializer.Settings
             string s = "LevelSettings of type " + EffectiveType;
             if (EnhancedFormat == true)
             {
-                s += ", enhanced format";
                 if (EnhancedWriteMode != EnhancedMode.NotSpecified)
-                    s += " " + Enum.GetName(typeof(EnhancedMode), EnhancedWriteMode);
+                    s += ", " + EnhancedWriteMode;
+                else
+                    s += ", enhanced";
             }
             else if (EnhancedFormat == false)
-                s += ", compact format";
+                s += ", compact";
 
             if (Collection.ItemType != null)
                 s += ", itemType " + Collection.ItemType;
