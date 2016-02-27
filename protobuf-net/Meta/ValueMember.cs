@@ -170,10 +170,11 @@ namespace AqlaSerializer.Meta
                 try
 #endif
                 {
-                    var ser = ValueSerializerBuilder.BuildValueFinalSerializer(
+                    WireType wt;
+                    var ser = _model.ValueSerializerBuilder.BuildValueFinalSerializer(
                         _vs,
                         true,
-                        _model);
+                        out wt);
 
                     PropertyInfo prop = Member as PropertyInfo;
                     if (prop != null)

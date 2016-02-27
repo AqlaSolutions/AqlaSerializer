@@ -18,25 +18,27 @@ using System.Reflection;
 
 namespace AqlaSerializer.Meta
 {
-    internal class ValueSerializerBuilder
+    internal class ValueSerializerBuilder : IValueSerializerBuilder
     {
-        internal static IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, RuntimeTypeModel model)
+        readonly RuntimeTypeModel _model;
+
+        public ValueSerializerBuilder(RuntimeTypeModel model)
         {
-            WireType wireType;
-            return BuildValueFinalSerializer(settings, isMemberOrNested, model, out wireType);
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            _model = model;
         }
 
-        internal static IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, RuntimeTypeModel model, out WireType wireType)
+        public IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, out WireType wireType)
         {
-            return BuildValueFinalSerializer(settings, isMemberOrNested, model, out wireType, 0);
+            return BuildValueFinalSerializer(settings, isMemberOrNested, out wireType, 0);
         }
 
-        static IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, RuntimeTypeModel model, out WireType wireType, int levelNumber)
+        IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, out WireType wireType, int levelNumber)
         {
             bool tryAsReference;
             bool tryAsLateRef;
             object defaultValue;
-            var l = CompleteLevel(settings, levelNumber, model, out tryAsReference, out tryAsLateRef, out defaultValue).Basic;
+            var l = CompleteLevel(settings, levelNumber, out tryAsReference, out tryAsLateRef, out defaultValue).Basic;
             Debug.Assert(l.ContentBinaryFormatHint != null, "l.ContentBinaryFormatHint != null");
             Debug.Assert(l.EnhancedFormat != null, "l.EnhancedFormat != null");
             Debug.Assert(l.WriteAsDynamicType != null, "l.WriteAsDynamicType != null");
@@ -62,7 +64,7 @@ namespace AqlaSerializer.Meta
             bool isPacked = !itemTypeCanBeNull &&
                             l.Collection.ItemType != null
                             && l.Collection.Format == CollectionFormat.Google
-                            && !RuntimeTypeModel.CheckTypeIsCollection(model, l.Collection.ItemType)
+                            && !RuntimeTypeModel.CheckTypeIsCollection(_model, l.Collection.ItemType)
                             && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(l.Collection.ItemType), l.ContentBinaryFormatHint.Value));
 
             IProtoSerializerWithWireType ser = null;
@@ -71,7 +73,7 @@ namespace AqlaSerializer.Meta
             {
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
-                MetaType.ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
+                MetaType.ResolveListTypes(_model, itemType, ref nestedItemType, ref nestedDefaultType);
 
                 bool itemIsNestedCollection = nestedItemType != null;
                 bool tryHandleAsRegistered = !isMemberOrNested || !itemIsNestedCollection;
@@ -80,7 +82,7 @@ namespace AqlaSerializer.Meta
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
-                    ser = TryGetCoreSerializer(model, l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, !l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref dummy);
+                    ser = _model.ValueSerializerBuilder.TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, !l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -89,7 +91,7 @@ namespace AqlaSerializer.Meta
                     if (!tryHandleAsRegistered && nestedDefaultType == null)
                     {
                         MetaType metaType;
-                        if (model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
+                        if (_model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
                             nestedDefaultType = metaType.ConstructType ?? metaType.Type;
                     }
 
@@ -99,7 +101,7 @@ namespace AqlaSerializer.Meta
                     if (nestedDefaultType == null)
                     {
                         MetaType metaType;
-                        if (model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
+                        if (_model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
                             nestedDefaultType = metaType.ConstructType ?? metaType.Type;
                     }
 
@@ -129,7 +131,6 @@ namespace AqlaSerializer.Meta
                     ser = BuildValueFinalSerializer(
                         settings,
                         true,
-                        model,
                         out wt,
                         levelNumber + 1);
 
@@ -140,7 +141,7 @@ namespace AqlaSerializer.Meta
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
-                ser = TryGetCoreSerializer(model, l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, !l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref defaultValue);
+                ser = _model.ValueSerializerBuilder.TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, !l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref defaultValue);
             }
 
             if (ser == null)
@@ -156,7 +157,7 @@ namespace AqlaSerializer.Meta
                 ))
             {
                 // if not wrapped with net obj - wrap with write-null check
-                ser = new NoNullDecorator(model, ser, l.Collection.ItemType != null); // throw only for collection elements, otherwise don't write
+                ser = new NoNullDecorator(_model, ser, l.Collection.ItemType != null); // throw only for collection elements, otherwise don't write
             }
 
             if (itemType != ser.ExpectedType && (!l.WriteAsDynamicType.Value || !Helpers.IsAssignableFrom(ser.ExpectedType, itemType)))
@@ -169,43 +170,43 @@ namespace AqlaSerializer.Meta
                 if (l.EffectiveType.IsArray)
                 {
                     ser = new ArrayDecorator(
-                                     model,
+                                     _model,
                                      ser,
                                      isPacked,
                                      wireType,
                                      l.EffectiveType,
                                      !l.Collection.Append.Value,
-                                     !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
+                                     !_model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection));
                 }
                 else
                 {
                     ser = ListDecorator.Create(
-                        model,
+                        _model,
                         l.EffectiveType,
                         l.CollectionConcreteType,
                         ser,
                         isPacked,
                         wireType,
                         !l.Collection.Append.Value,
-                        !model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection),
+                        !_model.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Collection),
                         true);
                 }
 
                 if (isMemberOrNested)
                 {
                     // dynamic type is not applied to lists
-                    if (MetaType.IsNetObjectValueDecoratorNecessary(model, l.EffectiveType, tryAsReference))
+                    if (MetaType.IsNetObjectValueDecoratorNecessary(_model, l.EffectiveType, tryAsReference))
                     {
                         ser = new NetObjectValueDecorator(
                             ser,
                             Helpers.GetNullableUnderlyingType(l.EffectiveType) != null,
                             tryAsReference,
-                            tryAsReference && CanReallyBeAsLateReference(model.GetKey(l.EffectiveType, false, true), model),
-                            model);
+                            tryAsReference && CanReallyBeAsLateReference(_model.GetKey(l.EffectiveType, false, true), _model),
+                            _model);
                     }
                     else if (!Helpers.IsValueType(l.EffectiveType) || Helpers.GetNullableUnderlyingType(l.EffectiveType) != null)
                     {
-                        ser = new NoNullDecorator(model, ser, false);
+                        ser = new NoNullDecorator(_model, ser, false);
                     }
                 }
 
@@ -215,19 +216,19 @@ namespace AqlaSerializer.Meta
             }
 
             if (levelNumber == 0 && defaultValue != null)
-                ser = new DefaultValueDecorator(model, defaultValue, ser);
+                ser = new DefaultValueDecorator(_model, defaultValue, ser);
 
             return ser;
         }
 
-        internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
+        public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
              bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
         {
             object dummy = null;
-            return TryGetCoreSerializer(model, dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes, false, ref dummy);
+            return TryGetCoreSerializer(dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes, false, ref dummy);
         }
 
-        internal static IProtoSerializerWithWireType TryGetCoreSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
+        public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes, bool tryAsLateRef, ref object defaultValue)
         {
             Type originalType = type;
@@ -245,11 +246,11 @@ namespace AqlaSerializer.Meta
 
             if (Helpers.IsEnum(type))
             {
-                if (allowComplexTypes && model != null)
+                if (allowComplexTypes && _model != null)
                 {
                     // need to do this before checking the typecode; an int enum will report Int32 etc
                     defaultWireType = WireType.Variant;
-                    ser = new WireTypeDecorator(defaultWireType, new EnumSerializer(type, model.GetEnumMap(type)));
+                    ser = new WireTypeDecorator(defaultWireType, new EnumSerializer(type, _model.GetEnumMap(type)));
                 }
                 else
                 { // enum is fine for adding as a meta-type
@@ -259,20 +260,20 @@ namespace AqlaSerializer.Meta
             }
             if (ser == null)
             {
-                ser = TryGetBasicTypeSerializer(model, dataFormat, type, out defaultWireType, overwriteList);
+                ser = TryGetBasicTypeSerializer(dataFormat, type, out defaultWireType, overwriteList);
                 if (ser != null && Helpers.GetTypeCode(type) == ProtoTypeCode.Uri)
                 {
                     // should be after uri but uri should always be before collection
                     if (defaultValue != null)
                     {
-                        ser = new DefaultValueDecorator(model, defaultValue, ser);
+                        ser = new DefaultValueDecorator(_model, defaultValue, ser);
                         defaultValue = null;
                     }
                 }
             }
             if (ser == null)
             {
-                var parseable = model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, model) : null;
+                var parseable = _model.AllowParseableTypes ? ParseableSerializer.TryCreate(type, _model) : null;
                 if (parseable != null)
                 {
                     defaultWireType = WireType.String;
@@ -281,42 +282,42 @@ namespace AqlaSerializer.Meta
             }
 
             if (ser != null)
-                return (isPackedCollection || !allowComplexTypes) ? ser : DecorateValueSerializer(model, originalType, dynamicType ? dataFormat : (BinaryDataFormat?)null, ref tryAsReference, tryAsLateRef, ser);
+                return (isPackedCollection || !allowComplexTypes) ? ser : DecorateValueSerializer(originalType, dynamicType ? dataFormat : (BinaryDataFormat?)null, ref tryAsReference, tryAsLateRef, ser);
 
             if (allowComplexTypes)
             {
-                int key = model.GetKey(type, false, true);
+                int key = _model.GetKey(type, false, true);
 
                 defaultWireType = WireType.StartGroup;
 
                 if (key >= 0 || dynamicType)
                 {
                     if (dynamicType)
-                        return new NetObjectValueDecorator(originalType, tryAsReference, dataFormat, model);
-                    else if (tryAsLateRef && tryAsReference && CanReallyBeAsLateReference(key, model))
+                        return new NetObjectValueDecorator(originalType, tryAsReference, dataFormat, _model);
+                    else if (tryAsLateRef && tryAsReference && CanReallyBeAsLateReference(key, _model))
                     {
-                        return new NetObjectValueDecorator(originalType, key, tryAsReference, true, model[type], model);
+                        return new NetObjectValueDecorator(originalType, key, tryAsReference, true, _model[type], _model);
                     }
-                    else if (MetaType.IsNetObjectValueDecoratorNecessary(model, originalType, tryAsReference))
-                        return new NetObjectValueDecorator(originalType, key, tryAsReference, false, model[type], model);
+                    else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, originalType, tryAsReference))
+                        return new NetObjectValueDecorator(originalType, key, tryAsReference, false, _model[type], _model);
                     else
-                        return new ModelTypeSerializer(type, key, model[type]);
+                        return new ModelTypeSerializer(type, key, _model[type]);
                 }
             }
             defaultWireType = WireType.None;
             return null;
         }
 
-        static IProtoSerializerWithWireType DecorateValueSerializer(RuntimeTypeModel model, Type type, BinaryDataFormat? dynamicTypeDataFormat, ref bool asReference, bool tryAsLateRef, IProtoSerializerWithWireType ser)
+        IProtoSerializerWithWireType DecorateValueSerializer(Type type, BinaryDataFormat? dynamicTypeDataFormat, ref bool asReference, bool tryAsLateRef, IProtoSerializerWithWireType ser)
         {
             if (Helpers.IsValueType(type)) asReference = false;
 
             // Uri decorator is applied after default value
             // because default value for Uri is treated as string
 
-            if (ser.ExpectedType == model.MapType(typeof(string)) && type == model.MapType(typeof(Uri)))
+            if (ser.ExpectedType == _model.MapType(typeof(string)) && type == _model.MapType(typeof(Uri)))
             {
-                ser = new UriDecorator(model, ser);
+                ser = new UriDecorator(_model, ser);
             }
 #if PORTABLE
                 else if (ser.ExpectedType == model.MapType(typeof(string)) && type.FullName == typeof(Uri).FullName)
@@ -327,11 +328,11 @@ namespace AqlaSerializer.Meta
 #endif
             if (dynamicTypeDataFormat != null)
             {
-                ser = new NetObjectValueDecorator(type, asReference, dynamicTypeDataFormat.Value, model);
+                ser = new NetObjectValueDecorator(type, asReference, dynamicTypeDataFormat.Value, _model);
             }
-            else if (MetaType.IsNetObjectValueDecoratorNecessary(model, type, asReference))
+            else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, type, asReference))
             {
-                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef & asReference && CanReallyBeAsLateReference(model.GetKey(type, false, true), model), model);
+                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef & asReference && CanReallyBeAsLateReference(_model.GetKey(type, false, true), _model), _model);
             }
             else
             {
@@ -359,76 +360,76 @@ namespace AqlaSerializer.Meta
             return !autoTuple && !Helpers.IsValueType(type);// && Helpers.GetTypeCode(type) != ProtoTypeCode.String;
         }
 
-        static IProtoSerializerWithWireType TryGetBasicTypeSerializer(RuntimeTypeModel model, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)
+        IProtoSerializerWithWireType TryGetBasicTypeSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)
         {
             ProtoTypeCode code = Helpers.GetTypeCode(type);
             switch (code)
             {
                 case ProtoTypeCode.Int32:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new Int32Serializer(model));
+                    return new WireTypeDecorator(defaultWireType, new Int32Serializer(_model));
                 case ProtoTypeCode.UInt32:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new UInt32Serializer(model));
+                    return new WireTypeDecorator(defaultWireType, new UInt32Serializer(_model));
                 case ProtoTypeCode.Int64:
                     defaultWireType = GetIntWireType(dataFormat, 64);
-                    return new WireTypeDecorator(defaultWireType, new Int64Serializer(model));
+                    return new WireTypeDecorator(defaultWireType, new Int64Serializer(_model));
                 case ProtoTypeCode.UInt64:
                     defaultWireType = GetIntWireType(dataFormat, 64);
-                    return new WireTypeDecorator(defaultWireType, new UInt64Serializer(model));
+                    return new WireTypeDecorator(defaultWireType, new UInt64Serializer(_model));
                 case ProtoTypeCode.Single:
                     defaultWireType = WireType.Fixed32;
-                    return new WireTypeDecorator(defaultWireType, new SingleSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new SingleSerializer(_model));
                 case ProtoTypeCode.Double:
                     defaultWireType = WireType.Fixed64;
-                    return new WireTypeDecorator(defaultWireType, new DoubleSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new DoubleSerializer(_model));
                 case ProtoTypeCode.Boolean:
                     defaultWireType = WireType.Variant;
-                    return new WireTypeDecorator(defaultWireType, new BooleanSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new BooleanSerializer(_model));
                 case ProtoTypeCode.DateTime:
                     defaultWireType = GetDateTimeWireType(dataFormat);
-                    return new WireTypeDecorator(defaultWireType, new DateTimeSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new DateTimeSerializer(_model));
                 case ProtoTypeCode.Decimal:
                     defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new DecimalSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new DecimalSerializer(_model));
                 case ProtoTypeCode.Byte:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new ByteSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new ByteSerializer(_model));
                 case ProtoTypeCode.SByte:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new SByteSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new SByteSerializer(_model));
                 case ProtoTypeCode.Char:
                     defaultWireType = WireType.Variant;
-                    return new WireTypeDecorator(defaultWireType, new CharSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new CharSerializer(_model));
                 case ProtoTypeCode.Int16:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new Int16Serializer(model));
+                    return new WireTypeDecorator(defaultWireType, new Int16Serializer(_model));
                 case ProtoTypeCode.UInt16:
                     defaultWireType = GetIntWireType(dataFormat, 32);
-                    return new WireTypeDecorator(defaultWireType, new UInt16Serializer(model));
+                    return new WireTypeDecorator(defaultWireType, new UInt16Serializer(_model));
                 case ProtoTypeCode.TimeSpan:
                     defaultWireType = GetDateTimeWireType(dataFormat);
-                    return new WireTypeDecorator(defaultWireType, new TimeSpanSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new TimeSpanSerializer(_model));
                 case ProtoTypeCode.Guid:
                     defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new GuidSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new GuidSerializer(_model));
                 case ProtoTypeCode.ByteArray:
                     defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new BlobSerializer(model, overwriteList));
+                    return new WireTypeDecorator(defaultWireType, new BlobSerializer(_model, overwriteList));
                 case ProtoTypeCode.Uri: // treat uri as string; wrapped in decorator later
                 case ProtoTypeCode.String:
                     defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new StringSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new StringSerializer(_model));
                 case ProtoTypeCode.Type:
                     defaultWireType = WireType.String;
-                    return new WireTypeDecorator(defaultWireType, new SystemTypeSerializer(model));
+                    return new WireTypeDecorator(defaultWireType, new SystemTypeSerializer(_model));
             }
 
             defaultWireType = WireType.None;
             return null;
         }
 
-        private static WireType GetIntWireType(BinaryDataFormat format, int width)
+        WireType GetIntWireType(BinaryDataFormat format, int width)
         {
             switch (format)
             {
@@ -439,7 +440,8 @@ namespace AqlaSerializer.Meta
                 default: throw new InvalidOperationException();
             }
         }
-        private static WireType GetDateTimeWireType(BinaryDataFormat format)
+
+        WireType GetDateTimeWireType(BinaryDataFormat format)
         {
             switch (format)
             {
@@ -451,7 +453,7 @@ namespace AqlaSerializer.Meta
         }
 
 
-        private static object ParseDefaultValue(Type type, object value)
+        object ParseDefaultValue(Type type, object value)
         {
             {
                 Type tmp = Helpers.GetNullableUnderlyingType(type);
@@ -511,7 +513,7 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-        static ValueSerializationSettings.LevelValue CompleteLevel(ValueSerializationSettings vs, int levelNr, RuntimeTypeModel model, out bool asReference, out bool asLateReference, out object defaultValue)
+        ValueSerializationSettings.LevelValue CompleteLevel(ValueSerializationSettings vs, int levelNr, out bool asReference, out bool asLateReference, out object defaultValue)
         {
             var lv = vs.GetSettingsCopy(levelNr);
             var level = lv.Basic; // do not use lv.Basic, it's overwritten at the end of this method
@@ -519,7 +521,7 @@ namespace AqlaSerializer.Meta
             if (levelNr == 0)
             {
                 //#if WINRT
-                if (vs.DefaultValue != null && model.MapType(vs.DefaultValue.GetType()) != level.EffectiveType)
+                if (vs.DefaultValue != null && _model.MapType(vs.DefaultValue.GetType()) != level.EffectiveType)
                 //#else
                 //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
                 //#endif
@@ -543,7 +545,7 @@ namespace AqlaSerializer.Meta
             #region Reference and dynamic type
 
             {
-                asReference = GetAsReferenceDefault(model, level.EffectiveType, false, false);
+                asReference = GetAsReferenceDefault(_model, level.EffectiveType, false, false);
 
                 EnhancedMode wm = level.EnhancedWriteMode;
                 if (level.EnhancedFormat == false)
@@ -559,9 +561,9 @@ namespace AqlaSerializer.Meta
                 if (dynamicType && level.EnhancedFormat == false) throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat for value of type " + level.EffectiveType);
                 if (wm == EnhancedMode.LateReference)
                 {
-                    int key = model.GetKey(level.EffectiveType, false, false);
+                    int key = _model.GetKey(level.EffectiveType, false, false);
                     // we check here only theoretical possibility for type but not whether it's enabled on model level
-                    if (key <= 0 || !ValueSerializerBuilder.CanTypeBeAsLateReference(model[key]))
+                    if (key <= 0 || !ValueSerializerBuilder.CanTypeBeAsLateReference(_model[key]))
                         throw new ProtoException("Value can't be written as late reference because of its type " + level.EffectiveType);
 
                     asLateReference = true;
@@ -584,21 +586,21 @@ namespace AqlaSerializer.Meta
 
             #region Collections
             {
-                int idx = model.FindOrAddAuto(level.EffectiveType, false, true, false);
-                if (idx >= 0 && model[level.EffectiveType].IgnoreListHandling)
+                int idx = _model.FindOrAddAuto(level.EffectiveType, false, true, false);
+                if (idx >= 0 && _model[level.EffectiveType].IgnoreListHandling)
                     ResetCollectionSettings(ref level);
                 else
                 {
                     Type newCollectionConcreteType = null;
                     Type newItemType = null;
 
-                    MetaType.ResolveListTypes(model, level.EffectiveType, ref newItemType, ref newCollectionConcreteType);
+                    MetaType.ResolveListTypes(_model, level.EffectiveType, ref newItemType, ref newCollectionConcreteType);
 
                     if (level.Collection.ItemType == null)
                         level.Collection.ItemType = newItemType;
 
                     if (level.CollectionConcreteType == null && idx >= 0)
-                        level.CollectionConcreteType = model[level.EffectiveType].ConstructType;
+                        level.CollectionConcreteType = _model[level.EffectiveType].ConstructType;
 
                     // should not override with default because what if specified something like List<string> for IList? 
                     if (level.CollectionConcreteType == null)
