@@ -53,6 +53,7 @@ namespace AqlaSerializer.Meta
     {
         internal ProtoCompatibilitySettings ProtoCompatibility { get; private set; } = new ProtoCompatibilitySettings();
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
+        internal IValueSerializerBuilder ValueSerializerBuilder { get; }
 
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
@@ -288,6 +289,7 @@ namespace AqlaSerializer.Meta
             AutoCompile = true;
 #endif
             _autoAddStrategy = new DefaultAutoAddStrategy(this);
+            ValueSerializerBuilder = new ValueSerializerBuilder(this);
 #if !FEAT_IKVM
             Add(MapType(typeof(ModelTypeRelationsData)), true);
 #endif
@@ -378,7 +380,7 @@ namespace AqlaSerializer.Meta
                 WireType defaultWireType;
                 MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
                 IProtoSerializer ser = family == MetaType.AttributeFamily.None
-                    ? ValueSerializerBuilder.TryGetCoreSerializer(this, BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false)
+                    ? this.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false)
                     : null;
 
                 if (ser != null) basicTypes.Add(new BasicType(type, ser));

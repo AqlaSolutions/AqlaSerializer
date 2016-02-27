@@ -645,12 +645,12 @@ namespace AqlaSerializer.Meta
                     s.EnhancedWriteMode = EnhancedMode.Reference;
                 }
                 s.ContentBinaryFormatHint = CollectionDataFormat;
-                
+
+                WireType wt;
                 var ser = (IProtoTypeSerializer)
-                       ValueSerializerBuilder.BuildValueFinalSerializer(
+                       model.ValueSerializerBuilder.BuildValueFinalSerializer(
                            new ValueSerializationSettings(new MemberLevelSettingsValue?[] { s }, s.MakeDefaultNestedLevel()), 
-                           false,
-                           model);
+                           false, out wt);
 
                 // standard root decorator won't start any field
                 // in compatibility mode collections won't start subitems like normally
