@@ -22,5 +22,14 @@ namespace AqlaSerializer.Settings
         public Type ConcreteType;
         public bool IsAutoTuple;
         public MemberLevelSettingsValue Member;
+
+        public TypeSettingsValue GetInitializedToValueOrDefault()
+        {
+            var x = this;
+            x.PrefixLength = x.PrefixLength.GetValueOrDefault(true);
+            x.EnumPassthru = x.EnumPassthru.GetValueOrDefault();
+            x.Member = x.Member.GetInitializedToValueOrDefault();
+            return x;
+        }
     }
 }
