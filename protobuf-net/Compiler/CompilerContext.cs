@@ -786,6 +786,9 @@ namespace AqlaSerializer.Compiler
             
         }
 
+        /// <summary>
+        /// Do not forget to box!
+        /// </summary>
         public void EmitCallNoteObject()
         {
             LoadReaderWriter();
