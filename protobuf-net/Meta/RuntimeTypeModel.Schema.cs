@@ -56,7 +56,7 @@ namespace AqlaSerializer.Meta
             if (effectiveType == this.MapType(typeof(byte[]))) return "bytes";
 
             WireType wireType;
-            IProtoSerializer ser = this.ValueSerializerBuilder.TryGetCoreSerializer(dataFormat, effectiveType, out wireType, false, false, false, false);
+            IProtoSerializer ser = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(dataFormat, effectiveType, out wireType);
             if (ser == null)
             {   // model type
                 if (asReference || dynamicType)
@@ -154,7 +154,7 @@ namespace AqlaSerializer.Meta
                 if (tmp != null) type = tmp;
 
                 WireType defaultWireType;
-                isInbuiltType = (this.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false) != null);
+                isInbuiltType = (this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType) != null);
                 if (!isInbuiltType)
                 {
                     //Agenerate just relative to the supplied type
@@ -242,7 +242,7 @@ namespace AqlaSerializer.Meta
             {
                 Type itemType = TypeModel.GetListItemType(this, metaType.Type);
                 WireType defaultWireType;
-                IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, itemType, out defaultWireType, false, false, false, false);
+                IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, itemType, out defaultWireType);
                 if (coreSerializer == null)
                 {
                     int index = FindOrAddAuto(itemType, false, false, false);
@@ -271,7 +271,7 @@ namespace AqlaSerializer.Meta
                             else if (mapping[i] is FieldInfo) type = ((FieldInfo)mapping[i]).FieldType;
 
                             WireType defaultWireType;
-                            IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false);
+                            IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType);
                             if (coreSerializer == null)
                             {
                                 int index = FindOrAddAuto(type, false, false, false);
@@ -300,7 +300,7 @@ namespace AqlaSerializer.Meta
                         if (fieldMetaType != null)
                             type = fieldMetaType.GetSurrogateOrSelf().Type;
                         WireType defaultWireType;
-                        IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType, false, false, false, false);
+                        IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType);
                         if (coreSerializer == null)
                         {
                             // is an interesting type
