@@ -237,8 +237,10 @@ message HasPrimitives {
 
             var model = TypeModel.Create();
             model.AutoAddMissingTypes = false;
-            model.Add(typeof(MySurrogate), true);
-            model.Add(typeof(MyNonSurrogate), false).SetSurrogate(typeof(MySurrogate));
+            model.Add(typeof(MySurrogate), true).AsReferenceDefault = false;
+            MetaType t = model.Add(typeof(MyNonSurrogate), false);
+            t.SetSurrogate(typeof(MySurrogate));
+            t.AsReferenceDefault = false;
             model.Add(typeof(UsesSurrogates), true);
             model.Add(typeof(List<MySurrogate>), true);
             model.Add(typeof(List<MyNonSurrogate>), true);

@@ -67,13 +67,38 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                         notAsReference = !value;
                     }
                 }
-                Type memberType = Helpers.GetMemberType(member);
-                // TODO remove GetAsReferenceDefault from here? read on build serializer?
-                if (!asRefHasValue && !ValueSerializerBuilder.GetAsReferenceDefault(model, memberType, true, false))
+
+                if (!asRefHasValue)
                 {
-                    // by default enable for ProtoMember
-                    notAsReferenceHasValue = true;
-                    notAsReference = true;
+                    // those can't be registered and don't have AsReferenceDefault
+                    // explicitely set their asReference = false
+                    switch (Helpers.GetTypeCode(Helpers.GetMemberType(member)))
+                    {
+                        case ProtoTypeCode.String:
+                        case ProtoTypeCode.ByteArray:
+                        case ProtoTypeCode.Type:
+                        case ProtoTypeCode.Uri:
+                            notAsReference = true;
+                            notAsReferenceHasValue = true;
+                            break;
+                        default:
+                            if (!RuntimeTypeModel.CheckTypeCanBeAdded(model, Helpers.GetMemberType(member)))
+                            {
+                                notAsReference = true;
+                                notAsReferenceHasValue = true;
+                            }
+                            else
+                            {
+                                // we could check GetContactFamily == null
+                                // but type still may be force-added even without contract
+                                // so we have to implicitely set fallback to false
+                                // the downside is that noone will know why
+                                // the default is not as reference for this member
+                                // if its EffectiveType is not registered
+                                level.EnhancedFormatDefaultFallback = false;
+                            }
+                            break;
+                    }
                 }
 
                 if (notAsReferenceHasValue)

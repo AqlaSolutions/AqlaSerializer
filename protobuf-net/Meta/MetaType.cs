@@ -94,10 +94,6 @@ namespace AqlaSerializer.Meta
 #if WINRT
             this.typeInfo = type.GetTypeInfo();
 #endif
-            // TODO removed when merging type settings into member
-            if (model.AutoAddStrategy.GetAsReferenceDefault(type, false))
-                AsReferenceDefault = true;
-
         }
 
         internal int GetKey(bool demand, bool getBaseKey)

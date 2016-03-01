@@ -22,10 +22,15 @@ namespace AqlaSerializer.Settings
         public bool? EnhancedFormat;
 
         /// <summary>
+        /// Used when no registered EffectiveType found to get default enhanced format, required to support not as reference default behavior on legacy proto members of non-contract types.
+        /// </summary>
+        public bool? EnhancedFormatDefaultFallback;
+
+        /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
         public EnhancedMode EnhancedWriteMode;
-
+        
         /// <summary>
         /// Embeds the type information into the stream, allowing usage with types not known in advance.
         /// Has value if != null.
@@ -75,6 +80,7 @@ namespace AqlaSerializer.Settings
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
             if (r.CollectionConcreteType == null) r.CollectionConcreteType = baseValue.CollectionConcreteType;
+            if (r.EnhancedFormatDefaultFallback == null) r.EnhancedFormatDefaultFallback = baseValue.EnhancedFormatDefaultFallback;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
         }

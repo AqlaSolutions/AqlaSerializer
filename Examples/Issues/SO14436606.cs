@@ -95,10 +95,15 @@ namespace Examples.Issues
         public void ThreeApproachesAreCompatible()
         {
             string surrogate, fields, defaultRef_AFirst, defaultRef_BFirst;
+            string defaultRef_AFirst_proto;
+            string fields_proto;
+            string surrogate_proto;
             using (var ms = new MemoryStream())
             {
-                CreateDefaultRefModel(true, true).Serialize(ms, CreateB_WithDefaultRef());
+                RuntimeTypeModel m = CreateDefaultRefModel(true, true);
+                m.Serialize(ms, CreateB_WithDefaultRef());
                 defaultRef_AFirst = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
+                defaultRef_AFirst_proto = m.GetSchema(typeof(B_WithDefaultRef));
             }
             using (var ms = new MemoryStream())
             {
@@ -107,14 +112,18 @@ namespace Examples.Issues
             }
             using (var ms = new MemoryStream())
             {
-                CreateSurrogateModel(true).Serialize(ms, CreateB());
+                RuntimeTypeModel m = CreateSurrogateModel(true);
+                m.Serialize(ms, CreateB());
                 surrogate = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
+                surrogate_proto = m.GetSchema(typeof(B));
             }
 
             using (var ms = new MemoryStream())
             {
-                CreateFieldsModel(true).Serialize(ms, CreateB());
+                RuntimeTypeModel m = CreateFieldsModel(true);
+                m.Serialize(ms, CreateB());
                 fields = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
+                fields_proto = m.GetSchema(typeof(B));
             }
             
             Assert.AreEqual(surrogate, fields, "fields vs surrogate");
@@ -180,6 +189,7 @@ namespace Examples.Issues
 
             // this is the evil bit:
             model[typeof(KeyValuePair<int, A>)].SetSurrogate(typeof(RefPair<int, A>));
+            model[typeof(KeyValuePair<int, A>)].AsReferenceDefault = true;
             return model;
         }
 

@@ -73,16 +73,30 @@ namespace AqlaSerializer.Meta
             {
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
-                MetaType.ResolveListTypes(_model, itemType, ref nestedItemType, ref nestedDefaultType);
+                int idx = _model.FindOrAddAuto(itemType, false, true, false);
+                if (idx < 0 || !_model[itemType].IgnoreListHandling)
+                    MetaType.ResolveListTypes(_model, itemType, ref nestedItemType, ref nestedDefaultType);
 
                 bool itemIsNestedCollection = nestedItemType != null;
-                bool tryHandleAsRegistered = !isMemberOrNested || !itemIsNestedCollection;
-
-
+                
+                // primitive types except System.Object may be handled as nested through recursion
+                bool tryHandleAsRegistered = !isMemberOrNested || itemType == _model.MapType(typeof(object));
+                
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
                     ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref dummy);
+                    if (ser != null)
+                        ThrowIfHasMoreLevels(settings, levelNumber, l, ", nested type " + itemType.Name + " should be handled as registered type (dynamic type or not a member)");
+                }
+                else if (!itemIsNestedCollection)
+                {
+                    var nestedLevel = settings.GetSettingsCopy(levelNumber + 1);
+                    nestedLevel = PrepareNestedLevelForBuild(nestedLevel, itemType);
+                    nestedLevel.Basic.Collection.ItemType = null; // not a collection or IgnoreListHandling
+                    settings.SetSettings(nestedLevel, levelNumber + 1);
+                    
+                    ser = BuildValueFinalSerializer(settings, true, out wireType, levelNumber + 1);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -95,7 +109,7 @@ namespace AqlaSerializer.Meta
                             nestedDefaultType = metaType.ConstructType ?? metaType.Type;
                     }
 
-                    if (tryAsReference && !CanTypeBeAsReference(l.Collection.ItemType, false))
+                    if (tryAsReference && !CanTypeBeAsReference(l.Collection.ItemType))
                         tryAsReference = false;
 
                     if (nestedDefaultType == null)
@@ -118,13 +132,9 @@ namespace AqlaSerializer.Meta
                         throw new ProtoException(
                             "Nested collection item type " + nestedLevel.Basic.Collection.ItemType + " is not assignable to " + nestedItemType + " for declared collection type " +
                             l.EffectiveType);
-                    
-                    if (nestedLevel.Basic.EffectiveType == null)
-                        nestedLevel.Basic.EffectiveType = itemType;
-                    else if (!Helpers.IsAssignableFrom(itemType, nestedLevel.Basic.EffectiveType))
-                        throw new ProtoException(
-                            "Nested collection type " + nestedLevel.Basic.EffectiveType + " is not assignable to " + itemType);
-                    
+
+                    nestedLevel = PrepareNestedLevelForBuild(nestedLevel, itemType);
+
                     settings.SetSettings(nestedLevel, levelNumber + 1);
 
                     WireType wt;
@@ -142,6 +152,8 @@ namespace AqlaSerializer.Meta
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
                 ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref defaultValue);
+                if (ser != null)
+                    ThrowIfHasMoreLevels(settings, levelNumber, l, ", no more nested type detected");
             }
 
             if (ser == null)
@@ -156,8 +168,12 @@ namespace AqlaSerializer.Meta
                 || (!Helpers.IsValueType(itemType) && !(ser is NetObjectValueDecorator))
                 ))
             {
-                // if not wrapped with net obj - wrap with write-null check
-                ser = new NoNullDecorator(_model, ser, l.Collection.ItemType != null); // throw only for collection elements, otherwise don't write
+                // nested level may be not collection and already wrapped with nonull, may later add check whether handled as registered vs as nested
+                if (!(ser is NoNullDecorator))
+                {
+                    // if not wrapped with net obj - wrap with write-null check
+                    ser = new NoNullDecorator(_model, ser, l.Collection.ItemType != null); // throw only for collection elements, otherwise don't write
+                }
             }
 
             if (itemType != ser.ExpectedType && (!l.WriteAsDynamicType.Value || !Helpers.IsAssignableFrom(ser.ExpectedType, itemType)))
@@ -221,6 +237,26 @@ namespace AqlaSerializer.Meta
             return ser;
         }
 
+        static void ThrowIfHasMoreLevels(ValueSerializationSettings settings, int currentLevelNr, MemberLevelSettingsValue currentLevel, string description)
+        {
+            if (settings.HasSettingsSpecified(currentLevelNr + 1))
+            {
+                throw new ProtoException(
+                    "Found unused specified nested level " + (currentLevelNr + 1) + " settings, maximum nested depth type " + currentLevel.EffectiveType.Name + description);
+            }
+        }
+
+        static ValueSerializationSettings.LevelValue PrepareNestedLevelForBuild(ValueSerializationSettings.LevelValue nestedLevel, Type itemType)
+        {
+
+            if (nestedLevel.Basic.EffectiveType == null)
+                nestedLevel.Basic.EffectiveType = itemType;
+            else if (!Helpers.IsAssignableFrom(itemType, nestedLevel.Basic.EffectiveType))
+                throw new ProtoException(
+                    "Nested collection type " + nestedLevel.Basic.EffectiveType + " is not assignable to " + itemType);
+            return nestedLevel;
+        }
+
         public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             ref bool tryAsReference, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, bool tryAsLateRef, ref object defaultValue)
         {
@@ -231,7 +267,7 @@ namespace AqlaSerializer.Meta
                 if (tmp != null) type = tmp;
             }
 #endif
-            if (tryAsReference && !CanTypeBeAsReference(type, false))
+            if (tryAsReference && !CanTypeBeAsReference(type))
                 tryAsReference = false;
 
             defaultWireType = WireType.None;
@@ -325,7 +361,8 @@ namespace AqlaSerializer.Meta
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, type, asReference))
             {
-                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef & asReference && CanReallyBeAsLateReference(_model.GetKey(type, false, true), _model), _model);
+                // TODO use enhancedformat and modes in members
+                ser = new NetObjectValueDecorator(ser, Helpers.GetNullableUnderlyingType(type) != null, asReference, tryAsLateRef && asReference && CanReallyBeAsLateReference(_model.GetKey(type, false, true), _model), _model);
             }
             else
             {
@@ -348,9 +385,9 @@ namespace AqlaSerializer.Meta
             return mt != null && !mt.Type.IsArray && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !Helpers.IsValueType(mt.Type);
         }
 
-        internal static bool CanTypeBeAsReference(Type type, bool autoTuple)
+        internal static bool CanTypeBeAsReference(Type type)
         {
-            return !autoTuple && !Helpers.IsValueType(type);// && Helpers.GetTypeCode(type) != ProtoTypeCode.String;
+            return !Helpers.IsValueType(type);
         }
 
         IProtoSerializerWithWireType TryGetBasicTypeSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)
@@ -515,9 +552,9 @@ namespace AqlaSerializer.Meta
             {
                 //#if WINRT
                 if (vs.DefaultValue != null && _model.MapType(vs.DefaultValue.GetType()) != level.EffectiveType)
-                //#else
-                //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
-                //#endif
+                    //#else
+                    //            if (defaultValue != null && !memberType.IsInstanceOfType(defaultValue))
+                    //#endif
                 {
                     vs.DefaultValue = ParseDefaultValue(level.EffectiveType, vs.DefaultValue);
                 }
@@ -528,17 +565,17 @@ namespace AqlaSerializer.Meta
             int idx = _model.FindOrAddAuto(level.EffectiveType, false, true, false);
             if (idx >= 0)
             {
-                var typeSettings = _model[idx].SettingsValue;
+                var typeSettings = _model[idx].MakeFinalizedSettingsValue();
                 level = MemberLevelSettingsValue.Merge(typeSettings.Member, level);
             }
+            else if (level.EnhancedFormat == null)
+                level.EnhancedFormat = level.EnhancedFormatDefaultFallback;
 
             asLateReference = false;
 
             #region Reference and dynamic type
 
             {
-                asReference = GetAsReferenceDefault(_model, level.EffectiveType, false, false);
-
                 EnhancedMode wm = level.EnhancedWriteMode;
                 if (level.EnhancedFormat == false)
                 {
@@ -547,7 +584,8 @@ namespace AqlaSerializer.Meta
                 }
                 else if (wm != EnhancedMode.NotSpecified)
                     asReference = wm == EnhancedMode.LateReference || wm == EnhancedMode.Reference;
-
+                else
+                    asReference = !Helpers.IsValueType(level.EffectiveType);
 
                 bool dynamicType = level.WriteAsDynamicType.GetValueOrDefault();
                 if (dynamicType && level.EnhancedFormat == false)
@@ -565,7 +603,7 @@ namespace AqlaSerializer.Meta
                 if (asReference)
                 {
                     // we check here only theoretical possibility for type but not whether it's enabled on model level
-                    if (!ValueSerializerBuilder.CanTypeBeAsReference(level.EffectiveType, false))
+                    if (!ValueSerializerBuilder.CanTypeBeAsReference(level.EffectiveType))
                         throw new ProtoException("Value can't be written as reference because of its type " + level.EffectiveType);
 
                     level.EnhancedFormat = true;
@@ -592,31 +630,35 @@ namespace AqlaSerializer.Meta
                     if (level.Collection.ItemType == null)
                         level.Collection.ItemType = newItemType;
 
-                    if (level.CollectionConcreteType == null && idx >= 0)
-                        level.CollectionConcreteType = _model[level.EffectiveType].ConstructType;
-
-                    // should not override with default because what if specified something like List<string> for IList? 
-                    if (level.CollectionConcreteType == null)
-                        level.CollectionConcreteType = newCollectionConcreteType;
-                    else if (!Helpers.IsAssignableFrom(level.EffectiveType, level.CollectionConcreteType))
-                    {
-                        throw new ProtoException(
-                            "Specified CollectionConcreteType " + level.CollectionConcreteType.Name + " is not assignable to " + level.EffectiveType);
-                    }
-
                     if (level.Collection.ItemType == null)
                         ResetCollectionSettings(ref level);
-                    else if (!level.Collection.Append.GetValueOrDefault() && lv.IsNotAssignable)
+                    else
                     {
-                        if (level.Collection.Append == null)
-                            level.Collection.Append = true;
-                        else
-                            throw new ProtoException("The property is not writable but AppendCollection was set to false");
+                        if (level.CollectionConcreteType == null && idx >= 0)
+                            level.CollectionConcreteType = _model[level.EffectiveType].ConstructType;
+
+                        // should not override with default because what if specified something like List<string> for IList? 
+                        if (level.CollectionConcreteType == null)
+                            level.CollectionConcreteType = newCollectionConcreteType;
+                        else if (!Helpers.IsAssignableFrom(level.EffectiveType, level.CollectionConcreteType))
+                        {
+                            throw new ProtoException(
+                                "Specified CollectionConcreteType " + level.CollectionConcreteType.Name + " is not assignable to " + level.EffectiveType);
+                        }
+
+                        if (!level.Collection.Append.GetValueOrDefault() && lv.IsNotAssignable)
+                        {
+                            if (level.Collection.Append == null)
+                                level.Collection.Append = true;
+                            else
+                                throw new ProtoException("The property is not writable but AppendCollection was set to false");
+                        }
                     }
                 }
             }
+            
             #endregion
-
+            
             lv.Basic = level.GetInitializedToValueOrDefault();
 
             vs.SetSettings(lv, levelNr);
@@ -634,27 +676,6 @@ namespace AqlaSerializer.Meta
             level0.Collection.PackedWireTypeForRead = null;
             level0.Collection.Format = CollectionFormat.NotSpecified;
             level0.CollectionConcreteType = null;
-        }
-
-        internal static bool GetAsReferenceDefault(RuntimeTypeModel model, Type memberType, bool isProtobufNetLegacyMember, bool isDeterminatedAsAutoTuple)
-        {
-            if (ValueSerializerBuilder.CanTypeBeAsReference(memberType, isDeterminatedAsAutoTuple))
-            {
-                if (RuntimeTypeModel.CheckTypeDoesntRequireContract(model, memberType))
-                    isProtobufNetLegacyMember = false; // inbuilt behavior types doesn't depend on member legacy behavior
-
-                MetaType type = model.FindWithoutAdd(memberType);
-                if (type != null)
-                {
-                    type = type.GetSurrogateOrSelf();
-                    return type.AsReferenceDefault;
-                }
-                else
-                { // we need to scan the hard way; can't risk recursion by fully walking it
-                    return model.AutoAddStrategy.GetAsReferenceDefault(memberType, isProtobufNetLegacyMember);
-                }
-            }
-            return false;
         }
     }
 }

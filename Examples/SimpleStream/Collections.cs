@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Examples.SimpleStream
 {
@@ -56,7 +57,8 @@ namespace Examples.SimpleStream
         [Test]
         public void RunNakedCollectionTest()
         {
-            Foo foo = GetFullFoo(), clone = Serializer.DeepClone(foo);
+            var tm = TypeModel.Create();
+            Foo foo = GetFullFoo(), clone = tm.DeepClone(foo);
             Assert.IsTrue(CompareFoos(foo, clone));            
         }
 

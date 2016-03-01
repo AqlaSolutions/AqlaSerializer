@@ -209,6 +209,8 @@ namespace AqlaSerializer.Meta
                     throw new NotSupportedException(mi.MemberType.ToString());
             }
 #endif
+            // we can't check IgnoreListHandling (because of recursion when adding type) but we don't need to
+            // it will be checked in ValueSerializedBuilder.CompleteLevel stage
             ResolveListTypes(_model, miType, ref itemType, ref defaultType);
 
             var serializationSettings = new ValueSerializationSettings();
