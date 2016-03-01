@@ -525,13 +525,12 @@ namespace AqlaSerializer.Meta
             }
             else defaultValue = null;
 
-            // TODO merge type settings
-            //int memberTypeMetaKey = _model.GetKey(MemberType, false, false);
-            //if (memberTypeMetaKey >= 0)
-            //{
-            //    var typeSettings = _model[memberTypeMetaKey].GetSettings());
-            //    level0 = MemberLevelSettingsValue.Merge(typeSettings, level0);
-            //}
+            int idx = _model.FindOrAddAuto(level.EffectiveType, false, true, false);
+            if (idx >= 0)
+            {
+                var typeSettings = _model[idx].SettingsValue;
+                level = MemberLevelSettingsValue.Merge(typeSettings.Member, level);
+            }
 
             asLateReference = false;
 
@@ -551,7 +550,8 @@ namespace AqlaSerializer.Meta
 
 
                 bool dynamicType = level.WriteAsDynamicType.GetValueOrDefault();
-                if (dynamicType && level.EnhancedFormat == false) throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat for value of type " + level.EffectiveType);
+                if (dynamicType && level.EnhancedFormat == false)
+                    throw new ProtoException("Dynamic type write mode strictly requires enhanced MemberFormat for value of type " + level.EffectiveType);
                 if (wm == EnhancedMode.LateReference)
                 {
                     int key = _model.GetKey(level.EffectiveType, false, false);
@@ -578,8 +578,8 @@ namespace AqlaSerializer.Meta
             #endregion
 
             #region Collections
+
             {
-                int idx = _model.FindOrAddAuto(level.EffectiveType, false, true, false);
                 if (idx >= 0 && _model[level.EffectiveType].IgnoreListHandling)
                     ResetCollectionSettings(ref level);
                 else
