@@ -30,7 +30,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
     {
         protected override TypeAttributeHandlerResult TryMap(AttributeMap item, TypeState s, TypeArgsValue a, RuntimeTypeModel model)
         {
-            if (!s.AsEnum && a.CanUse(AttributeType.ProtoBuf))
+            if (a.CanUse(AttributeType.ProtoBuf))
                 s.PartialMembers.Add(item);
             return TypeAttributeHandlerResult.Done;
         }

@@ -34,21 +34,15 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             {
                 var attr = item.GetRuntimeAttribute<SerializableTypeAttribute>(model);
                 s.SettingsValue = attr.TypeSettings;
-                if (s.SettingsValue.EnumPassthru.GetValueOrDefault())
-                    s.AsEnum = false;
 
                 s.ImplicitOnlyWriteable = attr.ImplicitOnlyWriteable;
+                s.DataMemberOffset = attr.DataMemberOffset;
+                if (attr.InferTagFromNameHasValue)
+                    s.InferTagByName = attr.InferTagFromName;
+                s.ImplicitFields = attr.ImplicitFields;
+                if (attr.ImplicitFirstTag != 0) s.ImplicitFirstTag = attr.ImplicitFirstTag;
 
-                if (!s.AsEnum)
-                {
-                    s.DataMemberOffset = attr.DataMemberOffset;
-                    if (attr.InferTagFromNameHasValue)
-                        s.InferTagByName = attr.InferTagFromName;
-                    s.ImplicitFields = attr.ImplicitFields;
-                    if (attr.ImplicitFirstTag != 0) s.ImplicitFirstTag = attr.ImplicitFirstTag;
-                    
-                    if (s.ImplicitFields != ImplicitFieldsMode.None) s.ImplicitAqla = true;
-                }
+                if (s.ImplicitFields != ImplicitFieldsMode.None) s.ImplicitAqla = true;
 
                 return TypeAttributeHandlerResult.Done;
             }

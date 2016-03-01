@@ -33,7 +33,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             // we check CanUse everywhere but not family because GetContractFamily is based on CanUse
             // and CanUse is based on the settings
             // except is for SerializableAttribute which family is not returned if other families are present
-            if (!s.AsEnum && a.HasFamily(MetaType.AttributeFamily.SystemSerializable))
+            if (a.HasFamily(MetaType.AttributeFamily.SystemSerializable))
             {
                 s.ImplicitFields = ImplicitFieldsMode.AllFields;
                 s.ImplicitAqla = true;

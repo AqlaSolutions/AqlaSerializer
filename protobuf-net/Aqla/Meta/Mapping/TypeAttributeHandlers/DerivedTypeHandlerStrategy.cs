@@ -30,7 +30,6 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
     {
         public TypeAttributeHandlerResult TryMap(AttributeMap item, TypeState s)
         {
-            TypeArgsValue a = s.Input;
             RuntimeTypeModel model = s.Model;
             object tmp;
             int tag = 0;

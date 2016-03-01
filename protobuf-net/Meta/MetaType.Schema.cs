@@ -32,6 +32,7 @@ namespace AqlaSerializer.Meta
     {
         internal string GetSchemaTypeName()
         {
+            Serializer.GetHashCode();
             if (_surrogate != null) return _model[_surrogate].GetSchemaTypeName();
 
             if (!Helpers.IsNullOrEmpty(_settingsValue.Name)) return _settingsValue.Name;
@@ -77,6 +78,7 @@ namespace AqlaSerializer.Meta
 
         internal void WriteSchema(System.Text.StringBuilder builder, int indent, ref bool requiresBclImport)
         {
+            Serializer.GetHashCode();
             if (_surrogate != null) return; // nothing to write
 
 
@@ -123,7 +125,7 @@ namespace AqlaSerializer.Meta
             else if (Helpers.IsEnum(Type))
             {
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
-                if (fieldsArr.Length == 0 && EnumPassthru.GetValueOrDefault())
+                if (EnumPassthru.GetValueOrDefault())
                 {
                     if (Type
 #if WINRT

@@ -52,7 +52,6 @@ namespace AqlaSerializer.Meta.Mapping
         {
             var s = new TypeState(args);
             s.InferTagByName = args.Model.InferTagFromNameDefault;
-            s.AsEnum = Helpers.IsEnum(args.Type);
             if (args.Family == MetaType.AttributeFamily.ImplicitFallback)
             {
                 s.ImplicitFields = args.ImplicitFallbackMode;

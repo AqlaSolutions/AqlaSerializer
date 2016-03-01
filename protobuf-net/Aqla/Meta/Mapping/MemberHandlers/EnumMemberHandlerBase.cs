@@ -37,8 +37,19 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
         protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
             // always consider SerializableMember if not strict ProtoBuf
-            if (!s.Input.AsEnum) return MemberHandlerResult.NotFound;
-            if (main.Tag <= 0) main.Tag = Helpers.GetEnumMemberUnderlyingValue(member);
+            if (!s.Input.IsEnumValueMember) return MemberHandlerResult.NotFound;
+            if (main.Tag <= 0)
+            {
+                try
+                {
+                    main.Tag = Helpers.GetEnumMemberUnderlyingValue(member);
+                }
+                catch (OverflowException)
+                {
+                    // should use EnumPassthrough for this value
+                    return MemberHandlerResult.NotFound;
+                }
+            }
             if (!s.Input.CanUse(RequiredAttributeType)) return MemberHandlerResult.Partial;
             if (HasIgnore(s)) return MemberHandlerResult.Ignore;
 

@@ -29,14 +29,14 @@ namespace AqlaSerializer.Meta
 {
     partial class MetaType
     {
-
         internal EnumSerializer.EnumPair[] GetEnumMap()
         {
-            if (EnumPassthru.GetValueOrDefault()) return null;
-            EnumSerializer.EnumPair[] result = new EnumSerializer.EnumPair[_fields.Count];
+            if (!Helpers.IsEnum(Type) || EnumPassthru.GetValueOrDefault()) return null;
+            var fields = _fields.Cast<ValueMember>().ToArray();
+            EnumSerializer.EnumPair[] result = new EnumSerializer.EnumPair[fields.Length];
             for (int i = 0; i < result.Length; i++)
             {
-                ValueMember member = (ValueMember)_fields[i];
+                ValueMember member = (ValueMember)fields[i];
                 int wireValue = member.FieldNumber;
                 object value = member.GetRawEnumValue();
                 result[i] = new EnumSerializer.EnumPair(wireValue, value, member.MemberType);

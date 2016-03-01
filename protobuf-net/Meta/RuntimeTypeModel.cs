@@ -1119,7 +1119,13 @@ namespace AqlaSerializer.Meta
         internal EnumSerializer.EnumPair[] GetEnumMap(Type type)
         {
             int index = FindOrAddAuto(type, false, false, false);
-            return index < 0 ? null : ((MetaType)types[index]).GetEnumMap();
+            if (index < 0) return null;
+            else
+            {
+                var metaType = ((MetaType)types[index]);
+                metaType.Serializer.GetHashCode();
+                return metaType.GetEnumMap();
+            }
         }
 
         private int metadataTimeoutMilliseconds = 5000;

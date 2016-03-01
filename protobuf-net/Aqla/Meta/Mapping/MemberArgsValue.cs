@@ -31,7 +31,10 @@ namespace AqlaSerializer.Meta.Mapping
         public bool IsForced { get; set; }
         public MemberInfo Member { get; set; }
         public MetaType.AttributeFamily Family { get; set; }
-        public bool AsEnum { get; set; }
+        /// <summary>
+        /// Static field on enum type
+        /// </summary>
+        public bool IsEnumValueMember { get; set; }
         public bool InferTagByName { get; set; }
         public IEnumerable<AttributeMap> PartialMembers { get; set; }
         public int DataMemberOffset { get; set; }

@@ -38,8 +38,8 @@ namespace AqlaSerializer.Meta.Mapping
 
         public virtual MappedMember Map(MemberArgsValue args)
         {
-            if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.AsEnum)) return null;
-            if (args.AsEnum) args.IsForced = true;
+            if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.IsEnumValueMember)) return null;
+            if (args.IsEnumValueMember) args.IsForced = true;
             var state = new MemberState(args);
             MemberMainSettingsValue m = state.MainValue;
             m.Tag = int.MinValue;

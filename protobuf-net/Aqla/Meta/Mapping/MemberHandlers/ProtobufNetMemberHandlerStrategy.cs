@@ -29,6 +29,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
     {
         public MemberHandlerResult TryRead(AttributeMap attribute, MemberState s, MemberInfo member, RuntimeTypeModel model)
         {
+            if (s.Input.IsEnumValueMember) return MemberHandlerResult.NotFound;
             var main = s.MainValue;
             try
             {

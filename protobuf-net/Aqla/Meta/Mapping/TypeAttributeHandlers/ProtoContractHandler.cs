@@ -43,10 +43,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
 #endif
                     {
                         if (item.TryGet("EnumPassthru", out tmp))
-                        {
                             main.EnumPassthru = (bool)tmp;
-                            if (main.EnumPassthru.GetValueOrDefault()) s.AsEnum = false; // no longer treated as an enum
-                        }
                     }
                 }
                 else
