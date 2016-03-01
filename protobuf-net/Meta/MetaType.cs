@@ -63,7 +63,17 @@ namespace AqlaSerializer.Meta
         public Type Type { get; }
 
         internal bool IsFrozen { get; private set; }
-        internal bool IsPending { get; private set; }
+        bool _isPending;
+
+        internal bool IsPending
+        {
+            get { return _isPending; }
+            set
+            {
+                if (value && !_isPending) ThrowIfFrozen();
+                _isPending = value;
+            }
+        }
 
         internal MetaType(RuntimeTypeModel model, Type type, MethodInfo factory)
         {
@@ -71,6 +81,7 @@ namespace AqlaSerializer.Meta
             if (model == null) throw new ArgumentNullException(nameof(model));
             if (type == null) throw new ArgumentNullException(nameof(type));
 
+            // TODO ?
             if (model.AutoAddStrategy.GetAsReferenceDefault(type, false))
                 AsReferenceDefault = true;
 
@@ -85,15 +96,6 @@ namespace AqlaSerializer.Meta
             this.typeInfo = type.GetTypeInfo();
 #endif
             this._model = model;
-
-            if (Helpers.IsEnum(type))
-            {
-#if WINRT
-                EnumPassthru = typeInfo.IsDefined(typeof(FlagsAttribute), false);
-#else
-                EnumPassthru = type.IsDefined(model.MapType(typeof(FlagsAttribute)), false);
-#endif
-            }
         }
 
         internal int GetKey(bool demand, bool getBaseKey)
@@ -137,8 +139,8 @@ namespace AqlaSerializer.Meta
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             var mt = (MetaType)MemberwiseClone();
-            mt.serializer = null;
-            mt.rootSerializer = null;
+            mt._serializer = null;
+            mt._rootSerializer = null;
             mt._model = model;
             mt._subTypes = new BasicList();
             mt._subTypesSimple = new BasicList();

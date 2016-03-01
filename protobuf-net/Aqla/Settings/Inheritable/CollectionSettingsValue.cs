@@ -24,7 +24,7 @@ namespace AqlaSerializer.Settings
         /// Has value if != null.
         /// </summary>
         public Type ItemType;
-
+        
         /// <summary>
         /// Has value if != null
         /// </summary>
@@ -36,6 +36,8 @@ namespace AqlaSerializer.Settings
         /// Has value if != null
         /// </summary>
         public bool? Append;
+
+        public bool IsCollection => ItemType != null;
 
         public static CollectionSettingsValue Merge(CollectionSettingsValue baseValue, CollectionSettingsValue derivedValue)
         {

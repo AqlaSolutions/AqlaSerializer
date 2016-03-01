@@ -19,7 +19,7 @@ namespace AqlaSerializer.Settings
         public bool SkipConstructor;
         public bool IgnoreListHandling;
         public bool? PrefixLength;
-        public Type ConcreteType;
+        public Type ConstructType;
         public bool IsAutoTuple;
         public MemberLevelSettingsValue Member;
 

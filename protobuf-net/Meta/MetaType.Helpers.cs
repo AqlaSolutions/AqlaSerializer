@@ -32,7 +32,7 @@ namespace AqlaSerializer.Meta
 
         internal EnumSerializer.EnumPair[] GetEnumMap()
         {
-            if (HasFlag(OPTIONS_EnumPassThru)) return null;
+            if (EnumPassthru) return null;
             EnumSerializer.EnumPair[] result = new EnumSerializer.EnumPair[_fields.Count];
             for (int i = 0; i < result.Length; i++)
             {
@@ -57,7 +57,7 @@ namespace AqlaSerializer.Meta
 
         internal static MetaType GetRootType(MetaType source)
         {
-            while (source.serializer != null)
+            while (source._serializer != null)
             {
                 MetaType tmp = source.BaseType;
                 if (tmp == null) return source;

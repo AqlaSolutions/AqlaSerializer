@@ -50,13 +50,6 @@ namespace AqlaSerializer
         public string Name { get { return TypeSettings.Name; } set { TypeSettings.Name = value; } }
 
         /// <summary>
-        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel settings. See <see cref="SerializableMemberAttributeBase.EnhancedFormat"/>
-        /// </summary>
-        public bool DefaultEnhancedFormat { get { return TypeSettings.Member.EnhancedFormat.Value; } set { TypeSettings.Member.EnhancedFormat = value; } }
-
-        public bool DefaultEnhancedFormatHasValue => TypeSettings.Member.EnhancedFormat.HasValue;
-
-        /// <summary>
         /// Applies only to enums (not to DTO classes themselves); gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
         /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
         /// </summary>
@@ -81,18 +74,25 @@ namespace AqlaSerializer
         /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
         /// with dynamic proxies, or with interface-based APIs; for collections this is a default collection type.
         /// </summary>
-        public Type ConcreteType
+        public Type ConstructType
         {
-            get { return TypeSettings.ConcreteType; }
+            get { return TypeSettings.ConstructType; }
             set
             {
                 // sets both for member and for type
                 // because member can only have ConcreteType specified for collection but not normal types
                 // while TypeSettings.ConcreteType may used for not collections too
                 TypeSettings.Member.CollectionConcreteType = value;
-                TypeSettings.ConcreteType = value;
+                TypeSettings.ConstructType = value;
             }
         }
+
+        /// <summary>
+        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel settings. See <see cref="SerializableMemberAttributeBase.EnhancedFormat"/>
+        /// </summary>
+        public bool DefaultEnhancedFormat { get { return TypeSettings.Member.EnhancedFormat.Value; } set { TypeSettings.Member.EnhancedFormat = value; } }
+
+        public bool DefaultEnhancedFormatHasValue => TypeSettings.Member.EnhancedFormat.HasValue;
 
         /// <summary>
         /// Enhanced features
@@ -128,15 +128,15 @@ namespace AqlaSerializer
         /// </summary>
         public int ImplicitFirstTag
         {
-            get { return implicitFirstTag; }
+            get { return _implicitFirstTag; }
             set
             {
                 if (value < 1) throw new ArgumentOutOfRangeException("value");
-                implicitFirstTag = value;
+                _implicitFirstTag = value;
             }
         }
 
-        private int implicitFirstTag;
+        private int _implicitFirstTag;
 
         /// <summary>
         /// If specified, alternative contract markers (such as markers for XmlSerailizer or DataContractSerializer) are ignored.
@@ -183,8 +183,6 @@ namespace AqlaSerializer
             get { return HasFlag(OPTIONS_InferTagFromNameHasValue); }
         }
 
-        private int dataMemberOffset;
-
         /// <summary>
         /// Specifies an offset to apply to [DataMember(Order=...)] markers;
         /// this is useful when working with mex-generated classes that have
@@ -192,20 +190,20 @@ namespace AqlaSerializer
         /// 
         /// This value is added to the Order of each member.
         /// </summary>
-        public int DataMemberOffset { get { return dataMemberOffset; } set { dataMemberOffset = value; } }
+        public int DataMemberOffset { get; set; }
 
         private bool HasFlag(byte flag)
         {
-            return (flags & flag) == flag;
+            return (_flags & flag) == flag;
         }
 
         private void SetFlag(byte flag, bool value)
         {
-            if (value) flags |= flag;
-            else flags = (byte)(flags & ~flag);
+            if (value) _flags |= flag;
+            else _flags = (byte)(_flags & ~flag);
         }
 
-        private byte flags;
+        private byte _flags;
 
         private const byte
             OPTIONS_InferTagFromName = 1,
