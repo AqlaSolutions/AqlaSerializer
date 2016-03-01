@@ -377,6 +377,15 @@
     <Compile Include="ICloneable.cs" />
     <Compile Include="Meta\IKVMAttributeFactory.cs" />
     <Compile Include="Meta\IValueSerializerBuilder.cs" />
+    <Compile Include="Meta\MetaType.BuildSerializer.cs" />
+    <Compile Include="Meta\MetaType.Callbacks.cs" />
+    <Compile Include="Meta\MetaType.Comparsion.cs" />
+    <Compile Include="Meta\MetaType.Fields.cs" />
+    <Compile Include="Meta\MetaType.Helpers.cs" />
+    <Compile Include="Meta\MetaType.Hierarchy.cs" />
+    <Compile Include="Meta\MetaType.Schema.cs" />
+    <Compile Include="Meta\MetaType.Settings.cs" />
+    <Compile Include="Meta\MetaType.Surrogate.cs" />
     <Compile Include="Meta\ReflectionObjectMap.cs" />
     <Compile Include="Meta\ValueSerializationSettings.cs" />
     <Compile Include="Meta\ValueSerializerBuilder.cs" />

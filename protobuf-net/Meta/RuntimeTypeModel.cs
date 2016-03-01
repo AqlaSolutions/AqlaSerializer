@@ -316,7 +316,7 @@ namespace AqlaSerializer.Meta
             {
                 if (metaType.Type == type)
                 {
-                    if (metaType.Pending) WaitOnLock(metaType);
+                    if (metaType.IsPending) WaitOnLock(metaType);
                     return metaType;
                 }
             }
@@ -404,7 +404,7 @@ namespace AqlaSerializer.Meta
             if (key >= 0)
             {
                 metaType = (MetaType)types[key];
-                if (metaType.Pending)
+                if (metaType.IsPending)
                 {
                     WaitOnLock(metaType);
                 }
@@ -459,7 +459,7 @@ namespace AqlaSerializer.Meta
                         }
                         metaType = Create(type);
                     }
-                    metaType.Pending = true;
+                    metaType.IsPending = true;
                     bool weAdded = false;
 
                     // double-checked
@@ -477,7 +477,7 @@ namespace AqlaSerializer.Meta
                     if (weAdded)
                     {
                         metaType.ApplyDefaultBehaviour();
-                        metaType.Pending = false;
+                        metaType.IsPending = false;
                     }
                     else
                     {
@@ -755,14 +755,14 @@ namespace AqlaSerializer.Meta
                     applyDefaultBehaviourIfNew = false;
                 }
                 if (newType == null) newType = Create(type);
-                newType.Pending = true;
+                newType.IsPending = true;
                 TakeLock(ref opaqueToken);
                 // double checked
                 if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", "type");
                 ThrowIfFrozen();
                 types.Add(newType);
                 if (applyDefaultBehaviourIfNew) { newType.ApplyDefaultBehaviour(); }
-                newType.Pending = false;
+                newType.IsPending = false;
             }
             finally
             {

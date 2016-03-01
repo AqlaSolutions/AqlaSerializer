@@ -101,7 +101,7 @@ namespace AqlaSerializer
                     metaType.IsAutoTuple = sv.IsAutoTuple;
                     metaType.IgnoreListHandling = sv.IgnoreListHandling;
                     metaType.UseConstructor = !sv.SkipConstructor;
-                    metaType.PrefixLength = sv.PrefixLength.GetValueOrDefault(metaType.PrefixLength);
+                    metaType.PrefixLength = sv.PrefixLength.GetValueOrDefault(true);
                 }
 
                 var partialMembers = mapped.PartialMembers;
@@ -117,21 +117,21 @@ namespace AqlaSerializer
                 var members = new List<MappedMember>();
 
 #if WINRT
-            System.Collections.Generic.IEnumerable<MemberInfo> foundList;
-            if (asEnum) {
-                foundList = type.GetRuntimeFields();
-            }
-            else
-            {
-                System.Collections.Generic.List<MemberInfo> list = new System.Collections.Generic.List<MemberInfo>();
-                foreach(PropertyInfo prop in type.GetRuntimeProperties()) {
-                    MethodInfo getter = Helpers.GetGetMethod(prop, false, false);
-                    if(getter != null && !getter.IsStatic) list.Add(prop);
+                System.Collections.Generic.IEnumerable<MemberInfo> foundList;
+                if (asEnum) {
+                    foundList = type.GetRuntimeFields();
                 }
-                foreach(FieldInfo fld in type.GetRuntimeFields()) if(fld.IsPublic && !fld.IsStatic) list.Add(fld);
-                foreach(MethodInfo mthd in type.GetRuntimeMethods()) if(mthd.IsPublic && !mthd.IsStatic) list.Add(mthd);
-                foundList = list;
-            }
+                else
+                {
+                    System.Collections.Generic.List<MemberInfo> list = new System.Collections.Generic.List<MemberInfo>();
+                    foreach(PropertyInfo prop in type.GetRuntimeProperties()) {
+                        MethodInfo getter = Helpers.GetGetMethod(prop, false, false);
+                        if(getter != null && !getter.IsStatic) list.Add(prop);
+                    }
+                    foreach(FieldInfo fld in type.GetRuntimeFields()) if(fld.IsPublic && !fld.IsStatic) list.Add(fld);
+                    foreach(MethodInfo mthd in type.GetRuntimeMethods()) if(mthd.IsPublic && !mthd.IsStatic) list.Add(mthd);
+                    foundList = list;
+                }
 #else
                 MemberInfo[] foundList = type.GetMembers(asEnum ? BindingFlags.Public | BindingFlags.Static
                     : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -566,9 +566,9 @@ namespace AqlaSerializer
             return ignoreAddSettings || (!isProtobufNetLegacyMember && !_model.AddNotAsReferenceDefault);
         }
 
-        static bool GetAsReferenceDefault(MemberLevelSettingsValue m, Type type)
+        public static bool GetAsReferenceDefault(MemberLevelSettingsValue m, Type type)
         {
-            return m.EnhancedFormat != false && m.EnhancedWriteMode != EnhancedMode.Minimal && !Helpers.IsValueType(type);
+            return m.EnhancedFormat != false && m.EnhancedWriteMode != EnhancedMode.Minimal && (m.EnhancedWriteMode != EnhancedMode.NotSpecified || !Helpers.IsValueType(type));
         }
 
         public virtual bool GetIgnoreListHandling(Type type)
