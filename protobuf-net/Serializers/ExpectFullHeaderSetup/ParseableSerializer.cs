@@ -79,7 +79,9 @@ namespace AqlaSerializer.Serializers
         public object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // since replaces
-            return parse.Invoke(null, new object[] { source.ReadString() });
+            var v = parse.Invoke(null, new object[] { source.ReadString() });
+            ProtoReader.NoteObject(v, source);
+            return v;
         }
         public void Write(object value, ProtoWriter dest)
         {
@@ -122,6 +124,9 @@ namespace AqlaSerializer.Serializers
             {
                 ctx.EmitBasicRead("ReadString", ctx.MapType(typeof(string)));
                 ctx.EmitCall(parse);
+                ctx.CopyValue();
+                ctx.CastToObject(parse.ReturnType);
+                ctx.EmitCallNoteObject();
             }
         }
 #endif
