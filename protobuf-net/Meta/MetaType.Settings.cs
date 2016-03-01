@@ -50,7 +50,7 @@ namespace AqlaSerializer.Meta
         /// Gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
         /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
         /// </summary>
-        public bool EnumPassthru
+        public bool? EnumPassthru
         {
             get { return _settingsValue.EnumPassthru; }
             set { _settingsValue.EnumPassthru = value; }
