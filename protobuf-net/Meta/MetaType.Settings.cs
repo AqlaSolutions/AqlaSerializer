@@ -33,19 +33,27 @@ namespace AqlaSerializer.Meta
         TypeSettingsValue _settingsValue;
         internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
 
-        private string name;
-
         /// <summary>
         /// Gets or sets the name of this contract.
         /// </summary>
         public string Name
         {
-            get { return !string.IsNullOrEmpty(name) ? name : Type.Name; }
+            get { return !string.IsNullOrEmpty(_settingsValue.Name) ? _settingsValue.Name : Type.Name; }
             set
             {
                 ThrowIfFrozen();
-                name = value;
+                _settingsValue.Name = value;
             }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
+        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
+        /// </summary>
+        public bool EnumPassthru
+        {
+            get { return _settingsValue.EnumPassthru; }
+            set { _settingsValue.EnumPassthru = value; }
         }
 
         /// <summary>
@@ -55,54 +63,55 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool UseConstructor
         { // negated to have defaults as flat zero
-            get { return !HasFlag(OPTIONS_SkipConstructor); }
-            set { SetFlag(OPTIONS_SkipConstructor, !value, true); }
+            get { return !_settingsValue.SkipConstructor; }
+            set { _settingsValue.SkipConstructor = !value; }
         }
+
+        public bool? PrefixLength { get { return _settingsValue.PrefixLength; } set { _settingsValue.PrefixLength = value; } }
+
         /// <summary>
         /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
         /// with dynamic proxies, or with interface-based APIs; for collections this is a default collection type.
         /// </summary>
         public Type ConstructType
         {
-            get { return constructType; }
+            get { return _settingsValue.ConstructType; }
             set
             {
                 ThrowIfFrozen();
 
                 if (value != null && !Helpers.IsAssignableFrom(this.Type, value))
                     throw new ArgumentException("Specified type " + value.Name + " is not assignable to " + this.Type.Name);
-                constructType = value;
+                // will set also member.CollectionConcreteType in InitSerializers
+                _settingsValue.ConstructType = value;
             }
         }
-        private Type constructType;
-        /// <summary>
-        /// Gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
-        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
-        /// </summary>
-        public bool EnumPassthru
-        {
-            get { return HasFlag(OPTIONS_EnumPassThru); }
-            set { SetFlag(OPTIONS_EnumPassThru, value, true); }
-        }
 
+        public bool? DefaultEnhancedFormat { get { return _settingsValue.Member.EnhancedFormat; } set { _settingsValue.Member.EnhancedFormat = value; } }
+        public EnhancedMode DefaultEnhancedWriteAs { get { return _settingsValue.Member.EnhancedWriteMode; } set { _settingsValue.Member.EnhancedWriteMode = value; } }
+        public BinaryDataFormat? ContentBinaryFormatHint { get { return _settingsValue.Member.ContentBinaryFormatHint; } set { _settingsValue.Member.ContentBinaryFormatHint = value; } }
+        public CollectionFormat CollectionFormat { get { return _settingsValue.Member.Collection.Format; } set { _settingsValue.Member.Collection.Format = value; } }
+        public Type CollectionItemType { get { return _settingsValue.Member.Collection.ItemType; } set { _settingsValue.Member.Collection.ItemType = value; } }
+        
         /// <summary>
         /// Gets or sets a value indicating that this type should NOT be treated as a list, even if it has
         /// familiar list-like characteristics (enumerable, add, etc)
         /// </summary>
         public bool IgnoreListHandling
         {
-            get { return HasFlag(OPTIONS_IgnoreListHandling); }
+            get { return _settingsValue.IgnoreListHandling; }
             set
             {
                 if (value && Type.IsArray)
                     throw new InvalidOperationException("Can't disable list handling for arrays");
-                SetFlag(OPTIONS_IgnoreListHandling, value, true);
+                _settingsValue.IgnoreListHandling = value;
             }
         }
 
         /// <summary>
-        /// Should this type be treated as a reference by default FOR MISSING TYPE MEMBERS ONLY?
+        /// Should this type be treated as a reference by default
         /// </summary>
+        [Obsolete("Use DefaultEnhancedFormat and DefaultEnhancedWriteAs")]
         public bool AsReferenceDefault
         {
             get { return DefaultAutoAddStrategy.GetAsReferenceDefault(_settingsValue.Member, Type); }
@@ -120,22 +129,10 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        public bool PrefixLength
-        {
-            get { return _settingsValue.PrefixLength.GetValueOrDefault(true); }
-            set { _settingsValue.PrefixLength = value; }
-        }
-
-        public BinaryDataFormat CollectionDataFormat
-        {
-            get { return _settingsValue.Member.ContentBinaryFormatHint.GetValueOrDefault(); }
-            set { _settingsValue.Member.ContentBinaryFormatHint = value; }
-        }
-
         internal bool IsAutoTuple
         {
-            get { return HasFlag(OPTIONS_AutoTuple); }
-            set { SetFlag(OPTIONS_AutoTuple, value, true); }
+            get { return _settingsValue.IsAutoTuple; }
+            set { _settingsValue.IsAutoTuple = value; }
         }
 
     }

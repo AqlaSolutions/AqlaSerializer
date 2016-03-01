@@ -91,16 +91,7 @@ namespace AqlaSerializer
                     foreach (var candidate in mapped.DerivedTypes)
                         if (metaType.IsValidSubType(candidate.Type)) metaType.AddSubType(candidate.Tag, candidate.Type, candidate.DataFormat);
 
-                    TypeSettingsValue sv = mapped.SettingsValue;
-                    metaType.AsReferenceDefault = GetAsReferenceDefault(sv.Member, type);
-                    metaType.Name = sv.Name; // can be null, see MetaType.Name getter
-                    metaType.CollectionDataFormat = sv.Member.ContentBinaryFormatHint.GetValueOrDefault();
-                    metaType.ConstructType = sv.ConcreteType;
-                    metaType.EnumPassthru = sv.EnumPassthru;
-                    metaType.IsAutoTuple = sv.IsAutoTuple;
-                    metaType.IgnoreListHandling = sv.IgnoreListHandling;
-                    metaType.UseConstructor = !sv.SkipConstructor;
-                    metaType.PrefixLength = sv.PrefixLength.GetValueOrDefault(true);
+                    metaType.SettingsValue = mapped.SettingsValue;
                 }
 
                 var partialMembers = mapped.PartialMembers;

@@ -34,7 +34,7 @@ namespace AqlaSerializer.Meta
         {
             if (_surrogate != null) return _model[_surrogate].GetSchemaTypeName();
 
-            if (!Helpers.IsNullOrEmpty(name)) return name;
+            if (!Helpers.IsNullOrEmpty(_settingsValue.Name)) return _settingsValue.Name;
 
             string typeName = Type.Name;
 #if !NO_GENERICS
@@ -174,7 +174,7 @@ namespace AqlaSerializer.Meta
                 {
                     member.Serializer.GetHashCode();
                     MemberLevelSettingsValue s = member.GetSettingsCopy(0);
-                    string ordinality = s.Collection.ItemType != null ? "repeated" : member.IsRequired ? "required" : "optional";
+                    string ordinality = s.Collection.IsCollection ? "repeated" : member.IsRequired ? "required" : "optional";
                     NewLine(builder, indent + 1).Append(ordinality).Append(' ');
                     if (s.ContentBinaryFormatHint.GetValueOrDefault() == BinaryDataFormat.Group) builder.Append("group ");
                     string schemaTypeName = member.GetSchemaTypeName(true, ref requiresBclImport);
@@ -196,7 +196,7 @@ namespace AqlaSerializer.Meta
                             builder.Append(" [default = ").Append(member.DefaultValue).Append(']');
                         }
                     }
-                    if (s.Collection.ItemType != null && s.Collection.Format == CollectionFormat.Google &&
+                    if (s.Collection.IsCollection && s.Collection.Format == CollectionFormat.Google &&
                         ListDecorator.CanPack(HelpersInternal.GetWireType(Helpers.GetTypeCode(member.MemberType), s.ContentBinaryFormatHint.GetValueOrDefault())))
                     {
                         builder.Append(" [packed=true]");

@@ -29,123 +29,7 @@ namespace AqlaSerializer.Meta
 {
     partial class MetaType
     {
-
-#if FEAT_IKVM || !FEAT_COMPILER
-        internal bool IsCompiledInPlace => false;
-#else
-        internal bool IsCompiledInPlace => serializer is CompiledSerializer;
-#endif
-
-        public bool IsSerializerReady
-        {
-            get
-            {
-#if !WINRT
-                Thread.MemoryBarrier();
-#else
-                Interlocked.MemoryBarrier();
-#endif
-                return serializer != null;
-            }
-        }
-
-        [DebuggerHidden]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        IProtoSerializerWithWireType ISerializerProxy.Serializer => Serializer;
-
-#if FEAT_COMPILER && !FX11
-
-        /// <summary>
-        /// Compiles the serializer for this type; this is *not* a full
-        /// standalone compile, but can significantly boost performance
-        /// while allowing additional types to be added.
-        /// </summary>
-        /// <remarks>An in-place compile can access non-public types / members</remarks>
-        public void CompileInPlace()
-        {
-            var s = Serializer;
-            var r = RootSerializer;
-#if FAKE_COMPILE
-            return;
-#endif
-#if FEAT_IKVM
-            // just no nothing, quietely; don't want to break the API
-#else
-            if (s is CompiledSerializer) return;
-            serializer = CompiledSerializer.Wrap(s, _model);
-            rootSerializer = CompiledSerializer.Wrap(r, _model);
-#endif
-        }
-#endif
-
-
-        internal bool IsPrepared()
-        {
-#if FEAT_COMPILER && !FEAT_IKVM && !FX11
-            return serializer is CompiledSerializer;
-#else
-            return false;
-#endif
-        }
-
-        
-        private IProtoTypeSerializer serializer;
-        [DebuggerHidden]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        internal IProtoTypeSerializer Serializer
-        {
-            get
-            {
-                if (serializer == null)
-                {
-                    int opaqueToken = 0;
-                    try
-                    {
-                        _model.TakeLock(ref opaqueToken);
-                        if (serializer == null)
-                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
-                            // serializers needing to wait until another thread has finished adding the properties
-                            InitSerializers();
-                        }
-                    }
-                    finally
-                    {
-                        _model.ReleaseLock(opaqueToken);
-                    }
-                }
-                return serializer;
-            }
-        }
-
-        private IProtoTypeSerializer rootSerializer;
-
-        [DebuggerHidden]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        internal IProtoTypeSerializer RootSerializer
-        {
-            get
-            {
-                if (rootSerializer == null)
-                {
-                    int opaqueToken = 0;
-                    try
-                    {
-                        _model.TakeLock(ref opaqueToken);
-                        if (rootSerializer == null)
-                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
-                            // serializers needing to wait until another thread has finished adding the properties
-                            InitSerializers();
-                        }
-                    }
-                    finally
-                    {
-                        _model.ReleaseLock(opaqueToken);
-                    }
-                }
-                return rootSerializer;
-            }
-        }
-        // to be compatible with aux serializer and don't add overhead we don't decorate enums with netobject
+        // to be compatible with auxiliary type serializer and don't add overhead we don't decorate enums with netobject
         bool RootStartsGroup => RootNetObjectMode || RootLateReferenceMode;
         bool RootNetObjectMode => !IsSimpleValue && IsNetObjectValueDecoratorNecessary(_model, Type, true);
         bool RootLateReferenceMode => !IsSimpleValue && _model.ProtoCompatibility.UseOwnFormat;
@@ -154,10 +38,26 @@ namespace AqlaSerializer.Meta
 
         void InitSerializers()
         {
-            SetFlag(OPTIONS_Frozen, true, false);
-            serializer = BuildSerializer(false);
+            ThrowIfFrozen();
+            IsFrozen = true;
+            MemberLevelSettingsValue m = _settingsValue.Member;
+            if (_settingsValue.IgnoreListHandling)
+            {
+                m.Collection.ItemType = null;
+                m.Collection.Format = CollectionFormat.NotSpecified;
+                m.Collection.PackedWireTypeForRead = null;
+            }
+            
+            m.CollectionConcreteType = _settingsValue.ConstructType;
+
+            if (_settingsValue.PrefixLength == null && !IsSimpleValue)
+                _settingsValue.PrefixLength = true;
+            
+            _settingsValue.Member = m;
+            
+            _serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
-            rootSerializer = new RootDecorator(
+            _rootSerializer = new RootDecorator(
                 Type,
                 RootNetObjectMode,
                 !RootLateReferenceMode,
@@ -179,13 +79,17 @@ namespace AqlaSerializer.Meta
 
             if (Helpers.IsEnum(Type))
             {
+                Debug.Assert(IsSimpleValue);
                 IProtoTypeSerializer ser = new WireTypeDecorator(WireType.Variant, new EnumSerializer(Type, GetEnumMap()));
                 if (isRoot && !RootStartsGroup)
                     ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
                 return ser;
             }
 
-            Type itemType = IgnoreListHandling ? null : (Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type));
+            Type itemType = IgnoreListHandling
+                                ? null
+                                : (_settingsValue.Member.Collection.ItemType ?? (Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type)));
+
             if (itemType != null)
             {
 
@@ -196,33 +100,19 @@ namespace AqlaSerializer.Meta
 
                 Type defaultType = null;
                 ResolveListTypes(_model, Type, ref itemType, ref defaultType);
-
-                //    Type nestedItemType = null;
-                //Type nestedDefaultType = null;
-                //MetaType.ResolveListTypes(model, itemType, ref nestedItemType, ref nestedDefaultType);
-
+                
                 if (_fields.Count != 0)
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
-                var s = new MemberLevelSettingsValue
-                {
-                    EffectiveType = Type,
-                    Collection =
-                    {
-                        Append = false,
-                        // TODO use type settings
-                        Format = PrefixLength ? CollectionFormat.Google : CollectionFormat.GoogleNotPacked
-                    },
-                    CollectionConcreteType = ConstructType ?? defaultType,
-
-                };
-
-                if (AsReferenceDefault)
-                {
-                    s.EnhancedFormat = true;
-                    s.EnhancedWriteMode = EnhancedMode.Reference;
-                }
-                s.ContentBinaryFormatHint = CollectionDataFormat;
+                // apply default member settings to type settings too
+                var s = _settingsValue.Member;
+                // but change this:
+                s.EffectiveType = Type; // not merged with anything so assign
+                s.CollectionConcreteType = _settingsValue.ConstructType ?? defaultType;
+                s.Collection.Append = false; // allowed only on members
+                s.WriteAsDynamicType = false; // allowed only on members
+                // this should be handled as collection
+                if (s.Collection.ItemType == null) s.Collection.ItemType = itemType;
 
                 WireType wt;
                 var ser = (IProtoTypeSerializer)
@@ -255,7 +145,7 @@ namespace AqlaSerializer.Meta
                 MemberInfo[] mapping;
                 ConstructorInfo ctor = ResolveTupleConstructor(Type, out mapping);
                 if (ctor == null) throw new InvalidOperationException();
-                return new TupleSerializer(_model, ctor, mapping, PrefixLength);
+                return new TupleSerializer(_model, ctor, mapping, _settingsValue.PrefixLength.GetValueOrDefault(true));
             }
 
 
@@ -310,10 +200,126 @@ namespace AqlaSerializer.Meta
                 baseCtorCallbacks.CopyTo(arr, 0);
                 Array.Reverse(arr);
             }
-            return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, UseConstructor, _callbacks, constructType, _factory, PrefixLength);
+            return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValue.SkipConstructor, _callbacks, _settingsValue.ConstructType, _factory, _settingsValue.PrefixLength.Value);
         }
 
 
+
+#if FEAT_IKVM || !FEAT_COMPILER
+        internal bool IsCompiledInPlace => false;
+#else
+        internal bool IsCompiledInPlace => _serializer is CompiledSerializer;
+#endif
+
+        public bool IsSerializerReady
+        {
+            get
+            {
+#if !WINRT
+                Thread.MemoryBarrier();
+#else
+                Interlocked.MemoryBarrier();
+#endif
+                return _serializer != null;
+            }
+        }
+
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        IProtoSerializerWithWireType ISerializerProxy.Serializer => Serializer;
+
+#if FEAT_COMPILER && !FX11
+
+        /// <summary>
+        /// Compiles the serializer for this type; this is *not* a full
+        /// standalone compile, but can significantly boost performance
+        /// while allowing additional types to be added.
+        /// </summary>
+        /// <remarks>An in-place compile can access non-public types / members</remarks>
+        public void CompileInPlace()
+        {
+            var s = Serializer;
+            var r = RootSerializer;
+#if FAKE_COMPILE
+            return;
+#endif
+#if FEAT_IKVM
+            // just no nothing, quietely; don't want to break the API
+#else
+            if (s is CompiledSerializer) return;
+            _serializer = CompiledSerializer.Wrap(s, _model);
+            _rootSerializer = CompiledSerializer.Wrap(r, _model);
+#endif
+        }
+#endif
+
+
+        internal bool IsPrepared()
+        {
+#if FEAT_COMPILER && !FEAT_IKVM && !FX11
+            return _serializer is CompiledSerializer;
+#else
+            return false;
+#endif
+        }
+
+
+        private IProtoTypeSerializer _serializer;
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal IProtoTypeSerializer Serializer
+        {
+            get
+            {
+                if (_serializer == null)
+                {
+                    int opaqueToken = 0;
+                    try
+                    {
+                        _model.TakeLock(ref opaqueToken);
+                        if (_serializer == null)
+                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
+                            // serializers needing to wait until another thread has finished adding the properties
+                            InitSerializers();
+                        }
+                    }
+                    finally
+                    {
+                        _model.ReleaseLock(opaqueToken);
+                    }
+                }
+                return _serializer;
+            }
+        }
+
+        private IProtoTypeSerializer _rootSerializer;
+
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal IProtoTypeSerializer RootSerializer
+        {
+            get
+            {
+                if (_rootSerializer == null)
+                {
+                    int opaqueToken = 0;
+                    try
+                    {
+                        _model.TakeLock(ref opaqueToken);
+                        if (_rootSerializer == null)
+                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
+                            // serializers needing to wait until another thread has finished adding the properties
+                            InitSerializers();
+                        }
+                    }
+                    finally
+                    {
+                        _model.ReleaseLock(opaqueToken);
+                    }
+                }
+                return _rootSerializer;
+            }
+        }
     }
 }
 #endif

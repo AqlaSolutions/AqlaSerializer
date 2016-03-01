@@ -62,14 +62,14 @@ namespace AqlaSerializer.Meta
             bool itemTypeCanBeNull = !Helpers.IsValueType(itemType) || Helpers.GetNullableUnderlyingType(itemType) != null;
 
             bool isPacked = !itemTypeCanBeNull &&
-                            l.Collection.ItemType != null
+                            l.Collection.IsCollection
                             && l.Collection.Format == CollectionFormat.Google
                             && !RuntimeTypeModel.CheckTypeIsCollection(_model, l.Collection.ItemType)
                             && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(l.Collection.ItemType), l.ContentBinaryFormatHint.Value));
 
             IProtoSerializerWithWireType ser = null;
 
-            if (l.Collection.ItemType != null)
+            if (l.Collection.IsCollection)
             {
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
@@ -165,7 +165,7 @@ namespace AqlaSerializer.Meta
 
 
             // apply lists if appropriate
-            if (l.Collection.ItemType != null)
+            if (l.Collection.IsCollection)
             {
                 if (l.EffectiveType.IsArray)
                 {
