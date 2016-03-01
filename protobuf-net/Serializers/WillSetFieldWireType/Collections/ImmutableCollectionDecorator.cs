@@ -166,11 +166,14 @@ namespace AqlaSerializer.Serializers
         public override object CreateInstance(ProtoReader source)
         {
             object builderInstance = builderFactory.Invoke(null, null);
-            return finish.Invoke(builderInstance, null);
+            var r = finish.Invoke(builderInstance, null);
+            ProtoReader.NoteObject(r, source);
+            return r;
         }
 
         public override object Read(object value, ProtoReader source)
         {
+            int trappedKey = ProtoReader.ReserveNoteObject(source);
             object builderInstance = builderFactory.Invoke(null, null);
             object[] args = new object[1];
 
@@ -199,7 +202,9 @@ namespace AqlaSerializer.Serializers
                     },
                 source);
             
-            return finish.Invoke(builderInstance, null);
+            var r = finish.Invoke(builderInstance, null);
+            ProtoReader.NoteReservedTrappedObject(trappedKey, r, source);
+            return r;
         }
 #endif
 
@@ -212,6 +217,9 @@ namespace AqlaSerializer.Serializers
                 ctx.EmitCall(builderFactory);
                 ctx.LoadAddress(builder, builder.Type);
                 ctx.EmitCall(finish);
+                ctx.CopyValue();
+                ctx.CastToObject(ExpectedType);
+                ctx.EmitCallNoteObject();
             }
         }
 
@@ -220,9 +228,11 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 Type voidType = ctx.MapType(typeof(void));
-                using (Compiler.Local value = AppendToCollection ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : null)
+                using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
                 using (Compiler.Local builderInstance = new Compiler.Local(ctx, builderFactory.ReturnType))
+                using (Compiler.Local trappedKey = new Compiler.Local(ctx, typeof(int)))
                 {
+                    ctx.G.Assign(trappedKey, ctx.G.ReaderFunc.ReserveNoteObject_int());
                     ctx.EmitCall(builderFactory);
                     ctx.StoreValue(builderInstance);
 
@@ -309,9 +319,11 @@ namespace AqlaSerializer.Serializers
                     {
                         ctx.Cast(ExpectedType);
                     }
+                    ctx.StoreValue(value);
+                    ctx.G.Reader.NoteReservedTrappedObject(trappedKey, value);
 
-                    if (!EmitReadReturnsValue)
-                        ctx.G.Assign(value, ctx.G.GetStackValueOperand(ExpectedType));
+                    if (EmitReadReturnsValue)
+                        ctx.LoadValue(value);
                 }
             }
         }
