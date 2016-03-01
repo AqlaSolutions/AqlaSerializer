@@ -34,7 +34,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             {
                 var attr = item.GetRuntimeAttribute<SerializableTypeAttribute>(model);
                 s.SettingsValue = attr.TypeSettings;
-                if (s.SettingsValue.EnumPassthru.GetValueOrDefault())
+                if (s.SettingsValue.EnumPassthru)
                     s.AsEnum = false;
 
                 s.ImplicitOnlyWriteable = attr.ImplicitOnlyWriteable;
