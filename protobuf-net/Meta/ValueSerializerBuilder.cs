@@ -82,7 +82,7 @@ namespace AqlaSerializer.Meta
                 if (tryHandleAsRegistered)
                 {
                     object dummy = null;
-                    ser = _model.ValueSerializerBuilder.TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, !l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref dummy);
+                    ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref dummy);
                 }
 
                 if (ser == null && itemIsNestedCollection)
@@ -141,7 +141,7 @@ namespace AqlaSerializer.Meta
             {
                 if (!isMemberOrNested) tryAsReference = false; // handled outside and not wrapped with collection
                 isPacked = false; // it's not even a collection
-                ser = _model.ValueSerializerBuilder.TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, !l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref defaultValue);
+                ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref tryAsReference, l.WriteAsDynamicType.Value, l.Collection.Append.Value, isPacked, true, tryAsLateRef, ref defaultValue);
             }
 
             if (ser == null)
@@ -222,14 +222,7 @@ namespace AqlaSerializer.Meta
         }
 
         public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-             bool tryAsReference, bool dynamicType, bool overwriteList, bool allowComplexTypes)
-        {
-            object dummy = null;
-            return TryGetCoreSerializer(dataFormat, type, out defaultWireType, ref tryAsReference, dynamicType, overwriteList, false, allowComplexTypes, false, ref dummy);
-        }
-
-        public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-            ref bool tryAsReference, bool dynamicType, bool overwriteList, bool isPackedCollection, bool allowComplexTypes, bool tryAsLateRef, ref object defaultValue)
+            ref bool tryAsReference, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, bool tryAsLateRef, ref object defaultValue)
         {
             Type originalType = type;
 #if !NO_GENERICS
@@ -260,7 +253,7 @@ namespace AqlaSerializer.Meta
             }
             if (ser == null)
             {
-                ser = TryGetBasicTypeSerializer(dataFormat, type, out defaultWireType, overwriteList);
+                ser = TryGetBasicTypeSerializer(dataFormat, type, out defaultWireType, !appendCollection);
                 if (ser != null && Helpers.GetTypeCode(type) == ProtoTypeCode.Uri)
                 {
                     // should be after uri but uri should always be before collection
