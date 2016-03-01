@@ -96,8 +96,7 @@ namespace AqlaSerializer
                     metaType.Name = sv.Name; // can be null, see MetaType.Name getter
                     metaType.CollectionDataFormat = sv.Member.ContentBinaryFormatHint.GetValueOrDefault();
                     metaType.ConstructType = sv.ConcreteType;
-                    if (sv.EnumPassthru != null)
-                        metaType.EnumPassthru = sv.EnumPassthru.Value;
+                    metaType.EnumPassthru = sv.EnumPassthru;
                     metaType.IsAutoTuple = sv.IsAutoTuple;
                     metaType.IgnoreListHandling = sv.IgnoreListHandling;
                     metaType.UseConstructor = !sv.SkipConstructor;
