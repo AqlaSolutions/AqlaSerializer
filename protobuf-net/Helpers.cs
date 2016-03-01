@@ -39,7 +39,6 @@ namespace AqlaSerializer
 
         public static int GetEnumMemberUnderlyingValue(MemberInfo member)
         {
-
 #if WINRT || PORTABLE || CF || FX11
             return Convert.ToInt32(((FieldInfo)member).GetValue(null));
 #else

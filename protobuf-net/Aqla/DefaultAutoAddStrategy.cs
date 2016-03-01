@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using AltLinq;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Meta.Mapping;
@@ -99,17 +100,17 @@ namespace AqlaSerializer
                 int implicitFirstTag = mapped.ImplicitFirstTag;
                 bool inferTagByName = mapped.InferTagByName;
                 ImplicitFieldsMode implicitMode = mapped.ImplicitFields;
-                bool asEnum = mapped.AsEnum && !metaType.EnumPassthru;
                 family = mapped.Input.Family;
                 
                 MethodInfo[] callbacks = null;
 
                 var members = new List<MappedMember>();
 
+                bool isEnum = Helpers.IsEnum(type);
 #if WINRT
                 System.Collections.Generic.IEnumerable<MemberInfo> foundList;
-                if (asEnum) {
-                    foundList = type.GetRuntimeFields();
+                if (isEnum) {
+                    foundList = type.GetRuntimeFields().Where(x => x.IsStatic && x.IsPublic);
                 }
                 else
                 {
@@ -123,8 +124,11 @@ namespace AqlaSerializer
                     foundList = list;
                 }
 #else
-                MemberInfo[] foundList = type.GetMembers(asEnum ? BindingFlags.Public | BindingFlags.Static
+                MemberInfo[] foundList = type.GetMembers(isEnum 
+                    ? BindingFlags.Public | BindingFlags.Static
                     : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (isEnum)
+                    foundList = foundList.Where(x => x.MemberType == MemberTypes.Field).ToArray();
 #endif
                 foreach (MemberInfo member in foundList)
                 {
@@ -134,19 +138,17 @@ namespace AqlaSerializer
                     {
                         var args = new MemberArgsValue(member, map, AcceptableAttributes, Model)
                         {
-                            AsEnum = asEnum,
                             DataMemberOffset = dataMemberOffset,
                             Family = family,
                             InferTagByName = inferTagByName,
                             PartialMembers = partialMembers,
+                            IsEnumValueMember = isEnum
                         };
-
+                        
                         PropertyInfo property;
                         FieldInfo field;
                         if ((property = member as PropertyInfo) != null)
                         {
-                            if (asEnum) continue; // wasn't expecting any props!
-
                             bool isPublic = Helpers.GetGetMethod(property, false, false) != null;
 
                             bool canBeMapped = isPublic || Helpers.GetGetMethod(property, true, true) != null;
@@ -188,25 +190,24 @@ namespace AqlaSerializer
                         else if ((field = member as FieldInfo) != null)
                         {
                             bool isPublic = field.IsPublic;
-                            if (asEnum && !field.IsStatic)
-                            { // only care about static things on enums; WinRT has a __value instance field!
-                                continue;
-                            }
-
-                            switch (implicitMode)
+                            
+                            if (!args.IsEnumValueMember)
                             {
-                                case ImplicitFieldsMode.AllFields:
-                                    args.IsForced = true;
-                                    break;
-                                case ImplicitFieldsMode.PublicFields:
-                                    if (isPublic) args.IsForced = true;
-                                    break;
-                                case ImplicitFieldsMode.PublicFieldsAndProperties:
-                                    if (isPublic) args.IsForced = true;
-                                    break;
-                                case ImplicitFieldsMode.AllFieldsAndProperties:
-                                    args.IsForced = true;
-                                    break;
+                                switch (implicitMode)
+                                {
+                                    case ImplicitFieldsMode.AllFields:
+                                        args.IsForced = true;
+                                        break;
+                                    case ImplicitFieldsMode.PublicFields:
+                                        if (isPublic) args.IsForced = true;
+                                        break;
+                                    case ImplicitFieldsMode.PublicFieldsAndProperties:
+                                        if (isPublic) args.IsForced = true;
+                                        break;
+                                    case ImplicitFieldsMode.AllFieldsAndProperties:
+                                        args.IsForced = true;
+                                        break;
+                                }
                             }
 
                             var r = ApplyDefaultBehaviour_AddMembers(args);
@@ -217,7 +218,6 @@ namespace AqlaSerializer
                     MethodInfo method;
                     if ((method = member as MethodInfo) != null)
                     {
-                        if (asEnum) continue;
                         AttributeMap[] memberAttribs = AttributeMap.Create(_model, method, false);
                         if (memberAttribs != null && memberAttribs.Length > 0)
                         {
@@ -270,7 +270,7 @@ namespace AqlaSerializer
                 if (!DisableAutoAddingMemberTypes)
                     foreach (var member in members)
                     {
-                        if (!asEnum && member.Tag > 0)
+                        if (!member.MappingState.Input.IsEnumValueMember && member.Tag > 0)
                         {
                             Type memberType = Helpers.GetMemberType(member.Member);
                             memberType = Helpers.GetNullableUnderlyingType(memberType) ?? memberType;
@@ -510,7 +510,7 @@ namespace AqlaSerializer
             if (implicitFirstTag != null && !s.TagIsPinned)
                 mappedMember.Tag = metaType.GetNextFreeFieldNumber(implicitFirstTag.Value);
 
-            if (mappedMember.MappingState.Input.AsEnum || mappedMember.Tag > 0)
+            if (mappedMember.MappingState.Input.IsEnumValueMember || mappedMember.Tag > 0)
                 metaType.Add(mappedMember);
         }
 

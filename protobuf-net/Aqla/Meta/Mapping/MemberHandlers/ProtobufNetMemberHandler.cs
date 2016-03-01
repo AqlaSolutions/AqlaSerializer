@@ -38,6 +38,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
         protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
+            if (s.Input.IsEnumValueMember) return MemberHandlerResult.NotFound;
             // always consider ProtoMember if not strict Aqla
             // even if no [ProtoContract] was declared!
             if (!s.Input.CanUse(AttributeType.ProtoBuf)) return MemberHandlerResult.NotFound;

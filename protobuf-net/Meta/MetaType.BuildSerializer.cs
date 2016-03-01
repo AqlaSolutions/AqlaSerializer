@@ -39,7 +39,6 @@ namespace AqlaSerializer.Meta
         void InitSerializers()
         {
             ThrowIfFrozen();
-            IsFrozen = true;
 
             MemberLevelSettingsValue m = _settingsValue.Member;
 
@@ -57,14 +56,14 @@ namespace AqlaSerializer.Meta
                 m.Collection.Format = CollectionFormat.NotSpecified;
                 m.Collection.PackedWireTypeForRead = null;
             }
-            
+
             m.CollectionConcreteType = _settingsValue.ConstructType;
 
             if (_settingsValue.PrefixLength == null && !IsSimpleValue)
                 _settingsValue.PrefixLength = true;
-            
+
             _settingsValue.Member = m;
-            
+
             _serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
             _rootSerializer = new RootDecorator(
@@ -73,6 +72,9 @@ namespace AqlaSerializer.Meta
                 !RootLateReferenceMode,
                 s,
                 _model);
+
+            IsFrozen = true;
+
 #if FEAT_COMPILER && !FX11
             if (_model.AutoCompile) CompileInPlace();
 #endif
@@ -159,14 +161,17 @@ namespace AqlaSerializer.Meta
             }
 
 
-            _fields.Trim();
-            int fieldCount = _fields.Count;
-            int subTypeCount = _subTypes == null ? 0 : _subTypes.Count;
+            var fields = new BasicList(_fields.Cast<object>());
+            fields.Trim();
+            
+            int fieldCount = fields.Count;
+            int subTypeCount = _subTypes?.Count ?? 0;
             int[] fieldNumbers = new int[fieldCount + subTypeCount];
             IProtoSerializerWithWireType[] serializers = new IProtoSerializerWithWireType[fieldCount + subTypeCount];
             int i = 0;
             if (subTypeCount != 0)
             {
+                Debug.Assert(_subTypes != null, "_subTypes != null");
                 foreach (SubType subType in _subTypes)
                 {
 #if WINRT
@@ -183,7 +188,7 @@ namespace AqlaSerializer.Meta
             }
             if (fieldCount != 0)
             {
-                foreach (ValueMember member in _fields)
+                foreach (ValueMember member in fields)
                 {
                     fieldNumbers[i] = member.FieldNumber;
                     serializers[i++] = member.Serializer;

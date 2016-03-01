@@ -30,6 +30,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
     {
         protected override MemberHandlerResult TryMap(MemberState s, ref MemberMainSettingsValue main, MemberInfo member, RuntimeTypeModel model)
         {
+            if (s.Input.IsEnumValueMember) return MemberHandlerResult.NotFound;
             if (!s.Input.CanUse(AttributeType.SystemNonSerialized)) return MemberHandlerResult.NotFound;
             var attrib = AttributeMap.GetAttribute(s.Input.Attributes, "System.NonSerializedAttribute");
             if (attrib != null) return MemberHandlerResult.Ignore;

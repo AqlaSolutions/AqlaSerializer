@@ -60,7 +60,6 @@ namespace Examples.Issues
 
             var c = new C();
             c.PopulateRun();
-
             Func<IResolveConstraint> check = () => Throws.ArgumentException.With.Message.StartsWith("The supplied default implementation cannot be created: Examples.Issues.O");
             Assert.That(() => Test(m, c, "Runtime"), check());
             Assert.That(() => m.CompileInPlace(), check());

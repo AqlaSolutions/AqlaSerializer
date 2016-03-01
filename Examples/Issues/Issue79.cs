@@ -1,4 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
 using System;
 using NUnit.Framework;
 using AqlaSerializer;
@@ -11,8 +12,13 @@ namespace Examples.Issues
         [Flags]
         public enum MyFlagsEnum : ushort // just to make the tests awqward
         {
-            None = 0, A = 1, B = 2, C = 4, D = 8
+            None = 0,
+            A = 1,
+            B = 2,
+            C = 4,
+            D = 8
         }
+
         [ProtoBuf.ProtoContract]
         public class MyTypeWithFlags
         {
@@ -29,6 +35,7 @@ namespace Examples.Issues
             TestRoundtrip(MyFlagsEnum.C);
             TestRoundtrip(MyFlagsEnum.D);
         }
+
         [Test]
         public void ShouldRoundtripCompositeValues()
         {
@@ -38,22 +45,16 @@ namespace Examples.Issues
                 TestRoundtrip(i);
             }
         }
+
         private static void TestRoundtrip(MyFlagsEnum value)
         {
 
             MyTypeWithFlags obj = new MyTypeWithFlags { SomeValue = value }, clone;
             string caption = value + " (" + (int)value + ")";
-            try
-            {
-                clone = Serializer.DeepClone(obj);
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message + " serializing " + caption);
-                throw;
-            }
+
+            clone = Serializer.DeepClone(obj);
+
             Assert.AreEqual(value, clone.SomeValue, caption);
         }
     }
-
 }

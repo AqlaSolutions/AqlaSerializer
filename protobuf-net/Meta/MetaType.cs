@@ -81,9 +81,7 @@ namespace AqlaSerializer.Meta
             if (model == null) throw new ArgumentNullException(nameof(model));
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            // TODO ?
-            if (model.AutoAddStrategy.GetAsReferenceDefault(type, false))
-                AsReferenceDefault = true;
+            this._model = model;
 
             IProtoSerializer coreSerializer = model.TryGetBasicTypeSerializer(type);
             if (coreSerializer != null)
@@ -92,10 +90,14 @@ namespace AqlaSerializer.Meta
             }
 
             this.Type = type;
+
 #if WINRT
             this.typeInfo = type.GetTypeInfo();
 #endif
-            this._model = model;
+            // TODO removed when merging type settings into member
+            if (model.AutoAddStrategy.GetAsReferenceDefault(type, false))
+                AsReferenceDefault = true;
+
         }
 
         internal int GetKey(bool demand, bool getBaseKey)

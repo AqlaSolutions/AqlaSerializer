@@ -40,8 +40,7 @@ namespace AqlaSerializer.Meta.Mapping
         public bool ImplicitOnlyWriteable { get; set; }
         public int ImplicitFirstTag { get; set; } = 1;
         public bool InferTagByName { get; set; }
-        public bool AsEnum { get; set; }
-
+        
         public List<DerivedTypeCandidate> DerivedTypes { get; set; } = new List<DerivedTypeCandidate>();
 
         public List<AttributeMap> PartialMembers { get; set; } = new List<AttributeMap>();
