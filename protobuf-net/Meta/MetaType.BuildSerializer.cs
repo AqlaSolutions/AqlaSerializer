@@ -40,7 +40,17 @@ namespace AqlaSerializer.Meta
         {
             ThrowIfFrozen();
             IsFrozen = true;
+
             MemberLevelSettingsValue m = _settingsValue.Member;
+
+            if (_settingsValue.EnumPassthru == null && Helpers.IsEnum(Type))
+            {
+#if WINRT
+                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
+#else
+                _settingsValue.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
+#endif
+            }
             if (_settingsValue.IgnoreListHandling)
             {
                 m.Collection.ItemType = null;

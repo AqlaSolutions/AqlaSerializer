@@ -15,7 +15,7 @@ namespace AqlaSerializer.Settings
     public struct TypeSettingsValue
     {
         public string Name;
-        public bool EnumPassthru;
+        public bool? EnumPassthru;
         public bool SkipConstructor;
         public bool IgnoreListHandling;
         public bool? PrefixLength;
@@ -27,6 +27,7 @@ namespace AqlaSerializer.Settings
         {
             var x = this;
             x.PrefixLength = x.PrefixLength.GetValueOrDefault(true);
+            x.EnumPassthru = x.EnumPassthru.GetValueOrDefault();
             x.Member = x.Member.GetInitializedToValueOrDefault();
             return x;
         }

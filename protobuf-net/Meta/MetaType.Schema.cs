@@ -123,7 +123,7 @@ namespace AqlaSerializer.Meta
             else if (Helpers.IsEnum(Type))
             {
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
-                if (fieldsArr.Length == 0 && EnumPassthru)
+                if (fieldsArr.Length == 0 && EnumPassthru.GetValueOrDefault())
                 {
                     if (Type
 #if WINRT

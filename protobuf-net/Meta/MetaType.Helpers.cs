@@ -32,7 +32,7 @@ namespace AqlaSerializer.Meta
 
         internal EnumSerializer.EnumPair[] GetEnumMap()
         {
-            if (EnumPassthru) return null;
+            if (EnumPassthru.GetValueOrDefault()) return null;
             EnumSerializer.EnumPair[] result = new EnumSerializer.EnumPair[_fields.Count];
             for (int i = 0; i < result.Length; i++)
             {

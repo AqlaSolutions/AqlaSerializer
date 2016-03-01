@@ -13,17 +13,26 @@ namespace Examples.Issues
         public void Exec()
         {
             var model = TypeModel.Create();
-            Assert.IsFalse(model[typeof(A)].EnumPassthru, "A");
-            Assert.IsTrue(model[typeof(B)].EnumPassthru, "B");
+            model.Add(typeof(A), true);
+            model.Add(typeof(B), true);
+            model.Add(typeof(C), true);
+            model.Add(typeof(D), true);
+            model.Add(typeof(E), true);
+            model.Add(typeof(F), true);
+            model.Add(typeof(G), true);
+            model.Add(typeof(H), true);
+            model.CompileInPlace();
+            Assert.IsFalse(model[typeof(A)].EnumPassthru.Value, "A");
+            Assert.IsTrue(model[typeof(B)].EnumPassthru.Value, "B");
 
-            Assert.IsFalse(model[typeof(C)].EnumPassthru, "C");
-            Assert.IsTrue(model[typeof(D)].EnumPassthru, "D");
+            Assert.IsFalse(model[typeof(C)].EnumPassthru.Value, "C");
+            Assert.IsTrue(model[typeof(D)].EnumPassthru.Value, "D");
 
-            Assert.IsTrue(model[typeof(E)].EnumPassthru, "E");
-            Assert.IsTrue(model[typeof(F)].EnumPassthru, "F");
+            Assert.IsTrue(model[typeof(E)].EnumPassthru.Value, "E");
+            Assert.IsTrue(model[typeof(F)].EnumPassthru.Value, "F");
 
-            Assert.IsFalse(model[typeof(G)].EnumPassthru, "G");
-            Assert.IsFalse(model[typeof(H)].EnumPassthru, "H");            
+            Assert.IsFalse(model[typeof(G)].EnumPassthru.Value, "G");
+            Assert.IsFalse(model[typeof(H)].EnumPassthru.Value, "H");            
         }
 
         // no ProtoContract; with [Flags] is pass-thru, else not
