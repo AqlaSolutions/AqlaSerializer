@@ -18,11 +18,13 @@ namespace AqlaSerializer
         public SerializableMemberNestedAttribute(int level)
             : base(level, null, 0)
         {
+            if (level <= 0) throw new ArgumentOutOfRangeException(nameof(level), "Should be > 0");
         }
 
         public SerializableMemberNestedAttribute(int level, bool enchancedFormat, EnhancedMode enhancedWriteAs = 0)
             : base(level, enchancedFormat, enhancedWriteAs)
         {
+            if (level <= 0) throw new ArgumentOutOfRangeException(nameof(level), "Should be > 0");
         }
     }
 }

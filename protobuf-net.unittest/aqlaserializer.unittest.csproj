@@ -147,6 +147,7 @@
     <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Aqla\CoreReferenceSerialization.cs" />
     <Compile Include="Aqla\NullForLists.cs" />
+    <Compile Include="Aqla\TooManyLevels.cs" />
     <Compile Include="Attribs\Basic.cs" />
     <Compile Include="Attribs\ComplexMultiTypes.cs" />
     <Compile Include="Attribs\PointStruct.cs" />

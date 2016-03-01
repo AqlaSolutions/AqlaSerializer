@@ -24,8 +24,6 @@ namespace AqlaSerializer
 {
     public interface IAutoAddStrategy
     {
-        bool GetIgnoreListHandling(Type type);
-        bool GetAsReferenceDefault(Type type, bool isProtobufNetLegacyMember);
         void ApplyDefaultBehaviour(MetaType type);
         MetaType.AttributeFamily GetContractFamily(Type type);
         IAutoAddStrategy Clone(RuntimeTypeModel model);

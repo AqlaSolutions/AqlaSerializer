@@ -355,7 +355,6 @@
     <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />
     <Compile Include="Aqla\Settings\Inheritable\CollectionSettingsValue.cs" />
     <Compile Include="Aqla\Settings\Inheritable\MemberLevelSettingsValue.cs" />
-    <Compile Include="Aqla\Settings\Example.cs" />
     <Compile Include="Aqla\SerializeDerivedTypeAttribute.cs" />
     <Compile Include="Aqla\Settings\MemberMainSettingsValue.cs" />
     <Compile Include="Aqla\Settings\TypeSettingsValue.cs" />

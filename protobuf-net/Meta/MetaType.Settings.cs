@@ -33,6 +33,11 @@ namespace AqlaSerializer.Meta
         TypeSettingsValue _settingsValue;
         internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
 
+        internal TypeSettingsValue MakeFinalizedSettingsValue()
+        {
+            return FinalizeSettingsValue(_settingsValue);
+        }
+
         /// <summary>
         /// Gets or sets the name of this contract.
         /// </summary>
@@ -114,7 +119,12 @@ namespace AqlaSerializer.Meta
         [Obsolete("Use DefaultEnhancedFormat and DefaultEnhancedWriteAs")]
         public bool AsReferenceDefault
         {
-            get { return DefaultAutoAddStrategy.GetAsReferenceDefault(_settingsValue.Member, Type); }
+            get
+            {
+                MemberLevelSettingsValue m = _settingsValue.Member;
+                return m.EnhancedFormat != false && m.EnhancedWriteMode != EnhancedMode.Minimal &&
+                       (m.EnhancedWriteMode != EnhancedMode.NotSpecified || ValueSerializerBuilder.CanTypeBeAsReference(Type));
+            }
             set
             {
                 if (value)

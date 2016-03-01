@@ -977,7 +977,7 @@ namespace AqlaSerializer.Meta
 #if CHECK_COMPILED_VS_NOT
             int initialSourcePosition = source.Position;
             long initialStreamPosition = initialSourcePosition + source.InitialUnderlyingStreamPosition;
-            var refState = source.StoreReferenceState();
+            var refState = (!SkipCompiledVsNotCheck && isRoot) ? source.StoreReferenceState() : null;
             int initialNumber = source.FieldNumber;
             var initialWireType = source.WireType;
 #endif

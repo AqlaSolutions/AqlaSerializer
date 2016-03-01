@@ -162,24 +162,12 @@ namespace Examples
 
             using (var ms = new MemoryStream())
             {
-                try
-                {
-                    model.Serialize(ms, obj);
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":serialize", ex);
-                }
+                model.Serialize(ms, obj);
+                
                 ms.Position = 0;
-                T clone;
-                try
-                {
-                    clone = (T)model.Deserialize(ms, null, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":deserialize", ex);
-                }
+
+                var clone = (T)model.Deserialize(ms, null, typeof(T));
+                
                 Assert.AreEqual(4, clone.Dictionary.Count, caption);
                 Assert.AreEqual("a", clone.Dictionary[1], caption);
                 Assert.AreEqual("b", clone.Dictionary[2], caption);

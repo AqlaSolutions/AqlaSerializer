@@ -40,29 +40,7 @@ namespace AqlaSerializer.Meta
         {
             ThrowIfFrozen();
 
-            MemberLevelSettingsValue m = _settingsValue.Member;
-
-            if (_settingsValue.EnumPassthru == null && Helpers.IsEnum(Type))
-            {
-#if WINRT
-                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
-#else
-                _settingsValue.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
-#endif
-            }
-            if (_settingsValue.IgnoreListHandling)
-            {
-                m.Collection.ItemType = null;
-                m.Collection.Format = CollectionFormat.NotSpecified;
-                m.Collection.PackedWireTypeForRead = null;
-            }
-
-            m.CollectionConcreteType = _settingsValue.ConstructType;
-
-            if (_settingsValue.PrefixLength == null && !IsSimpleValue)
-                _settingsValue.PrefixLength = true;
-
-            _settingsValue.Member = m;
+            _settingsValue = FinalizeSettingsValue(_settingsValue);
 
             _serializer = BuildSerializer(false);
             var s = BuildSerializer(true);
@@ -78,6 +56,34 @@ namespace AqlaSerializer.Meta
 #if FEAT_COMPILER && !FX11
             if (_model.AutoCompile) CompileInPlace();
 #endif
+        }
+
+        TypeSettingsValue FinalizeSettingsValue(TypeSettingsValue sv)
+        {
+            MemberLevelSettingsValue m = sv.Member;
+
+            if (sv.EnumPassthru == null && Helpers.IsEnum(Type))
+            {
+#if WINRT
+                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
+#else
+                sv.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
+#endif
+            }
+            if (sv.IgnoreListHandling)
+            {
+                m.Collection.ItemType = null;
+                m.Collection.Format = CollectionFormat.NotSpecified;
+                m.Collection.PackedWireTypeForRead = null;
+            }
+
+            m.CollectionConcreteType = sv.ConstructType;
+
+            if (sv.PrefixLength == null && !IsSimpleValue)
+                sv.PrefixLength = true;
+            
+            sv.Member = m;
+            return sv;
         }
 
         private IProtoTypeSerializer BuildSerializer(bool isRoot)

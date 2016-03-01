@@ -40,7 +40,10 @@ namespace AqlaSerializer.Serializers
 
                 Type itemType = null, defaultType = null;
 
-                MetaType.ResolveListTypes(model, finalType, ref itemType, ref defaultType);
+                int idx = model.FindOrAddAuto(finalType, false, true, false);
+                if (idx < 0 || !model[finalType].IgnoreListHandling)
+                    MetaType.ResolveListTypes(model, finalType, ref itemType, ref defaultType);
+                
                 Type tmp = itemType == null ? finalType : itemType;
 
                 bool asReference = false;

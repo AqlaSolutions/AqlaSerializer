@@ -531,57 +531,6 @@ namespace AqlaSerializer
             return false;
         }
         
-        public virtual bool GetAsReferenceDefault(Type type, bool isProtobufNetLegacyMember)
-        {
-            if (type == null) throw new ArgumentNullException("type");
-            if (!ValueSerializerBuilder.CanTypeBeAsReference(type, false)) return false;
-            if (Helpers.IsEnum(type)) return false; // never as-ref
-            AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
-            for (int i = 0; i < typeAttribs.Length; i++)
-            {
-                if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && CanUse(AttributeType.Aqla))
-                {
-                    var attr = typeAttribs[i].GetRuntimeAttribute<SerializableTypeAttribute>(Model);
-                    MemberLevelSettingsValue m = attr.TypeSettings.Member;
-                    return GetAsReferenceDefault(m, type);
-                }
-                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && CanUse(AttributeType.ProtoBuf))
-                {
-                    object tmp;
-                    if (typeAttribs[i].TryGet("AsReferenceDefault", out tmp)) return (bool)tmp;
-                }
-            }
-
-            bool ignoreAddSettings = RuntimeTypeModel.CheckTypeDoesntRequireContract(_model, type);
-            return ignoreAddSettings || (!isProtobufNetLegacyMember && !_model.AddNotAsReferenceDefault);
-        }
-
-        public static bool GetAsReferenceDefault(MemberLevelSettingsValue m, Type type)
-        {
-            return m.EnhancedFormat != false && m.EnhancedWriteMode != EnhancedMode.Minimal && (m.EnhancedWriteMode != EnhancedMode.NotSpecified || !Helpers.IsValueType(type));
-        }
-
-        public virtual bool GetIgnoreListHandling(Type type)
-        {
-            if (type == null) throw new ArgumentNullException("type");
-            AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
-            for (int i = 0; i < typeAttribs.Length; i++)
-            {
-                if (typeAttribs[i].AttributeType.FullName == "AqlaSerializer.SerializableTypeAttribute" && CanUse(AttributeType.Aqla))
-                {
-                    var attr = typeAttribs[i].GetRuntimeAttribute<SerializableTypeAttribute>(Model);
-                    var s = attr.TypeSettings;
-                    return s.IgnoreListHandling;
-                }
-                if (typeAttribs[i].AttributeType.FullName == "ProtoBuf.ProtoContractAttribute" && CanUse(AttributeType.ProtoBuf))
-                {
-                    object tmp;
-                    if (typeAttribs[i].TryGet("IgnoreListHandling", out tmp)) return (bool)tmp;
-                }
-            }
-            return false;
-        }
-
         public bool DisableAutoTuples { get; set; }
 
         /// <summary>

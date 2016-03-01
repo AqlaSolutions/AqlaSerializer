@@ -174,7 +174,6 @@ namespace AqlaSerializer.Meta
         {
             if (type == null) return;
             if (Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return; // don't try this[type] for inbuilts
-            if (model.AutoAddStrategy.GetIgnoreListHandling(type)) return;
             // handle arrays
             if (type.IsArray)
             {
