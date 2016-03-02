@@ -38,6 +38,48 @@ namespace AqlaSerializer.Meta
             return FinalizeSettingsValue(_settingsValue);
         }
 
+        void ThrowIfInvalidSettings(TypeSettingsValue sv)
+        {
+            if (sv.IgnoreListHandling && Type.IsArray)
+                throw new InvalidOperationException("Can't disable list handling for arrays");
+
+            if (sv.ConstructType != null && !Helpers.IsAssignableFrom(this.Type, sv.ConstructType))
+                throw new ArgumentException("Specified construct type " + sv.ConstructType.Name + " is not assignable to " + this.Type.Name);
+
+            if (sv.Member.Collection.ConcreteType != null && !Helpers.IsAssignableFrom(this.Type, sv.Member.Collection.ConcreteType))
+                throw new ArgumentException("Specified collection concrete type " + sv.Member.Collection.ConcreteType.Name + " is not assignable to " + this.Type.Name);
+        }
+
+        TypeSettingsValue FinalizeSettingsValue(TypeSettingsValue sv)
+        {
+            ThrowIfInvalidSettings(sv);
+
+            MemberLevelSettingsValue m = sv.Member;
+
+            if (sv.EnumPassthru == null && Helpers.IsEnum(Type))
+            {
+#if WINRT
+                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
+#else
+                sv.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
+#endif
+            }
+            if (sv.IgnoreListHandling)
+            {
+                m.Collection.ItemType = null;
+                m.Collection.Format = CollectionFormat.NotSpecified;
+                m.Collection.PackedWireTypeForRead = null;
+            }
+
+            m.Collection.ConcreteType = sv.ConstructType;
+
+            if (sv.PrefixLength == null && !IsSimpleValue)
+                sv.PrefixLength = true;
+
+            sv.Member = m;
+            return sv;
+        }
+
         /// <summary>
         /// Gets or sets the name of this contract.
         /// </summary>
@@ -46,8 +88,12 @@ namespace AqlaSerializer.Meta
             get { return !string.IsNullOrEmpty(_settingsValue.Name) ? _settingsValue.Name : Type.Name; }
             set
             {
-                ThrowIfFrozen();
-                _settingsValue.Name = value;
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Name = value;
+                        return sv;
+                    });
             }
         }
 
@@ -58,7 +104,15 @@ namespace AqlaSerializer.Meta
         public bool? EnumPassthru
         {
             get { return _settingsValue.EnumPassthru; }
-            set { _settingsValue.EnumPassthru = value; }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                        {
+                            sv.EnumPassthru = value;
+                            return sv;
+                        });
+            }
         }
 
         /// <summary>
@@ -69,10 +123,33 @@ namespace AqlaSerializer.Meta
         public bool UseConstructor
         { // negated to have defaults as flat zero
             get { return !_settingsValue.SkipConstructor; }
-            set { _settingsValue.SkipConstructor = !value; }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.SkipConstructor = !value;
+                        return sv;
+                    });
+            }
         }
 
-        public bool? PrefixLength { get { return _settingsValue.PrefixLength; } set { _settingsValue.PrefixLength = value; } }
+        public bool? PrefixLength
+        {
+            get
+            {
+                return _settingsValue.PrefixLength;
+            }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.PrefixLength = value;
+                        return sv;
+                    });
+            }
+        }
 
         /// <summary>
         /// The concrete type to create when a new instance of this type is needed; this may be useful when dealing
@@ -83,21 +160,98 @@ namespace AqlaSerializer.Meta
             get { return _settingsValue.ConstructType; }
             set
             {
-                ThrowIfFrozen();
-
-                if (value != null && !Helpers.IsAssignableFrom(this.Type, value))
-                    throw new ArgumentException("Specified type " + value.Name + " is not assignable to " + this.Type.Name);
-                // will set also member.Collection.ConcreteType in InitSerializers
-                _settingsValue.ConstructType = value;
+                ChangeSettings(
+                    sv =>
+                    {
+                        // will set also member.Collection.ConcreteType in InitSerializers
+                        sv.ConstructType = value;
+                        return sv;
+                    });
             }
         }
 
-        public bool? DefaultEnhancedFormat { get { return _settingsValue.Member.EnhancedFormat; } set { _settingsValue.Member.EnhancedFormat = value; } }
-        public EnhancedMode DefaultEnhancedWriteAs { get { return _settingsValue.Member.EnhancedWriteMode; } set { _settingsValue.Member.EnhancedWriteMode = value; } }
-        public BinaryDataFormat? ContentBinaryFormatHint { get { return _settingsValue.Member.ContentBinaryFormatHint; } set { _settingsValue.Member.ContentBinaryFormatHint = value; } }
-        public CollectionFormat CollectionFormat { get { return _settingsValue.Member.Collection.Format; } set { _settingsValue.Member.Collection.Format = value; } }
-        public Type CollectionItemType { get { return _settingsValue.Member.Collection.ItemType; } set { _settingsValue.Member.Collection.ItemType = value; } }
-        
+        public bool? DefaultEnhancedFormat
+        {
+            get
+            {
+                return _settingsValue.Member.EnhancedFormat;
+            }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Member.EnhancedFormat = value;
+                        return sv;
+                    });
+            }
+        }
+
+        public EnhancedMode DefaultEnhancedWriteAs
+        {
+            get
+            {
+                return _settingsValue.Member.EnhancedWriteMode;
+            }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Member.EnhancedWriteMode = value;
+                        return sv;
+                    });
+            }
+        }
+
+        public BinaryDataFormat? ContentBinaryFormatHint
+        {
+            get { return _settingsValue.Member.ContentBinaryFormatHint; }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Member.ContentBinaryFormatHint = value;
+                        return sv;
+                    });
+            }
+        }
+
+        public CollectionFormat CollectionFormat
+        {
+            get
+            {
+                return _settingsValue.Member.Collection.Format;
+            }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Member.Collection.Format = value;
+                        return sv;
+                    });
+            }
+        }
+
+        public Type CollectionItemType
+        {
+            get
+            {
+                return _settingsValue.Member.Collection.ItemType;
+            }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Member.Collection.ItemType = value;
+                        return sv;
+                    });
+            }
+        }
+
         /// <summary>
         /// Gets or sets a value indicating that this type should NOT be treated as a list, even if it has
         /// familiar list-like characteristics (enumerable, add, etc)
@@ -107,9 +261,12 @@ namespace AqlaSerializer.Meta
             get { return _settingsValue.IgnoreListHandling; }
             set
             {
-                if (value && Type.IsArray)
-                    throw new InvalidOperationException("Can't disable list handling for arrays");
-                _settingsValue.IgnoreListHandling = value;
+                ChangeSettings(
+                    sv =>
+                        {
+                            sv.IgnoreListHandling = value;
+                            return sv;
+                        });
             }
         }
 
@@ -127,24 +284,46 @@ namespace AqlaSerializer.Meta
             }
             set
             {
-                if (value)
-                {
-                    _settingsValue.Member.EnhancedFormat = true;
-                    if (!AsReferenceDefault) _settingsValue.Member.EnhancedWriteMode = EnhancedMode.Reference;
-                }
-                else
-                {
-                    _settingsValue.Member.EnhancedFormat = false;
-                }
+                ChangeSettings(
+                    sv =>
+                        {
+                            if (value)
+                            {
+                                sv.Member.EnhancedFormat = true;
+                                if (!AsReferenceDefault) sv.Member.EnhancedWriteMode = EnhancedMode.Reference;
+                            }
+                            else
+                            {
+                                sv.Member.EnhancedFormat = false;
+                            }
+
+                            return sv;
+                        });
             }
         }
 
         internal bool IsAutoTuple
         {
             get { return _settingsValue.IsAutoTuple; }
-            set { _settingsValue.IsAutoTuple = value; }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                        {
+                            sv.IsAutoTuple = value;
+                            return sv;
+                        });
+            }
         }
 
+        void ChangeSettings(Func<TypeSettingsValue, TypeSettingsValue> setter)
+        {
+            ThrowIfFrozen();
+            var sv = setter(_settingsValue);
+            ThrowIfInvalidSettings(sv);
+            _settingsValue = sv;
+        }
     }
 }
+
 #endif

@@ -58,34 +58,6 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-        TypeSettingsValue FinalizeSettingsValue(TypeSettingsValue sv)
-        {
-            MemberLevelSettingsValue m = sv.Member;
-
-            if (sv.EnumPassthru == null && Helpers.IsEnum(Type))
-            {
-#if WINRT
-                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
-#else
-                sv.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
-#endif
-            }
-            if (sv.IgnoreListHandling)
-            {
-                m.Collection.ItemType = null;
-                m.Collection.Format = CollectionFormat.NotSpecified;
-                m.Collection.PackedWireTypeForRead = null;
-            }
-
-            m.Collection.ConcreteType = sv.ConstructType;
-
-            if (sv.PrefixLength == null && !IsSimpleValue)
-                sv.PrefixLength = true;
-            
-            sv.Member = m;
-            return sv;
-        }
-
         private IProtoTypeSerializer BuildSerializer(bool isRoot)
         {
             // reference tracking decorators (RootDecorator, NetObjectDecorator, NetObjectValueDecorator)
