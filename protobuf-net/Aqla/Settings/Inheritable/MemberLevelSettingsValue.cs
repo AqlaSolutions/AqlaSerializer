@@ -14,10 +14,8 @@ namespace AqlaSerializer.Settings
 {
     public struct MemberLevelSettingsValue
     {
-        internal Type EffectiveType;
-
-        public Type TryGetEffectiveType() => EffectiveType;
-
+        public Type EffectiveType;
+        
         /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
