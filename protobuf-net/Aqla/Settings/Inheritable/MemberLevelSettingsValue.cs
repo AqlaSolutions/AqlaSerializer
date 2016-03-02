@@ -14,7 +14,9 @@ namespace AqlaSerializer.Settings
 {
     public struct MemberLevelSettingsValue
     {
-        public Type EffectiveType;
+        internal Type EffectiveType;
+
+        public Type TryGetEffectiveType() => EffectiveType;
 
         /// <summary>
         /// Has value if != NotSpecified
@@ -44,11 +46,6 @@ namespace AqlaSerializer.Settings
         /// </summary>
         public BinaryDataFormat? ContentBinaryFormatHint;
         
-        /// <summary>
-        /// For abstract types (IList etc), the type of concrete object to create (if required). Ignored for not collections. Has value if != null.
-        /// </summary>
-        public Type CollectionConcreteType;
-
         public CollectionSettingsValue Collection;
 
         public MemberLevelSettingsValue GetInitializedToValueOrDefault()
@@ -67,7 +64,7 @@ namespace AqlaSerializer.Settings
             var x = this;
             x.Collection.ItemType = null;
             x.Collection.PackedWireTypeForRead = null;
-            x.CollectionConcreteType = null;
+            x.Collection.ConcreteType = null;
             x.EffectiveType = null;
             return x;
         }
@@ -79,7 +76,6 @@ namespace AqlaSerializer.Settings
             if (r.EnhancedWriteMode == EnhancedMode.NotSpecified) r.EnhancedWriteMode = baseValue.EnhancedWriteMode;
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
-            if (r.CollectionConcreteType == null) r.CollectionConcreteType = baseValue.CollectionConcreteType;
             if (r.EnhancedFormatDefaultFallback == null) r.EnhancedFormatDefaultFallback = baseValue.EnhancedFormatDefaultFallback;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;

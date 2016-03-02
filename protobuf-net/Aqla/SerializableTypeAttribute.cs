@@ -84,7 +84,7 @@ namespace AqlaSerializer
                 // sets both for member and for type
                 // because member can only have ConcreteType specified for collection but not normal types
                 // while TypeSettings.ConcreteType may used for not collections too
-                TypeSettings.Member.CollectionConcreteType = value;
+                TypeSettings.Member.Collection.ConcreteType = value;
                 TypeSettings.ConstructType = value;
             }
         }

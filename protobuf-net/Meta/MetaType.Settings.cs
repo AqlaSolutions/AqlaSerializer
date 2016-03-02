@@ -87,7 +87,7 @@ namespace AqlaSerializer.Meta
 
                 if (value != null && !Helpers.IsAssignableFrom(this.Type, value))
                     throw new ArgumentException("Specified type " + value.Name + " is not assignable to " + this.Type.Name);
-                // will set also member.CollectionConcreteType in InitSerializers
+                // will set also member.Collection.ConcreteType in InitSerializers
                 _settingsValue.ConstructType = value;
             }
         }

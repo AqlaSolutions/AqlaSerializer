@@ -75,7 +75,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Default collection implementation
         /// </summary>
-        public Type CollectionConcreteType { get { return LevelSettings.CollectionConcreteType; } set { LevelSettings.CollectionConcreteType = value; } }
+        public Type CollectionConcreteType { get { return LevelSettings.Collection.ConcreteType; } set { LevelSettings.Collection.ConcreteType = value; } }
 
         /// <summary>
         /// The data-format to be used when encoding this value.

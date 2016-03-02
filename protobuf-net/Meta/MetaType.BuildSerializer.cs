@@ -77,7 +77,7 @@ namespace AqlaSerializer.Meta
                 m.Collection.PackedWireTypeForRead = null;
             }
 
-            m.CollectionConcreteType = sv.ConstructType;
+            m.Collection.ConcreteType = sv.ConstructType;
 
             if (sv.PrefixLength == null && !IsSimpleValue)
                 sv.PrefixLength = true;
@@ -126,7 +126,7 @@ namespace AqlaSerializer.Meta
                 var s = _settingsValue.Member;
                 // but change this:
                 s.EffectiveType = Type; // not merged with anything so assign
-                s.CollectionConcreteType = _settingsValue.ConstructType ?? defaultType;
+                s.Collection.ConcreteType = _settingsValue.ConstructType ?? defaultType;
                 s.Collection.Append = false; // allowed only on members
                 s.WriteAsDynamicType = false; // allowed only on members
                 // this should be handled as collection
