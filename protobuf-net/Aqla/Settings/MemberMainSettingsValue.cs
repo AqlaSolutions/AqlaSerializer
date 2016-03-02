@@ -15,8 +15,7 @@ namespace AqlaSerializer.Settings
 {
     public struct MemberMainSettingsValue
     {
-        internal int Tag;
-        public int GetTag() => Tag;
+        public int Tag;
         public string Name;
         public bool IsRequiredInSchema;
         
