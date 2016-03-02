@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -36,11 +37,34 @@ namespace AqlaSerializer.Meta
 
         bool IsSimpleValue => Helpers.IsEnum(Type);
 
+        static void AddDependenciesRecursively(MetaType mt, Dictionary<MetaType, bool> set)
+        {
+            RuntimeTypeModel model = mt._model;
+            foreach (ValueMember field in mt.Fields)
+            {
+                int key = model.GetKey(field.MemberType, false, false);
+                if (key >= 0)
+                {
+                    var otherMt = model[key];
+                    if (!set.ContainsKey(otherMt))
+                    {
+                        set.Add(otherMt, true);
+                        AddDependenciesRecursively(otherMt, set);
+                    }
+                }
+            }
+        }
+
         void InitSerializers()
         {
-            ThrowIfFrozen();
+            if (_rootSerializer != null)
+                ThrowFrozen();
+            else
+                IsFrozen = false;
 
-            _settingsValue = FinalizeSettingsValue(_settingsValue);
+            AddDependenciesRecursively(this, new Dictionary<MetaType, bool>());
+
+            FinalizeSettingsValue();
 
             _serializer = BuildSerializer(false);
             var s = BuildSerializer(true);

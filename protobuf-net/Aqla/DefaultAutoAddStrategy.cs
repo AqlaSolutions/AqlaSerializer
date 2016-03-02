@@ -70,7 +70,7 @@ namespace AqlaSerializer
                 && CanAutoAddType(baseType)
                 && MetaType.CanHaveSubType(baseType))
             {
-                FindOrAddType(baseType, true, false, false);
+                _model.FindOrAddAuto(baseType, true, false, false);
             }
 
             try
@@ -285,7 +285,7 @@ namespace AqlaSerializer
 
                             if (CanAutoAddType(memberType))
                             {
-                                FindOrAddType(memberType, true, false, false);
+                                _model.FindOrAddAuto(memberType, true, false, false);
                             }
                         }
                     }
@@ -294,24 +294,17 @@ namespace AqlaSerializer
             {
                 if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
                 {
-                    if (FindMetaTypeWithoutAdd(baseType) != null)
+                    if (_model.FindWithoutAdd(baseType) != null)
                     {
                         MetaType baseMeta = _model[baseType];
-                        if (!DisableAutoRegisteringSubtypes && !baseMeta.IsList && baseMeta.IsValidSubType(type) && CanAutoAddType(baseType))
+                        // we can't add to frozen base type
+                        // but this is not always an error
+                        // e.g. dynamic member of base type doesn't need registered subtype
+                        if (!baseMeta.IsFrozen && !DisableAutoRegisteringSubtypes && !baseMeta.IsList && baseMeta.IsValidSubType(type) && CanAutoAddType(baseType))
                             baseMeta.AddSubType(baseMeta.GetNextFreeFieldNumber(AutoRegisteringSubtypesFirstTag), type);
                     }
                 }
             }
-        }
-        
-        protected virtual MetaType FindMetaTypeWithoutAdd(Type baseType)
-        {
-            return _model.FindWithoutAdd(baseType);
-        }
-
-        protected virtual void FindOrAddType(Type type, bool demand, bool addWithContractOnly, bool addEvenIfAutoDisabled)
-        {
-            _model.FindOrAddAuto(type, demand, addWithContractOnly, addEvenIfAutoDisabled);
         }
 
         protected virtual MappedMember ApplyDefaultBehaviour_AddMembers(MemberArgsValue argsValue)

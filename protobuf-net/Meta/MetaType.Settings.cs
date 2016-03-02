@@ -32,10 +32,39 @@ namespace AqlaSerializer.Meta
     {
         TypeSettingsValue _settingsValue;
         internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
+        bool _finalizedSettings;
 
-        internal TypeSettingsValue MakeFinalizedSettingsValue()
+        internal void FinalizeSettingsValue()
         {
-            return FinalizeSettingsValue(_settingsValue);
+            if (_finalizedSettings) return;
+            ThrowIfInvalidSettings(_settingsValue);
+
+            MemberLevelSettingsValue m = _settingsValue.Member;
+
+            if (_settingsValue.EnumPassthru == null && Helpers.IsEnum(Type))
+            {
+#if WINRT
+                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
+#else
+                _settingsValue.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
+#endif
+            }
+            if (_settingsValue.IgnoreListHandling)
+            {
+                m.Collection.ItemType = null;
+                m.Collection.Format = CollectionFormat.NotSpecified;
+                m.Collection.PackedWireTypeForRead = null;
+            }
+
+            m.Collection.ConcreteType = _settingsValue.ConstructType;
+
+            if (_settingsValue.PrefixLength == null && !IsSimpleValue)
+                _settingsValue.PrefixLength = true;
+
+            _settingsValue.Member = m;
+            
+            _finalizedSettings = true;
+            IsFrozen = true;
         }
 
         void ThrowIfInvalidSettings(TypeSettingsValue sv)
@@ -49,37 +78,7 @@ namespace AqlaSerializer.Meta
             if (sv.Member.Collection.ConcreteType != null && !Helpers.IsAssignableFrom(this.Type, sv.Member.Collection.ConcreteType))
                 throw new ArgumentException("Specified collection concrete type " + sv.Member.Collection.ConcreteType.Name + " is not assignable to " + this.Type.Name);
         }
-
-        TypeSettingsValue FinalizeSettingsValue(TypeSettingsValue sv)
-        {
-            ThrowIfInvalidSettings(sv);
-
-            MemberLevelSettingsValue m = sv.Member;
-
-            if (sv.EnumPassthru == null && Helpers.IsEnum(Type))
-            {
-#if WINRT
-                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
-#else
-                sv.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
-#endif
-            }
-            if (sv.IgnoreListHandling)
-            {
-                m.Collection.ItemType = null;
-                m.Collection.Format = CollectionFormat.NotSpecified;
-                m.Collection.PackedWireTypeForRead = null;
-            }
-
-            m.Collection.ConcreteType = sv.ConstructType;
-
-            if (sv.PrefixLength == null && !IsSimpleValue)
-                sv.PrefixLength = true;
-
-            sv.Member = m;
-            return sv;
-        }
-
+        
         /// <summary>
         /// Gets or sets the name of this contract.
         /// </summary>

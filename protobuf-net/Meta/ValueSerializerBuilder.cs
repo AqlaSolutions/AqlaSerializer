@@ -565,7 +565,9 @@ namespace AqlaSerializer.Meta
             int idx = _model.FindOrAddAuto(level.EffectiveType, false, true, false);
             if (idx >= 0)
             {
-                var typeSettings = _model[idx].MakeFinalizedSettingsValue();
+                MetaType mt = _model[idx];
+                mt.FinalizeSettingsValue();
+                var typeSettings = mt.SettingsValue;
                 level = MemberLevelSettingsValue.Merge(typeSettings.Member, level);
             }
             else if (level.EnhancedFormat == null)

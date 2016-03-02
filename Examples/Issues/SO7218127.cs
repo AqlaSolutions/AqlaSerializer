@@ -37,6 +37,7 @@ namespace Examples.Issues
             public BaseType Value { get; set; }
         }
         [ProtoBuf.ProtoContract]
+        //[ProtoBuf.ProtoInclude(2, typeof(SubType))] // this would be required if not dynamic (base type can't be changed to add subtype after basetype serializer was already generated)
         public class BaseType
         {
             [ProtoBuf.ProtoMember(1)]

@@ -140,6 +140,7 @@ namespace AqlaSerializer.Meta
             mt._serializer = null;
             mt._rootSerializer = null;
             mt._model = model;
+            mt._finalizedSettings = false;
             mt._subTypes = new BasicList();
             mt._subTypesSimple = new BasicList();
             mt.IsFrozen = false;
@@ -154,7 +155,12 @@ namespace AqlaSerializer.Meta
         /// </summary>
         protected internal void ThrowIfFrozen()
         {
-            if (IsFrozen) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + Type.FullName);
+            if (IsFrozen) ThrowFrozen();
+        }
+
+        void ThrowFrozen()
+        {
+            throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + Type.FullName + " or once its settings were used for generating member serializer");
         }
 
 
