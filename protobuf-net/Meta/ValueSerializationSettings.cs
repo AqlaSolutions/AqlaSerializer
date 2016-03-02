@@ -59,7 +59,7 @@ namespace AqlaSerializer.Meta
             return _levels.Count > level && _levels[level] != null;
         }
 
-        public int MinSpecifiedLevelsCount => _levels.Count;
+        public int MaxSpecifiedNestedLevel => _levels.Select((x, i) => new { Level = x, i }).LastOrDefault(x => x.Level != null)?.i ?? -1;
 
         public LevelValue GetSettingsCopy(int level)
         {

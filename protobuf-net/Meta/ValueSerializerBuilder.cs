@@ -239,10 +239,10 @@ namespace AqlaSerializer.Meta
 
         static void ThrowIfHasMoreLevels(ValueSerializationSettings settings, int currentLevelNr, MemberLevelSettingsValue currentLevel, string description)
         {
-            if (settings.HasSettingsSpecified(currentLevelNr + 1))
+            if (settings.MaxSpecifiedNestedLevel > currentLevelNr)
             {
                 throw new ProtoException(
-                    "Found unused specified nested level " + (currentLevelNr + 1) + " settings, maximum nested depth type " + currentLevel.EffectiveType.Name + description);
+                    "Found unused specified nested level settings, maximum possible nested level is " + currentLevelNr + "-" + currentLevel.EffectiveType.Name + description);
             }
         }
 
