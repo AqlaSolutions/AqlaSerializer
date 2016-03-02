@@ -32,7 +32,7 @@ namespace AqlaSerializer.Meta
         private BasicList _fields = new BasicList();
 
         internal System.Collections.IEnumerable Fields => this._fields;
-
+        
         public int GetNextFreeFieldNumber()
         {
             return GetNextFreeFieldNumber(1);
@@ -268,6 +268,7 @@ namespace AqlaSerializer.Meta
                 _model.TakeLock(ref opaqueToken);
                 ThrowIfFrozen();
                 _fields.Add(member);
+                member.FinalizingSettings += (s, a) => FinalizingMemberSettings?.Invoke(this, a);
             }
             finally
             {

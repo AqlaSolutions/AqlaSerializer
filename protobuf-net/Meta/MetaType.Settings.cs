@@ -32,39 +32,68 @@ namespace AqlaSerializer.Meta
     {
         TypeSettingsValue _settingsValue;
         internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
+
+        internal class FinalizingOwnSettingsArgs : EventArgs
+        {
+            public MetaType Type { get;  }
+
+            public FinalizingOwnSettingsArgs(MetaType type)
+            {
+                Type = type;
+            }
+        }
+
+        internal event EventHandler<FinalizingOwnSettingsArgs> FinalizingOwnSettings;
+        internal event EventHandler<ValueMember.FinalizingSettingsArgs> FinalizingMemberSettings;
+
         bool _finalizedSettings;
 
         internal void FinalizeSettingsValue()
         {
             if (_finalizedSettings) return;
-            ThrowIfInvalidSettings(_settingsValue);
 
-            MemberLevelSettingsValue m = _settingsValue.Member;
-
-            if (_settingsValue.EnumPassthru == null && Helpers.IsEnum(Type))
+            int opaqueToken = 0;
+            try
             {
+                _model.TakeLock(ref opaqueToken);
+
+                if (_finalizedSettings) return;
+
+                ThrowIfInvalidSettings(_settingsValue);
+                FinalizingOwnSettings?.Invoke(this, new FinalizingOwnSettingsArgs(this));
+                ThrowIfInvalidSettings(_settingsValue);
+
+                MemberLevelSettingsValue m = _settingsValue.Member;
+
+                if (_settingsValue.EnumPassthru == null && Helpers.IsEnum(Type))
+                {
 #if WINRT
-                _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
+                    _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
 #else
-                _settingsValue.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
+                    _settingsValue.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
 #endif
+                }
+                if (_settingsValue.IgnoreListHandling)
+                {
+                    m.Collection.ItemType = null;
+                    m.Collection.Format = CollectionFormat.NotSpecified;
+                    m.Collection.PackedWireTypeForRead = null;
+                }
+
+                m.Collection.ConcreteType = _settingsValue.ConstructType;
+
+                if (_settingsValue.PrefixLength == null && !IsSimpleValue)
+                    _settingsValue.PrefixLength = true;
+
+                _settingsValue.Member = m;
+
+                _finalizedSettings = true;
+                IsFrozen = true;
             }
-            if (_settingsValue.IgnoreListHandling)
+            finally
             {
-                m.Collection.ItemType = null;
-                m.Collection.Format = CollectionFormat.NotSpecified;
-                m.Collection.PackedWireTypeForRead = null;
+                _model.ReleaseLock(opaqueToken);
             }
-
-            m.Collection.ConcreteType = _settingsValue.ConstructType;
-
-            if (_settingsValue.PrefixLength == null && !IsSimpleValue)
-                _settingsValue.PrefixLength = true;
-
-            _settingsValue.Member = m;
-            
-            _finalizedSettings = true;
-            IsFrozen = true;
         }
 
         void ThrowIfInvalidSettings(TypeSettingsValue sv)
