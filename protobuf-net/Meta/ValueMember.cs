@@ -26,7 +26,7 @@ namespace AqlaSerializer.Meta
 
         ValueSerializationSettings _vs;
 
-        MethodInfo getSpecified, setSpecified;
+        MethodInfo _getSpecified, _setSpecified;
         RuntimeTypeModel _model;
 
         private volatile IProtoSerializerWithWireType _serializer;
@@ -105,13 +105,13 @@ namespace AqlaSerializer.Meta
                 level0.IsNotAssignable = !Helpers.CanWrite(_model, Member);
                 _vs.SetSettings(level0, 0);
                 
-                if (_vs.DefaultValue != null && getSpecified != null)
+                if (_vs.DefaultValue != null && _getSpecified != null)
                     throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
 
                 if (_vs.DefaultValue != null && IsRequired)
                     throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on Required member " + Member);
 
-                if (getSpecified == null && !IsRequired && _vs.DefaultValue == null)
+                if (_getSpecified == null && !IsRequired && _vs.DefaultValue == null)
                 {
                     if (_model.UseImplicitZeroDefaults)
                     {
@@ -187,8 +187,8 @@ namespace AqlaSerializer.Meta
                         else
                             throw new InvalidOperationException();
                     }
-                    if (getSpecified != null || setSpecified != null)
-                        ser = new MemberSpecifiedDecorator(getSpecified, setSpecified, ser);
+                    if (_getSpecified != null || _setSpecified != null)
+                        ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
 
                     return ser;
                 }
@@ -560,8 +560,8 @@ namespace AqlaSerializer.Meta
                 }
             }
             ThrowIfFrozen();
-            this.getSpecified = getSpecified;
-            this.setSpecified = setSpecified;
+            this._getSpecified = getSpecified;
+            this._setSpecified = setSpecified;
 
         }
 
