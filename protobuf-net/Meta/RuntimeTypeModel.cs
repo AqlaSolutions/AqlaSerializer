@@ -488,16 +488,16 @@ namespace AqlaSerializer.Meta
                 {
                     ReleaseLock(opaqueToken);
                 }
-                AddDependentSubTypes(metaType);
+                AddDependencies(metaType);
             }
             return key;
         }
 
-        void AddDependentSubTypes(MetaType baseType)
+        void AddDependencies(MetaType type)
         {
             //// e.g. IDictionary<MyKey, MyValue> - specific generic type
             //Type defaultType;
-            //if (MetaType.IsDictionaryOrListInterface(this, baseType.Type, out defaultType))
+            //if (MetaType.IsDictionaryOrListInterface(this, type.Type, out defaultType))
             //{
             //    //baseType.AddSubType()
             //}
@@ -768,7 +768,7 @@ namespace AqlaSerializer.Meta
             {
                 ReleaseLock(opaqueToken);
             }
-            AddDependentSubTypes(newType);
+            AddDependencies(newType);
             return newType;
         }
 
