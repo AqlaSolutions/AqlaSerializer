@@ -496,12 +496,12 @@ namespace AqlaSerializer
             {
                 var level0 = mappedMember.MappingState.SerializationSettings.GetSettingsCopy(0).Basic;
                 {
-                    Type defaultType = level0.CollectionConcreteType;
+                    Type defaultType = level0.Collection.ConcreteType;
                     if (defaultType == null)
                     {
                         var memberType = level0.EffectiveType ?? Helpers.GetMemberType(mappedMember.Member);
                         if (Helpers.IsInterface(memberType) || Helpers.IsAbstract(memberType))
-                            level0.CollectionConcreteType = FindDefaultInterfaceImplementation(memberType);
+                            level0.Collection.ConcreteType = FindDefaultInterfaceImplementation(memberType);
                     }
                 }
                 mappedMember.MappingState.SerializationSettings.SetSettings(level0, 0);

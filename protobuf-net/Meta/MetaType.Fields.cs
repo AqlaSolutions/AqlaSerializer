@@ -217,7 +217,7 @@ namespace AqlaSerializer.Meta
             var memberSettings = new MemberMainSettingsValue { Tag = fieldNumber };
 
             var level0 = serializationSettings.GetSettingsCopy(0).Basic;
-            level0.CollectionConcreteType = defaultType;
+            level0.Collection.ConcreteType = defaultType;
             level0.Collection.ItemType = itemType;
 
             serializationSettings.SetSettings(level0, 0);

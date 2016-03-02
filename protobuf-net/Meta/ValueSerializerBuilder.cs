@@ -199,7 +199,7 @@ namespace AqlaSerializer.Meta
                     ser = ListDecorator.Create(
                         _model,
                         l.EffectiveType,
-                        l.CollectionConcreteType,
+                        l.Collection.ConcreteType,
                         ser,
                         isPacked,
                         wireType,
@@ -634,16 +634,16 @@ namespace AqlaSerializer.Meta
                         ResetCollectionSettings(ref level);
                     else
                     {
-                        if (level.CollectionConcreteType == null && idx >= 0)
-                            level.CollectionConcreteType = _model[level.EffectiveType].ConstructType;
+                        if (level.Collection.ConcreteType == null && idx >= 0)
+                            level.Collection.ConcreteType = _model[level.EffectiveType].ConstructType;
 
                         // should not override with default because what if specified something like List<string> for IList? 
-                        if (level.CollectionConcreteType == null)
-                            level.CollectionConcreteType = newCollectionConcreteType;
-                        else if (!Helpers.IsAssignableFrom(level.EffectiveType, level.CollectionConcreteType))
+                        if (level.Collection.ConcreteType == null)
+                            level.Collection.ConcreteType = newCollectionConcreteType;
+                        else if (!Helpers.IsAssignableFrom(level.EffectiveType, level.Collection.ConcreteType))
                         {
                             throw new ProtoException(
-                                "Specified CollectionConcreteType " + level.CollectionConcreteType.Name + " is not assignable to " + level.EffectiveType);
+                                "Specified CollectionConcreteType " + level.Collection.ConcreteType.Name + " is not assignable to " + level.EffectiveType);
                         }
 
                         if (!level.Collection.Append.GetValueOrDefault() && lv.IsNotAssignable)
@@ -675,7 +675,7 @@ namespace AqlaSerializer.Meta
             level0.Collection.ItemType = null;
             level0.Collection.PackedWireTypeForRead = null;
             level0.Collection.Format = CollectionFormat.NotSpecified;
-            level0.CollectionConcreteType = null;
+            level0.Collection.ConcreteType = null;
         }
     }
 }

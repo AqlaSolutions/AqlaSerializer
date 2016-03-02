@@ -263,7 +263,6 @@ namespace AqlaSerializer.Meta
         }
 
 #region Setting accessors
-        // TODO wrapper
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
             return _vs.GetSettingsCopy(level).Basic;
@@ -415,7 +414,7 @@ namespace AqlaSerializer.Meta
                 SetForAllLevels(
                     x =>
                         {
-                            x.CollectionConcreteType = value;
+                            x.Collection.ConcreteType = value;
                             return x;
                         });
             }

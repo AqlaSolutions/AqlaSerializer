@@ -61,7 +61,7 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(typeof(TypeWithLists), model[typeof(TypeWithLists)][1].ParentType, "ParentType");
             Assert.AreEqual(typeof(string), model[typeof(TypeWithLists)][1].GetSettingsCopy().Collection.ItemType, "ItemType");
             Assert.AreEqual(typeof(List<string>), model[typeof(TypeWithLists)][1].MemberType, "MemberType");
-            Assert.AreEqual(typeof(List<string>), model[typeof(TypeWithLists)][1].GetSettingsCopy().CollectionConcreteType, "DefaultType");
+            Assert.AreEqual(typeof(List<string>), model[typeof(TypeWithLists)][1].GetSettingsCopy().Collection.ConcreteType, "DefaultType");
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(typeof(TypeWithLists), model[typeof(TypeWithLists)][1].ParentType, "ParentType");
             Assert.AreEqual(typeof(int), model[typeof(TypeWithLists)][1].GetSettingsCopy().Collection.ItemType, "ItemType");
             Assert.AreEqual(typeof(List<int>), model[typeof(TypeWithLists)][1].MemberType, "MemberType");
-            Assert.AreEqual(typeof(List<int>), model[typeof(TypeWithLists)][1].GetSettingsCopy().CollectionConcreteType, "DefaultType");
+            Assert.AreEqual(typeof(List<int>), model[typeof(TypeWithLists)][1].GetSettingsCopy().Collection.ConcreteType, "DefaultType");
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(typeof(TypeWithLists), model[typeof(TypeWithLists)][2].ParentType, "ParentType");
             Assert.AreEqual(typeof(string), model[typeof(TypeWithLists)][2].GetSettingsCopy().Collection.ItemType, "ItemType");
             Assert.AreEqual(typeof(IList<string>), model[typeof(TypeWithLists)][2].MemberType, "MemberType");
-            Assert.AreEqual(typeof(List<string>), model[typeof(TypeWithLists)][2].GetSettingsCopy().CollectionConcreteType, "DefaultType");
+            Assert.AreEqual(typeof(List<string>), model[typeof(TypeWithLists)][2].GetSettingsCopy().Collection.ConcreteType, "DefaultType");
         }
 
         [Test]
@@ -94,7 +94,7 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(typeof(TypeWithLists), model[typeof(TypeWithLists)][2].ParentType, "ParentType");
             Assert.AreEqual(typeof(int), model[typeof(TypeWithLists)][2].GetSettingsCopy().Collection.ItemType, "ItemType");
             Assert.AreEqual(typeof(IList<int>), model[typeof(TypeWithLists)][2].MemberType, "MemberType");
-            Assert.AreEqual(typeof(List<int>), model[typeof(TypeWithLists)][2].GetSettingsCopy().CollectionConcreteType, "DefaultType");
+            Assert.AreEqual(typeof(List<int>), model[typeof(TypeWithLists)][2].GetSettingsCopy().Collection.ConcreteType, "DefaultType");
         }
 
         [Test]
