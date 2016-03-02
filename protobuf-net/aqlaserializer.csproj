@@ -385,6 +385,7 @@
     <Compile Include="Meta\MetaType.Schema.cs" />
     <Compile Include="Meta\MetaType.Settings.cs" />
     <Compile Include="Meta\MetaType.Surrogate.cs" />
+    <Compile Include="Meta\OverridingManager.cs" />
     <Compile Include="Meta\ReflectionObjectMap.cs" />
     <Compile Include="Meta\ValueSerializationSettings.cs" />
     <Compile Include="Meta\ValueSerializerBuilder.cs" />

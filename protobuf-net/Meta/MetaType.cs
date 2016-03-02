@@ -143,13 +143,17 @@ namespace AqlaSerializer.Meta
             mt._finalizedSettings = false;
             mt._subTypes = new BasicList();
             mt._subTypesSimple = new BasicList();
+            mt.FinalizingOwnSettings = null;
+            mt.FinalizingMemberSettings = null;
             mt.IsFrozen = false;
             mt.IsPending = false;
             mt.BaseType = baseType;
-            mt._fields = new BasicList(_fields.Cast<ValueMember>().Select(f => (object)f.CloneAsUnfrozen(model)));
+            mt._fields = new BasicList();
+            foreach (ValueMember field in _fields.Cast<ValueMember>().Select(f => (object)f.CloneAsUnfrozen(model)))
+                mt.Add(field);
             return mt;
         }
-
+        
         /// <summary>
         /// Throws an exception if the type has been made immutable
         /// </summary>

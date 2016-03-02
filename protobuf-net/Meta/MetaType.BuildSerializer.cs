@@ -58,25 +58,39 @@ namespace AqlaSerializer.Meta
         void InitSerializers()
         {
             if (_rootSerializer != null)
-                ThrowFrozen();
-            else
-                IsFrozen = false;
+                return;
 
-            AddDependenciesRecursively(this, new Dictionary<MetaType, bool>());
+            int opaqueToken = 0;
+            try
+            {
+                _model.TakeLock(ref opaqueToken);
 
-            FinalizeSettingsValue();
+                // double-check, but our main purpse with this lock is to ensure thread-safety with
+                // serializers needing to wait until another thread has finished adding the properties
+                if (_rootSerializer != null) return;
+                {
+                    IsFrozen = false;
 
-            _serializer = BuildSerializer(false);
-            var s = BuildSerializer(true);
-            _rootSerializer = new RootDecorator(
-                Type,
-                RootNetObjectMode,
-                !RootLateReferenceMode,
-                s,
-                _model);
+                    AddDependenciesRecursively(this, new Dictionary<MetaType, bool>());
 
-            IsFrozen = true;
+                    FinalizeSettingsValue();
 
+                    _serializer = BuildSerializer(false);
+                    var s = BuildSerializer(true);
+                    _rootSerializer = new RootDecorator(
+                        Type,
+                        RootNetObjectMode,
+                        !RootLateReferenceMode,
+                        s,
+                        _model);
+
+                    IsFrozen = true;
+                }
+            }
+            finally
+            {
+                _model.ReleaseLock(opaqueToken);
+            }
 #if FEAT_COMPILER && !FX11
             if (_model.AutoCompile) CompileInPlace();
 #endif
@@ -281,35 +295,19 @@ namespace AqlaSerializer.Meta
         }
 
 
-        private IProtoTypeSerializer _serializer;
+        volatile IProtoTypeSerializer _serializer;
         [DebuggerHidden]
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         internal IProtoTypeSerializer Serializer
         {
             get
             {
-                if (_serializer == null)
-                {
-                    int opaqueToken = 0;
-                    try
-                    {
-                        _model.TakeLock(ref opaqueToken);
-                        if (_serializer == null)
-                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
-                            // serializers needing to wait until another thread has finished adding the properties
-                            InitSerializers();
-                        }
-                    }
-                    finally
-                    {
-                        _model.ReleaseLock(opaqueToken);
-                    }
-                }
+                InitSerializers();
                 return _serializer;
             }
         }
 
-        private IProtoTypeSerializer _rootSerializer;
+        volatile IProtoTypeSerializer _rootSerializer;
 
         [DebuggerHidden]
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -317,23 +315,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                if (_rootSerializer == null)
-                {
-                    int opaqueToken = 0;
-                    try
-                    {
-                        _model.TakeLock(ref opaqueToken);
-                        if (_rootSerializer == null)
-                        { // double-check, but our main purpse with this lock is to ensure thread-safety with
-                            // serializers needing to wait until another thread has finished adding the properties
-                            InitSerializers();
-                        }
-                    }
-                    finally
-                    {
-                        _model.ReleaseLock(opaqueToken);
-                    }
-                }
+                InitSerializers();
                 return _rootSerializer;
             }
         }

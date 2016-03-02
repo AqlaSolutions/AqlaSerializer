@@ -29,8 +29,8 @@ namespace AqlaSerializer.Meta
         MethodInfo _getSpecified, _setSpecified;
         RuntimeTypeModel _model;
 
-        private volatile IProtoSerializerWithWireType _serializer;
-        internal IProtoSerializerWithWireType Serializer => _serializer ?? (_serializer = BuildSerializer());
+        volatile IProtoSerializerWithWireType _serializer;
+        internal IProtoSerializerWithWireType Serializer => BuildSerializer();
 
         /// <summary>
         /// The number that identifies this member in a protobuf stream
@@ -89,12 +89,32 @@ namespace AqlaSerializer.Meta
                 throw new NotSupportedException("Multi-dimension arrays are not supported");
         }
 
+        internal class FinalizingSettingsArgs : EventArgs
+        {
+            public ValueMember Member { get; }
+
+            public FinalizingSettingsArgs(ValueMember member)
+            {
+                Member = member;
+            }
+        }
+
+        internal event EventHandler<FinalizingSettingsArgs> FinalizingSettings;
+
         IProtoSerializerWithWireType BuildSerializer()
         {
+            if (_serializer != null) return _serializer;
+
             int opaqueToken = 0;
             try
             {
+                // this lock is for whole model, not just this value member
+                // so it should be taken anyway, right?
                 _model.TakeLock(ref opaqueToken); // check nobody is still adding this type
+
+                if (_serializer != null) return _serializer; // double check
+
+                FinalizingSettings?.Invoke(this, new FinalizingSettingsArgs(this));
 
                 if (FieldNumber < 1 && !Helpers.IsEnum(ParentType)) throw new ProtoException("FieldNumber < 1 for member " + Member);
 
@@ -189,6 +209,8 @@ namespace AqlaSerializer.Meta
                     }
                     if (_getSpecified != null || _setSpecified != null)
                         ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
+
+                    _serializer = ser;
 
                     return ser;
                 }
@@ -595,6 +617,7 @@ namespace AqlaSerializer.Meta
             var vm = (ValueMember)MemberwiseClone();
             vm._model = model;
             vm._serializer = null;
+            vm.FinalizingSettings = null;
             vm._vs = vm._vs.Clone();
             return vm;
         }

@@ -467,7 +467,7 @@ namespace AqlaSerializer.Meta
                     if (winner < 0)
                     {
                         ThrowIfFrozen();
-                        key = types.Add(metaType);
+                        key = Add(metaType);
                         weAdded = true;
                     }
                     else
@@ -503,6 +503,46 @@ namespace AqlaSerializer.Meta
             //}
         }
 
+        OverridingManager _overridingManager = new OverridingManager();
+
+        int Add(MetaType metaType)
+        {
+            _overridingManager.SubscribeTo(metaType);
+            return types.Add(metaType);
+        }
+
+        public void AddOverride(TypeSettingsOverride @override)
+        {
+            if (@override == null) throw new ArgumentNullException(nameof(@override));
+            int opaqueToken = 0;
+            try
+            {
+                TakeLock(ref opaqueToken);
+                ThrowIfFrozen();
+                _overridingManager.Add(@override);
+            }
+            finally
+            {
+                ReleaseLock(opaqueToken);
+            }
+        }
+
+        public void AddOverride(MemberSettingsOverride @override)
+        {
+            if (@override == null) throw new ArgumentNullException(nameof(@override));
+            int opaqueToken = 0;
+            try
+            {
+                TakeLock(ref opaqueToken);
+                ThrowIfFrozen();
+                _overridingManager.Add(@override);
+            }
+            finally
+            {
+                ReleaseLock(opaqueToken);
+            }
+        }
+        
         private MetaType RecogniseCommonTypes(Type type)
         {
             //#if !NO_GENERICS
@@ -760,7 +800,7 @@ namespace AqlaSerializer.Meta
                 // double checked
                 if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", "type");
                 ThrowIfFrozen();
-                types.Add(newType);
+                Add(newType);
                 if (applyDefaultBehaviourIfNew) { newType.ApplyDefaultBehaviour(); }
                 newType.IsPending = false;
             }
@@ -1308,8 +1348,11 @@ namespace AqlaSerializer.Meta
             m.AutoAddStrategy = AutoAddStrategy.Clone(this);
             m.ProtoCompatibility = compatibilitySettings ?? ProtoCompatibility.Clone();
             m.basicTypes = new BasicList();
+            m._overridingManager = m._overridingManager.CloneAsUnsubscribed();
             var cache = new MetaTypeCloneCache(m);
-            m.types = new BasicList(types.Cast<MetaType>().Select(cache.CloneMetaTypeWithoutDerived).Select(mt => (object)mt));
+            m.types = new BasicList();
+            foreach (MetaType metaType in types.Cast<MetaType>().Select(cache.CloneMetaTypeWithoutDerived).Select(mt => (object)mt))
+                m.Add(metaType);
             for (int i = 0; i < m.types.Count; i++)
             {
                 var original = (MetaType)types[i];
