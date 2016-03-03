@@ -8,6 +8,7 @@ using System.Text;
 using AltLinq;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
+using AqlaSerializer.Meta.Mapping.MemberHandlers;
 using AqlaSerializer.Serializers;
 using AqlaSerializer.Settings;
 #if FEAT_IKVM
@@ -39,6 +40,10 @@ namespace AqlaSerializer.Meta.Mapping
         public virtual MappedMember Map(MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.IsEnumValueMember)) return null;
+            if (args.Member.Name == "Values")
+            {
+
+            }
             if (args.IsEnumValueMember) args.IsForced = true;
             var state = new MemberState(args);
             MemberMainSettingsValue m = state.MainValue;
@@ -46,9 +51,12 @@ namespace AqlaSerializer.Meta.Mapping
             state.MainValue = m;
             
             if (ProcessHandlers(state) == MemberHandlerResult.Ignore || (state.MainValue.Tag < state.MinAcceptFieldNumber && !state.Input.IsForced)) return null;
+            
+            if (!state.SerializationSettings.HasSettingsSpecified(0))
+                state.SerializationSettings.SetSettings(state.SerializationSettings.GetSettingsCopy(0), 0);
 
             if (state.SerializationSettings.DefaultLevel == null)
-                state.SerializationSettings.DefaultLevel = state.SerializationSettings.GetSettingsCopy(0);
+                state.SerializationSettings.DefaultLevel = new ValueSerializationSettings.LevelValue(state.SerializationSettings.GetSettingsCopy(0).Basic.MakeDefaultNestedLevel());
 
             return new MappedMember(state)
             {

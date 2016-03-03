@@ -17,7 +17,7 @@ namespace Examples
         [Test]
         public void ShouldNotRequireSeeking()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             byte[] raw;
             const int EXPECTED = 830;
             using(var fs = new FakeStream())
@@ -34,7 +34,7 @@ namespace Examples
             }
             using (var fs = new FakeStream(raw))
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 var db = tm.Deserialize<Database>(fs);
                 Assert.AreEqual(EXPECTED, db.Orders.Count);
             }

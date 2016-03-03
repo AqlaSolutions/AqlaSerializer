@@ -23,7 +23,7 @@ namespace Examples.Issues
         [Test]
         public void Test_Vanilla()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             Execute_Vanilla(model, "Runtime");
             model.CompileInPlace();
@@ -35,7 +35,7 @@ namespace Examples.Issues
         [Test]
         public void Test_WithLengthPrefix([Values(false,true)] bool comp)
         {
-            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
+            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettingsValue.FullCompatibility : ProtoCompatibilitySettingsValue.Incompatible);
             model.AutoCompile = false;
             Execute_WithLengthPrefix(model, "Runtime");
             model.CompileInPlace();

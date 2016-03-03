@@ -51,7 +51,7 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed partial class RuntimeTypeModel : TypeModel
     {
-        internal ProtoCompatibilitySettings ProtoCompatibility { get; private set; } = new ProtoCompatibilitySettings();
+        internal ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; } = new ProtoCompatibilitySettingsValue();
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
         internal IValueSerializerBuilder ValueSerializerBuilder { get; }
 
@@ -214,7 +214,7 @@ namespace AqlaSerializer.Meta
         private sealed class Singleton
         {
             private Singleton() { }
-            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true, ProtoCompatibilitySettings.Default);
+            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true, ProtoCompatibilitySettingsValue.Default);
         }
         /// <summary>
         /// The default model, used to support AqlaSerializer.Serializer
@@ -227,7 +227,7 @@ namespace AqlaSerializer.Meta
         private sealed class SingletonCompatible
         {
             private SingletonCompatible() { }
-            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true, ProtoCompatibilitySettings.FullCompatibility);
+            internal static readonly RuntimeTypeModel Value = new RuntimeTypeModel(true, ProtoCompatibilitySettingsValue.FullCompatibility);
         }
         /// <summary>
         /// The default model, used to support AqlaSerializer.Serializer
@@ -270,7 +270,7 @@ namespace AqlaSerializer.Meta
             }
         }
         
-        internal RuntimeTypeModel(bool isDefault, ProtoCompatibilitySettings protoCompatibility)
+        internal RuntimeTypeModel(bool isDefault, ProtoCompatibilitySettingsValue protoCompatibility)
         {
             ProtoCompatibility = protoCompatibility.Clone();
 #if FEAT_COMPILER
@@ -511,6 +511,9 @@ namespace AqlaSerializer.Meta
             return types.Add(metaType);
         }
 
+        /// <summary>
+        /// Type overrides are run before preparing type serializer
+        /// </summary>
         public void AddOverride(TypeSettingsOverride @override)
         {
             if (@override == null) throw new ArgumentNullException(nameof(@override));
@@ -527,6 +530,9 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        /// <summary>
+        /// Member overrides are run before preparing member serializer
+        /// </summary>
         public void AddOverride(MemberSettingsOverride @override)
         {
             if (@override == null) throw new ArgumentNullException(nameof(@override));
@@ -901,6 +907,10 @@ namespace AqlaSerializer.Meta
         /// Turn off this when each (de)serialization has side effects like changing static field
         /// </summary>
         internal bool SkipCompiledVsNotCheck { get; set; }
+
+        internal bool SkipForcedLateReference { get; set; }
+
+        internal bool SkipForcedAdvancedVersioning { get; set; }
 
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream.
@@ -1339,7 +1349,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Returns a full deep copy of a model with all settings and added types
         /// </summary>
-        public RuntimeTypeModel CloneAsUnfrozen(ProtoCompatibilitySettings compatibilitySettings = null)
+        public RuntimeTypeModel CloneAsUnfrozen(ProtoCompatibilitySettingsValue? compatibilitySettings = null)
         {
             var m = (RuntimeTypeModel)MemberwiseClone();
             m.SetOption(OPTIONS_Frozen, false);

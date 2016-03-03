@@ -28,8 +28,8 @@ namespace Examples.Issues
         [Test]
         public void CompareWithWithoutImplicitDefaults()
         {
-            var with = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
-            var without = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var with = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
+            var without = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             without.AutoCompile = with.AutoCompile = false;
             with.UseImplicitZeroDefaults = true;
             without.UseImplicitZeroDefaults = false;

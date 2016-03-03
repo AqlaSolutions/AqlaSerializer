@@ -60,7 +60,7 @@ namespace test
 
             // Serialize to memory stream
             MemoryStream mStream = new MemoryStream();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm.Serialize(mStream, c);
 
             Assert.AreEqual(Size, mStream.Length); 

@@ -10,10 +10,10 @@ namespace AqlaSerializer.unittest.Aqla
         [SerializableType(ImplicitFirstTag = 3)]
         public class Node
         {
-            [SerializableMember(1, EnhancedMode.LateReference)]
+            [SerializableMember(1, ValueFormat.LateReference)]
             public Node Next { get; set; }
 
-            [SerializableMember(2, EnhancedMode.LateReference)]
+            [SerializableMember(2, ValueFormat.LateReference)]
             public Node Prev { get; set; }
 
             public int Value { get; set; }
@@ -51,13 +51,17 @@ namespace AqlaSerializer.unittest.Aqla
             }
 
             var original = new Container() { Tail = current, Head = first };
+            
+            var tm = TypeModel.Create();
+            
+            tm.SkipForcedLateReference = true;
 
-            var comp = ProtoCompatibilitySettings.Default;
-            if (late)
-                comp.AllowExtensionDefinitions |= NetObjectExtensionTypes.LateReference;
-            else
-                comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
-            var tm = TypeModel.Create(false, comp);
+            if (!late)
+            {
+                var t = tm.Add(typeof(Node), true);
+                t[1].Format = ValueFormat.Reference;
+                t[2].Format = ValueFormat.Reference;
+            }
 
             Container copy;
 

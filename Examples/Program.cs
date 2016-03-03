@@ -63,10 +63,10 @@ namespace Examples
         }
         public static bool CheckBytes<T>(T item, TypeModel model, params byte[] expected)
         {
-            var m = TypeModel.Create(false, ProtoCompatibilitySettings.None);
+            var m = TypeModel.Create(false, ProtoCompatibilitySettingsValue.Incompatible);
             m.DeepClone(item);
 
-            if (model == null) model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            if (model == null) model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             var rtm = model as RuntimeTypeModel;
             if (rtm != null)
                 rtm.AddNotAsReferenceDefault = true;
@@ -97,7 +97,7 @@ namespace Examples
         {
             using (MemoryStream ms = new MemoryStream(raw))
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 return tm.Deserialize<T>(ms);
             }
         }

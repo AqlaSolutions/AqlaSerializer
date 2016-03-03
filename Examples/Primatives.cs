@@ -168,7 +168,7 @@ namespace Examples
         static DateTime TestDateTime(DateTime value, out int len) {
             DateTimeOnly p = new DateTimeOnly { When = value };
             using(MemoryStream ms = new MemoryStream()) {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, p);
                 ms.Position = 0;
                 p = tm.Deserialize<DateTimeOnly>(ms);
@@ -181,7 +181,7 @@ namespace Examples
             TimeSpanOnly p = new TimeSpanOnly { HowLong = value };
             using (MemoryStream ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, p);
                 ms.Position = 0;
                 p = tm.Deserialize<TimeSpanOnly>(ms);
@@ -338,7 +338,7 @@ namespace Examples
         public void TestDecimalUnits()
         {
             Primatives p = new Primatives { TestDecimalDefault = decimal.Zero};
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Assert.AreEqual(p.TestDecimalDefault, tm.DeepClone(p).TestDecimalDefault);
 
             p.TestDecimalDefault = decimal.MinusOne;

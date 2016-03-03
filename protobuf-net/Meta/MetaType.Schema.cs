@@ -141,7 +141,7 @@ namespace AqlaSerializer.Meta
                     }
                     foreach (FieldInfo field in
 #if WINRT
-                        type.GetRuntimeFields()
+                        Type.GetRuntimeFields()
 #else
                         Type.GetFields()
 #endif
@@ -204,8 +204,8 @@ namespace AqlaSerializer.Meta
                         builder.Append(" [packed=true]");
                     }
                     builder.Append(';');
-                    if (schemaTypeName == "bcl.NetObjectProxy" && s.EnhancedFormat.GetValueOrDefault() && s.EnhancedWriteMode != EnhancedMode.Minimal &&
-                        s.EnhancedWriteMode != EnhancedMode.NotSpecified && !s.WriteAsDynamicType.GetValueOrDefault()) // we know what it is; tell the user
+                    if (schemaTypeName == "bcl.NetObjectProxy" && (s.Format==ValueFormat.Reference || s.Format == ValueFormat.LateReference)
+                        && !s.WriteAsDynamicType.GetValueOrDefault()) // we know what it is; tell the user
                     {
                         builder.Append(" // reference-tracked ").Append(member.GetSchemaTypeName(false, ref requiresBclImport));
                     }

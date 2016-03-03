@@ -18,17 +18,11 @@ namespace AqlaSerializer
     public abstract class SerializableMemberAttributeBase : Attribute
     {
         public MemberLevelSettingsValue LevelSettings;
-
-        protected SerializableMemberAttributeBase(int level, EnhancedMode enchancedWriteAs)
-            : this(level, enchancedWriteAs == EnhancedMode.NotSpecified ? (bool?)null : true, enchancedWriteAs)
-        {
-        }
-
-        protected SerializableMemberAttributeBase(int level, bool? enchancedFormat, EnhancedMode enchancedWriteAs = 0)
+        
+        protected SerializableMemberAttributeBase(int level, ValueFormat format = 0)
         {
             Level = level;
-            LevelSettings.EnhancedFormat = enchancedFormat;
-            EnhancedWriteAs = enchancedWriteAs;
+            LevelSettings.Format = format;
         }
 
         public int Level { get; set; }
@@ -63,14 +57,7 @@ namespace AqlaSerializer
         /// Not supported settings will be ignored.</para>
         /// The reason why DynamicType is on properties is because it's considered of the same EnhancedMode.Reference format.
         /// </remarks>
-        public bool EnhancedFormat { get { return LevelSettings.EnhancedFormat.Value; } set { LevelSettings.EnhancedFormat = value; } }
-
-        public bool EnhancedFormaHasValue => LevelSettings.EnhancedFormat.HasValue;
-
-        /// <summary>
-        /// Enhanced features
-        /// </summary>
-        public EnhancedMode EnhancedWriteAs { get { return LevelSettings.EnhancedWriteMode; } set { LevelSettings.EnhancedWriteMode = value; } }
+        public ValueFormat Format { get { return LevelSettings.Format; } set { LevelSettings.Format = value; } }
         
         /// <summary>
         /// Default collection implementation

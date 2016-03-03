@@ -42,7 +42,7 @@ namespace Examples.Issues
         public void AnonymousTypesAreEquivalent_Manual()
         {
             var obj = new { X = 123, Y = "abc" };
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             TestAnonTypeEquiv(model, obj, "Runtime");
             model.CompileInPlace();

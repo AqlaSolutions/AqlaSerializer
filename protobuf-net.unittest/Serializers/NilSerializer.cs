@@ -16,12 +16,17 @@ namespace AqlaSerializer.Serializers
             Util.Test("123", nil => nil, "");
         }
     }
-    sealed public class NilSerializer : IProtoSerializer
+    sealed class NilSerializer : IProtoSerializer
     {
         private readonly Type type;
         public bool EmitReadReturnsValue { get { return true; } }
         public bool RequiresOldValue { get { return true; } }
         public object Read(object value, ProtoReader reader) { return value; }
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+        
+        }
+
         Type IProtoSerializer.ExpectedType { get { return type; } }
         public NilSerializer(Type type) { this.type = type; }
         void IProtoSerializer.Write(object value, ProtoWriter dest) { }

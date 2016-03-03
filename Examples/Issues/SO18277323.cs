@@ -138,7 +138,7 @@ namespace Examples.Issues
         }
         static RuntimeTypeModel CreateModel(bool comp)
         {
-            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
+            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettingsValue.FullCompatibility : ProtoCompatibilitySettingsValue.Incompatible);
             model.AutoCompile = false;
             return model;
         }

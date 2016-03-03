@@ -40,7 +40,7 @@ namespace AqlaSerializer.Meta
         public Type GetBaseType()
         {
 #if WINRT
-            return typeInfo.BaseType;
+            return _typeInfo.BaseType;
 #else
             return Type.BaseType;
 #endif
@@ -61,12 +61,12 @@ namespace AqlaSerializer.Meta
         public bool IsValidSubType(Type subType)
         {
 #if WINRT
-            if (!CanHaveSubType(typeInfo)) return false;
+            if (!CanHaveSubType(_typeInfo)) return false;
 #else
             if (!CanHaveSubType(Type)) return false;
 #endif
 #if WINRT
-            return typeInfo.IsAssignableFrom(subType.GetTypeInfo());
+            return _typeInfo.IsAssignableFrom(subType.GetTypeInfo());
 #else
             return Type.IsAssignableFrom(subType);
 #endif
@@ -120,7 +120,7 @@ namespace AqlaSerializer.Meta
                 throw new ArgumentException("An array has inbuilt behaviour and cannot be as used as a subclass");
 
 #if WINRT
-            if (!CanHaveSubType(typeInfo)) {
+            if (!CanHaveSubType(_typeInfo)) {
 #else
             if (!CanHaveSubType(Type))
             {

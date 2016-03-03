@@ -338,6 +338,7 @@ namespace Examples
         [Test]
         public void TestPrimativeArray()
         {
+            var schema = RuntimeTypeModel.Default.GetDebugSchema(typeof(Prim));
             Prim p = new Prim { Values = new[] { "abc", "def", "ghi", "jkl" } },
                 clone = Serializer.DeepClone(p);
 
@@ -585,6 +586,7 @@ namespace Examples
             var tm = TypeModel.Create();
             tm.AutoCompile = compile;
             var source = ArrayArrayArray.CreateFilled();
+            var schema = tm.GetDebugSchema(typeof(ArrayArrayArray));
             var copy = tm.DeepClone(source);
             Assert.That(copy.Values, Is.EqualTo(source.Values));
         }

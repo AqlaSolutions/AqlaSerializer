@@ -20,7 +20,7 @@ namespace Examples.Issues
             using (var ms = new MemoryStream())
             {
                 // in non compatible mode empty netobject group is considered null
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 Assert.IsNotNull(tm.Deserialize<Foo>(ms), "Foo");
                 Assert.IsNull(tm.Deserialize<string>(ms), "string");
                 Assert.IsNotNull(tm.Deserialize<DateTime>(ms), "DateTime");
@@ -50,7 +50,7 @@ namespace Examples.Issues
             // byte[] is a special case that compares most closely to 1:data
             // (rather than 1:item0 1:item1 1:item2 etc)
             var orig = new byte[] { 0, 1, 2, 4, 5 };
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             var clone = tm.ChangeType<byte[], HasBytes>(orig).Blob;
             Assert.IsTrue(orig.SequenceEqual(clone));
         }

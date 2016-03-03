@@ -14,7 +14,7 @@ namespace Examples
         [Test]
         public void TestHasTuplesWrapped()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new HasTuples {Value = new BasicTuple(123, "abc")};
@@ -57,7 +57,7 @@ namespace Examples
         [Test]
         public void TestHasTuplesNaked()
         {
-            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new BasicTuple(123, "abc");
@@ -85,7 +85,7 @@ namespace Examples
         [Test]
         public void TestHasTuplesReversedOrderNaked()
         {
-            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new BasicTupleReversedOrder("abc", 123);
@@ -115,7 +115,7 @@ namespace Examples
         [Test]
         public void TestInbuiltTupleNaked()
         {
-            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = Tuple.Create(123, "abc");
@@ -145,7 +145,7 @@ namespace Examples
         [Test]
         public void TestAnonTypeAsTuple()
         {
-            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = RuntimeTypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
 
             var obj = new {Foo = 123, Bar = "abc"};

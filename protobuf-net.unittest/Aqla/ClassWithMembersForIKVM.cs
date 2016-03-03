@@ -6,13 +6,13 @@
         [SerializableMember(1)]
         public int Simple { get; set; }
 
-        [SerializableMember(2, EnhancedMode.Reference)]
+        [SerializableMember(2, ValueFormat.Reference)]
         public int Enum { get; set; }
 
-        [SerializableMember(3, EnhancedMode.Reference, DefaultValue = 5, CollectionFormat = CollectionFormat.Google)]
+        [SerializableMember(3, ValueFormat.Reference, DefaultValue = 5, CollectionFormat = CollectionFormat.Google)]
         public int Named { get; set; }
 
-        [SerializableMember(4, true)]
+        [SerializableMember(4, DynamicType = true)]
         public int Bool { get; set; }
 
     }

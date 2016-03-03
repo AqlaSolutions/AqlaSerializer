@@ -16,7 +16,7 @@ namespace Examples.Issues
         [Test]
         public void TestNullableDoubleList()
         {
-            var tm = TypeModel.Create(true, ProtoCompatibilitySettings.Default);
+            var tm = TypeModel.Create(true, ProtoCompatibilitySettingsValue.Default);
             var list = new List<double?> { 1, null, 2 };
             Assert.That(tm.DeepClone(list), Is.EqualTo(list));
         }
@@ -24,7 +24,7 @@ namespace Examples.Issues
         [Test]
         public void TestNullableInt32List()
         {
-            var tm = TypeModel.Create(true, ProtoCompatibilitySettings.Default);
+            var tm = TypeModel.Create(true, ProtoCompatibilitySettingsValue.Default);
             var list = new List<int?> { 1, null, 2 };
             Assert.That(tm.DeepClone(list), Is.EqualTo(list));
         }
@@ -32,7 +32,7 @@ namespace Examples.Issues
         [Test]
         public void TestNullableStringList()
         {
-            var tm = TypeModel.Create(true, ProtoCompatibilitySettings.Default);
+            var tm = TypeModel.Create(true, ProtoCompatibilitySettingsValue.Default);
             var list = new List<string> { "abc", null, "def" };
             Assert.That(tm.DeepClone(list), Is.EqualTo(list));
         }

@@ -26,12 +26,12 @@ namespace AqlaSerializer.unittest
         public void TestStringSerialize()
         {
             var prop = PropertyValue.Create("abc", "def");
-            var tm0 = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm0 = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm0.DeepClone(prop);
             string hex;
             using (MemoryStream ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, prop);
                 hex = Util.GetHex(ms.ToArray());
             }

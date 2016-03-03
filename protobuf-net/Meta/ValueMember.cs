@@ -255,14 +255,6 @@ namespace AqlaSerializer.Meta
                 {
                     throw new MissingMemberException(GetRethrowExceptionText(ex), ex);
                 }
-                catch (FieldAccessException ex)
-                {
-                    throw new FieldAccessException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (MethodAccessException ex)
-                {
-                    throw new MethodAccessException(GetRethrowExceptionText(ex), ex);
-                }
                 catch (MemberAccessException ex)
                 {
                     throw new MemberAccessException(GetRethrowExceptionText(ex), ex);
@@ -304,7 +296,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Allows to set EnhancedFormat and EnhancedWriteMode for all levels
         /// </summary>
-        [Obsolete("Use EnhancedFormat and EnhancedWriteMode")]
+        [Obsolete("Use Format")]
         public bool AsReference
         {
             set
@@ -314,13 +306,12 @@ namespace AqlaSerializer.Meta
                         {
                             if (value)
                             {
-                                x.EnhancedFormat = true;
-                                if (x.EnhancedWriteMode != EnhancedMode.LateReference)
-                                    x.EnhancedWriteMode = EnhancedMode.Reference;
+                                if (x.Format != ValueFormat.LateReference)
+                                    x.Format = ValueFormat.Reference;
                             }
                             else
                             {
-                                x.EnhancedWriteMode = EnhancedMode.Minimal;
+                                x.Format = ValueFormat.Compact;
                             }
                             return x;
                         });
@@ -445,39 +436,23 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Allows to set enchanced format for all levels
         /// </summary>
-        public bool EnhancedFormat
+        public ValueFormat Format
         {
             set
             {
                 SetForAllLevels(
                     x =>
                         {
-                            x.EnhancedFormat = value;
+                            x.Format = value;
                             return x;
                         });
             }
         }
-
-        /// <summary>
-        /// Allows to set enchanced write mode for all levels
-        /// </summary>
-        public EnhancedMode EnhancedWriteMode
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            x.EnhancedWriteMode = value;
-                            return x;
-                        });
-            }
-        }
-
+        
         /// <summary>
         /// Allows to set enchanced mode for all levels
         /// </summary>
-        [Obsolete("Use EnhancedFormat and EnhancedWriteMode")]
+        [Obsolete("Use Format")]
         public bool SupportNull
         {
             set
@@ -486,9 +461,12 @@ namespace AqlaSerializer.Meta
                     x =>
                         {
                             if (value)
-                                x.EnhancedFormat = true;
-                            else if (x.EnhancedWriteMode == EnhancedMode.NotSpecified || x.EnhancedWriteMode != EnhancedMode.LateReference)
-                                x.EnhancedFormat = false;
+                            {
+                                if (x.Format == ValueFormat.Compact || x.Format == ValueFormat.NotSpecified)
+                                    x.Format = ValueFormat.MinimalEnhancement;
+                            }
+                            else if (x.Format == ValueFormat.MinimalEnhancement || x.Format == ValueFormat.NotSpecified)
+                                x.Format = ValueFormat.Compact;
                             return x;
                         });
             }
@@ -506,10 +484,8 @@ namespace AqlaSerializer.Meta
                         {
                             if (value)
                             {
-                                x.EnhancedFormat = true;
                                 x.WriteAsDynamicType = true;
-                                if (x.EnhancedWriteMode == EnhancedMode.LateReference)
-                                    x.EnhancedWriteMode = EnhancedMode.Reference;
+                                x.Format = ValueFormat.Reference;
                             }
                             else
                             {
@@ -531,8 +507,8 @@ namespace AqlaSerializer.Meta
         internal object GetRawEnumValue()
         {
 #if WINRT || PORTABLE || CF || FX11
-            object value = ((FieldInfo)member).GetValue(null);
-            switch(Helpers.GetTypeCode(Enum.GetUnderlyingType(((FieldInfo)member).FieldType)))
+            object value = ((FieldInfo)Member).GetValue(null);
+            switch(Helpers.GetTypeCode(Enum.GetUnderlyingType(((FieldInfo)Member).FieldType)))
             {
                 case ProtoTypeCode.SByte: return (sbyte)value;
                 case ProtoTypeCode.Byte: return (byte)value;
@@ -606,8 +582,8 @@ namespace AqlaSerializer.Meta
             return _model.GetSchemaTypeName(
                 effectiveType,
                 GetSettingsCopy(0).ContentBinaryFormatHint.GetValueOrDefault(),
-                applyNetObjectProxy && GetSettingsCopy().EnhancedFormat.GetValueOrDefault(),
-                applyNetObjectProxy && GetSettingsCopy().EnhancedFormat.GetValueOrDefault() && GetSettingsCopy().WriteAsDynamicType.GetValueOrDefault(),
+                applyNetObjectProxy && GetSettingsCopy().Format == ValueFormat.Reference,
+                applyNetObjectProxy && GetSettingsCopy().WriteAsDynamicType.GetValueOrDefault(),
                 ref requiresBclImport);
         }
 

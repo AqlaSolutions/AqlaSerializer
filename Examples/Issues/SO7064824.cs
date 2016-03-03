@@ -122,7 +122,9 @@ namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
 
         RuntimeTypeModel CreateModel()
         {
-            RuntimeTypeModel model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            ProtoCompatibilitySettingsValue c = ProtoCompatibilitySettingsValue.FullCompatibility;
+            c.SuppressValueEnhancedFormat = false;
+            RuntimeTypeModel model = TypeModel.Create(false, c);
 
             model.Add(typeof(ObjectArrayContainerClass), true);
             model.Add(typeof(BaseClassArrayContainerClass), true);

@@ -171,7 +171,7 @@ namespace AqlaSerializer.Meta
             if (Type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
             MemberInfo mi = null;
 #if WINRT
-            mi = Helpers.IsEnum(type) ? type.GetTypeInfo().GetDeclaredField(memberName) : Helpers.GetInstanceMember(type.GetTypeInfo(), memberName);
+            mi = Helpers.IsEnum(Type) ? Type.GetTypeInfo().GetDeclaredField(memberName) : Helpers.GetInstanceMember(Type.GetTypeInfo(), memberName);
 
 #else
             MemberInfo[] members = Type.GetMember(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -238,7 +238,7 @@ namespace AqlaSerializer.Meta
             var serializationSettings = member.MappingState.SerializationSettings.Clone();
             var vm = new ValueMember(member.MainValue, serializationSettings, member.Member, this.Type, _model);
 #if WINRT
-            TypeInfo finalType = typeInfo;
+            TypeInfo finalType = _typeInfo;
 #else
             Type finalType = this.Type;
 #endif

@@ -125,7 +125,7 @@ namespace Examples
         {
             var parents = new List<IMLParent> { CreateChild() };
             Assert.AreEqual(1, parents.Count, "Original list (before)");
-            var serializer = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var serializer = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             using (var ms = new MemoryStream())
             {
                 serializer.Serialize(ms, parents);

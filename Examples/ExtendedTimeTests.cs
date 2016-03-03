@@ -124,7 +124,7 @@ namespace Examples
             Int64Fixed i64 = new Int64Fixed { Value = ticks };
             Assert.IsTrue(Program.CheckBytes(i64, bits));
 
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Int64Fixed i64Clone = tm.DeepClone(i64);
             Assert.AreEqual(ticks, i64Clone.Value, "Int64 roundtrip:" + ticks.ToString() + " (" + when.ToString() + ")");
 

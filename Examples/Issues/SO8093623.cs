@@ -46,7 +46,7 @@ namespace Examples.Issues
         [Test]
         public void TestExpectedResultFromGeneratedTypes()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             model.Add(typeof(A_generated), true);
             model.Add(typeof(B_generated), true);
@@ -74,7 +74,7 @@ namespace Examples.Issues
         [Test]
         public void TestSubclassDeserializes()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             model.Add(typeof (A), true);
             model.Add(typeof (B), true);

@@ -198,40 +198,23 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        public bool? DefaultEnhancedFormat
+        public ValueFormat DefaultFormat
         {
             get
             {
-                return _settingsValue.Member.EnhancedFormat;
+                return _settingsValue.Member.Format;
             }
             set
             {
                 ChangeSettings(
                     sv =>
                     {
-                        sv.Member.EnhancedFormat = value;
+                        sv.Member.Format = value;
                         return sv;
                     });
             }
         }
-
-        public EnhancedMode DefaultEnhancedWriteAs
-        {
-            get
-            {
-                return _settingsValue.Member.EnhancedWriteMode;
-            }
-            set
-            {
-                ChangeSettings(
-                    sv =>
-                    {
-                        sv.Member.EnhancedWriteMode = value;
-                        return sv;
-                    });
-            }
-        }
-
+        
         public BinaryDataFormat? ContentBinaryFormatHint
         {
             get { return _settingsValue.Member.ContentBinaryFormatHint; }
@@ -301,14 +284,14 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Should this type be treated as a reference by default
         /// </summary>
-        [Obsolete("Use DefaultEnhancedFormat and DefaultEnhancedWriteAs")]
+        [Obsolete("Use DefaultFormat")]
         public bool AsReferenceDefault
         {
             get
             {
                 MemberLevelSettingsValue m = _settingsValue.Member;
-                return m.EnhancedFormat != false && m.EnhancedWriteMode != EnhancedMode.Minimal &&
-                       (m.EnhancedWriteMode != EnhancedMode.NotSpecified || ValueSerializerBuilder.CanTypeBeAsReference(Type));
+                return m.Format == ValueFormat.Reference || m.Format == ValueFormat.LateReference ||
+                       (m.Format == ValueFormat.NotSpecified && ValueSerializerBuilder.CanTypeBeAsReference(Type));
             }
             set
             {
@@ -317,12 +300,13 @@ namespace AqlaSerializer.Meta
                         {
                             if (value)
                             {
-                                sv.Member.EnhancedFormat = true;
-                                if (!AsReferenceDefault) sv.Member.EnhancedWriteMode = EnhancedMode.Reference;
+                                if (sv.Member.Format != ValueFormat.LateReference)
+                                    sv.Member.Format = ValueFormat.Reference;
                             }
                             else
                             {
-                                sv.Member.EnhancedFormat = false;
+                                sv.Member.Format = ValueFormat.Compact;
+                                sv.Member.WriteAsDynamicType = false;
                             }
 
                             return sv;

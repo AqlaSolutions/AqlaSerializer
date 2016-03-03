@@ -140,6 +140,9 @@ namespace Examples
             Assert.AreEqual(105, bar.X_explicitField, "X: post");
             Assert.AreEqual(106, bar.Z_explicitProperty, "Z: post");
 
+            var proto1 = s.GetDebugSchema(typeof(ImplicitFieldPOCO));
+            var proto2 = s.GetDebugSchema(typeof(ImplicitFieldPOCOEquiv));
+
             ImplicitFieldPOCOEquiv equiv = s.ChangeType<ImplicitFieldPOCO, ImplicitFieldPOCOEquiv>(foo);
             Assert.AreEqual(100, equiv.D, "D: equiv");
             Assert.AreEqual(101, equiv.E, "E: equiv");

@@ -527,7 +527,7 @@ namespace AqlaSerializer.unittest.Meta
         }
         static RuntimeTypeModel CreateModelCompatible()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.Add(typeof (PackedData), true);
             return model;
         }
@@ -658,7 +658,7 @@ namespace AqlaSerializer.unittest.Meta
         {
             try
             {
-                TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(orig);
+                TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(orig);
                 using (MemoryStream ms = new MemoryStream())
                 {
                     model.Serialize(ms, orig);
@@ -680,7 +680,7 @@ namespace AqlaSerializer.unittest.Meta
         }
         static RuntimeTypeModel CreateModelCompatible()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.Add(typeof(PackedData), true);
             return model;
         }

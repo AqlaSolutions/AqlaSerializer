@@ -117,7 +117,7 @@ namespace Examples
         static byte[] GetBytes<T>(T item)
         {
             MemoryStream ms = new MemoryStream();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm.Serialize(ms, item);
             return ms.ToArray();
         }
@@ -160,7 +160,7 @@ namespace Examples
         static byte[] GetBytes<T>(T item)
         {
             MemoryStream ms = new MemoryStream();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm.Serialize(ms, item);
             return ms.ToArray();
         }

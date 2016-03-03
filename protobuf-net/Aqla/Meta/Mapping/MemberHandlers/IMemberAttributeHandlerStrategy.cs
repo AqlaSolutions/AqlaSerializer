@@ -28,6 +28,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
     public interface IMemberAttributeHandlerStrategy
     {
         MemberHandlerResult TryRead(AttributeMap attribute, MemberState s, MemberInfo member, RuntimeTypeModel model);
+        void SetLegacyFormat(ref MemberLevelSettingsValue level, MemberInfo member, RuntimeTypeModel model);
     }
 }
 #endif

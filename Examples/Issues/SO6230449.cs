@@ -25,7 +25,7 @@ namespace Examples.Issues
             using (var ms = new MemoryStream())
             {
                 // write data with a length-prefix but no field number
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.SerializeWithLengthPrefix(ms, new Foo { Bar = 1 }, typeof(Foo), PrefixStyle.Base128, 0);
                 tm.SerializeWithLengthPrefix(ms, new Foo { Bar = 2 }, typeof(Foo), PrefixStyle.Base128, 0);
                 tm.SerializeWithLengthPrefix(ms, new Foo { Bar = 3 }, typeof(Foo), PrefixStyle.Base128, 0);

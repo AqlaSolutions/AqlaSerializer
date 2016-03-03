@@ -59,7 +59,7 @@ namespace AqlaSerializer.Meta
             get
             {
 #if WINRT
-                return typeInfo.IsValueType;
+                return _typeInfo.IsValueType;
 #else
                 return Type.IsValueType;
 #endif

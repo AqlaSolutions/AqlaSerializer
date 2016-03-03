@@ -16,7 +16,7 @@ namespace Examples
         {
             MemoryStream ms = new MemoryStream();
             Foo foo = new Foo();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             foreach (int value in values)
             {
                 foo.Value = value;
@@ -34,7 +34,7 @@ namespace Examples
                 {
                     Debugger.Break();
                 }
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility); ;
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility); ;
                 Foo foo = tm.DeserializeWithLengthPrefix<Foo>(source, null, style, tag);
                 Assert.AreEqual(value, foo.Value);
                 count++;

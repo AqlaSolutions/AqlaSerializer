@@ -83,7 +83,7 @@ namespace Examples.Issues
         [Test]
         public void ExecuteWithSubType()
         {
-            ProtoCompatibilitySettings comp=ProtoCompatibilitySettings.Default;
+            ProtoCompatibilitySettingsValue comp=ProtoCompatibilitySettingsValue.Default;
             // late reference mode is not allowed on surrogates
             // TODO move LateReference mode to attributes
             //comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
