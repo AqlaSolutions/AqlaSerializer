@@ -20,14 +20,20 @@ namespace AqlaSerializer.Serializers
 {
     sealed class PropertyDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        public override void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, _property.Name))
+                Tail.WriteDebugSchema(builder);
+        }
+
         public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
-        public override Type ExpectedType { get { return forType; } }
-        private readonly PropertyInfo property;
+        public override Type ExpectedType => _forType;
+        private readonly PropertyInfo _property;
         readonly IProtoSerializerWithWireType _tail;
-        private readonly Type forType;
-        public override bool RequiresOldValue { get { return true; } }
-        private readonly bool canSetInRuntime;
-        private readonly MethodInfo shadowSetter;
+        private readonly Type _forType;
+        public override bool RequiresOldValue => true;
+        private readonly bool _canSetInRuntime;
+        private readonly MethodInfo _shadowSetter;
 
         AccessorsCache.Accessors _accessors;
 
@@ -36,15 +42,15 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(forType != null);
             Helpers.DebugAssert(property != null);
-            this.forType = forType;
-            this.property = property;
+            this._forType = forType;
+            this._property = property;
             _tail = tail;
-            SanityCheck(model, property, tail, out canSetInRuntime, true, true, false);
-            shadowSetter = Helpers.GetShadowSetter(model, property);
+            SanityCheck(model, property, tail, out _canSetInRuntime, true, true, false);
+            _shadowSetter = Helpers.GetShadowSetter(model, property);
 #if FEAT_COMPILER && !FEAT_IKVM
             _accessors = AccessorsCache.GetAccessors(property);
-            if (shadowSetter != null)
-                _accessors.Set = AccessorsCache.GetShadowSetter(shadowSetter);
+            if (_shadowSetter != null)
+                _accessors.Set = AccessorsCache.GetShadowSetter(_shadowSetter);
 #endif
         }
 
@@ -74,7 +80,7 @@ namespace AqlaSerializer.Serializers
         public override void Write(object value, ProtoWriter dest)
         {
             Helpers.DebugAssert(value != null);
-            Tail.Write(Helpers.GetPropertyValue(property, value), dest);
+            Tail.Write(Helpers.GetPropertyValue(_property, value), dest);
         }
 
         public override object Read(object value, ProtoReader source)
@@ -82,13 +88,13 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(value != null);
 
             object oldVal = Tail.RequiresOldValue
-                                ? _accessors.Get != null ? _accessors.Get(value) : Helpers.GetPropertyValue(property, value)
+                                ? _accessors.Get != null ? _accessors.Get(value) : Helpers.GetPropertyValue(_property, value)
                                 : null;
             object newVal = Tail.Read(oldVal, source);
-            if (canSetInRuntime
+            if (_canSetInRuntime
                 && (!Tail.RequiresOldValue // always set where can't check oldVal
                     // and if it's value type or nullable with changed null/not null or ref
-                    || (Helpers.IsValueType(property.PropertyType) && oldVal != null && newVal != null)
+                    || (Helpers.IsValueType(_property.PropertyType) && oldVal != null && newVal != null)
                     || !ReferenceEquals(oldVal, newVal)
                    ))
             {
@@ -99,13 +105,13 @@ namespace AqlaSerializer.Serializers
                 else
                 {
 
-                    if (shadowSetter == null)
+                    if (_shadowSetter == null)
                     {
-                        property.SetValue(value, newVal, null);
+                        _property.SetValue(value, newVal, null);
                     }
                     else
                     {
-                        shadowSetter.Invoke(value, new object[] { newVal });
+                        _shadowSetter.Invoke(value, new object[] { newVal });
                     }
                 }
             }
@@ -115,35 +121,35 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER 
-        public override bool EmitReadReturnsValue { get { return Helpers.IsValueType(forType); } }
+        public override bool EmitReadReturnsValue { get { return Helpers.IsValueType(_forType); } }
 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (ctx.StartDebugBlockAuto(this, property.Name))
+            using (ctx.StartDebugBlockAuto(this, _property.Name))
             {
                 ctx.LoadAddress(valueFrom, ExpectedType);
-                ctx.LoadValue(property);
+                ctx.LoadValue(_property);
                 Tail.EmitWrite(ctx, null);
             }
         }
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
-            using (ctx.StartDebugBlockAuto(this, property.Name))
+            using (ctx.StartDebugBlockAuto(this, _property.Name))
             {
                 var g = ctx.G;
                 bool canSet;
-                SanityCheck(ctx.Model, property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(property), true);
+                SanityCheck(ctx.Model, _property, Tail, out canSet, ctx.NonPublic, ctx.AllowInternal(_property), true);
 
                 using (Compiler.Local loc = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
-                using (Compiler.Local oldVal = canSet ? new Compiler.Local(ctx, property.PropertyType) : null)
-                using (Compiler.Local newVal = new Compiler.Local(ctx, property.PropertyType))
+                using (Compiler.Local oldVal = canSet ? new Compiler.Local(ctx, _property.PropertyType) : null)
+                using (Compiler.Local newVal = new Compiler.Local(ctx, _property.PropertyType))
                 {
                     Compiler.Local valueForTail = null;
                     if (Tail.RequiresOldValue)
                     {
                         ctx.LoadAddress(loc, ExpectedType);
-                        ctx.LoadValue(property);
+                        ctx.LoadValue(_property);
                         if (!oldVal.IsNullRef())
                         {
                             if (Tail.RequiresOldValue) // we need it later
@@ -180,7 +186,7 @@ namespace AqlaSerializer.Serializers
                         {
                             var condition = !g.StaticFactory.InvokeReferenceEquals(oldVal, newVal);
 
-                            if (Helpers.IsValueType(property.PropertyType))
+                            if (Helpers.IsValueType(_property.PropertyType))
                                 condition = (oldVal.AsOperand != null && newVal.AsOperand != null) || condition;
 
                             g.If(condition);
@@ -188,13 +194,13 @@ namespace AqlaSerializer.Serializers
 
                         ctx.LoadAddress(loc, ExpectedType);
                         ctx.LoadValue(newVal);
-                        if (shadowSetter == null)
+                        if (_shadowSetter == null)
                         {
-                            ctx.StoreValue(property);
+                            ctx.StoreValue(_property);
                         }
                         else
                         {
-                            ctx.EmitCall(shadowSetter);
+                            ctx.EmitCall(_shadowSetter);
                         }
 
                         if (check)

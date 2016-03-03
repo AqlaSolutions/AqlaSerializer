@@ -18,19 +18,31 @@ namespace AqlaSerializer.Serializers
 {
     sealed class TupleSerializer : IProtoTypeSerializer
     {
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.GroupSerializer(this))
+            {
+                for (int i = 0; i < _tails.Length; i++)
+                {
+                    using (builder.Field(i + 1, "Field"))
+                        _tails[i].WriteDebugSchema(builder);
+                }
+            }
+        }
+        
         public bool DemandWireTypeStabilityStatus() => true;
-        private readonly MemberInfo[] members;
+        readonly MemberInfo[] _members;
         readonly bool _prefixLength;
-        private readonly ConstructorInfo ctor;
-        private IProtoSerializerWithWireType[] tails;
+        readonly ConstructorInfo _ctor;
+        readonly IProtoSerializerWithWireType[] _tails;
         public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, MemberInfo[] members, bool prefixLength)
         {
-            if (ctor == null) throw new ArgumentNullException("ctor");
-            if (members == null) throw new ArgumentNullException("members");
-            this.ctor = ctor;
-            this.members = members;
+            if (ctor == null) throw new ArgumentNullException(nameof(ctor));
+            if (members == null) throw new ArgumentNullException(nameof(members));
+            this._ctor = ctor;
+            this._members = members;
             _prefixLength = prefixLength;
-            this.tails = new IProtoSerializerWithWireType[members.Length];
+            this._tails = new IProtoSerializerWithWireType[members.Length];
 
             ParameterInfo[] parameters = ctor.GetParameters();
             for(int i = 0 ; i < members.Length ; i++)
@@ -44,16 +56,23 @@ namespace AqlaSerializer.Serializers
                 if (idx < 0 || !model[finalType].IgnoreListHandling)
                     MetaType.ResolveListTypes(model, finalType, ref itemType, ref defaultType);
                 
-                Type tmp = itemType == null ? finalType : itemType;
+                Type tmp = itemType ?? finalType;
 
-                bool asReference = false;
+                ValueFormat format = ValueFormat.NotSpecified;
+                
                 int typeIndex = model.FindOrAddAuto(tmp, false, true, false);
                 if (typeIndex >= 0)
                 {
-                    asReference = model[tmp].AsReferenceDefault;
+                    MetaType mt = model[tmp];
+                    mt.FinalizeSettingsValue();
+                    format = mt.SettingsValue.Member.Format;
                 }
+
+                bool? dynamicType = null;
+                ValueSerializerBuilder.EnsureCorrectFormatSpecified(model, ref format, tmp, ref dynamicType, true);
+                
                 object dummy = null;
-                IProtoSerializerWithWireType tail = model.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, tmp, out wireType, ref asReference, false, false, false, true, false, ref dummy), serializer;
+                IProtoSerializerWithWireType tail = model.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, tmp, out wireType, ref format, dynamicType.GetValueOrDefault(), false, false, true, ref dummy), serializer;
                 if (tail == null)
                 {
                     throw new InvalidOperationException("No serializer defined for type: " + tmp.FullName);
@@ -74,7 +93,7 @@ namespace AqlaSerializer.Serializers
                         serializer = ListDecorator.Create(model, finalType, defaultType, tail, false, wireType, false, false, true);
                     }
                 }
-                tails[i] = serializer;
+                _tails[i] = serializer;
             }
         }
         public bool HasCallbacks(Meta.TypeModel.CallbackType callbackType)
@@ -87,7 +106,7 @@ namespace AqlaSerializer.Serializers
 #endif
         public Type ExpectedType
         {
-            get { return ctor.DeclaringType; }
+            get { return _ctor.DeclaringType; }
         }
 
 
@@ -100,13 +119,13 @@ namespace AqlaSerializer.Serializers
             PropertyInfo prop;
             FieldInfo field;
             
-            if ((prop = members[index] as PropertyInfo) != null)
+            if ((prop = _members[index] as PropertyInfo) != null)
             {
                 if (obj == null)
                     return Helpers.IsValueType(prop.PropertyType) ? Activator.CreateInstance(prop.PropertyType) : null;
                 return Helpers.GetPropertyValue(prop, obj);
             }
-            else if ((field = members[index] as FieldInfo) != null)
+            else if ((field = _members[index] as FieldInfo) != null)
             {
                 if (obj == null)
                     return Helpers.IsValueType(field.FieldType) ? Activator.CreateInstance(field.FieldType) : null;
@@ -119,7 +138,7 @@ namespace AqlaSerializer.Serializers
         }
         public object Read(object value, ProtoReader source)
         {
-            object[] values = new object[members.Length];
+            object[] values = new object[_members.Length];
             bool invokeCtor = false;
             int reservedTrap = -1;
             if (value == null)
@@ -134,10 +153,10 @@ namespace AqlaSerializer.Serializers
             while((field = source.ReadFieldHeader()) > 0)
             {
                 invokeCtor = true;
-                if(field <= tails.Length)
+                if(field <= _tails.Length)
                 {
-                    IProtoSerializer tail = tails[field - 1];
-                    values[field - 1] = tails[field - 1].Read(tail.RequiresOldValue ? values[field - 1] : null, source);
+                    IProtoSerializer tail = _tails[field - 1];
+                    values[field - 1] = _tails[field - 1].Read(tail.RequiresOldValue ? values[field - 1] : null, source);
                 }
                 else
                 {
@@ -147,7 +166,7 @@ namespace AqlaSerializer.Serializers
             ProtoReader.EndSubItem(token, source);
             if (invokeCtor)
             {
-                var r = ctor.Invoke(values);
+                var r = _ctor.Invoke(values);
                 // inside references won't work, but from outside will
                 // this is a common problem when deserializing immutable types
                 ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
@@ -158,7 +177,7 @@ namespace AqlaSerializer.Serializers
         public void Write(object value, ProtoWriter dest)
         {
             var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
-            for (int i = 0; i < tails.Length; i++)
+            for (int i = 0; i < _tails.Length; i++)
             {
                 object val = GetValue(value, i);
                 // this is the only place where we don't use null check from NetObjectValueDecorator
@@ -168,7 +187,7 @@ namespace AqlaSerializer.Serializers
                 if (val != null)
                 {
                     ProtoWriter.WriteFieldHeaderBegin(i + 1, dest);
-                    tails[i].Write(val, dest);
+                    _tails[i].Write(val, dest);
                 }
             }
             ProtoWriter.EndSubItem(token, dest);
@@ -181,7 +200,7 @@ namespace AqlaSerializer.Serializers
 
         Type GetMemberType(int index)
         {
-            Type result = Helpers.GetMemberType(members[index]);
+            Type result = Helpers.GetMemberType(_members[index]);
             if (result == null) throw new InvalidOperationException();
             return result;
         }
@@ -198,27 +217,27 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 var g = ctx.G;
-                using (Compiler.Local value = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom))
+                using (Compiler.Local value = ctx.GetLocalWithValue(_ctor.DeclaringType, valueFrom))
                 using (Compiler.Local token = ctx.Local(typeof(SubItemToken)))
                 {
                     g.Assign(token, g.WriterFunc.StartSubItem(value, _prefixLength));
-                    for (int i = 0; i < tails.Length; i++)
+                    for (int i = 0; i < _tails.Length; i++)
                     {
                         Type type = GetMemberType(i);
                         ctx.LoadAddress(value, ExpectedType);
-                        switch (members[i].MemberType)
+                        switch (_members[i].MemberType)
                         {
                             case MemberTypes.Field:
-                                ctx.LoadValue((FieldInfo)members[i]);
+                                ctx.LoadValue((FieldInfo)_members[i]);
                                 break;
                             case MemberTypes.Property:
-                                ctx.LoadValue((PropertyInfo)members[i]);
+                                ctx.LoadValue((PropertyInfo)_members[i]);
                                 break;
                         }
                         ctx.LoadValue(i + 1);
                         ctx.LoadReaderWriter();
                         ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderBegin)));
-                        ctx.WriteNullCheckedTail(type, tails[i], null, true);
+                        ctx.WriteNullCheckedTail(type, _tails[i], null, true);
                     }
                     g.Writer.EndSubItem(token);
                 }
@@ -241,7 +260,7 @@ namespace AqlaSerializer.Serializers
                     ctx.EmitCallReserveNoteObject();
                     ctx.StoreValue(reservedTrap);
 
-                    Compiler.Local[] locals = new Compiler.Local[members.Length];
+                    Compiler.Local[] locals = new Compiler.Local[_members.Length];
                     try
                     {
                         g.Assign(token, g.ReaderFunc.StartSubItem());
@@ -309,16 +328,16 @@ namespace AqlaSerializer.Serializers
                             ctx.LoadAddress(objValue, ExpectedType);
                             ctx.BranchIfFalse(skipOld, false);
                         }
-                        for (int i = 0; i < members.Length; i++)
+                        for (int i = 0; i < _members.Length; i++)
                         {
                             ctx.LoadAddress(objValue, ExpectedType);
-                            switch (members[i].MemberType)
+                            switch (_members[i].MemberType)
                             {
                                 case MemberTypes.Field:
-                                    ctx.LoadValue((FieldInfo)members[i]);
+                                    ctx.LoadValue((FieldInfo)_members[i]);
                                     break;
                                 case MemberTypes.Property:
-                                    ctx.LoadValue((PropertyInfo)members[i]);
+                                    ctx.LoadValue((PropertyInfo)_members[i]);
                                     break;
                             }
                             ctx.StoreValue(locals[i]);
@@ -333,8 +352,8 @@ namespace AqlaSerializer.Serializers
                                                notRecognised = ctx.DefineLabel();
                             ctx.Branch(@continue, false);
 
-                            Compiler.CodeLabel[] handlers = new Compiler.CodeLabel[members.Length];
-                            for (int i = 0; i < members.Length; i++)
+                            Compiler.CodeLabel[] handlers = new Compiler.CodeLabel[_members.Length];
+                            for (int i = 0; i < _members.Length; i++)
                             {
                                 handlers[i] = ctx.DefineLabel();
                             }
@@ -351,7 +370,7 @@ namespace AqlaSerializer.Serializers
                             for (int i = 0; i < handlers.Length; i++)
                             {
                                 ctx.MarkLabel(handlers[i]);
-                                IProtoSerializer tail = tails[i];
+                                IProtoSerializer tail = _tails[i];
                                 Compiler.Local oldValIfNeeded = tail.RequiresOldValue ? locals[i] : null;
                                 ctx.ReadNullCheckedTail(locals[i].Type, tail, oldValIfNeeded);
                                 if (tail.EmitReadReturnsValue)
@@ -394,11 +413,11 @@ namespace AqlaSerializer.Serializers
                         {
                             ctx.LoadValue(locals[i]);
                         }
-                        ctx.EmitCtor(ctor);
+                        ctx.EmitCtor(_ctor);
                         ctx.StoreValue(objValue);
 
                         ctx.LoadValue(objValue);
-                        ctx.CastToObject(ctx.MapType(ctor.DeclaringType));
+                        ctx.CastToObject(ctx.MapType(_ctor.DeclaringType));
                         ctx.StoreValue(refLocalToNoteObject);
 
                         ctx.LoadValue(reservedTrap);

@@ -531,6 +531,26 @@ namespace AqlaSerializer.Serializers
             add(_tail.Read(null, source));
         }
 #endif
+        
+        public string MakeDebugSchemaDescription(bool append)
+        {
+            string desc = "";
+            if (_protoCompatibility) desc += "Compatibility";
+            if (_writePacked)
+            {
+                if (desc.Length != 0)
+                    desc += ",";
+                desc += "WritePacked";
+            }
+            if (append)
+            {
+                if (desc.Length != 0)
+                    desc += ", ";
+                desc += "Append";
+            }
+            return desc;
+        }
+
     }
 }
 #endif

@@ -124,6 +124,13 @@ namespace AqlaSerializer.Meta
 
         }
 
+        public string GetDebugSchema(Type type)
+        {
+            var b = new DebugSchemaBuilder();
+            this[type].RootSerializer.WriteDebugSchema(b);
+            return b.ToString();
+        }
+
         // <summary>
         /// Suggest a .proto definition for the given type
         /// </summary>

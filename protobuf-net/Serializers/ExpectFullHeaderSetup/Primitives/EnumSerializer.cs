@@ -30,13 +30,13 @@ namespace AqlaSerializer.Serializers
 #endif
             }
         } 
-        private readonly Type enumType; 
-        private readonly EnumPair[] map;
+        private readonly Type _enumType; 
+        private readonly EnumPair[] _map;
         public EnumSerializer(Type enumType, EnumPair[] map)
         {
-            if (enumType == null) throw new ArgumentNullException("enumType");
-            this.enumType = enumType;
-            this.map = map;
+            if (enumType == null) throw new ArgumentNullException(nameof(enumType));
+            this._enumType = enumType;
+            this._map = map;
             if (map != null)
             {
                 for (int i = 1; i < map.Length; i++)
@@ -55,13 +55,13 @@ namespace AqlaSerializer.Serializers
             }
         }
         private ProtoTypeCode GetTypeCode() {
-            Type type = Helpers.GetNullableUnderlyingType( enumType);
-            if(type == null) type = enumType;
+            Type type = Helpers.GetNullableUnderlyingType( _enumType);
+            if(type == null) type = _enumType;
             return Helpers.GetTypeCode(type);
         }
 
         
-        public Type ExpectedType { get { return enumType; } }
+        public Type ExpectedType { get { return _enumType; } }
         
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
         
@@ -90,14 +90,14 @@ namespace AqlaSerializer.Serializers
             {
                 switch (GetTypeCode())
                 { // convert from int then box 
-                    case ProtoTypeCode.Byte: return Enum.ToObject(enumType, (byte)value);
-                    case ProtoTypeCode.SByte: return Enum.ToObject(enumType, (sbyte)value);
-                    case ProtoTypeCode.Int16: return Enum.ToObject(enumType, (short)value);
-                    case ProtoTypeCode.Int32: return Enum.ToObject(enumType, value);
-                    case ProtoTypeCode.Int64: return Enum.ToObject(enumType, (long)value);
-                    case ProtoTypeCode.UInt16: return Enum.ToObject(enumType, (ushort)value);
-                    case ProtoTypeCode.UInt32: return Enum.ToObject(enumType, (uint)value);
-                    case ProtoTypeCode.UInt64: return Enum.ToObject(enumType, (ulong)value);
+                    case ProtoTypeCode.Byte: return Enum.ToObject(_enumType, (byte)value);
+                    case ProtoTypeCode.SByte: return Enum.ToObject(_enumType, (sbyte)value);
+                    case ProtoTypeCode.Int16: return Enum.ToObject(_enumType, (short)value);
+                    case ProtoTypeCode.Int32: return Enum.ToObject(_enumType, value);
+                    case ProtoTypeCode.Int64: return Enum.ToObject(_enumType, (long)value);
+                    case ProtoTypeCode.UInt16: return Enum.ToObject(_enumType, (ushort)value);
+                    case ProtoTypeCode.UInt32: return Enum.ToObject(_enumType, (uint)value);
+                    case ProtoTypeCode.UInt64: return Enum.ToObject(_enumType, (ulong)value);
                     default: throw new InvalidOperationException();
                 }
             }
@@ -107,12 +107,12 @@ namespace AqlaSerializer.Serializers
         {
             Helpers.DebugAssert(value == null); // since replaces
             int wireValue = source.ReadInt32();
-            if(map == null) {
+            if(_map == null) {
                 return WireToEnum(wireValue);
             }
-            for(int i = 0 ; i < map.Length ; i++) {
-                if(map[i].WireValue == wireValue) {
-                    return map[i].TypedValue;
+            for(int i = 0 ; i < _map.Length ; i++) {
+                if(_map[i].WireValue == wireValue) {
+                    return _map[i].TypedValue;
                 }
             }
             source.ThrowEnumException(ExpectedType, wireValue);
@@ -120,17 +120,17 @@ namespace AqlaSerializer.Serializers
         }
         public void Write(object value, ProtoWriter dest)
         {
-            if (map == null)
+            if (_map == null)
             {
                 ProtoWriter.WriteInt32(EnumToWire(value), dest);
             }
             else
             {
-                for (int i = 0; i < map.Length; i++)
+                for (int i = 0; i < _map.Length; i++)
                 {
-                    if (object.Equals(map[i].TypedValue, value))
+                    if (object.Equals(_map[i].TypedValue, value))
                     {
-                        ProtoWriter.WriteInt32(map[i].WireValue, dest);
+                        ProtoWriter.WriteInt32(_map[i].WireValue, dest);
                         return;
                     }
                 }
@@ -146,7 +146,7 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 ProtoTypeCode typeCode = GetTypeCode();
-                if (map == null)
+                if (_map == null)
                 {
                     ctx.LoadValue(valueFrom);
                     ctx.ConvertToInt32(typeCode, false);
@@ -157,15 +157,15 @@ namespace AqlaSerializer.Serializers
                     using (Compiler.Local loc = ctx.GetLocalWithValue(ExpectedType, valueFrom))
                     {
                         Compiler.CodeLabel @continue = ctx.DefineLabel();
-                        for (int i = 0; i < map.Length; i++)
+                        for (int i = 0; i < _map.Length; i++)
                         {
                             Compiler.CodeLabel tryNextValue = ctx.DefineLabel(), processThisValue = ctx.DefineLabel();
                             ctx.LoadValue(loc);
-                            WriteEnumValue(ctx, typeCode, map[i].RawValue);
+                            WriteEnumValue(ctx, typeCode, _map[i].RawValue);
                             ctx.BranchIfEqual(processThisValue, true);
                             ctx.Branch(tryNextValue, true);
                             ctx.MarkLabel(processThisValue);
-                            ctx.LoadValue(map[i].WireValue);
+                            ctx.LoadValue(_map[i].WireValue);
                             ctx.EmitBasicWrite("WriteInt32", null);
                             ctx.Branch(@continue, false);
                             ctx.MarkLabel(tryNextValue);
@@ -186,19 +186,19 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 ProtoTypeCode typeCode = GetTypeCode();
-                if (map == null)
+                if (_map == null)
                 {
                     ctx.EmitBasicRead("ReadInt32", ctx.MapType(typeof(int)));
                     ctx.ConvertFromInt32(typeCode, false);
                 }
                 else
                 {
-                    int[] wireValues = new int[map.Length];
-                    object[] values = new object[map.Length];
-                    for (int i = 0; i < map.Length; i++)
+                    int[] wireValues = new int[_map.Length];
+                    object[] values = new object[_map.Length];
+                    for (int i = 0; i < _map.Length; i++)
                     {
-                        wireValues[i] = map[i].WireValue;
-                        values[i] = map[i].RawValue;
+                        wireValues[i] = _map[i].WireValue;
+                        values[i] = _map[i].RawValue;
                     }
                     using (Compiler.Local result = new Compiler.Local(ctx, ExpectedType))
                     using (Compiler.Local wireValue = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
@@ -276,6 +276,24 @@ namespace AqlaSerializer.Serializers
             ctx.Branch(@continue, false); // "continue"
         }
 #endif
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            if (_map == null)
+                builder.SingleValueSerializer(this);
+            else
+            {
+                using (builder.GroupSerializer(this))
+                {
+                    for (int i = 0; i < _map.Length; i++)
+                    {
+                        using (builder.Field(_map[i].WireValue, _map[i].TypedValue.ToString()))
+                        {
+                        }
+                    }
+                }
+            }
+            
+        }
     }
 }
 #endif

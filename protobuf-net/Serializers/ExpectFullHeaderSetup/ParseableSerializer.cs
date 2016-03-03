@@ -13,10 +13,10 @@ namespace AqlaSerializer.Serializers
 {
     sealed class ParseableSerializer : IProtoSerializerWithAutoType
     {
-        private readonly MethodInfo parse;
+        private readonly MethodInfo _parse;
         public static ParseableSerializer TryCreate(Type type, TypeModel model)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
 #if WINRT || PORTABLE
             MethodInfo method = null;
             
@@ -69,17 +69,17 @@ namespace AqlaSerializer.Serializers
         }
         private ParseableSerializer(MethodInfo parse)
         {
-            this.parse = parse;
+            this._parse = parse;
         }
-        public Type ExpectedType { get { return parse.DeclaringType; } }
+        public Type ExpectedType => _parse.DeclaringType;
 
-        bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        
+        bool IProtoSerializer.RequiresOldValue => false;
+
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // since replaces
-            var v = parse.Invoke(null, new object[] { source.ReadString() });
+            var v = _parse.Invoke(null, new object[] { source.ReadString() });
             ProtoReader.NoteObject(v, source);
             return v;
         }
@@ -90,7 +90,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
@@ -123,14 +123,17 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 ctx.EmitBasicRead("ReadString", ctx.MapType(typeof(string)));
-                ctx.EmitCall(parse);
+                ctx.EmitCall(_parse);
                 ctx.CopyValue();
-                ctx.CastToObject(parse.ReturnType);
+                ctx.CastToObject(_parse.ReturnType);
                 ctx.EmitCallNoteObject();
             }
         }
 #endif
-
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            builder.SingleValueSerializer(this);
+        }
     }
 }
 #endif

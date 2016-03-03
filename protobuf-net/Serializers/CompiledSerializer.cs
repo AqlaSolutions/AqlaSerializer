@@ -9,6 +9,11 @@ namespace AqlaSerializer.Serializers
 {
     sealed class CompiledSerializer : IProtoTypeSerializer
     {
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            head.WriteDebugSchema(builder);
+        }
+        
         readonly bool _isStableWireType;
 
         public bool DemandWireTypeStabilityStatus()

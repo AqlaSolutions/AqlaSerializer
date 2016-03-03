@@ -19,6 +19,12 @@ namespace AqlaSerializer.Serializers
 {
     sealed class RootDecorator : IProtoTypeSerializer
     {
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, _protoCompatibility ? "compatibility" : ""))
+                _serializer.WriteDebugSchema(builder);
+        }
+        
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility;
         readonly bool _protoCompatibility;
         readonly TypeModel _model;
@@ -200,7 +206,6 @@ namespace AqlaSerializer.Serializers
         }
 
 #endif
-
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
             return _serializer.HasCallbacks(callbackType);

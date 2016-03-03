@@ -21,6 +21,16 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     sealed class LateReferenceSerializer : IProtoSerializerWithWireType
     {
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this))
+            {
+                var b = builder.Contract(ExpectedType);
+                if (b != null)
+                    _model[_typeKey].Serializer.WriteDebugSchema(b);
+            }
+        }
+
         public bool DemandWireTypeStabilityStatus() => false;
         readonly RuntimeTypeModel _model;
         readonly int _typeKey;

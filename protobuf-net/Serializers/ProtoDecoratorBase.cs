@@ -14,6 +14,12 @@ namespace AqlaSerializer.Serializers
 {
     abstract class ProtoDecoratorBase : IProtoSerializer
     {
+        public virtual void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this))
+                Tail.WriteDebugSchema(builder);
+        }
+
         public abstract Type ExpectedType { get; }
         protected readonly IProtoSerializer Tail;
         protected ProtoDecoratorBase(IProtoSerializer tail) { this.Tail = tail; }
