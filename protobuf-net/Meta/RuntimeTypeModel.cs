@@ -34,7 +34,7 @@ using AqlaSerializer;
 using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
-using AltLinq;
+using AltLinq; using System.Linq;
 
 namespace AqlaSerializer.Meta
 {

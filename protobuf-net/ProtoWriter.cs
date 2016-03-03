@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Xml;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 #if MF
 using OverflowException = System.ApplicationException;

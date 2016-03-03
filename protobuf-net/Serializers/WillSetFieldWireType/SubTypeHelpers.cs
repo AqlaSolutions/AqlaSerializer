@@ -13,7 +13,7 @@ using IKVM.Reflection;
 using System.Reflection.Emit;
 #endif
 #endif
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 
 namespace AqlaSerializer.Serializers

@@ -4,7 +4,7 @@ using System;
 using AqlaSerializer.Compiler;
 #endif
 using System.Diagnostics;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;

@@ -5,7 +5,7 @@ using System;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
 #if FEAT_IKVM

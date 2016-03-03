@@ -2,7 +2,7 @@
 //#define DEBUG_COMPILE
 using System;
 using System.Diagnostics.CodeAnalysis;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;

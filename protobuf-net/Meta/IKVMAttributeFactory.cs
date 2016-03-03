@@ -1,7 +1,7 @@
 ﻿#if !NO_RUNTIME && FEAT_IKVM
 using System;
 using System.Reflection;
-using AltLinq;
+using AltLinq; using System.Linq;
 using Type = IKVM.Reflection.Type;
 
 namespace AqlaSerializer.Meta

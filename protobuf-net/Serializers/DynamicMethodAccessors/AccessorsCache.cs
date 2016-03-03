@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using AltLinq;
+using AltLinq; using System.Linq;
 #if ENABLED
 using DynamicCompilationSpike;
 #endif

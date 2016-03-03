@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
