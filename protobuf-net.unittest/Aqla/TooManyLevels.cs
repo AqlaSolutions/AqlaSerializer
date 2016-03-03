@@ -36,7 +36,7 @@ namespace AqlaSerializer.unittest.Aqla
             Assert.That(
                 () => tm.DeepClone(new Foo() { Member = 123 }).Member,
                 Throws.TypeOf<ProtoException>()
-                    .With.Message.StartsWith("Found unused specified nested level settings, maximum possible nested level is 0-Int32, no more nested type detected"));
+                    .With.Message.Contains("Found unused specified nested level settings, maximum possible nested level is 0-Int32, no more nested type detected"));
         }
 
         [Test]
