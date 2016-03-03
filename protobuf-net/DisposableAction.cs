@@ -1,6 +1,6 @@
 ﻿#if !NO_RUNTIME
 using System;
-using AltLinq;
+using AltLinq; using System.Linq;
 
 namespace AqlaSerializer
 {

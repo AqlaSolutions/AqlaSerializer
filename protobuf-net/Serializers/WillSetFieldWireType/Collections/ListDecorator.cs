@@ -5,7 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using AltLinq;
+using AltLinq; using System.Linq;
 #if FEAT_COMPILER
 using TriAxis.RunSharp;
 using AqlaSerializer.Compiler;

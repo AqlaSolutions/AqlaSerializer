@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Meta.Mapping;

@@ -4,7 +4,7 @@
 using System;
 using System.Collections;
 using System.Text;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;

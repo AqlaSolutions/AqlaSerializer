@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 
 namespace AqlaSerializer

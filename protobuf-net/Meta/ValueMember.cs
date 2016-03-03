@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using AqlaSerializer.Serializers;
 using System.Globalization;
-using AltLinq;
+using AltLinq; using System.Linq;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Settings;
 #if FEAT_IKVM
@@ -241,19 +241,15 @@ namespace AqlaSerializer.Meta
                 }
                 catch (ArgumentException ex)
                 {
+#if SILVERLIGHT || PORTABLE
+                    throw new ArgumentException(GetRethrowExceptionText(ex), ex);
+#else
                     throw new ArgumentException(GetRethrowExceptionText(ex), ex.ParamName, ex);
+#endif
                 }
-                catch (MissingMethodException ex)
+                catch (System.MissingMemberException ex)
                 {
-                    throw new MissingMethodException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (MissingFieldException ex)
-                {
-                    throw new MissingFieldException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (MissingMemberException ex)
-                {
-                    throw new MissingMemberException(GetRethrowExceptionText(ex), ex);
+                    throw new System.MissingMemberException(GetRethrowExceptionText(ex), ex);
                 }
                 catch (MemberAccessException ex)
                 {

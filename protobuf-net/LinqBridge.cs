@@ -1,4 +1,4 @@
-#if !NO_RUNTIME
+#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !WINRT && !PHONE8
 #region License, Terms and Author(s)
 //
 // LINQBridge
@@ -3139,3 +3139,10 @@ namespace AltLinq
     }
 }
 #endif
+
+namespace AltLinq
+{
+}
+namespace System.Linq
+{
+}
