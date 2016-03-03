@@ -21,7 +21,7 @@ namespace AqlaSerializer.Serializers
     {
         public bool DemandWireTypeStabilityStatus() => !_throwIfNull;
         readonly bool _throwIfNull;
-        private readonly Type expectedType;
+        readonly Type _expectedType;
 
         public NoNullDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool throwIfNull)
             : base(tail)
@@ -33,18 +33,18 @@ namespace AqlaSerializer.Serializers
 #if NO_GENERICS
                 throw new NotSupportedException("NullDecorator cannot be used with a struct without generics support");
 #else
-                expectedType = model.MapType(typeof(Nullable<>)).MakeGenericType(tailType);
+                _expectedType = model.MapType(typeof(Nullable<>)).MakeGenericType(tailType);
 #endif
             }
             else
             {
-                expectedType = tailType;
+                _expectedType = tailType;
             }
 
         }
 
-        public override Type ExpectedType { get { return expectedType; } }
-        public override bool RequiresOldValue { get { return true; } }
+        public override Type ExpectedType => _expectedType;
+        public override bool RequiresOldValue => true;
 
 #if !FEAT_IKVM
         public override object Read(object value, ProtoReader source)
@@ -79,11 +79,11 @@ namespace AqlaSerializer.Serializers
                     Debug.Assert(Tail.RequiresOldValue || Tail.EmitReadReturnsValue);
                     if (Tail.RequiresOldValue)
                     {
-                        if (expectedType.IsValueType)
+                        if (_expectedType.IsValueType)
                         {
                             tempLocal = ctx.Local(Tail.ExpectedType);
-                            ctx.LoadAddress(oldValue, expectedType);
-                            ctx.EmitCall(expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
+                            ctx.LoadAddress(oldValue, _expectedType);
+                            ctx.EmitCall(_expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
                             ctx.StoreValue(tempLocal);
                             valueForTail = tempLocal;
                         }
@@ -98,15 +98,15 @@ namespace AqlaSerializer.Serializers
 
                     Tail.EmitRead(ctx, valueForTail);
 
-                    if (expectedType.IsValueType)
+                    if (_expectedType.IsValueType)
                     {
                         if (!Tail.EmitReadReturnsValue)
                             ctx.LoadValue(tempLocal);
                         // note we demanded always returns a value
-                        ctx.EmitCtor(expectedType, Tail.ExpectedType); // re-nullable<T> it
+                        ctx.EmitCtor(_expectedType, Tail.ExpectedType); // re-nullable<T> it
                     }
 
-                    if (Tail.EmitReadReturnsValue || expectedType.IsValueType)
+                    if (Tail.EmitReadReturnsValue || _expectedType.IsValueType)
                         ctx.StoreValue(oldValue);
 
                     if (EmitReadReturnsValue)
@@ -121,13 +121,13 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
-                using (Compiler.Local valOrNull = ctx.GetLocalWithValue(expectedType, valueFrom))
+                using (Compiler.Local valOrNull = ctx.GetLocalWithValue(_expectedType, valueFrom))
                 {
 
-                    if (expectedType.IsValueType)
+                    if (_expectedType.IsValueType)
                     {
-                        ctx.LoadAddress(valOrNull, expectedType);
-                        ctx.LoadValue(expectedType.GetProperty("HasValue"));
+                        ctx.LoadAddress(valOrNull, _expectedType);
+                        ctx.LoadValue(_expectedType.GetProperty("HasValue"));
                     }
                     else
                     {
@@ -139,10 +139,10 @@ namespace AqlaSerializer.Serializers
                     ctx.BranchIfFalse(onNull, false);
                     // if !=null
                     {
-                        if (expectedType.IsValueType)
+                        if (_expectedType.IsValueType)
                         {
-                            ctx.LoadAddress(valOrNull, expectedType);
-                            ctx.EmitCall(expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
+                            ctx.LoadAddress(valOrNull, _expectedType);
+                            ctx.EmitCall(_expectedType.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
                         }
                         else
                         {

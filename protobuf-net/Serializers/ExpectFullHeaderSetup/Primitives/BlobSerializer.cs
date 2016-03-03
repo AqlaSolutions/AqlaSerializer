@@ -16,7 +16,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class BlobSerializer : IProtoSerializerWithAutoType
     {
-        public Type ExpectedType { get { return expectedType; } }
+        public Type ExpectedType => expectedType;
 
 #if FEAT_IKVM
         readonly Type expectedType;
@@ -29,15 +29,15 @@ namespace AqlaSerializer.Serializers
 #if FEAT_IKVM
             expectedType = model.MapType(typeof(byte[]));
 #endif
-            this.overwriteList = overwriteList;
+            this._overwriteList = overwriteList;
         }
 
-        private readonly bool overwriteList;
+        private readonly bool _overwriteList;
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
-            var result = ProtoReader.AppendBytes(overwriteList ? null : (byte[])value, source);
-            if (overwriteList || value == null)
+            var result = ProtoReader.AppendBytes(_overwriteList ? null : (byte[])value, source);
+            if (_overwriteList || value == null)
                 ProtoReader.NoteObject(result, source);
             return result;
         }
@@ -47,10 +47,11 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.WriteBytes((byte[])value, dest);
         }
 #endif
-        bool IProtoSerializer.RequiresOldValue { get { return !overwriteList; } }
+        bool IProtoSerializer.RequiresOldValue => !_overwriteList;
 
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
+
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (ctx.StartDebugBlockAuto(this))
@@ -79,6 +80,10 @@ namespace AqlaSerializer.Serializers
             }
         }
 #endif
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            builder.SingleValueSerializer(this, !_overwriteList ? "append" : null);
+        }
     }
 }
 

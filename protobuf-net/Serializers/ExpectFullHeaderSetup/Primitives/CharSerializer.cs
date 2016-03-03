@@ -40,6 +40,12 @@ namespace AqlaSerializer.Serializers
 #endif
         // no need for any special IL here; ushort and char are
         // interchangeable as long as there is no boxing/unboxing
+
+
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            builder.SingleValueSerializer(this);
+        }
     }
 }
 #endif

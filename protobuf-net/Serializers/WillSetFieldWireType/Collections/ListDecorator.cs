@@ -52,7 +52,7 @@ namespace AqlaSerializer.Serializers
             bool asList = IsList && !SuppressIList;
 
             // can't call clear? => create new!
-            bool forceNewInstance = !AppendToCollection && EmitReadReturnsValue && !asList;
+            bool forceNewInstance = !AppendToCollection && !asList;
 
             Action subTypeHandler = () =>
                 {
@@ -253,7 +253,7 @@ namespace AqlaSerializer.Serializers
                 bool asList = IsList && !SuppressIList;
 
                 // can't call clear? => create new!
-                bool forceNewInstance = !AppendToCollection && EmitReadReturnsValue && !asList;
+                bool forceNewInstance = !AppendToCollection && !asList;
 
                 Action subTypeHandler = () =>
                 {
@@ -532,6 +532,13 @@ namespace AqlaSerializer.Serializers
             }
         }
 #endif
+
+        public override void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, ListHelpers.MakeDebugSchemaDescription(AppendToCollection)))
+                Tail.WriteDebugSchema(builder);
+        }
+
     }
 }
 

@@ -17,33 +17,42 @@ namespace AqlaSerializer.Serializers
 {
     sealed class ModelTypeSerializer : IProtoTypeSerializer
     {
-        public bool DemandWireTypeStabilityStatus() => proxy.Serializer.DemandWireTypeStabilityStatus();
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this))
+            {
+                var b = builder.Contract(ExpectedType);
+                if (b != null)
+                    _proxy.Serializer.WriteDebugSchema(b);
+            }
+        }
+        
+        public bool DemandWireTypeStabilityStatus() => _proxy.Serializer.DemandWireTypeStabilityStatus();
 
-        private readonly int key;
-        private readonly Type type;
-        private readonly ISerializerProxy proxy;
+        private readonly int _key;
+        private readonly ISerializerProxy _proxy;
         
         public ModelTypeSerializer(Type type, int key, ISerializerProxy proxy)
         {
-            if (type == null) throw new ArgumentNullException("type");
-            if (proxy == null) throw new ArgumentNullException("proxy");
-            this.type = type;
-            this.proxy = proxy;
-            this.key = key;
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (proxy == null) throw new ArgumentNullException(nameof(proxy));
+            this.ExpectedType = type;
+            this._proxy = proxy;
+            this._key = key;
         }
 
-        Type IProtoSerializer.ExpectedType { get { return type; } }
-        bool IProtoSerializer.RequiresOldValue { get { return true; } }
-        
+        public Type ExpectedType { get; }
+        bool IProtoSerializer.RequiresOldValue => true;
+
 #if !FEAT_IKVM
         void IProtoSerializer.Write(object value, ProtoWriter dest)
         {
-            ProtoWriter.WriteRecursionSafeObject(value, key, dest);
+            ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
         }
 
         object IProtoSerializer.Read(object value, ProtoReader source)
         {
-            return ProtoReader.ReadObject(value, key, source);
+            return ProtoReader.ReadObject(value, _key, source);
         }
 #endif
 
@@ -54,7 +63,7 @@ namespace AqlaSerializer.Serializers
 #if SILVERLIGHT
             return false;
 #else
-            MethodBuilder method = ctx.GetDedicatedMethod(key, read);
+            MethodBuilder method = ctx.GetDedicatedMethod(_key, read);
             if (method == null) return false;
 
             ctx.LoadValue(valueFrom);
@@ -62,7 +71,7 @@ namespace AqlaSerializer.Serializers
             ctx.EmitCall(method);
             // handle inheritance (we will be calling the *base* version of things,
             // but we expect Read to return the "type" type)
-            if (read && type != method.ReturnType) ctx.Cast(this.type);
+            if (read && ExpectedType != method.ReturnType) ctx.Cast(this.ExpectedType);
 #endif
             return true;
         }
@@ -74,8 +83,8 @@ namespace AqlaSerializer.Serializers
                 if (!EmitDedicatedMethod(ctx, valueFrom, false))
                 {
                     ctx.LoadValue(valueFrom);
-                    if (type.IsValueType) ctx.CastToObject(type);
-                    ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
+                    if (ExpectedType.IsValueType) ctx.CastToObject(ExpectedType);
+                    ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(_key)); // re-map for formality, but would expect identical, else dedicated method
                     ctx.LoadReaderWriter();
                     ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod("WriteRecursionSafeObject"));
                 }
@@ -89,11 +98,11 @@ namespace AqlaSerializer.Serializers
                 if (!EmitDedicatedMethod(ctx, valueFrom, true))
                 {
                     ctx.LoadValue(valueFrom);
-                    if (type.IsValueType) ctx.CastToObject(type);
-                    ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
+                    if (ExpectedType.IsValueType) ctx.CastToObject(ExpectedType);
+                    ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(_key)); // re-map for formality, but would expect identical, else dedicated method
                     ctx.LoadReaderWriter();
                     ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("ReadObject"));
-                    ctx.CastFromObject(type);
+                    ctx.CastFromObject(ExpectedType);
                 }
             }
         }
@@ -102,34 +111,34 @@ namespace AqlaSerializer.Serializers
 
         bool IProtoTypeSerializer.HasCallbacks(TypeModel.CallbackType callbackType)
         {
-            return ((IProtoTypeSerializer)proxy.Serializer).HasCallbacks(callbackType);
+            return ((IProtoTypeSerializer)_proxy.Serializer).HasCallbacks(callbackType);
         }
 
         bool IProtoTypeSerializer.CanCreateInstance()
         {
-            return ((IProtoTypeSerializer)proxy.Serializer).CanCreateInstance();
+            return ((IProtoTypeSerializer)_proxy.Serializer).CanCreateInstance();
         }
 
 #if FEAT_COMPILER
         void IProtoTypeSerializer.EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, TypeModel.CallbackType callbackType)
         {
-            ((IProtoTypeSerializer)proxy.Serializer).EmitCallback(ctx, valueFrom, callbackType);
+            ((IProtoTypeSerializer)_proxy.Serializer).EmitCallback(ctx, valueFrom, callbackType);
         }
 
         void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx)
         {
-            ((IProtoTypeSerializer)proxy.Serializer).EmitCreateInstance(ctx);
+            ((IProtoTypeSerializer)_proxy.Serializer).EmitCreateInstance(ctx);
         }
 #endif
 #if !FEAT_IKVM
         void IProtoTypeSerializer.Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
-            ((IProtoTypeSerializer)proxy.Serializer).Callback(value, callbackType, context);
+            ((IProtoTypeSerializer)_proxy.Serializer).Callback(value, callbackType, context);
         }
 
         object IProtoTypeSerializer.CreateInstance(ProtoReader source)
         {
-            return ((IProtoTypeSerializer)proxy.Serializer).CreateInstance(source);
+            return ((IProtoTypeSerializer)_proxy.Serializer).CreateInstance(source);
         }
 #endif
     }

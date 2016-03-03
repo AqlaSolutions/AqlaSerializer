@@ -38,6 +38,7 @@ namespace AqlaSerializer.Serializers
     
     interface IProtoSerializer
     {
+        void WriteDebugSchema(IDebugSchemaBuilder builder);
         /// <summary>
         /// The type that this serializer is intended to work for.
         /// </summary>

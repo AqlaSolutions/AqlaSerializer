@@ -21,6 +21,8 @@ namespace AqlaSerializer.Serializers
 {
     sealed class NetObjectValueDecorator : IProtoTypeSerializer // type here is just for wrapping
     {
+        
+
         public bool DemandWireTypeStabilityStatus()
         {
             return true; // always subitem
@@ -56,7 +58,7 @@ namespace AqlaSerializer.Serializers
 
             int baseKey = model.GetKey(type, false, true);
             int key = model.GetKey(type, false, false);
-            if (!Helpers.IsValueType(type) && key >= 0 && baseKey >= 0 && ValueSerializerBuilder.CanReallyBeAsLateReference(key, model, true))
+            if (!Helpers.IsValueType(type) && key >= 0 && baseKey >= 0 && ValueSerializerBuilder.CanTypeBeAsLateReferenceOnBuildStage(key, model, true))
                 _lateReferenceTail = new LateReferenceSerializer(type, key, baseKey, model);
             else if (asLateReference) throw new ArgumentException("Can't use late reference with non-model or value type " + type.Name);
 
@@ -106,6 +108,17 @@ namespace AqlaSerializer.Serializers
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
             _key = key;
             _keySerializer = new ModelTypeSerializer(Helpers.GetNullableUnderlyingType(type) ?? type, key, serializerProxy);
+        }
+
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            var s = (_tail ?? _keySerializer);
+            if (s != null)
+            {
+                using (builder.SingleTailDecorator(this, _options.ToString()))
+                    s.WriteDebugSchema(builder);
+            }
+            else builder.SingleValueSerializer(this, _options.ToString());
         }
 
         public Type ExpectedType => _type;

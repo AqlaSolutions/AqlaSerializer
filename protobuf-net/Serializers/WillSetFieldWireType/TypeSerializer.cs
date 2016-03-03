@@ -1,6 +1,7 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using System.Text;
 using AltLinq;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
@@ -18,6 +19,31 @@ namespace AqlaSerializer.Serializers
 {
     sealed class TypeSerializer : IProtoTypeSerializer
     {
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.GroupSerializer(this))
+            {
+                for (int i = 0; i < serializers.Length; i++)
+                {
+                    IProtoSerializerWithWireType ser = serializers[i];
+                    if (ser.ExpectedType != forType)
+                    {
+                        using (builder.Field(fieldNumbers[i], "SubType"))
+                            ser.WriteDebugSchema(builder);
+                    }
+                }
+                for (int i = 0; i < serializers.Length; i++)
+                {
+                    IProtoSerializerWithWireType ser = serializers[i];
+                    if (ser.ExpectedType == forType)
+                    {
+                        using (builder.Field(fieldNumbers[i]))
+                            ser.WriteDebugSchema(builder);
+                    }
+                }
+            }
+        }
+        
         public bool DemandWireTypeStabilityStatus() => true;
 
         public bool HasCallbacks(TypeModel.CallbackType callbackType)

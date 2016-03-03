@@ -18,7 +18,7 @@ using System.Reflection;
 namespace AqlaSerializer.Serializers
 {
     sealed class ArrayDecorator : ProtoDecoratorBase, IProtoTypeSerializer
-    {
+    {   
         // will be always group or string and won't change between group and string in same session
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || _writePacked;
 #if !FEAT_IKVM
@@ -255,6 +255,12 @@ namespace AqlaSerializer.Serializers
             }
         }
 #endif
+
+        public override void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, _listHelpers.MakeDebugSchemaDescription(AppendToCollection)))
+                Tail.WriteDebugSchema(builder);
+        }
 
     }
 }

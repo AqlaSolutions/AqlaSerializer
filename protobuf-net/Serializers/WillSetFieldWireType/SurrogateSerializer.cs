@@ -15,6 +15,12 @@ namespace AqlaSerializer.Serializers
 {
     sealed class SurrogateSerializer : IProtoTypeSerializer
     {
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this))
+                rootTail.WriteDebugSchema(builder);
+        }
+        
         public bool DemandWireTypeStabilityStatus() => rootTail.DemandWireTypeStabilityStatus();
 
         bool IProtoTypeSerializer.HasCallbacks(AqlaSerializer.Meta.TypeModel.CallbackType callbackType)

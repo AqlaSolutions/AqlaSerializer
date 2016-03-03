@@ -14,13 +14,19 @@ namespace AqlaSerializer.Serializers
 {
     sealed class DefaultValueDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        public override void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, _defaultValue?.ToString()))
+                Tail.WriteDebugSchema(builder);
+        }
+
         public bool DemandWireTypeStabilityStatus() => false;
-        public override Type ExpectedType { get { return Tail.ExpectedType; } }
-        public override bool RequiresOldValue { get { return Tail.RequiresOldValue; } }
-        private readonly object defaultValue;
+        public override Type ExpectedType => Tail.ExpectedType;
+        public override bool RequiresOldValue => Tail.RequiresOldValue;
+        private readonly object _defaultValue;
         public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {
-            if (defaultValue == null) throw new ArgumentNullException("defaultValue");
+            if (defaultValue == null) throw new ArgumentNullException(nameof(defaultValue));
             Type type = model.MapType(defaultValue.GetType());
             // if the value is nullable we should check equality with nullable before writing
             var underlying = Helpers.GetNullableUnderlyingType(tail.ExpectedType);
@@ -34,14 +40,14 @@ namespace AqlaSerializer.Serializers
 #endif
                 )
             {
-                throw new ArgumentException(string.Format("Default value is of incorrect type (expected {0}, actaul {1})", tail.ExpectedType, type), "defaultValue");
+                throw new ArgumentException(string.Format("Default value is of incorrect type (expected {0}, actaul {1})", tail.ExpectedType, type), nameof(defaultValue));
             }
-            this.defaultValue = defaultValue;
+            this._defaultValue = defaultValue;
         }
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            if (!object.Equals(value, defaultValue))
+            if (!object.Equals(value, _defaultValue))
             {
                 Tail.Write(value, dest);
             }
@@ -55,7 +61,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        public override bool EmitReadReturnsValue { get { return Tail.EmitReadReturnsValue; } }
+        public override bool EmitReadReturnsValue => Tail.EmitReadReturnsValue;
 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
@@ -171,7 +177,7 @@ namespace AqlaSerializer.Serializers
                 switch (Helpers.GetTypeCode(expected))
                 {
                     case ProtoTypeCode.Boolean:
-                        if ((bool)defaultValue)
+                        if ((bool)_defaultValue)
                         {
                             ctx.BranchIfTrue(label, false);
                         }
@@ -181,112 +187,112 @@ namespace AqlaSerializer.Serializers
                         }
                         break;
                     case ProtoTypeCode.Byte:
-                        if ((byte)defaultValue == (byte)0)
+                        if ((byte)_defaultValue == (byte)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)(byte)defaultValue);
+                            ctx.LoadValue((int)(byte)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.SByte:
-                        if ((sbyte)defaultValue == (sbyte)0)
+                        if ((sbyte)_defaultValue == (sbyte)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)(sbyte)defaultValue);
+                            ctx.LoadValue((int)(sbyte)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.Int16:
-                        if ((short)defaultValue == (short)0)
+                        if ((short)_defaultValue == (short)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)(short)defaultValue);
+                            ctx.LoadValue((int)(short)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.UInt16:
-                        if ((ushort)defaultValue == (ushort)0)
+                        if ((ushort)_defaultValue == (ushort)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)(ushort)defaultValue);
+                            ctx.LoadValue((int)(ushort)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.Int32:
-                        if ((int)defaultValue == (int)0)
+                        if ((int)_defaultValue == (int)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)defaultValue);
+                            ctx.LoadValue((int)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.UInt32:
-                        if ((uint)defaultValue == (uint)0)
+                        if ((uint)_defaultValue == (uint)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)(uint)defaultValue);
+                            ctx.LoadValue((int)(uint)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.Char:
-                        if ((char)defaultValue == (char)0)
+                        if ((char)_defaultValue == (char)0)
                         {
                             ctx.BranchIfFalse(label, false);
                         }
                         else
                         {
-                            ctx.LoadValue((int)(char)defaultValue);
+                            ctx.LoadValue((int)(char)_defaultValue);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.Int64:
-                        ctx.LoadValue((long)defaultValue);
+                        ctx.LoadValue((long)_defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
                     case ProtoTypeCode.UInt64:
-                        ctx.LoadValue((long)(ulong)defaultValue);
+                        ctx.LoadValue((long)(ulong)_defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
                     case ProtoTypeCode.Double:
-                        ctx.LoadValue((double)defaultValue);
+                        ctx.LoadValue((double)_defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
                     case ProtoTypeCode.Single:
-                        ctx.LoadValue((float)defaultValue);
+                        ctx.LoadValue((float)_defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
                     case ProtoTypeCode.String:
-                        ctx.LoadValue((string)defaultValue);
+                        ctx.LoadValue((string)_defaultValue);
                         EmitBeq(ctx, label, expected);
                         break;
                     case ProtoTypeCode.Decimal:
                         {
-                            decimal d = (decimal)defaultValue;
+                            decimal d = (decimal)_defaultValue;
                             ctx.LoadValue(d);
                             EmitBeq(ctx, label, expected);
                         }
                         break;
                     case ProtoTypeCode.TimeSpan:
                         {
-                            TimeSpan ts = (TimeSpan)defaultValue;
+                            TimeSpan ts = (TimeSpan)_defaultValue;
                             if (ts == TimeSpan.Zero)
                             {
                                 ctx.LoadValue(typeof(TimeSpan).GetField("Zero"));
@@ -301,7 +307,7 @@ namespace AqlaSerializer.Serializers
                         }
                     case ProtoTypeCode.Guid:
                         {
-                            ctx.LoadValue((Guid)defaultValue);
+                            ctx.LoadValue((Guid)_defaultValue);
                             EmitBeq(ctx, label, expected);
                             break;
                         }
@@ -311,7 +317,7 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadValue(((DateTime)defaultValue).ToFileTime());
                         ctx.EmitCall(typeof(DateTime).GetMethod("FromFileTime"));                      
 #else
-                            ctx.LoadValue(((DateTime)defaultValue).ToBinary());
+                            ctx.LoadValue(((DateTime)_defaultValue).ToBinary());
                             ctx.EmitCall(ctx.MapType(typeof(DateTime)).GetMethod("FromBinary"));
 #endif
 

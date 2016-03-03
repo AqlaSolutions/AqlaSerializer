@@ -18,6 +18,12 @@ namespace AqlaSerializer.Serializers
     /// </summary>
     sealed class WireTypeDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+        public override void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, _wireType.ToString()))
+                Tail.WriteDebugSchema(builder);
+        }
+        
         public bool DemandWireTypeStabilityStatus() => true;
 
         public WireTypeDecorator(WireType wireType, IProtoSerializerWithAutoType tail, bool strict = false)
@@ -31,10 +37,7 @@ namespace AqlaSerializer.Serializers
 
         readonly bool _strict;
 
-        private bool NeedsHint
-        {
-            get { return ((int)_wireType & ~7) != 0; }
-        }
+        private bool NeedsHint => ((int)_wireType & ~7) != 0;
 
 #if !FEAT_IKVM
         public override object Read(object value, ProtoReader source)

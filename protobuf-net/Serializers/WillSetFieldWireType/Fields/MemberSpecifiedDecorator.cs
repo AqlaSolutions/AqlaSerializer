@@ -16,6 +16,12 @@ namespace AqlaSerializer.Serializers
 {
     sealed class MemberSpecifiedDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
+        public override void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.SingleTailDecorator(this, _getSpecified.Name))
+                Tail.WriteDebugSchema(builder);
+        }
+
         public bool DemandWireTypeStabilityStatus() => false;
         // may be not specified, right?
         public override Type ExpectedType => Tail.ExpectedType;

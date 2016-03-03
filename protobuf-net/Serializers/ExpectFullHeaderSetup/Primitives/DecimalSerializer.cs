@@ -61,6 +61,10 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            builder.SingleValueSerializer(this);
+        }
     }
 }
 #endif
