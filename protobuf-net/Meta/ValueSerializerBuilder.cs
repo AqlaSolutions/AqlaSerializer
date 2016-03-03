@@ -262,7 +262,7 @@ namespace AqlaSerializer.Meta
 
         public bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint)
         {
-            return type != typeof(string) 
+            return type != _model.MapType(typeof(string))
                 && !CanTypeBeNull(type)
                 && !RuntimeTypeModel.CheckTypeIsCollection(_model, type)
                 && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(type), contentBinaryFormatHint.GetValueOrDefault()));

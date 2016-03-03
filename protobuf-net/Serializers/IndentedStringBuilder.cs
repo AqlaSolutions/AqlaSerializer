@@ -1,7 +1,6 @@
 #if !NO_RUNTIME
 using System;
 using System.Text;
-using AqlaSerializer.Compiler;
 
 namespace AqlaSerializer.Serializers
 {

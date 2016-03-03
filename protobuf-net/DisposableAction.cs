@@ -2,7 +2,7 @@
 using System;
 using AltLinq;
 
-namespace AqlaSerializer.Compiler
+namespace AqlaSerializer
 {
     class DisposableAction : IDisposable
     {
