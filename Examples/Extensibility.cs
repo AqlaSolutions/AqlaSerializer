@@ -89,7 +89,7 @@ namespace Examples
             var canHaz = new CanHazData {
                 A = "abc", B = 456.7F, C = 123
             };
-            Assert.IsTrue(Program.CheckBytes(canHaz, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility), new byte[] {
+            Assert.IsTrue(Program.CheckBytes(canHaz, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility), new byte[] {
                 0x0A, 0x03, 0x61, 0x62, 0x63, // abc
                 0x15, 0x9A, 0x59, 0xE4, 0x43, // 456.7F
                 0x1D, 0x7B, 0x00, 0x00, 0x00  // 123
@@ -99,7 +99,7 @@ namespace Examples
         [Test]
         public void MakeFromScratch()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.Add(typeof(Naked), true);
             model.Add(typeof(CanHazData), true);//[3].IsStrict = true;
 
@@ -212,7 +212,7 @@ namespace Examples
             
             T small = Serializer.ChangeType<BiggerObject, T>(obj);
 
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
 
             small = tm.ChangeType<BiggerObject, T>(obj);
 
@@ -260,7 +260,7 @@ namespace Examples
         static void TestWriteExt<T>() where T : IExtTest, IExtensible, new() {
             const float SOME_VALUE = 987.65F;
             T obj = new T();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Extensible.AppendValue<float>(tm, obj, 3, SOME_VALUE);
 
             byte[] raw = GetExtensionBytes(obj);

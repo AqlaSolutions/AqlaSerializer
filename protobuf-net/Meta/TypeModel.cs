@@ -929,7 +929,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public static RuntimeTypeModel Create()
         {
-            return Create(false, ProtoCompatibilitySettings.Default);
+            return Create(false, ProtoCompatibilitySettingsValue.Default);
         }
 
         /// <summary>
@@ -940,7 +940,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         /// <param name="newestBehavior">If set to true the newest recommended defaults are enabled upon creation. Default: false</param>
         /// <param name="protoCompatibility">Protocol Buffers format compatibility</param>
-        public static RuntimeTypeModel Create(bool newestBehavior, ProtoCompatibilitySettings protoCompatibility)
+        public static RuntimeTypeModel Create(bool newestBehavior, ProtoCompatibilitySettingsValue protoCompatibility)
         {
             var r = new RuntimeTypeModel(false, protoCompatibility);
 #if FEAT_COMPILER && FORCE_AUTOCOMPILE

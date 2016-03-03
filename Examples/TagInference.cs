@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using AqlaSerializer;
 using System.Runtime.Serialization;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 
 namespace Examples
@@ -79,7 +80,12 @@ namespace Examples
                 Delta = 4,
                 Zulu = 9
             };
-            TagData clone = Serializer.DeepClone(data);
+            var tm = TypeModel.Create();
+
+            // for compatibility with DataMember
+            //tm.SkipForcedAdvancedVersioning = true;
+
+            TagData clone = tm.DeepClone(data);
             Assert.AreEqual(data.Bravo, clone.Bravo, "Bravo");
             Assert.AreEqual(data.Charlie, clone.Charlie, "Charlie");
             Assert.AreEqual(data.Delta, clone.Delta, "Delta");
@@ -96,7 +102,16 @@ namespace Examples
                 Delta = 4,
                 Zulu = 9
             };
-            TagDataExpected clone = Serializer.ChangeType<TagData, TagDataExpected>(data);
+
+            RuntimeTypeModel tm = TypeModel.Create();
+            
+            // for compatibility with DataMember
+            //tm.SkipForcedAdvancedVersioning = true;
+
+            var first = tm.GetDebugSchema(typeof(TagData));
+            var second = tm.GetDebugSchema(typeof(TagDataExpected));
+
+            TagDataExpected clone = tm.ChangeType<TagData, TagDataExpected>(data);
             Assert.AreEqual(data.Bravo, clone.Bravo, "Bravo");
             Assert.AreEqual(data.Charlie, clone.Charlie, "Charlie");
             Assert.AreEqual(data.Delta, clone.Delta, "Delta");

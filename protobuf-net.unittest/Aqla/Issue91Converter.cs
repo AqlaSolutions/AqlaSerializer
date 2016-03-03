@@ -15,7 +15,7 @@ namespace AqlaSerializer.unittest.Aqla
 
             //I apply AsReference decoration in run-time while configuring the model.
             //Don't think the moment really matters.
-            [SerializableMember(2, true, EnhancedMode.Reference)]
+            [SerializableMember(2, ValueFormat.Reference)]
             public object Value;
         }
 
@@ -56,14 +56,12 @@ namespace AqlaSerializer.unittest.Aqla
 
             }
         }
-
-        // TODO late reference is not supported for surrogate subtypes
+        
         [Test]
         public void Execute([Values(false, true)] bool compile)
         {
-            var comp = ProtoCompatibilitySettings.Default;
-            comp.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
-            var model = TypeModel.Create(false, comp);
+            var model = TypeModel.Create();
+            model.SkipForcedLateReference = true;
             model.AutoCompile = compile;
             model.Add(typeof(SObjectSurrogate), true);
             model.Add(typeof(STag), true);

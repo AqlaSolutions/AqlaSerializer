@@ -50,7 +50,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER CHECK_COMPILED_VS_NOT FORCE_LATE_REFERENCE FORCE_ADVANCED_VERSIONING</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER CHECK_COMPILED_VS_NOT FORCE_ADVANCED_VERSIONING</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -309,7 +309,8 @@
     <Compile Include="Aqla\AttributeType.cs" />
     <Compile Include="Aqla\DefaultAutoAddStrategy.cs" />
     <Compile Include="Aqla\CallbackAttributes.cs" />
-    <Compile Include="Aqla\EnhancedMode.cs" />
+    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetImplicitMemberHandler.cs" />
+    <Compile Include="Aqla\ValueFormat.cs" />
     <Compile Include="Aqla\IAutoAddStrategy.cs" />
     <Compile Include="Aqla\CollectionFormat.cs" />
     <Compile Include="Aqla\Meta\Mapping\DerivedTypeCandidate.cs" />
@@ -369,6 +370,7 @@
     <Compile Include="CallerMemberNameAttributes.cs" />
     <Compile Include="Compiler\CompilerDelegates.cs" />
     <Compile Include="Compiler\CompilerContext.cs" />
+    <Compile Include="Compiler\DisposableAction.cs" />
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Compiler\MethodContext.cs" />
     <Compile Include="Compiler\SerializerCodeGen.cs" />
@@ -389,6 +391,7 @@
     <Compile Include="Meta\ReflectionObjectMap.cs" />
     <Compile Include="Meta\ValueSerializationSettings.cs" />
     <Compile Include="Meta\ValueSerializerBuilder.cs" />
+    <Compile Include="Serializers\DebugSchemaBuilder.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\AccessorsCache.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\DynamicMethodCompiler.cs" />
     <Compile Include="LateReferencesCache.cs" />
@@ -411,8 +414,7 @@
     <Compile Include="Meta\BasicList.cs" />
     <Compile Include="Meta\CallbackSet.cs" />
     <Compile Include="Meta\MetaType.cs" />
-    <Compile Include="Meta\NetObjectExtensionTypes.cs" />
-    <Compile Include="Meta\ProtoCompatibilitySettings.cs" />
+    <Compile Include="Meta\ProtoCompatibilitySettingsValue.cs" />
     <Compile Include="Meta\RuntimeTypeModel.cs" />
     <Compile Include="Meta\RuntimeTypeModel.Schema.cs" />
     <Compile Include="Meta\SubType.cs" />
@@ -430,6 +432,8 @@
     <Compile Include="ProtoWriter.cs" />
     <Compile Include="SerializationContext.cs" />
     <Compile Include="Serializer.cs" />
+    <Compile Include="Serializers\IndentedStringBuilder.cs" />
+    <Compile Include="Serializers\IndentedWithBracketsStringBuilder.cs" />
     <Compile Include="Serializers\RootFieldNumberDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BlobSerializer.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\CharSerializer.cs" />

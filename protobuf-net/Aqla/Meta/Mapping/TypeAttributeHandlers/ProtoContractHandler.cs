@@ -67,15 +67,9 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                     if (item.TryGet("AsReferenceDefault", out tmp))
                     {
                         if ((bool)tmp)
-                        {
-                            main.Member.EnhancedFormat = true;
-                            main.Member.EnhancedWriteMode = EnhancedMode.Reference;
-                        }
+                            main.Member.Format = ValueFormat.Reference;
                         else
-                        {
-                            main.Member.EnhancedFormat = false;
-                            main.Member.EnhancedWriteMode = EnhancedMode.NotSpecified;
-                        }
+                            main.Member.Format = ValueFormat.Compact;
                     }
                     if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) s.ImplicitFirstTag = (int)tmp;
                     if (item.TryGet("ConstructType", out tmp)) main.ConstructType = (Type)tmp;

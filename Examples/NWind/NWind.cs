@@ -60,7 +60,7 @@ namespace DAL
         [Test]
         public void LoadTestDefaultModel()
         {
-            Database db = LoadDatabaseFromFile<Database>(TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility));
+            Database db = LoadDatabaseFromFile<Database>(TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility));
             DbMetrics("Database", db);
 
         }
@@ -68,7 +68,7 @@ namespace DAL
         [Test]
         public void LoadTestCustomModel()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Database db;
             
             db = LoadDatabaseFromFile<Database>(model);
@@ -93,7 +93,7 @@ namespace DAL
             byte[] blob = File.ReadAllBytes(@"NWind\nwind.proto.bin");
             using (MemoryStream ms = new MemoryStream(blob))
             {
-                var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 Type type = typeof(Database);
                 model.Deserialize(ms, null, type);
                 var compiled = model.Compile();

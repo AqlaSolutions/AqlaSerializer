@@ -33,7 +33,7 @@ namespace Examples.SimpleStream
             NoddyExtends ne = Program.Build<NoddyExtends>(0x1B, 0x08, 0x96, 0x01, 0x1C);// [start group 3] [test1] [end group 3]
 
             Assert.IsTrue(Program.CheckBytes(ne, 0x1B, 0x08, 0x96, 0x01, 0x1C), "Round trip");
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm.SkipCompiledVsNotCheck = true;
             Test1 t1 = Extensible.GetValue<Test1>(tm, ne, 3);
             Assert.IsNotNull(t1, "Got an object?");

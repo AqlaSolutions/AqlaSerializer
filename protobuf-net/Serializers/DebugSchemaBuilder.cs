@@ -151,7 +151,6 @@ namespace AqlaSerializer.Serializers
             sb.AppendLine(_sb.ToString());
             foreach (var b in _contracts)
             {
-                sb.AppendLine();
                 sb.AppendLine(b.Key + ":");
                 sb.AppendLine(b.Value.ToString());
             }

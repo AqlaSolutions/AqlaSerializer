@@ -49,7 +49,7 @@ namespace Examples
         {
             using (var ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, value);
                 return (int)ms.Length;
             }
@@ -58,7 +58,7 @@ namespace Examples
         public void TestPartialWithGuid()
         {
             var user = new User();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             var clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(0, Measure(user));
@@ -87,7 +87,7 @@ namespace Examples
         public void TestGuidWithCrazyDefault()
         {
             var user = new UserWithCrazyDefault();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             var clone = tm.DeepClone(user);
             Assert.AreEqual(user.GUID, clone.GUID);
             Assert.AreEqual(0, Measure(user));
@@ -131,7 +131,7 @@ namespace Examples
             var obj = new GuidLayout { Value = guid };
             using (var ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, obj);
                 string hex = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
                 // 0A = 1010 = field 1, length delimited (sub-object)
@@ -180,7 +180,7 @@ namespace Examples
             GuidData foo = new GuidData { Bar = Guid.Empty };
             using (MemoryStream ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, foo);
                 Assert.AreEqual(0, ms.Length); // 1 tag, 1 length (0)
                 ms.Position = 0;
@@ -196,7 +196,7 @@ namespace Examples
             GuidData foo = new GuidData { Bar = Guid.NewGuid() };
             using (MemoryStream ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, foo);
                 Assert.AreEqual(20, ms.Length); 
                 ms.Position = 0;

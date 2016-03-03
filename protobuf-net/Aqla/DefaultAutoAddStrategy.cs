@@ -128,7 +128,7 @@ namespace AqlaSerializer
                     ? BindingFlags.Public | BindingFlags.Static
                     : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 if (isEnum)
-                    foundList = foundList.Where(x => x.MemberType == MemberTypes.Field).ToArray();
+                    foundList = foundList.Where(x => x is FieldInfo).ToArray();
 #endif
                 foreach (MemberInfo member in foundList)
                 {
@@ -183,7 +183,7 @@ namespace AqlaSerializer
                             var r = ApplyDefaultBehaviour_AddMembers(args);
                             if (r != null)
                             {
-                                if (!canBeMapped) throw new MethodAccessException("Property " + property + " should be readable to be mapped.");
+                                if (!canBeMapped) throw new MemberAccessException("Property " + property + " should be readable to be mapped.");
                                 members.Add(r);
                             }
                         }
@@ -632,6 +632,7 @@ namespace AqlaSerializer
                     new ProtobufNetPartialMemberHandler(new ProtobufNetMemberHandlerStrategy()),
                     new DataContractMemberHandler(),
                     new XmlContractMemberHandler(),
+                    new ProtobufNetImplicitMemberHandler(new ProtobufNetMemberHandlerStrategy()), 
                 });
         }
 

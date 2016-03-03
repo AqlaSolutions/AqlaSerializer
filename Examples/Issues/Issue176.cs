@@ -22,7 +22,7 @@ namespace Examples.Issues
         {
             byte[] fileBytes = File.ReadAllBytes(@"NWind\nwind.proto.bin");
 
-            RuntimeTypeModel ordersModel = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            RuntimeTypeModel ordersModel = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             ordersModel.AutoCompile = false;
             
             Database database = (Database)ordersModel.Deserialize(new MemoryStream(fileBytes), null, typeof(Database));

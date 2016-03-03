@@ -23,7 +23,7 @@ namespace precompile.tests
             var rtm = TypeModel.Create();
             Type t = LoadType(rtm);
             var runtime = MakeRuntime(rtm, t, "Enum");
-            Assert.That(runtime.EnhancedWriteAs, Is.EqualTo(EnhancedMode.Reference));
+            Assert.That(runtime.Format, Is.EqualTo(ValueFormat.Reference));
         }
 
         [Test]
@@ -32,7 +32,7 @@ namespace precompile.tests
             var rtm = TypeModel.Create();
             Type t = LoadType(rtm);
             var runtime = MakeRuntime(rtm, t, "Bool");
-            Assert.That(runtime.EnhancedWriteAs, Is.EqualTo(true));
+            Assert.That(runtime.DynamicType, Is.EqualTo(true));
         }
 
         [Test]

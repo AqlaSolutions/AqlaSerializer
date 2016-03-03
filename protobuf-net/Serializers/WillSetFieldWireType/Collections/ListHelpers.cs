@@ -23,7 +23,7 @@ namespace AqlaSerializer.Serializers
 {
     class ListHelpers
     {
-        readonly WireType _packedWireTypeForRead;
+        readonly WireType _packedWireTypeForRead = WireType.None;
         readonly IProtoSerializerWithWireType _tail;
         readonly bool _protoCompatibility;
         readonly bool _writePacked;
@@ -34,7 +34,10 @@ namespace AqlaSerializer.Serializers
         
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail)
         {
-            _packedWireTypeForRead = packedWireTypeForRead;
+            if (ListDecorator.CanPack(packedWireTypeForRead))
+                _packedWireTypeForRead = packedWireTypeForRead;
+            else if (writePacked)
+                throw new ArgumentException("For writePacked wire type for read should be specified");
             _tail = tail;
             _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;
@@ -547,6 +550,12 @@ namespace AqlaSerializer.Serializers
                 if (desc.Length != 0)
                     desc += ", ";
                 desc += "Append";
+            }
+            if (_packedWireTypeForRead != WireType.None)
+            {
+                if (desc.Length != 0)
+                    desc += ", ";
+                desc += "PackedRead = " + _packedWireTypeForRead;
             }
             return desc;
         }

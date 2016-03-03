@@ -53,7 +53,7 @@ namespace Examples.Issues
         [Test]
         public void DeserializeParentWithUnmarkedChildShouldWork()
         {
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Assert.AreEqual(typeof(ParentA), tm.Deserialize<ParentA>(Stream.Null).GetType());
         }
 
@@ -80,7 +80,7 @@ namespace Examples.Issues
         [Test]
         public void DeserializeParentWithUnexpectedChildShouldWork()
         {
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Assert.AreEqual(typeof(ParentB), tm.Deserialize<ParentB>(Stream.Null).GetType());
         }
 
@@ -94,7 +94,7 @@ namespace Examples.Issues
         [Test]
         public void DeserializeParentWithExpectedChildShouldWork()
         {
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             Assert.AreEqual(typeof(ParentC), tm.Deserialize<ParentC>(Stream.Null).GetType());
         }
 

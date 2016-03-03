@@ -14,7 +14,7 @@ namespace AqlaSerializer.unittest.Meta
     {
         static RuntimeTypeModel CreateModel(bool comp)
         {
-            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
+            var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettingsValue.FullCompatibility : ProtoCompatibilitySettingsValue.Incompatible);
             model.Add(typeof(OuterRef), false)
                 .Add(1, "Int32")
                 .Add(2, "String")

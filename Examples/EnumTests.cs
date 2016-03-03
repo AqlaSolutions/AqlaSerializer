@@ -241,7 +241,7 @@ enum blah {
             EnumFoo foo = new EnumFoo { Bar = val };
             using (MemoryStream ms = new MemoryStream())
             {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
                 tm.Serialize(ms, foo);
                 ms.Position = 0;
                 byte[] buffer = ms.ToArray();
@@ -313,7 +313,7 @@ enum blah {
         {
             EnumMarkedContract value = EnumMarkedContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
         }
 
         [Test]
@@ -321,7 +321,7 @@ enum blah {
         {
             EnumMarkedContract? value = EnumMarkedContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
         }
         [Test]
         public void RoundTripTopLevelNullableContractNull()
@@ -334,7 +334,7 @@ enum blah {
         {
             EnumNoContract value = EnumNoContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
         }
 
         [Test]
@@ -342,7 +342,7 @@ enum blah {
         {
             EnumNoContract? value = EnumNoContract.C;
             Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility).DeepClone(value));
+            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
         }
         [Test]
         public void RoundTripTopLevelNullableNoContractNull()

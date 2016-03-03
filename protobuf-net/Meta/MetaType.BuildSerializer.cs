@@ -31,9 +31,20 @@ namespace AqlaSerializer.Meta
     partial class MetaType
     {
         // to be compatible with auxiliary type serializer and don't add overhead we don't decorate enums with netobject
-        bool RootStartsGroup => RootNetObjectMode || RootLateReferenceMode;
-        bool RootNetObjectMode => !IsSimpleValue && IsNetObjectValueDecoratorNecessary(_model, Type, true);
-        bool RootLateReferenceMode => !IsSimpleValue && _model.ProtoCompatibility.UseOwnFormat;
+        bool GetRootStartsGroup()
+        {
+            return GetRootNetObjectMode() || GetRootLateReferenceMode();
+        }
+
+        bool GetRootNetObjectMode()
+        {
+            return !IsSimpleValue && IsNetObjectValueDecoratorNecessary(_model, ValueFormat.Reference);
+        }
+
+        bool GetRootLateReferenceMode()
+        {
+            return !IsSimpleValue && !_model.ProtoCompatibility.SuppressOwnRootFormat;
+        }
 
         bool IsSimpleValue => Helpers.IsEnum(Type);
 
@@ -79,8 +90,8 @@ namespace AqlaSerializer.Meta
                     var s = BuildSerializer(true);
                     _rootSerializer = new RootDecorator(
                         Type,
-                        RootNetObjectMode,
-                        !RootLateReferenceMode,
+                        GetRootNetObjectMode(),
+                        !GetRootLateReferenceMode(),
                         s,
                         _model);
 
@@ -109,7 +120,7 @@ namespace AqlaSerializer.Meta
             {
                 Debug.Assert(IsSimpleValue);
                 IProtoTypeSerializer ser = new WireTypeDecorator(WireType.Variant, new EnumSerializer(Type, GetEnumMap()));
-                if (isRoot && !RootStartsGroup)
+                if (isRoot && !GetRootStartsGroup())
                     ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
                 return ser;
             }
@@ -151,7 +162,7 @@ namespace AqlaSerializer.Meta
                 // standard root decorator won't start any field
                 // in compatibility mode collections won't start subitems like normally
                 // so wrap with field
-                if (isRoot && !RootStartsGroup)
+                if (isRoot && !GetRootStartsGroup())
                     ser = new RootFieldNumberDecorator(ser, TypeModel.EnumRootTag);
 
                 return ser;

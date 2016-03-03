@@ -127,7 +127,7 @@ namespace Examples.Issues
             MemoryStream mspf = new MemoryStream();
             MemoryStream msfp = new MemoryStream();
             MemoryStream msff = new MemoryStream();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm.Serialize(mspp, app);
             tm.Serialize(mspf, apf);
             tm.Serialize(msfp, afp);

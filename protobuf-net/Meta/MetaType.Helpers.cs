@@ -44,15 +44,11 @@ namespace AqlaSerializer.Meta
             return result;
         }
 
-        internal static bool IsNetObjectValueDecoratorNecessary(RuntimeTypeModel m, Type t, bool checkAsReference)
+        internal static bool IsNetObjectValueDecoratorNecessary(RuntimeTypeModel m, ValueFormat format)
         {
+            if (m.ProtoCompatibility.SuppressValueEnhancedFormat) return false;
 
-            bool isRef = !Helpers.IsValueType(t);
-            bool isNullable = isRef || Helpers.GetNullableUnderlyingType(t) != null;
-            bool wrap = (isRef && checkAsReference && m.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Reference))
-                        || (isNullable && m.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.Null)
-                            || m.ProtoCompatibility.AllowExtensionDefinitions.HasFlag(NetObjectExtensionTypes.AdvancedVersioning));
-            return wrap;
+            return format != ValueFormat.Compact;
         }
 
         internal static MetaType GetRootType(MetaType source)
@@ -274,7 +270,7 @@ namespace AqlaSerializer.Meta
         {
             if (Helpers.IsNullOrEmpty(name)) return null;
 #if WINRT
-            return instance ? Helpers.GetInstanceMethod(typeInfo, name) : Helpers.GetStaticMethod(typeInfo, name);
+            return instance ? Helpers.GetInstanceMethod(_typeInfo, name) : Helpers.GetStaticMethod(_typeInfo, name);
 #else
             return instance ? Helpers.GetInstanceMethod(Type, name) : Helpers.GetStaticMethod(Type, name);
 #endif

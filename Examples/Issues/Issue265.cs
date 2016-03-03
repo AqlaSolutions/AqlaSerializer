@@ -29,7 +29,7 @@ namespace Examples.Issues
         [Test]
         public void ShouldSerializeEnumArrayMember()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             TestMember(model);
             model.Compile("ShouldSerializeEnumArrayMember", "ShouldSerializeEnumArrayMember.dll");
@@ -61,7 +61,7 @@ namespace Examples.Issues
         [Test]
         public void ShouldSerializeIndividualEnum()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             TestIndividual(model);
             model.Compile("ShouldSerializeIndividualEnum", "ShouldSerializeIndividualEnum.dll");
@@ -82,7 +82,7 @@ namespace Examples.Issues
         [Test]
         public void ShouldSerializeArrayOfEnums()
         {
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             TestArray(model);
             model.Compile("ShouldSerializeArrayOfEnums", "ShouldSerializeArrayOfEnums.dll");

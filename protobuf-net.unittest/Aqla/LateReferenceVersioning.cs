@@ -20,7 +20,7 @@ namespace AqlaSerializer.unittest.Aqla
         {
             public int Data { get; set; }
 
-            [SerializableMember(1, EnhancedMode.LateReference)]
+            [SerializableMember(1, ValueFormat.LateReference)]
             public Referenced Next { get; set; }
         }
 
@@ -62,9 +62,8 @@ namespace AqlaSerializer.unittest.Aqla
         public void EnsureLateWorks()
         {
             var original = new Container { Value = GenerateNodes(4000) };
-            var comp1 = ProtoCompatibilitySettings.None;
-            comp1.AllowExtensionDefinitions |= NetObjectExtensionTypes.LateReference;
-            var tm1 = TypeModel.Create(false, comp1);
+            var tm1 = TypeModel.Create();
+            tm1.SkipForcedLateReference = true;
             Container copy = tm1.DeepClone(original);
             CheckNodes(original.Value, copy.Value);
         }
@@ -97,12 +96,14 @@ namespace AqlaSerializer.unittest.Aqla
 
         static Container DeepClone(Container original, bool notLateToLate)
         {
-            var comp1 = ProtoCompatibilitySettings.None;
-            comp1.AllowExtensionDefinitions |= NetObjectExtensionTypes.LateReference;
-            var tm1 = TypeModel.Create(false, comp1);
-            var comp2 = ProtoCompatibilitySettings.None;
-            comp2.AllowExtensionDefinitions &= ~NetObjectExtensionTypes.LateReference;
-            var tm2 = TypeModel.Create(false, comp2);
+            var tm1 = TypeModel.Create();
+            var tm2 = TypeModel.Create();
+
+            tm1.SkipForcedLateReference = true;
+            tm2.SkipForcedLateReference = true;
+
+            ValueMember f = tm2.Add(typeof(Referenced), true)[1];
+            f.Format = ValueFormat.Reference;
 
             if (notLateToLate)
             {

@@ -121,7 +121,7 @@ message EnumWrapper {
         [Test]
         public void NWindPipeline()
         {
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             DAL.Database masterDb = DAL.NWindTests.LoadDatabaseFromFile<DAL.Database>(tm);
             int orderCount = masterDb.Orders.Count,
                 lineCount = masterDb.Orders.Sum(o => o.Lines.Count),

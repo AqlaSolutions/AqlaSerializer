@@ -14,7 +14,7 @@ namespace Examples.Issues
         public void Execute()
         {
             byte[] buffer = { 9, 8, 5, 26, 5, 24, 238, 98, 32, 1 };
-            var model = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             model.AutoCompile = false;
             using (var ms = new MemoryStream(buffer))
             {

@@ -17,7 +17,7 @@ namespace AqlaSerializer.unittest.Meta
             public string Name { get; set; }
             public static RuntimeTypeModel BuildMeta([Values(false, true)] bool comp)
             {
-                var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettings.FullCompatibility : ProtoCompatibilitySettings.None);
+                var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettingsValue.FullCompatibility : ProtoCompatibilitySettingsValue.Incompatible);
                 model.AddNotAsReferenceDefault = true;
                 var t=model.Add(typeof(Customer), false);
                 t.Add(1, "Id");

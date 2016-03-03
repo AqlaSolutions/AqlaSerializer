@@ -38,9 +38,13 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotEmpty("Name", ref main.Name);
                 if (!main.IsRequiredInSchema) attribute.TryGetNotDefault("IsRequired", ref main.IsRequiredInSchema);
 
+                var type = Helpers.GetMemberType(member);
+
                 bool isPacked = false;
                 attribute.TryGetNotDefault("IsPacked", ref isPacked);
-                level.Collection.Format = isPacked ? CollectionFormat.Google : CollectionFormat.GoogleNotPacked;
+                level.Collection.Format = isPacked ? CollectionFormat.Google : CollectionFormat.NotSpecified;
+                //if (!isPacked && level.EffectiveType.IsArray && level.EffectiveType.GetElementType().IsArray)
+                //    level.Collection.Format = CollectionFormat.NotSpecified;
 
                 bool overwriteList = false;
                 attribute.TryGetNotDefault("OverwriteList", ref overwriteList);
@@ -50,8 +54,14 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 attribute.TryGetNotDefault("DataFormat", ref dataFormat);
                 level.ContentBinaryFormatHint = dataFormat;
 
+                if (!level.WriteAsDynamicType.GetValueOrDefault())
+                    attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);
+                bool dynamicType = level.WriteAsDynamicType.GetValueOrDefault();
+
+                if (dynamicType && level.Format == ValueFormat.NotSpecified)
+                    level.Format = ValueFormat.MinimalEnhancement;
+
                 bool asRefHasValue = false;
-                bool notAsReferenceHasValue = false;
                 bool notAsReference = false;
 #if !FEAT_IKVM
                 // IKVM can't access AsReferenceHasValue, but conveniently, AsReference will only be returned if set via ctor or property
@@ -63,84 +73,112 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                     asRefHasValue = attribute.TryGetNotDefault("AsReference", ref value);
                     if (asRefHasValue) // if AsReference = true - use defaults
                     {
-                        notAsReferenceHasValue = true;
                         notAsReference = !value;
                     }
                 }
 
                 if (!asRefHasValue)
                 {
-                    // those can't be registered and don't have AsReferenceDefault
-                    // explicitely set their asReference = false
-                    switch (Helpers.GetTypeCode(Helpers.GetMemberType(member)))
-                    {
-                        case ProtoTypeCode.String:
-                        case ProtoTypeCode.ByteArray:
-                        case ProtoTypeCode.Type:
-                        case ProtoTypeCode.Uri:
-                            notAsReference = true;
-                            notAsReferenceHasValue = true;
-                            break;
-                        default:
-                            if (!RuntimeTypeModel.CheckTypeCanBeAdded(model, Helpers.GetMemberType(member)))
-                            {
-                                notAsReference = true;
-                                notAsReferenceHasValue = true;
-                            }
-                            else
-                            {
-                                // we could check GetContactFamily == null
-                                // but type still may be force-added even without contract
-                                // so we have to implicitely set fallback to false
-                                // the downside is that noone will know why
-                                // the default is not as reference for this member
-                                // if its EffectiveType is not registered
-                                level.EnhancedFormatDefaultFallback = false;
-                            }
-                            break;
-                    }
+                    if (level.Format == ValueFormat.NotSpecified)
+                        SetLegacyFormat(ref level, member, model);
                 }
-
-                if (notAsReferenceHasValue)
+                else
                 {
                     // it depends on ValueMember.GetAsReferenceDefault() result!
                     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                     if (notAsReference)
                     {
-                        level.EnhancedWriteMode = EnhancedMode.NotSpecified;
+                        level.Format = GetDefaultLegacyFormat(type, model);
                         // -x-
                         //bool isNullable = !Helpers.IsValueType(memberType) || Helpers.GetNullableUnderlyingType(memberType) != null;
                         //// supports null is also affected so we don't change anything or ref type: with compatibility mode Compact will be used otherwise Enhanced
                         //if (!isNullable)
                         // -x-
-                        level.EnhancedFormat = false;
                     }
                     else
                     {
-                        level.EnhancedWriteMode = EnhancedMode.Reference;
-                        level.EnhancedFormat = true;
+                        level.Format = ValueFormat.Reference;
                     }
                 }
 
-                if (!level.WriteAsDynamicType.GetValueOrDefault())
-                    attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);
-                if (level.WriteAsDynamicType.GetValueOrDefault()) level.EnhancedFormat = true;
-
                 s.TagIsPinned = main.Tag > 0;
+
+                var dl = s.SerializationSettings.DefaultLevel.GetValueOrDefault(new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevel()));
+
+                if (isPacked)
+                    dl.Basic.Format = ValueFormat.Compact;
+                
+                if (dynamicType)
+                {
+                    // apply dynamic type to items
+                    Type itemType = null;
+                    Type defaultType = null;
+                    MetaType.ResolveListTypes(model, Helpers.GetMemberType(s.Member), ref itemType, ref defaultType);
+                    if (itemType != null)
+                    {
+                        dl.Basic.WriteAsDynamicType = true;
+                        dl.Basic.Format = ValueFormat.Reference;
+
+                        if (level.Format == ValueFormat.Compact || level.Format == ValueFormat.MinimalEnhancement)
+                            level.WriteAsDynamicType = false;
+                    }
+                }
+
+                s.SerializationSettings.DefaultLevel = dl;
                 s.SerializationSettings.SetSettings(level, 0);
 
-                if (!asRefHasValue)
-                {
-                    var ds = s.SerializationSettings.DefaultLevel.GetValueOrDefault();
-                    ds.Basic.EnhancedFormat = false;
-                    s.SerializationSettings.DefaultLevel = ds;
-                }
-                
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto
             }
             finally
             {
                 s.MainValue = main;
+            }
+        }
+
+        static ValueFormat GetDefaultLegacyFormat(Type type, RuntimeTypeModel model)
+        {
+            return ValueSerializerBuilder.CanTypeBeNull(type)
+#if FORCE_ADVANCED_VERSIONING
+                   || !model.SkipForcedAdvancedVersioning
+#endif
+                       ? ValueFormat.MinimalEnhancement
+                       : ValueFormat.Compact;
+        }
+
+        public void SetLegacyFormat(ref MemberLevelSettingsValue level, MemberInfo member, RuntimeTypeModel model)
+        {
+            Type type = Helpers.GetMemberType(member);
+            ValueFormat legacyFormat = GetDefaultLegacyFormat(type, model);
+            if (level.WriteAsDynamicType.GetValueOrDefault())
+            {
+                level.DefaultFormatFallback = legacyFormat;
+                return;
+            }
+            switch (Helpers.GetTypeCode(type))
+            {
+                // these can't be registered and don't have AsReferenceDefault
+                // explicitely set their asReference = false
+                case ProtoTypeCode.String:
+                case ProtoTypeCode.ByteArray:
+                case ProtoTypeCode.Type:
+                case ProtoTypeCode.Uri:
+                    level.Format = legacyFormat;
+                    break;
+                default:
+                    // we could check GetContactFamily == null
+                    // but type still may be force-added even without contract
+                    // so we have to implicitely set fallback to false
+                    // the downside is that noone will know why
+                    // the default is not as reference for this member
+                    // if its EffectiveType is not registered
+                    level.DefaultFormatFallback = legacyFormat;
+
+                    if (!RuntimeTypeModel.CheckTypeCanBeAdded(model, type))
+                    {
+                        // for primitive types - explicitly
+                        level.Format = legacyFormat;
+                    }
+                    break;
             }
         }
     }

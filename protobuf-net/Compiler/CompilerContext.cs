@@ -584,21 +584,6 @@ namespace AqlaSerializer.Compiler
             }
         }
 
-        class DisposableAction : IDisposable
-        {
-            readonly Action _action;
-
-            public DisposableAction(Action action)
-            {
-                _action = action;
-            }
-
-            public void Dispose()
-            {
-                _action?.Invoke();
-            }
-        }
-
         int _debugDepth;
 
         public IDisposable StartDebugBlockAuto(object owner, string subBlock = null, [CallerFilePath] string filePath = null, [CallerMemberName] string memberName = null, [CallerLineNumber] int lineNumber=0)

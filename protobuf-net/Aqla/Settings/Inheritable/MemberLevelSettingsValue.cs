@@ -19,17 +19,12 @@ namespace AqlaSerializer.Settings
         /// <summary>
         /// Has value if != NotSpecified
         /// </summary>
-        public bool? EnhancedFormat;
+        public ValueFormat Format;
 
         /// <summary>
-        /// Used when no registered EffectiveType found to get default enhanced format, required to support not as reference default behavior on legacy proto members of non-contract types.
+        /// Used when no enhanced format specified, required to support not as reference default behavior on legacy proto members of non-contract types.
         /// </summary>
-        public bool? EnhancedFormatDefaultFallback;
-
-        /// <summary>
-        /// Has value if != NotSpecified
-        /// </summary>
-        public EnhancedMode EnhancedWriteMode;
+        public ValueFormat DefaultFormatFallback;
         
         /// <summary>
         /// Embeds the type information into the stream, allowing usage with types not known in advance.
@@ -50,9 +45,8 @@ namespace AqlaSerializer.Settings
         {
             var x = this;
             x.Collection.Append = x.Collection.Append.GetValueOrDefault();
-            x.Collection.PackedWireTypeForRead = x.Collection.PackedWireTypeForRead.GetValueOrDefault();
+            // we don't change PackedWireTypeForRead because any non-null value would be not default
             x.ContentBinaryFormatHint = x.ContentBinaryFormatHint.GetValueOrDefault();
-            x.EnhancedFormat = x.EnhancedFormat.GetValueOrDefault();
             x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
             return x;
         }
@@ -70,11 +64,10 @@ namespace AqlaSerializer.Settings
         public static MemberLevelSettingsValue Merge(MemberLevelSettingsValue baseValue, MemberLevelSettingsValue derivedValue)
         {
             var r = derivedValue;
-            if (r.EnhancedFormat == null) r.EnhancedFormat = baseValue.EnhancedFormat;
-            if (r.EnhancedWriteMode == EnhancedMode.NotSpecified) r.EnhancedWriteMode = baseValue.EnhancedWriteMode;
+            if (r.Format == ValueFormat.NotSpecified) r.Format = baseValue.Format;
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
-            if (r.EnhancedFormatDefaultFallback == null) r.EnhancedFormatDefaultFallback = baseValue.EnhancedFormatDefaultFallback;
+            if (r.DefaultFormatFallback == null) r.DefaultFormatFallback = baseValue.DefaultFormatFallback;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
         }
@@ -82,14 +75,12 @@ namespace AqlaSerializer.Settings
         public override string ToString()
         {
             string s = "LevelSettings of type " + EffectiveType;
-            if (EnhancedFormat == true)
+            if (Format != ValueFormat.Compact)
             {
-                if (EnhancedWriteMode != EnhancedMode.NotSpecified)
-                    s += ", " + EnhancedWriteMode;
-                else
-                    s += ", enhanced";
+                if (Format != ValueFormat.NotSpecified)
+                    s += ", " + Format;
             }
-            else if (EnhancedFormat == false)
+            else if (Format == ValueFormat.Compact)
                 s += ", compact";
 
             if (Collection.ItemType != null)

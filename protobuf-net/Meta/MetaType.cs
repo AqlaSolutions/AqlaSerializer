@@ -55,7 +55,7 @@ namespace AqlaSerializer.Meta
         bool _isDefaultBehaviourApplied;
 
 #if WINRT
-        private readonly TypeInfo typeInfo;
+        private readonly TypeInfo _typeInfo;
 #endif
         /// <summary>
         /// The runtime type that the meta-type represents
@@ -92,7 +92,7 @@ namespace AqlaSerializer.Meta
             this.Type = type;
 
 #if WINRT
-            this.typeInfo = type.GetTypeInfo();
+            this._typeInfo = type.GetTypeInfo();
 #endif
         }
 

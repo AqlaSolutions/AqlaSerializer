@@ -32,7 +32,7 @@ namespace Examples
             tm0.DeepClone(ed);
 
             MemoryStream ms = new MemoryStream();
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             tm.Serialize(ms, ed);
             byte[] buffer = ms.GetBuffer();
             Assert.AreEqual(30, ms.Length);

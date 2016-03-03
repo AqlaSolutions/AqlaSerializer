@@ -198,7 +198,7 @@ namespace Examples
             {
                 List = { 1, 2, 3, 4, 5, 1000 }
             };
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             EntityWithUnpackedInts clone = tm.ChangeType<EntityWithPackedInts, EntityWithUnpackedInts>(item);
             Assert.AreNotSame(item.List, clone.Items);
             Assert.IsTrue(item.List.SequenceEqual(clone.Items));
@@ -211,7 +211,7 @@ namespace Examples
             {
                 Items = { 1, 2, 3, 4, 5, 1000 }
             };
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             EntityWithPackedInts clone = tm.ChangeType<EntityWithUnpackedInts, EntityWithPackedInts>(item);
             Assert.AreNotSame(item.Items, clone.List);
             Assert.IsTrue(item.Items.SequenceEqual(clone.List));

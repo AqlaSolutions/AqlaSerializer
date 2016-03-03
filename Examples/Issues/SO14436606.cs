@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using AqlaSerializer.Settings;
 
 namespace Examples.Issues
 {
@@ -78,8 +79,7 @@ namespace Examples.Issues
         {
             var model = CreateDefaultRefModel(true, false);
             Assert.IsTrue(model[typeof(A_WithDefaultRef)].AsReferenceDefault, "A:AsReferenceDefault - A first");
-            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedWriteMode == EnhancedMode.Reference, "B.A:AsReference  - A first");
-            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedFormat.GetValueOrDefault(), "B.A:AsReference  - A first");
+            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().Format == ValueFormat.Reference, "B.A:AsReference  - A first");
 
         }
         [Test]
@@ -87,8 +87,7 @@ namespace Examples.Issues
         {
             var model = CreateDefaultRefModel(false, false);
             Assert.IsTrue(model[typeof(A_WithDefaultRef)].AsReferenceDefault, "A:AsReferenceDefault - B first");
-            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedWriteMode == EnhancedMode.Reference, "B.A:AsReference  - B first");
-            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().EnhancedFormat.GetValueOrDefault(), "B.A:AsReference  - B first");
+            Assert.IsTrue(model[typeof(B_WithDefaultRef)][1].GetSettingsCopy().Format == ValueFormat.Reference, "B.A:AsReference  - B first");
         }
 
         [Test]
@@ -98,12 +97,14 @@ namespace Examples.Issues
             string defaultRef_AFirst_proto;
             string fields_proto;
             string surrogate_proto;
+            // Items should be not as reference but element A.Value should
+            
             using (var ms = new MemoryStream())
             {
                 RuntimeTypeModel m = CreateDefaultRefModel(true, true);
                 m.Serialize(ms, CreateB_WithDefaultRef());
                 defaultRef_AFirst = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
-                defaultRef_AFirst_proto = m.GetSchema(typeof(B_WithDefaultRef));
+                defaultRef_AFirst_proto = m.GetDebugSchema(typeof(B_WithDefaultRef));
             }
             using (var ms = new MemoryStream())
             {
@@ -115,7 +116,7 @@ namespace Examples.Issues
                 RuntimeTypeModel m = CreateSurrogateModel(true);
                 m.Serialize(ms, CreateB());
                 surrogate = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
-                surrogate_proto = m.GetSchema(typeof(B));
+                surrogate_proto = m.GetDebugSchema(typeof(B));
             }
 
             using (var ms = new MemoryStream())
@@ -123,7 +124,7 @@ namespace Examples.Issues
                 RuntimeTypeModel m = CreateFieldsModel(true);
                 m.Serialize(ms, CreateB());
                 fields = BitConverter.ToString(ms.GetBuffer(), 0, (int)ms.Length);
-                fields_proto = m.GetSchema(typeof(B));
+                fields_proto = m.GetDebugSchema(typeof(B));
             }
             
             Assert.AreEqual(surrogate, fields, "fields vs surrogate");
@@ -148,9 +149,15 @@ namespace Examples.Issues
 
         static RuntimeTypeModel CreateDefaultRefModel(bool aFirst, bool comp)
         {
-            ProtoCompatibilitySettings fullComp = ProtoCompatibilitySettings.FullCompatibility;
-            fullComp.AllowExtensionDefinitions |= NetObjectExtensionTypes.Reference;
-            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
+            ProtoCompatibilitySettingsValue fullComp = ProtoCompatibilitySettingsValue.FullCompatibility;
+            fullComp.SuppressValueEnhancedFormat = false;
+            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettingsValue.Incompatible);
+            if (comp)
+            {
+                model.SkipForcedLateReference = true;
+            }
+            // otherwise will not be compatible
+            model.SkipForcedAdvancedVersioning = true;
             if (aFirst)
             {
                 model.Add(typeof(A_WithDefaultRef), true);
@@ -161,15 +168,25 @@ namespace Examples.Issues
                 model.Add(typeof(B_WithDefaultRef), true);
                 model.Add(typeof(A_WithDefaultRef), true);
             }
+            
+            ValueMember f = model[typeof(B_WithDefaultRef)][2];
+            MemberLevelSettingsValue s = f.GetSettingsCopy(0);
+            Assert.That(s.Format, Is.EqualTo(ValueFormat.NotSpecified));
+            s.Format = ValueFormat.Compact;
+            f.SetSettings(s);
+
             model.AutoCompile = false;
 
             return model;
         }
         static RuntimeTypeModel CreateFieldsModel(bool comp)
         {
-            ProtoCompatibilitySettings fullComp = ProtoCompatibilitySettings.FullCompatibility;
-            fullComp.AllowExtensionDefinitions |= NetObjectExtensionTypes.Reference;
-            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
+            ProtoCompatibilitySettingsValue fullComp = ProtoCompatibilitySettingsValue.FullCompatibility;
+            fullComp.SuppressValueEnhancedFormat = false;
+            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettingsValue.Incompatible);
+            if (comp)
+                model.SkipForcedLateReference = true;
+            model.SkipForcedAdvancedVersioning = true;
             model.AutoCompile = false;
             var type = model.Add(typeof(KeyValuePair<int, A>), false);
             model.SkipCompiledVsNotCheck = true;
@@ -181,9 +198,12 @@ namespace Examples.Issues
         }
         static RuntimeTypeModel CreateSurrogateModel(bool comp)
         {
-            ProtoCompatibilitySettings fullComp = ProtoCompatibilitySettings.FullCompatibility;
-            fullComp.AllowExtensionDefinitions |= NetObjectExtensionTypes.Reference;
-            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettings.None);
+            ProtoCompatibilitySettingsValue fullComp = ProtoCompatibilitySettingsValue.FullCompatibility;
+            fullComp.SuppressValueEnhancedFormat = false;
+            var model = TypeModel.Create(false, comp ? fullComp : ProtoCompatibilitySettingsValue.Incompatible);
+            model.SkipForcedAdvancedVersioning = true;
+            if (comp)
+                model.SkipForcedLateReference = true;
             model.AutoCompile = false;
             model[typeof(B)][2].AsReference = false; // or just remove AsReference on Items
 

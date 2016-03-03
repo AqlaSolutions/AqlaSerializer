@@ -19,8 +19,10 @@ namespace Examples.Issues
             var model = TypeModel.Create();
             MetaType t = model.Add(typeof (hierarchy.B), false);
             t.Add("prop1", "prop2");
-            t[1].AsReference = false;
-            t[2].AsReference = false;
+            // default for nullable type is minimal enhancement mode
+            // flat will have them set same way
+            t[1].Format = ValueFormat.MinimalEnhancement;
+            t[2].Format = ValueFormat.MinimalEnhancement;
             
 
             var hb = new hierarchy.B();
@@ -30,6 +32,9 @@ namespace Examples.Issues
             var ms = new MemoryStream();
 
             model.Serialize(ms, hb);
+            var schemaHierarchy = model.GetDebugSchema(typeof(hierarchy.B));
+            var schemaFlat = model.GetDebugSchema(typeof(flat.B));
+
             ms.Position = 0;
             var flatB = Serializer.Deserialize<flat.B>(ms);
 

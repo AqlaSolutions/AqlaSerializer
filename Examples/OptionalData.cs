@@ -67,7 +67,7 @@ namespace Examples
 
         static void Test<T>(float value, int expectedSize) where T : class, IOptionalData, new()
         {
-            var tm = TypeModel.Create(false, ProtoCompatibilitySettings.FullCompatibility);
+            var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             T orig = new T { Value = value }, clone = tm.DeepClone(orig);
             Assert.AreEqual(value, orig.Value, "Original");
             Assert.AreNotSame(orig, clone, "Different objects");

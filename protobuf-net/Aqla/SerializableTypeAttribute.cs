@@ -24,17 +24,10 @@ namespace AqlaSerializer
         {
             
         }
-
-        public SerializableTypeAttribute(bool defaultEnhancedFormat, EnhancedMode defaultEnchancedWriteAs = 0)
+        
+        public SerializableTypeAttribute(ValueFormat defaultFormat)
         {
-            DefaultEnhancedFormat = defaultEnhancedFormat;
-            DefaultEnhancedWriteAs = defaultEnchancedWriteAs;
-        }
-
-        public SerializableTypeAttribute(EnhancedMode defaultEnchancedWriteAs)
-        {
-            DefaultEnhancedWriteAs = defaultEnchancedWriteAs;
-            TypeSettings.Member.EnhancedFormat = defaultEnchancedWriteAs != EnhancedMode.NotSpecified ? true : (bool?)null;
+            TypeSettings.Member.Format = defaultFormat;
         }
 
         public TypeSettingsValue TypeSettings;
@@ -90,16 +83,9 @@ namespace AqlaSerializer
         }
 
         /// <summary>
-        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel settings. See <see cref="SerializableMemberAttributeBase.EnhancedFormat"/>
+        /// Supported features; this settings is used only for members; serialization of root type itself is controlled by RuntimeTypeModel. See <see cref="SerializableMemberAttributeBase.Format"/>
         /// </summary>
-        public bool DefaultEnhancedFormat { get { return TypeSettings.Member.EnhancedFormat.Value; } set { TypeSettings.Member.EnhancedFormat = value; } }
-
-        public bool DefaultEnhancedFormatHasValue => TypeSettings.Member.EnhancedFormat.HasValue;
-
-        /// <summary>
-        /// Enhanced features
-        /// </summary>
-        public EnhancedMode DefaultEnhancedWriteAs { get { return TypeSettings.Member.EnhancedWriteMode; } set { TypeSettings.Member.EnhancedWriteMode = value; } }
+        public ValueFormat DefaultEnhancedFormat { get { return TypeSettings.Member.Format; } set { TypeSettings.Member.Format = value; } }
         
         /// <summary>
         /// The data-format to be used when encoding this value.
