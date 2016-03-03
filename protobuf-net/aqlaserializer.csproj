@@ -370,11 +370,11 @@
     <Compile Include="CallerMemberNameAttributes.cs" />
     <Compile Include="Compiler\CompilerDelegates.cs" />
     <Compile Include="Compiler\CompilerContext.cs" />
-    <Compile Include="Compiler\DisposableAction.cs" />
     <Compile Include="Compiler\Local.cs" />
     <Compile Include="Compiler\MethodContext.cs" />
     <Compile Include="Compiler\SerializerCodeGen.cs" />
     <Compile Include="Compiler\StackValueOperand.cs" />
+    <Compile Include="DisposableAction.cs" />
     <Compile Include="ICloneable.cs" />
     <Compile Include="Meta\IKVMAttributeFactory.cs" />
     <Compile Include="Meta\IValueSerializerBuilder.cs" />
