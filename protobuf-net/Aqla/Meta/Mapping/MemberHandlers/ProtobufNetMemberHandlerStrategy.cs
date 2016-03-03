@@ -103,7 +103,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
                 s.TagIsPinned = main.Tag > 0;
 
-                var dl = s.SerializationSettings.DefaultLevel.GetValueOrDefault(new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevel()));
+                var dl = s.SerializationSettings.DefaultLevel.GetValueOrDefault(new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevelForLegacyMember()));
 
                 if (isPacked)
                     dl.Basic.Format = ValueFormat.Compact;
@@ -134,7 +134,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 s.MainValue = main;
             }
         }
-
+        
         static ValueFormat GetDefaultLegacyFormat(Type type, RuntimeTypeModel model)
         {
             return ValueSerializerBuilder.CanTypeBeNull(type)

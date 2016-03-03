@@ -34,10 +34,13 @@ namespace AqlaSerializer.Serializers
         
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail)
         {
-            if (ListDecorator.CanPack(packedWireTypeForRead))
-                _packedWireTypeForRead = packedWireTypeForRead;
-            else if (writePacked)
-                throw new ArgumentException("For writePacked wire type for read should be specified");
+            if (protoCompatibility)
+            {
+                if (ListDecorator.CanPack(packedWireTypeForRead))
+                    _packedWireTypeForRead = packedWireTypeForRead;
+                else if (writePacked)
+                    throw new ArgumentException("For writePacked wire type for read should be specified");
+            }
             _tail = tail;
             _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;

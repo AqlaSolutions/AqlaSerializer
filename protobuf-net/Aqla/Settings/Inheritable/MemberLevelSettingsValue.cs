@@ -50,14 +50,33 @@ namespace AqlaSerializer.Settings
             x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
             return x;
         }
-
-        public MemberLevelSettingsValue MakeDefaultNestedLevel()
+        
+        public MemberLevelSettingsValue MakeDefaultNestedLevelForRootType()
         {
             var x = this;
+
             x.Collection.ItemType = null;
             x.Collection.PackedWireTypeForRead = null;
             x.Collection.ConcreteType = null;
             x.EffectiveType = null;
+
+            return x;
+        }
+
+        public MemberLevelSettingsValue MakeDefaultNestedLevelForLegacyMember()
+        {
+            return MakeDefaultNestedLevelForRootType();
+        }
+
+        public MemberLevelSettingsValue MakeDefaultNestedLevel()
+        {
+            var x = this.MakeDefaultNestedLevelForRootType();
+
+            x.Format = ValueFormat.NotSpecified;
+            x.ContentBinaryFormatHint = null;
+            x.WriteAsDynamicType = null;
+            x.DefaultFormatFallback = ValueFormat.NotSpecified;
+            
             return x;
         }
 

@@ -146,6 +146,7 @@
     <Compile Include="Aqla\MembersAddTypes.cs" />
     <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Aqla\CoreReferenceSerialization.cs" />
+    <Compile Include="Aqla\NestedLevelsTest.cs" />
     <Compile Include="Aqla\NullForLists.cs" />
     <Compile Include="Aqla\TooManyLevels.cs" />
     <Compile Include="Attribs\Basic.cs" />
