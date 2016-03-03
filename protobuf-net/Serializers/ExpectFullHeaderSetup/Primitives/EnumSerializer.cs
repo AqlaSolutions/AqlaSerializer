@@ -286,7 +286,13 @@ namespace AqlaSerializer.Serializers
                 {
                     for (int i = 0; i < _map.Length; i++)
                     {
-                        using (builder.Field(_map[i].WireValue, _map[i].TypedValue.ToString()))
+#if FEAT_IKVM
+                        string name = _map[i].RawValue.ToString();
+#else
+                        string name = _map[i].TypedValue.ToString();
+#endif
+
+                        using (builder.Field(_map[i].WireValue, name))
                         {
                         }
                     }

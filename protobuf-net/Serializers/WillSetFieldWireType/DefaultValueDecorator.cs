@@ -314,7 +314,7 @@ namespace AqlaSerializer.Serializers
                     case ProtoTypeCode.DateTime:
                         {
 #if FX11 || SILVERLIGHT
-                        ctx.LoadValue(((DateTime)defaultValue).ToFileTime());
+                        ctx.LoadValue(((DateTime)_defaultValue).ToFileTime());
                         ctx.EmitCall(typeof(DateTime).GetMethod("FromFileTime"));                      
 #else
                             ctx.LoadValue(((DateTime)_defaultValue).ToBinary());
