@@ -63,11 +63,11 @@ namespace Examples
     [TestFixture]
     public class TagInference
     {
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void TestTagWithoutInference()
         {
             TagDataWithoutInfer data = new TagDataWithoutInfer();
-            Serializer.DeepClone(data);
+            Assert.That(() => Serializer.DeepClone(data), Throws.TypeOf<ArgumentException>().With.Message.Contains("Bravo").Or.With.Message.Contains("Delta"));
         }
 
         [Test]

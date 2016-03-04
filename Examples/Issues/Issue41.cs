@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using AqlaSerializer;
+using AqlaSerializer.Meta;
 
 namespace Issue41
 {
@@ -49,16 +50,18 @@ namespace Issue41
     [TestFixture]
     public class Issue41Rig
     {
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void Issue41TestOriginalSubClassShouldComplainAboutDuplicateTags()
         {
-            Serializer.Serialize<B_Orig>(Stream.Null, new B_Orig());
+            var tm = TypeModel.Create();
+            Assert.That(() => tm.Serialize(Stream.Null, new B_Orig()), Throws.TypeOf<ArgumentException>().With.Message.Contains("Prop"));
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void Issue41TestOriginalBaseClassShouldComplainAboutDuplicateTags()
         {
-            Serializer.Serialize<A_Orig>(Stream.Null, new A_Orig());
+            var tm = TypeModel.Create();
+            Assert.That(() => tm.Serialize(Stream.Null, new A_Orig()), Throws.TypeOf<ArgumentException>().With.Message.Contains("Prop"));
         }
 
         [Test]

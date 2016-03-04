@@ -247,7 +247,7 @@ namespace AqlaSerializer.Serializers
                                 if (subTypeHandler == null)
                                     g.Reader.SkipField();
                                 else
-                                    subTypeHandler(); // TODO multiple times?
+                                    subTypeHandler();
                                 g.Assign(read, true);
                             }
                             g.End();

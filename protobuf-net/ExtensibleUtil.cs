@@ -110,10 +110,7 @@ namespace AqlaSerializer
 #else
             if(instance == null) throw new ArgumentNullException("instance");
             if(value == null) throw new ArgumentNullException("value");
-
-            // TODO
-            //model.CheckTagNotInUse(tag);
-
+            
             // obtain the extension object and prepare to write
             IExtension extn = instance.GetExtensionObject(true);
             if (extn == null) throw new InvalidOperationException("No extension object available; appended data would be lost.");

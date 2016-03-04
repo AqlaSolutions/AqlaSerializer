@@ -471,7 +471,6 @@ namespace AqlaSerializer.Compiler
                 // because if we are now inside loop
                 // (there are no scopes in dynamicmethod)
                 // they won't reset on each loop pass!!!
-                // TODO any optimization?
                 InitLocal(type, result);
             }
             return result;
@@ -671,7 +670,6 @@ namespace AqlaSerializer.Compiler
 #endif
         }
 
-        // TODO ensure valueFrom is reassigned everywhere
         public Local GetLocalWithValueForEmitRead(IProtoSerializer ser, Compiler.Local fromValue)
         {
             if (!ser.RequiresOldValue) return Local(ser.ExpectedType, true);

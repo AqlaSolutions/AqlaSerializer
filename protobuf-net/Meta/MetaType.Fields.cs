@@ -72,6 +72,11 @@ namespace AqlaSerializer.Meta
             return number;
         }
 
+        public bool IsFieldFree(int fieldNumber)
+        {
+            return GetNextFreeFieldNumber(fieldNumber) == fieldNumber;
+        }
+
         internal bool IsDefined(int fieldNumber)
         {
             foreach (ValueMember field in _fields)
@@ -267,6 +272,8 @@ namespace AqlaSerializer.Meta
             {
                 _model.TakeLock(ref opaqueToken);
                 ThrowIfFrozen();
+
+                if (!IsFieldFree(member.FieldNumber) && !Helpers.IsEnum(Type)) throw new ArgumentException(string.Format("FieldNumber {0} for {1} was already taken", member.FieldNumber, member), nameof(member));
                 _fields.Add(member);
                 member.FinalizingSettings += (s, a) => FinalizingMemberSettings?.Invoke(this, a);
             }

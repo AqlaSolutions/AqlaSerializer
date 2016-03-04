@@ -173,7 +173,6 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
-                // TODO may be get rid of returning through stack? always require old value?
                 using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
                 using (Compiler.Local converted = new Compiler.Local(ctx, declaredType)) // declare/re-use local
                 using (Compiler.Local reservedTrap = new Compiler.Local(ctx, typeof(int)))

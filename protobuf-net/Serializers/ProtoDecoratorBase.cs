@@ -36,6 +36,7 @@ namespace AqlaSerializer.Serializers
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom) { EmitRead(ctx, valueFrom); }
         // TODO may be return null or local and remove property EmitReadReturnsValue to avoid unnecessary copying between locals
         // TODO need to ensure that valueFrom is always correctly reassigned when not returns to stack
+        // TODO may be get rid of returning through stack? always require old value?
         protected abstract void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom);
 #endif
     }

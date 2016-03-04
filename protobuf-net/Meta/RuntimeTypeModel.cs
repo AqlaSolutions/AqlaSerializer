@@ -875,7 +875,10 @@ namespace AqlaSerializer.Meta
         internal int GetKey(Type type, bool demand, bool getBaseKey)
         {
             Helpers.DebugAssert(type != null);
+            string rethrowMsg;
+#if !DEBUG
             try
+#endif
             {
                 int typeIndex = FindOrAddAuto(type, demand, true, false);
                 if (typeIndex >= 0)
@@ -889,18 +892,72 @@ namespace AqlaSerializer.Meta
                 }
                 return typeIndex;
             }
-            catch (NotSupportedException)
+#if !DEBUG
+            catch (ProtoException ex)
             {
-                throw; // re-surface "as-is"
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new ProtoException(rethrowMsg, ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new InvalidOperationException(rethrowMsg, ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new InvalidOperationException(rethrowMsg, ex);
+            }
+            catch (NotImplementedException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new NotImplementedException(rethrowMsg, ex);
+            }
+            catch (ArgumentNullException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new ArgumentNullException(rethrowMsg, ex);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new ArgumentOutOfRangeException(rethrowMsg, ex);
+            }
+            catch (ArgumentException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+#if SILVERLIGHT || PORTABLE
+                throw new ArgumentException(rethrowMsg, ex);
+#else
+                throw new ArgumentException(rethrowMsg, ex.ParamName, ex);
+#endif
+            }
+            catch (System.MissingMemberException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new System.MissingMemberException(rethrowMsg, ex);
+            }
+            catch (MemberAccessException ex)
+            {
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new MemberAccessException(rethrowMsg, ex);
             }
             catch (Exception ex)
             {
-                if (ex.Message.IndexOf(type.FullName, System.StringComparison.Ordinal) >= 0) throw;  // already enough info
-                throw new ProtoException(ex.Message + " (" + type.FullName + ")", ex);
+                if ((rethrowMsg = TryGetWrappedExceptionMessage(ex, type)) == null) throw;
+                throw new ProtoException(rethrowMsg, ex);
             }
+#endif
+            //throw new ProtoException(, ex);
         }
 
-
+        string TryGetWrappedExceptionMessage(Exception ex, Type t)
+        {
+            return ex.Message.IndexOf(t.FullName, System.StringComparison.Ordinal) >= 0
+                       ? (ex.Message + " (" + t.FullName + ")")
+                       : null;
+        }
+        
         internal static event Action<string> ValidateDll;
 
         /// <summary>

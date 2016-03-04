@@ -38,7 +38,7 @@ using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
 using AltLinq; using System.Linq;
-// TODO сделать обяхательное создание dll и проверку peverify даже в compileinplace
+
 namespace AqlaSerializer.Meta
 {
 #if !NO_GENERiCS

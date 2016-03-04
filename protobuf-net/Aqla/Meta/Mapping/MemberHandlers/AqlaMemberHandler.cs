@@ -56,7 +56,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
 
             s.TagIsPinned = memberRtAttr.Tag > 0;
-            return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // TODO minAcceptFieldNumber only applies to non-proto?
+            return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial;
         }
     }
 }

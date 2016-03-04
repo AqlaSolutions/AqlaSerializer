@@ -54,9 +54,8 @@ namespace AqlaSerializer.Meta
             Debug.Assert(l.WriteAsDynamicType != null, "l.WriteAsDynamicType != null");
             Debug.Assert(l.Collection.Append != null, "l.Collection.Append != null");
             
-            // TODO when changing collection element settings consider that IgnoreListHandling may be also disabled after making member
-            // TODO postpone all checks for types when adding member till BuildSerializer, resolve everything only on buildserializer! till that have only local not inherited settings.
-            // TODO do not allow EnumPassthru and other settings to affect anything until buildling serializer
+            // postpone all checks for types when adding member till BuildSerializer, resolve everything only on buildserializer! till that have only local not inherited settings.
+            // do not allow EnumPassthru and other settings to affect anything until buildling serializer
             wireType = 0;
             Type itemType = l.Collection.ItemType ?? l.EffectiveType;
 
@@ -65,8 +64,6 @@ namespace AqlaSerializer.Meta
 
             if (l.EffectiveType.IsArray && l.EffectiveType.GetArrayRank() != 1)
                 throw new NotSupportedException("Multi-dimension arrays are not supported");
-
-            // TODO use Collection.Format!
 
             bool itemTypeCanBeNull = CanTypeBeNull(itemType);
 
@@ -444,7 +441,6 @@ namespace AqlaSerializer.Meta
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
             {
-                // TODO use enhancedformat and modes in members
                 ser = new NetObjectValueDecorator(
                     ser,
                     Helpers.GetNullableUnderlyingType(type) != null,

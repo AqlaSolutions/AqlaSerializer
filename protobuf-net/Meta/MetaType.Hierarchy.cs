@@ -94,10 +94,7 @@ namespace AqlaSerializer.Meta
             }
             return false;
         }
-
-
-        // TODO throw exception duplicate field number when adding (now when building serializers)
-
+        
         /// <summary>
         /// Adds a known sub-type to the inheritance model
         /// </summary>
@@ -110,8 +107,8 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MetaType AddSubType(int fieldNumber, Type derivedType, BinaryDataFormat dataFormat)
         {
-            if (derivedType == null) throw new ArgumentNullException("derivedType");
-            if (fieldNumber < 1) throw new ArgumentOutOfRangeException("fieldNumber");
+            if (derivedType == null) throw new ArgumentNullException(nameof(derivedType));
+            if (fieldNumber < 1) throw new ArgumentOutOfRangeException(nameof(fieldNumber));
 
             if (Type.IsArray)
                 throw new ArgumentException("An array has inbuilt behaviour and cannot be subclassed");
@@ -129,10 +126,13 @@ namespace AqlaSerializer.Meta
             }
             if (!IsValidSubType(derivedType))
             {
-                throw new ArgumentException(derivedType.Name + " is not a valid sub-type of " + Type.Name, "derivedType");
+                throw new ArgumentException(derivedType.Name + " is not a valid sub-type of " + Type.Name, nameof(derivedType));
             }
 
             if (_subTypesSimple != null && _subTypesSimple.Contains(derivedType)) return this; // already exists
+
+            if (!IsFieldFree(fieldNumber))
+                throw new ArgumentException(string.Format("FieldNumber {0} was already taken in type {1}, can't add sub-type {2}", fieldNumber, Type.Name, derivedType.Name), nameof(fieldNumber));
 
             if (_subTypesSimple == null) _subTypesSimple = new BasicList();
             _subTypesSimple.Add(derivedType);

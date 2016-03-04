@@ -1360,7 +1360,7 @@ namespace AqlaSerializer
                     return;
                 case WireType.StartGroup:
                     SubItemToken readerToken = StartSubItem(this),
-                                 writerToken = ProtoWriter.StartSubItemWithoutWritingHeader(null, writer); // TODO emit
+                                 writerToken = ProtoWriter.StartSubItemWithoutWritingHeader(null, writer);
                     while (ReadFieldHeader() > 0) { AppendExtensionField(writer); }
                     EndSubItem(readerToken, this);
                     ProtoWriter.EndSubItem(writerToken, writer);
