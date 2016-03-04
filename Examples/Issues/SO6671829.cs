@@ -21,10 +21,9 @@ namespace Examples.Issues
             t.Add("prop1", "prop2");
             // default for nullable type is minimal enhancement mode
             // flat will have them set same way
-            t[1].Format = ValueFormat.MinimalEnhancement;
-            t[2].Format = ValueFormat.MinimalEnhancement;
+            t[1].SetSettings(x => x.V.Format = ValueFormat.MinimalEnhancement);
+            t[2].SetSettings(x => x.V.Format = ValueFormat.MinimalEnhancement);
             
-
             var hb = new hierarchy.B();
             hb.prop1 = "prop1";
             hb.prop2 = "prop2";

@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.ComponentModel;
+using System.Threading;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -36,6 +37,15 @@ namespace AqlaSerializer
     internal sealed class Helpers
     {
         private Helpers() { }
+
+        public static void MemoryBarrier()
+        {
+#if !WINRT
+            Thread.MemoryBarrier();
+#else
+            Interlocked.MemoryBarrier();
+#endif
+        }
 
         public static int GetEnumMemberUnderlyingValue(MemberInfo member)
         {

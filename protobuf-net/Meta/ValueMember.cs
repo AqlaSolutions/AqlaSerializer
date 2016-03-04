@@ -6,6 +6,7 @@ using System.Diagnostics;
 using AqlaSerializer.Serializers;
 using System.Globalization;
 using AltLinq; using System.Linq;
+using System.Threading;
 using AqlaSerializer.Internal;
 using AqlaSerializer.Settings;
 #if FEAT_IKVM
@@ -272,12 +273,20 @@ namespace AqlaSerializer.Meta
             return Member + ": " + (string.IsNullOrEmpty(e.Message) ? "serializer build problem" : e.Message);
         }
 
-#region Setting accessors
+        #region Setting accessors
+
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
             return _vs.GetSettingsCopy(level).Basic;
         }
         
+        public void SetSettings(MemberLevelSettingsChangeDelegate func, int level = 0)
+        {
+            var v = new MemberLevelSettingsRef(GetSettingsCopy(level));
+            func(v);
+            SetSettings(v.V, level);
+        }
+
         public void SetSettings(MemberLevelSettingsValue value, int level = 0)
         {
             SetSettings(value, level, false);
@@ -286,13 +295,14 @@ namespace AqlaSerializer.Meta
         void SetSettings(MemberLevelSettingsValue value, int level, bool bypassFrozenCheck)
         {
             if (!bypassFrozenCheck) ThrowIfFrozen();
+            Helpers.MemoryBarrier();
             _vs.SetSettings(value, level);
         }
 
         /// <summary>
-        /// Allows to set EnhancedFormat and EnhancedWriteMode for all levels
+        /// Allows to set Format for all levels
         /// </summary>
-        [Obsolete("Use Format")]
+        [Obsolete("Use GetSettingsCopy/SetSettings and Format")]
         public bool AsReference
         {
             set
@@ -315,9 +325,9 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// Allows to set as ContentBinaryFormatHint for all levels
+        /// Allows to set as ContentBinaryFormatHint for all levels; to set for specific level use <see cref="SetSettings"/>.
         /// </summary>
-        [Obsolete("Use ContentBinaryFormatHint")]
+        [Obsolete("Use GetSettingsCopy/SetSettings and ContentBinaryFormatHint")]
         public BinaryDataFormat DataFormat
         {
             set
@@ -330,27 +340,11 @@ namespace AqlaSerializer.Meta
                         });
             }
         }
-
+        
         /// <summary>
-        /// Allows to set as ContentBinaryFormatHint for all levels
+        /// Allows to set Collection.Append for all levels; to set for specific level use <see cref="SetSettings"/>.
         /// </summary>
-        public BinaryDataFormat ContentBinaryFormatHint
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            x.ContentBinaryFormatHint = value;
-                            return x;
-                        });
-            }
-        }
-
-        /// <summary>
-        /// Allows to set Collection.Append for all levels
-        /// </summary>
-        [Obsolete("May be not supported later")]
+        [Obsolete("May be not supported later; also use GetSettingsCopy/SetSettings and Collection.Append")]
         public bool AppendCollection
         {
             set
@@ -365,9 +359,9 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// Allows to set CollectionFormat for all levels
+        /// Allows to set CollectionFormat for all levels; to set for specific level use <see cref="SetSettings"/>.
         /// </summary>
-        [Obsolete("Use CollectionFormat")]
+        [Obsolete("Use GetSettingsCopy/SetSettings and Collection.Format")]
         public bool IsPacked
         {
             set
@@ -382,73 +376,9 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// Allows to set CollectionFormat for all levels
+        /// Allows to set Format for all levels; to set for specific level use <see cref="SetSettings"/>.
         /// </summary>
-        public CollectionFormat CollectionFormat
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            x.Collection.Format = value;
-                            return x;
-                        });
-            }
-        }
-
-        /// <summary>
-        /// Allows to set Collection.ItemType for all levels
-        /// </summary>
-        public Type ItemType
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            x.Collection.ItemType = value;
-                            return x;
-                        });
-            }
-        }
-
-        /// <summary>
-        /// Allows to set CollectionConcreteType for all levels
-        /// </summary>
-        public Type CollectionConcreteType
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            x.Collection.ConcreteType = value;
-                            return x;
-                        });
-            }
-        }
-
-        /// <summary>
-        /// Allows to set enchanced format for all levels
-        /// </summary>
-        public ValueFormat Format
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            x.Format = value;
-                            return x;
-                        });
-            }
-        }
-        
-        /// <summary>
-        /// Allows to set enchanced mode for all levels
-        /// </summary>
-        [Obsolete("Use Format")]
+        [Obsolete("Use GetSettingsCopy/SetSettings and Format")]
         public bool SupportNull
         {
             set
@@ -467,31 +397,7 @@ namespace AqlaSerializer.Meta
                         });
             }
         }
-
-        /// <summary>
-        /// Allows to set dynamic type and enhanced format for all levels
-        /// </summary>
-        public bool DynamicType
-        {
-            set
-            {
-                SetForAllLevels(
-                    x =>
-                        {
-                            if (value)
-                            {
-                                x.WriteAsDynamicType = true;
-                                x.Format = ValueFormat.Reference;
-                            }
-                            else
-                            {
-                                x.WriteAsDynamicType = false;
-                            }
-                            return x;
-                        });
-            }
-        }
-
+        
         void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter, bool bypassFrozenCheck = false)
         {
             if (!bypassFrozenCheck) ThrowIfFrozen();

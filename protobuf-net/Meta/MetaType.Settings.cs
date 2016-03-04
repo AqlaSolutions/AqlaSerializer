@@ -30,6 +30,38 @@ namespace AqlaSerializer.Meta
 {
     partial class MetaType
     {
+        ValueSerializationSettings _rootNestedVs = new ValueSerializationSettings();
+
+        /// <summary>
+        /// These settings are only applicable for collection types when they are serialized not as a member (root or LateReference)
+        /// </summary>
+        public MemberLevelSettingsValue GetNestedSettingsCopyWhenRoot(int level)
+        {
+            if (level == 0) throw new ArgumentOutOfRangeException("Zero level settings should be obtained through DefaultX properties on MetaType");
+            return _rootNestedVs.GetSettingsCopy(level).Basic;
+        }
+        
+        /// <summary>
+        /// These settings are only applicable for collection types when they are serialized not as a member (root or LateReference)
+        /// </summary>
+        public void SetNestedSettingsWhenRoot(MemberLevelSettingsValue value, int level)
+        {
+            if (level == 0) throw new ArgumentOutOfRangeException("Zero level settings should be specified through DefaultX properties on MetaType");
+            ThrowIfFrozen();
+            Helpers.MemoryBarrier();
+            _rootNestedVs.SetSettings(value, level);
+        }
+
+        /// <summary>
+        /// These settings are only applicable for collection types when they are serialized not as a member (root or LateReference)
+        /// </summary>
+        public void SetNestedSettingsWhenRoot(MemberLevelSettingsChangeDelegate func, int level)
+        {
+            var v = new MemberLevelSettingsRef(GetNestedSettingsCopyWhenRoot(level));
+            func(v);
+            SetNestedSettingsWhenRoot(v.V, level);
+        }
+
         TypeSettingsValue _settingsValue;
         internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
 
@@ -333,6 +365,7 @@ namespace AqlaSerializer.Meta
             ThrowIfFrozen();
             var sv = setter(_settingsValue);
             ThrowIfInvalidSettings(sv);
+            Helpers.MemoryBarrier();
             _settingsValue = sv;
         }
     }

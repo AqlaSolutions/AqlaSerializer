@@ -153,11 +153,12 @@ namespace AqlaSerializer.Meta
                 // this should be handled as collection
                 if (s.Collection.ItemType == null) s.Collection.ItemType = itemType;
 
+                var vs = _rootNestedVs.Clone();
+                vs.SetSettings(s, 0);
+                vs.DefaultLevel = new ValueSerializationSettings.LevelValue(s.MakeDefaultNestedLevel());
+
                 WireType wt;
-                var ser = (IProtoTypeSerializer)
-                       _model.ValueSerializerBuilder.BuildValueFinalSerializer(
-                           new ValueSerializationSettings(new MemberLevelSettingsValue?[] { s }, s.MakeDefaultNestedLevel()),
-                           false, out wt);
+                var ser = (IProtoTypeSerializer)_model.ValueSerializerBuilder.BuildValueFinalSerializer(vs, false, out wt);
 
                 // standard root decorator won't start any field
                 // in compatibility mode collections won't start subitems like normally
@@ -257,11 +258,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-#if !WINRT
-                Thread.MemoryBarrier();
-#else
-                Interlocked.MemoryBarrier();
-#endif
+                Helpers.MemoryBarrier();
                 return _serializer != null;
             }
         }

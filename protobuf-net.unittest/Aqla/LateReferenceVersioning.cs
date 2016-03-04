@@ -103,7 +103,7 @@ namespace AqlaSerializer.unittest.Aqla
             tm2.SkipForcedLateReference = true;
 
             ValueMember f = tm2.Add(typeof(Referenced), true)[1];
-            f.Format = ValueFormat.Reference;
+            f.SetSettings(x => x.V.Format = ValueFormat.Reference);
 
             if (notLateToLate)
             {

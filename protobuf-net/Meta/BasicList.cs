@@ -277,9 +277,7 @@ namespace AqlaSerializer.Meta
                         throw new ArgumentOutOfRangeException();
                     return;
                 }
-#if !WINRT
-                Thread.MemoryBarrier();
-#endif
+                Helpers.MemoryBarrier();
                 Array.Copy(data, sourceStart, array, destinationStart, length);
             }
 

@@ -59,8 +59,9 @@ namespace AqlaSerializer.unittest.Aqla
             if (!late)
             {
                 var t = tm.Add(typeof(Node), true);
-                t[1].Format = ValueFormat.Reference;
-                t[2].Format = ValueFormat.Reference;
+                t[1].SetSettings(x => x.V.Format = ValueFormat.Reference);
+
+                t[2].SetSettings(x => x.V.Format = ValueFormat.Reference);
             }
 
             Container copy;

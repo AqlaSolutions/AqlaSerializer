@@ -65,14 +65,7 @@ namespace AqlaSerializer.Settings
 
         public MemberLevelSettingsValue MakeDefaultNestedLevel()
         {
-            var x = this.MakeDefaultNestedLevelForLegacyMember();
-
-            x.Format = ValueFormat.NotSpecified;
-            x.ContentBinaryFormatHint = null;
-            x.WriteAsDynamicType = null;
-            x.DefaultFormatFallback = ValueFormat.NotSpecified;
-            
-            return x;
+            return new MemberLevelSettingsValue();
         }
 
         public static MemberLevelSettingsValue Merge(MemberLevelSettingsValue baseValue, MemberLevelSettingsValue derivedValue)
@@ -100,6 +93,18 @@ namespace AqlaSerializer.Settings
             if (Collection.ItemType != null)
                 s += ", itemType " + Collection.ItemType;
             return s;
+        }
+    }
+
+    public delegate void MemberLevelSettingsChangeDelegate(MemberLevelSettingsRef value);
+
+    public class MemberLevelSettingsRef
+    {
+        public MemberLevelSettingsValue V;
+
+        public MemberLevelSettingsRef(MemberLevelSettingsValue v)
+        {
+            V = v;
         }
     }
 }
