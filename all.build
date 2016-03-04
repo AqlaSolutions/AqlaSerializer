@@ -190,24 +190,13 @@
     <RemoveDir Directories="Examples\obj; Examples\bin"/>
     <MSBuild Projects="Examples\Examples.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
 
-    <!-- execute the unit tests (do this last as it is slower; allows interruption
-    and simple visibility of test results -->
-    <NUnit Assemblies="Examples\bin\Release\Examples.exe"
-       ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
-
     <!-- build the test project -->
     <RemoveDir Directories="protobuf-net.unittest\obj; protobuf-net.unittest\bin"/>
     <MSBuild Projects="protobuf-net.unittest\aqlaserializer.unittest.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
 
-    <NUnit Assemblies="protobuf-net.unittest\bin\Release\aqlaserializer.unittest.exe"
-       ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
-
     <!-- build the test project -->
     <RemoveDir Directories="precompile.tests\obj; precompile.tests\bin"/>
     <MSBuild Projects="precompile.tests\precompile.tests.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
-
-    <NUnit Assemblies="precompile.tests\bin\release\precompile.tests.dll"
-       ToolPath="C:\Program Files (x86)\NUnit 2.6.2\bin" />
 
   </Target>
 </Project>
