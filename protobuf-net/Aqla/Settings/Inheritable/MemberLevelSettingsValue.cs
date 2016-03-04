@@ -50,8 +50,8 @@ namespace AqlaSerializer.Settings
             x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
             return x;
         }
-        
-        public MemberLevelSettingsValue MakeDefaultNestedLevelForRootType()
+
+        public MemberLevelSettingsValue MakeDefaultNestedLevelForLegacyMember()
         {
             var x = this;
 
@@ -63,14 +63,9 @@ namespace AqlaSerializer.Settings
             return x;
         }
 
-        public MemberLevelSettingsValue MakeDefaultNestedLevelForLegacyMember()
-        {
-            return MakeDefaultNestedLevelForRootType();
-        }
-
         public MemberLevelSettingsValue MakeDefaultNestedLevel()
         {
-            var x = this.MakeDefaultNestedLevelForRootType();
+            var x = this.MakeDefaultNestedLevelForLegacyMember();
 
             x.Format = ValueFormat.NotSpecified;
             x.ContentBinaryFormatHint = null;
@@ -86,7 +81,7 @@ namespace AqlaSerializer.Settings
             if (r.Format == ValueFormat.NotSpecified) r.Format = baseValue.Format;
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
-            if (r.DefaultFormatFallback == null) r.DefaultFormatFallback = baseValue.DefaultFormatFallback;
+            if (r.DefaultFormatFallback == ValueFormat.NotSpecified) r.DefaultFormatFallback = baseValue.DefaultFormatFallback;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
         }

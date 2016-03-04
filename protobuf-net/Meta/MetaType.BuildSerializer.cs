@@ -156,7 +156,7 @@ namespace AqlaSerializer.Meta
                 WireType wt;
                 var ser = (IProtoTypeSerializer)
                        _model.ValueSerializerBuilder.BuildValueFinalSerializer(
-                           new ValueSerializationSettings(new MemberLevelSettingsValue?[] { s }, s.MakeDefaultNestedLevelForRootType()),
+                           new ValueSerializationSettings(new MemberLevelSettingsValue?[] { s }, s.MakeDefaultNestedLevel()),
                            false, out wt);
 
                 // standard root decorator won't start any field
