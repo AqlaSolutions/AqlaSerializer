@@ -75,7 +75,7 @@ namespace AqlaSerializer.unittest.Aqla
         public void DifferentSubTypes(Type subType, Type expected)
         {
             var tm = TypeModel.Create();
-            var strategy = (DefaultAutoAddStrategy)tm.AutoAddStrategy;
+            var strategy = (AutoAddStrategy)tm.AutoAddStrategy;
             strategy.DisableAutoRegisteringSubtypes = true;
             var original = new BaseContainer();
             original.List = (ListType)Activator.CreateInstance(subType);

@@ -46,7 +46,7 @@ namespace AqlaSerializer.unittest.AqlaAttributes
         [Test]
         public void ShouldBeImplicitPublicPropertiesByDefault()
         {
-            _model.AutoAddStrategy = new DefaultAutoAddStrategy(_model) { ImplicitFallbackMode = ImplicitFieldsMode.PublicProperties };
+            _model.AutoAddStrategy = new AutoAddStrategy(_model) { ImplicitFallbackMode = ImplicitFieldsMode.PublicProperties };
             var t = _model.Add(typeof(TestClass), true);
             var fields = t.GetFields();
             Assert.AreEqual(2, fields.Length);
@@ -57,7 +57,7 @@ namespace AqlaSerializer.unittest.AqlaAttributes
         [Test]
         public void ShouldAddMissingAsImplicitProperties()
         {
-            _model.AutoAddStrategy = new DefaultAutoAddStrategy(_model) { ImplicitFallbackMode = ImplicitFieldsMode.PublicProperties };
+            _model.AutoAddStrategy = new AutoAddStrategy(_model) { ImplicitFallbackMode = ImplicitFieldsMode.PublicProperties };
             _model.AutoAddMissingTypes = true;
             Check();
         }

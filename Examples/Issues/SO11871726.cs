@@ -22,7 +22,7 @@ namespace Examples.Issues
         public void ExecuteWithAutoAddProtoContractTypesOnlyShouldFail()
         {
             var model = TypeModel.Create();
-            model.AutoAddStrategy = new DefaultAutoAddStrategy(model) { AcceptableAttributes = AttributeType.ProtoBuf };
+            model.AutoAddStrategy = new AutoAddStrategy(model) { AcceptableAttributes = AttributeType.ProtoBuf };
             Assert.IsInstanceOfType(typeof(Foo), model.DeepClone(new Foo()));
         }
 

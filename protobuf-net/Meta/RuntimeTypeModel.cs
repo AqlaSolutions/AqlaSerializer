@@ -237,7 +237,7 @@ namespace AqlaSerializer.Meta
             get { return SingletonCompatible.Value; }
         }
 
-        public static DefaultAutoAddStrategy DefaultAutoAddStrategy { get { return (DefaultAutoAddStrategy) Default.AutoAddStrategy; } }
+        public static AutoAddStrategy DefaultAutoAddStrategy { get { return (AutoAddStrategy) Default.AutoAddStrategy; } }
 
         /// <summary>
         /// Returns list of the MetaType instances that can be
@@ -288,7 +288,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_COMPILER && !FX11 && !DEBUG
             AutoCompile = true;
 #endif
-            _autoAddStrategy = new DefaultAutoAddStrategy(this);
+            _autoAddStrategy = new AutoAddStrategy(this);
             ValueSerializerBuilder = new ValueSerializerBuilder(this);
 #if !FEAT_IKVM
             Add(MapType(typeof(ModelTypeRelationsData)), true);

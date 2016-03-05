@@ -28,7 +28,7 @@ using System.Reflection.Emit;
 namespace AqlaSerializer
 {
     using AttributeFamily = MetaType.AttributeFamily;
-    public class DefaultAutoAddStrategy : IAutoAddStrategy
+    public class AutoAddStrategy : IAutoAddStrategy
     {
         IMemberMapper _memberMapper;
 
@@ -610,55 +610,55 @@ namespace AqlaSerializer
 
         public bool DisableAutoAddingMemberTypes { get; set; }
 
-        public DefaultAutoAddStrategy(RuntimeTypeModel model)
+        public AutoAddStrategy(RuntimeTypeModel model)
         {
             if (model == null) throw new ArgumentNullException("model");
             _model = model;
-            MemberMapper = CreateDefaultMemberMapper();
-            TypeMapper = CreateDefaultTypeMapper();
+            MemberMapper = new MemberMapper(
+                CreateDefaultMemberMapperHandlers());
+            TypeMapper = new TypeMapper(
+                CreateDefaultTypeMapperHandlers());
         }
 
-        public static IMemberMapper CreateDefaultMemberMapper()
+        public static IMemberHandler[] CreateDefaultMemberMapperHandlers()
         {
-            return new MemberMapper(
-                new IMemberHandler[]
-                {
-                    new SystemNonSerializableHandler(),
-                    new AqlaEnumMemberHandler(),
-                    new ProtobufNetEnumMemberHandler(),
-                    new AqlaMemberHandler(),
-                    new AqlaPartialMemberHandler(),
-                    new ProtobufNetMemberHandler(new ProtobufNetMemberHandlerStrategy()),
-                    new ProtobufNetPartialMemberHandler(new ProtobufNetMemberHandlerStrategy()),
-                    new DataContractMemberHandler(),
-                    new XmlContractMemberHandler(),
-                    new ProtobufNetImplicitMemberHandler(new ProtobufNetMemberHandlerStrategy()), 
-                });
+            return new IMemberHandler[]
+            {
+                new SystemNonSerializableHandler(),
+                new AqlaEnumMemberHandler(),
+                new ProtobufNetEnumMemberHandler(),
+                new AqlaMemberHandler(),
+                new AqlaPartialMemberHandler(),
+                new ProtobufNetMemberHandler(new ProtobufNetMemberHandlerStrategy()),
+                new ProtobufNetPartialMemberHandler(new ProtobufNetMemberHandlerStrategy()),
+                new DataContractMemberHandler(),
+                new XmlContractMemberHandler(),
+                new ProtobufNetImplicitMemberHandler(new ProtobufNetMemberHandlerStrategy()), 
+            };
         }
 
-        public static ITypeMapper CreateDefaultTypeMapper()
+        public static TypeMapper.Handler[] CreateDefaultTypeMapperHandlers()
         {
-            return new TypeMapper(
-                new[]
-                {
-                    new TypeMapper.Handler("System.SerializableAttribute", new SystemSerializableHandler()),
-                    new TypeMapper.Handler("AqlaSerializer.SerializableTypeAttribute", new AqlaContractHandler()),
-                    new TypeMapper.Handler("ProtoBuf.ProtoContractAttribute", new ProtoContractHandler()),
-                    new TypeMapper.Handler("ProtoBuf.ProtoIncludeAttribute", new ProtoIncludeHandler(new DerivedTypeHandlerStrategy())),
-                    new TypeMapper.Handler("AqlaSerializer.SerializeDerivedTypeAttribute", new SerializeDerivedTypeHandler(new DerivedTypeHandlerStrategy())),
-                    new TypeMapper.Handler("AqlaSerializer.PartialNonSerializableMemberAttribute", new AqlaPartialHandler()),
-                    new TypeMapper.Handler("AqlaSerializer.SerializablePartialMemberAttribute", new AqlaPartialHandler()),
-                    new TypeMapper.Handler("ProtoBuf.ProtoPartialIgnoreAttribute", new ProtoPartialHandler()),
-                    new TypeMapper.Handler("ProtoBuf.ProtoPartialMemberAttribute", new ProtoPartialHandler()),
-                    new TypeMapper.Handler("System.Runtime.Serialization.DataContractAttribute", new DataContractHandler()),
-                    new TypeMapper.Handler("System.Xml.Serialization.XmlTypeAttribute", new XmlContractHandler()),
-                });
+            return new[]
+            {
+                new TypeMapper.Handler("System.SerializableAttribute", new SystemSerializableHandler()),
+                new TypeMapper.Handler("AqlaSerializer.SerializableTypeAttribute", new AqlaContractHandler()),
+                new TypeMapper.Handler("ProtoBuf.ProtoContractAttribute", new ProtoContractHandler()),
+                new TypeMapper.Handler("ProtoBuf.ProtoIncludeAttribute", new ProtoIncludeHandler(new DerivedTypeHandlerStrategy())),
+                new TypeMapper.Handler("AqlaSerializer.SerializeDerivedTypeAttribute", new SerializeDerivedTypeHandler(new DerivedTypeHandlerStrategy())),
+                new TypeMapper.Handler("AqlaSerializer.PartialNonSerializableMemberAttribute", new AqlaPartialHandler()),
+                new TypeMapper.Handler("AqlaSerializer.SerializablePartialMemberAttribute", new AqlaPartialHandler()),
+                new TypeMapper.Handler("ProtoBuf.ProtoPartialIgnoreAttribute", new ProtoPartialHandler()),
+                new TypeMapper.Handler("ProtoBuf.ProtoPartialMemberAttribute", new ProtoPartialHandler()),
+                new TypeMapper.Handler("System.Runtime.Serialization.DataContractAttribute", new DataContractHandler()),
+                new TypeMapper.Handler("System.Xml.Serialization.XmlTypeAttribute", new XmlContractHandler()),
+            };
         }
 
         public virtual IAutoAddStrategy Clone(RuntimeTypeModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
-            var s = (DefaultAutoAddStrategy)MemberwiseClone();
+            var s = (AutoAddStrategy)MemberwiseClone();
             s._model = model;
             return s;
         }
