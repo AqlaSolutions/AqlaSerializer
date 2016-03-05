@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using AqlaSerializer.Compiler;
 #endif
 using AqlaSerializer.Meta;
-
+using AqlaSerializer.Settings;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -45,55 +45,15 @@ namespace AqlaSerializer.Serializers
             this._tails = new IProtoSerializerWithWireType[members.Length];
 
             ParameterInfo[] parameters = ctor.GetParameters();
-            for(int i = 0 ; i < members.Length ; i++)
+            for (int i = 0; i < members.Length; i++)
             {
-                WireType wireType;
-                Type finalType = parameters[i].ParameterType;
+                var level = new MemberLevelSettingsValue { EffectiveType = parameters[i].ParameterType };
+                var vs = new ValueSerializationSettings();
+                vs.SetSettings(new ValueSerializationSettings.LevelValue(level) { IsNotAssignable = true }, 0);
+                vs.DefaultLevel = new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevel());
 
-                Type itemType = null, defaultType = null;
-
-                int idx = model.FindOrAddAuto(finalType, false, true, false);
-                if (idx < 0 || !model[finalType].IgnoreListHandling)
-                    MetaType.ResolveListTypes(model, finalType, ref itemType, ref defaultType);
-                
-                Type tmp = itemType ?? finalType;
-
-                ValueFormat format = ValueFormat.NotSpecified;
-                
-                int typeIndex = model.FindOrAddAuto(tmp, false, true, false);
-                if (typeIndex >= 0)
-                {
-                    MetaType mt = model[tmp];
-                    mt.FinalizeSettingsValue();
-                    format = mt.SettingsValue.Member.Format;
-                }
-
-                bool? dynamicType = null;
-                ValueSerializerBuilder.EnsureCorrectFormatSpecified(model, ref format, tmp, ref dynamicType, true);
-                
-                object dummy = null;
-                IProtoSerializerWithWireType tail = model.ValueSerializerBuilder.TryGetCoreSerializer(BinaryDataFormat.Default, tmp, out wireType, ref format, dynamicType.GetValueOrDefault(), false, false, true, ref dummy), serializer;
-                if (tail == null)
-                {
-                    throw new InvalidOperationException("No serializer defined for type: " + tmp.FullName);
-                }
-
-                if(itemType == null)
-                {
-                    serializer = tail;
-                }
-                else
-                {
-                    if (finalType.IsArray)
-                    {
-                        serializer = new ArrayDecorator(model, tail, false, wireType, finalType, false, false);
-                    }
-                    else
-                    {
-                        serializer = ListDecorator.Create(model, finalType, defaultType, tail, false, wireType, false, false, true);
-                    }
-                }
-                _tails[i] = serializer;
+                WireType wt;
+                _tails[i] = model.ValueSerializerBuilder.BuildValueFinalSerializer(vs, true, out wt);
             }
         }
         public bool HasCallbacks(Meta.TypeModel.CallbackType callbackType)

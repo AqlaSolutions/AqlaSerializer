@@ -21,22 +21,8 @@ namespace AqlaSerializer.Meta
     {
         IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, out WireType wireType);
 
-        IProtoSerializerWithWireType TryGetCoreSerializer(
-            BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
-            ref ValueFormat format, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue);
-        
+        IProtoSerializerWithWireType TryGetSimpleCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType);
         bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint);
-    }
-
-    static class ValueSerializerBuilderExtensions
-    {
-        public static IProtoSerializerWithWireType TryGetSimpleCoreSerializer(this IValueSerializerBuilder builder, BinaryDataFormat dataFormat, Type type, out WireType defaultWireType)
-        {
-            object dummy = null;
-            ValueFormat format = ValueFormat.Compact;
-            return builder.TryGetCoreSerializer(dataFormat, type, out defaultWireType, ref format, false, false, false, false, ref dummy);
-        }
-
     }
 }
 #endif

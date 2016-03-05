@@ -339,6 +339,13 @@ namespace AqlaSerializer.Meta
             return nestedLevel;
         }
 
+        public IProtoSerializerWithWireType TryGetSimpleCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType)
+        {
+            object dummy = null;
+            ValueFormat format = ValueFormat.Compact;
+            return TryGetCoreSerializer(dataFormat, type, out defaultWireType, ref format, false, false, false, false, ref dummy);
+        }
+
         public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             ref ValueFormat format, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue)
         {
