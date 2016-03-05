@@ -8,6 +8,7 @@ using System.Text;
 using AltLinq; using System.Linq;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
+using AqlaSerializer.Meta.Mapping.MemberHandlers;
 using AqlaSerializer.Serializers;
 using AqlaSerializer.Settings;
 #if FEAT_IKVM
@@ -69,7 +70,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                         if ((bool)tmp)
                             main.Member.Format = ValueFormat.Reference;
                         else
-                            main.Member.Format = ValueFormat.Compact;
+                            main.Member.Format = ProtobufNetMemberHandlerStrategy.GetDefaultLegacyFormat(s.Type, model);
                     }
                     if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) s.ImplicitFirstTag = (int)tmp;
                     if (item.TryGet("ConstructType", out tmp)) main.ConstructType = (Type)tmp;
