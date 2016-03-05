@@ -42,14 +42,7 @@ namespace AqlaSerializer.Meta
                 var l2 = CompleteLevel(settings, levelNumber, out defaultValue);
                 Debug.Assert(l.Equals(l2.Basic));
             }
-
-
-            if (_model.ProtoCompatibility.SuppressValueEnhancedFormat)
-            {
-                l.Format = ValueFormat.Compact;
-                l.WriteAsDynamicType = false;
-            }
-
+            
             Debug.Assert(l.ContentBinaryFormatHint != null, "l.ContentBinaryFormatHint != null");
             Debug.Assert(l.WriteAsDynamicType != null, "l.WriteAsDynamicType != null");
             Debug.Assert(l.Collection.Append != null, "l.Collection.Append != null");
@@ -348,7 +341,9 @@ namespace AqlaSerializer.Meta
         public IProtoSerializerWithWireType TryGetCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             ref ValueFormat format, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue)
         {
-            if (format == ValueFormat.NotSpecified) throw new ArgumentException("Format should be specified for TryGetCoreSerializer", "format");
+            if (format == ValueFormat.NotSpecified) throw new ArgumentException("Format should be specified for TryGetCoreSerializer", nameof(format));
+            if (format != ValueFormat.Compact && _model.ProtoCompatibility.SuppressValueEnhancedFormat)
+                throw new InvalidOperationException("TryGetCoreSerializer should receive final format with ProtoCompatibility already taken into account");
             Type originalType = type;
 #if !NO_GENERICS
             {
@@ -356,9 +351,6 @@ namespace AqlaSerializer.Meta
                 if (tmp != null) type = tmp;
             }
 #endif
-            if (_model.ProtoCompatibility.SuppressValueEnhancedFormat)
-                format = ValueFormat.Compact;
-
             defaultWireType = WireType.None;
             IProtoSerializerWithWireType ser = null;
 
