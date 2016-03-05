@@ -181,7 +181,7 @@ namespace AqlaSerializer.Meta
             // apply lists if appropriate
             if (l.Collection.IsCollection)
             {
-                bool protoCompatibility = l.Collection.Format == CollectionFormat.Google || l.Collection.Format == CollectionFormat.GoogleNotPacked;
+                bool protoCompatibility = l.Collection.Format == CollectionFormat.Protobuf || l.Collection.Format == CollectionFormat.ProtobufNotPacked;
 
                 WireType packedReadWt;
                 if (!protoCompatibility)
@@ -255,7 +255,7 @@ namespace AqlaSerializer.Meta
         {
             return level.Collection.IsCollection
                    && CanPack(level.Collection.ItemType, level.ContentBinaryFormatHint)
-                   && level.Collection.Format == CollectionFormat.Google;
+                   && level.Collection.Format == CollectionFormat.Protobuf;
         }
 
         public bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint)
@@ -752,7 +752,7 @@ namespace AqlaSerializer.Meta
                         {
                             level.Collection.Format = !_model.ProtoCompatibility.SuppressCollectionEnhancedFormat
                                                           ? CollectionFormat.Enhanced
-                                                          : CollectionFormat.Google;
+                                                          : CollectionFormat.Protobuf;
                         }
 
                     }

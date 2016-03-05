@@ -198,7 +198,7 @@ namespace AqlaSerializer.Meta
                             builder.Append(" [default = ").Append(member.DefaultValue).Append(']');
                         }
                     }
-                    if (s.Collection.IsCollection && s.Collection.Format == CollectionFormat.Google &&
+                    if (s.Collection.IsCollection && s.Collection.Format == CollectionFormat.Protobuf &&
                         ListDecorator.CanPack(HelpersInternal.GetWireType(Helpers.GetTypeCode(member.MemberType), s.ContentBinaryFormatHint.GetValueOrDefault())))
                     {
                         builder.Append(" [packed=true]");

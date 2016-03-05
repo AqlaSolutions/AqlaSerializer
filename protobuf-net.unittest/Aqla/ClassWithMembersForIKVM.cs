@@ -9,7 +9,7 @@
         [SerializableMember(2, ValueFormat.Reference)]
         public int Enum { get; set; }
 
-        [SerializableMember(3, ValueFormat.Reference, DefaultValue = 5, CollectionFormat = CollectionFormat.Google)]
+        [SerializableMember(3, ValueFormat.Reference, DefaultValue = 5, CollectionFormat = CollectionFormat.Protobuf)]
         public int Named { get; set; }
 
         [SerializableMember(4, DynamicType = true)]

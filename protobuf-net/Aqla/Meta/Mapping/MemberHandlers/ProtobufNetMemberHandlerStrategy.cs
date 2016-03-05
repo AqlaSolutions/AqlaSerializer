@@ -47,9 +47,9 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 bool isPacked = false;
                 attribute.TryGetNotDefault("IsPacked", ref isPacked);
                 level.Collection.Format = isPacked 
-                    ? CollectionFormat.Google 
+                    ? CollectionFormat.Protobuf 
                     : (model.ProtoCompatibility.SuppressCollectionEnhancedFormat
-                        ? CollectionFormat.GoogleNotPacked
+                        ? CollectionFormat.ProtobufNotPacked
                         : CollectionFormat.NotSpecified
                     );
                 

@@ -41,7 +41,7 @@ namespace precompile.tests
             var rtm = TypeModel.Create();
             Type t = LoadType(rtm);
             var runtime = MakeRuntime(rtm, t, "Named");
-            Assert.That(runtime.CollectionFormat, Is.EqualTo(CollectionFormat.Google));
+            Assert.That(runtime.CollectionFormat, Is.EqualTo(CollectionFormat.Protobuf));
         }
 
         static SerializableMemberAttribute MakeRuntime(RuntimeTypeModel rtm, Type t, string name)

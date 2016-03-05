@@ -369,7 +369,7 @@ namespace AqlaSerializer.Meta
                 SetForAllLevels(
                     x =>
                         {
-                            x.Collection.Format = value ? CollectionFormat.Google : CollectionFormat.GoogleNotPacked;
+                            x.Collection.Format = value ? CollectionFormat.Protobuf : CollectionFormat.ProtobufNotPacked;
                             return x;
                         });
             }
