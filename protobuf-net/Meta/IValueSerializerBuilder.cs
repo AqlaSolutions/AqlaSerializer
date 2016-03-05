@@ -24,8 +24,7 @@ namespace AqlaSerializer.Meta
         IProtoSerializerWithWireType TryGetCoreSerializer(
             BinaryDataFormat dataFormat, Type type, out WireType defaultWireType,
             ref ValueFormat format, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue);
-
-        bool CanBePackedCollection(MemberLevelSettingsValue level);
+        
         bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint);
     }
 

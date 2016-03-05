@@ -187,6 +187,7 @@ namespace AqlaSerializer.Meta
                 if (!protoCompatibility)
                 {
                     packedReadWt = WireType.None;
+                    Debug.Assert(!isPacked); // should be determinated before passing to TryGetCoreSerializer
                     isPacked = false;
                 }
                 else
@@ -254,7 +255,7 @@ namespace AqlaSerializer.Meta
         {
             return level.Collection.IsCollection
                    && CanPack(level.Collection.ItemType, level.ContentBinaryFormatHint)
-                   && level.Collection.Format != CollectionFormat.GoogleNotPacked;
+                   && level.Collection.Format == CollectionFormat.Google;
         }
 
         public bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint)
