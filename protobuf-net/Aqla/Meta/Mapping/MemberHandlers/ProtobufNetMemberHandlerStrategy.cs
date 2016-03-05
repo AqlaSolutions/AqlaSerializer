@@ -60,10 +60,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 if (!level.WriteAsDynamicType.GetValueOrDefault())
                     attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);
                 bool dynamicType = level.WriteAsDynamicType.GetValueOrDefault();
-
-                if (dynamicType && level.Format == ValueFormat.NotSpecified)
-                    level.Format = ValueFormat.MinimalEnhancement;
-
+                
                 bool asRefHasValue = false;
                 bool notAsReference = false;
 #if !FEAT_IKVM
@@ -138,7 +135,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
         }
         
-        static ValueFormat GetDefaultLegacyFormat(Type type, RuntimeTypeModel model)
+        public static ValueFormat GetDefaultLegacyFormat(Type type, RuntimeTypeModel model)
         {
             return ValueSerializerBuilder.CanTypeBeNull(type)
 #if FORCE_ADVANCED_VERSIONING
