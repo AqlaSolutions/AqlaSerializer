@@ -754,6 +754,8 @@ namespace AqlaSerializer.Meta
                                                           ? CollectionFormat.Enhanced
                                                           : CollectionFormat.Protobuf;
                         }
+                        else if (level.Collection.Format == CollectionFormat.Enhanced && _model.ProtoCompatibility.SuppressCollectionEnhancedFormat)
+                            level.Collection.Format = CollectionFormat.Protobuf;
 
                     }
                 }
