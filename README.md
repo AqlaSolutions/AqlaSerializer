@@ -4,7 +4,7 @@ It is a fast and portable binary serializer designed to be easily used on your e
 
 Basically this is a fork of well known <a href="https://github.com/mgravell/protobuf-net">protobuf-net</a> project. Protobuf-net,  as a *data serializer*, has issues with handling some very common .NET specific features. See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/wiki/Comparsion-with-protobuf-net-and-migration">comparsion page</a>.
 
-AqlaSerializer is an *object* serializer, it's primary goal is to support important .NET features like nested collections, references, etc but it still can have a support for Google Protocol Buffers in compatibility mode.
+AqlaSerializer is an *object* serializer, it's primary goal is to support important .NET features like nested collections, references, etc and it still supports for Google Protocol Buffers in compatibility mode.
 
 It is a free open source project in which you can participiate.
 
