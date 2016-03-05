@@ -126,8 +126,10 @@ namespace AqlaSerializer.Meta
 
         public string GetDebugSchema(Type type)
         {
+            int k = GetKey(type, false, true);
+            if (k == -1) return string.Empty;
             var b = new DebugSchemaBuilder();
-            this[type].RootSerializer.WriteDebugSchema(b);
+            this[k].RootSerializer.WriteDebugSchema(b);
             return b.ToString();
         }
 

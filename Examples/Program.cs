@@ -68,9 +68,10 @@ namespace Examples
 
             if (model == null) model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
             var rtm = model as RuntimeTypeModel;
+            string schema = null;
             if (rtm != null)
-                rtm.AddNotAsReferenceDefault = true;
-
+                schema = rtm.GetDebugSchema(item.GetType());
+            
             using (MemoryStream ms = new MemoryStream())
             {
                 model.Serialize(ms, item);
@@ -86,6 +87,7 @@ namespace Examples
                     var d = model.Deserialize<T>(ms);
                     Assert.That(act, Is.EqualTo(exp));
                 }
+                schema?.GetHashCode();
                 return equal;
             }
         }

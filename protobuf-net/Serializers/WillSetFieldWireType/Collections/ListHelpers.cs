@@ -545,20 +545,20 @@ namespace AqlaSerializer.Serializers
             if (_writePacked)
             {
                 if (desc.Length != 0)
-                    desc += ",";
-                desc += "WritePacked";
-            }
-            if (append)
-            {
-                if (desc.Length != 0)
                     desc += ", ";
-                desc += "Append";
+                desc += "WritePacked";
             }
             if (_packedWireTypeForRead != WireType.None)
             {
                 if (desc.Length != 0)
                     desc += ", ";
                 desc += "PackedRead = " + _packedWireTypeForRead;
+            }
+            if (append)
+            {
+                if (desc.Length != 0)
+                    desc += ", ";
+                desc += "Append";
             }
             return desc;
         }

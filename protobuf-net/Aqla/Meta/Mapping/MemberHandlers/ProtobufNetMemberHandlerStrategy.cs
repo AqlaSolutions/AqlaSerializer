@@ -40,19 +40,22 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
                 var type = Helpers.GetMemberType(member);
 
-                bool isPacked = false;
-                attribute.TryGetNotDefault("IsPacked", ref isPacked);
-                level.Collection.Format = isPacked ? CollectionFormat.Google : CollectionFormat.NotSpecified;
-                //if (!isPacked && level.EffectiveType.IsArray && level.EffectiveType.GetElementType().IsArray)
-                //    level.Collection.Format = CollectionFormat.NotSpecified;
-
-                bool overwriteList = false;
-                attribute.TryGetNotDefault("OverwriteList", ref overwriteList);
-                level.Collection.Append = !overwriteList;
-
                 BinaryDataFormat dataFormat = 0;
                 attribute.TryGetNotDefault("DataFormat", ref dataFormat);
                 level.ContentBinaryFormatHint = dataFormat;
+
+                bool isPacked = false;
+                attribute.TryGetNotDefault("IsPacked", ref isPacked);
+                level.Collection.Format = isPacked 
+                    ? CollectionFormat.Google 
+                    : (model.ValueSerializerBuilder.CanPack(type, level.ContentBinaryFormatHint) || model.ProtoCompatibility.SuppressCollectionEnhancedFormat
+                        ? CollectionFormat.GoogleNotPacked
+                        : CollectionFormat.NotSpecified
+                    );
+                
+                bool overwriteList = false;
+                attribute.TryGetNotDefault("OverwriteList", ref overwriteList);
+                level.Collection.Append = !overwriteList;
 
                 if (!level.WriteAsDynamicType.GetValueOrDefault())
                     attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);

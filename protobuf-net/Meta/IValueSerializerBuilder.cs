@@ -26,6 +26,7 @@ namespace AqlaSerializer.Meta
             ref ValueFormat format, bool dynamicType, bool appendCollection, bool isPackedCollection, bool allowComplexTypes, ref object defaultValue);
 
         bool CanBePackedCollection(MemberLevelSettingsValue level);
+        bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint);
     }
 
     static class ValueSerializerBuilderExtensions

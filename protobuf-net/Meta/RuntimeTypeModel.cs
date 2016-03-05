@@ -578,12 +578,7 @@ namespace AqlaSerializer.Meta
             ThrowIfFrozen();
             return new MetaType(this, type, defaultFactory);
         }
-
-        /// <summary>
-        /// See <see cref="MetaType.AsReferenceDefault"/>
-        /// </summary>
-        public bool AddNotAsReferenceDefault { get; set; }
-
+        
         /// <summary>
         /// If enabled all Arrays and Lists will be handled in extended mode to always support reference tracking and null (which will break without runtime/pre-compiled dll) but may have a size overhead (going to fix that in later releases)
         /// </summary>

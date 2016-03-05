@@ -18,8 +18,7 @@ namespace AqlaSerializer.unittest.Meta
             public static RuntimeTypeModel BuildMeta([Values(false, true)] bool comp)
             {
                 var model = TypeModel.Create(false, comp ? ProtoCompatibilitySettingsValue.FullCompatibility : ProtoCompatibilitySettingsValue.Incompatible);
-                model.AddNotAsReferenceDefault = true;
-                var t=model.Add(typeof(Customer), false);
+                var t = model.Add(typeof(Customer), false);
                 t.Add(1, "Id");
                 t.AddField(2, "Name").AsReference = false;
                 return model;

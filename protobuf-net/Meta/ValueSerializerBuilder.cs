@@ -188,13 +188,20 @@ namespace AqlaSerializer.Meta
             // apply lists if appropriate
             if (l.Collection.IsCollection)
             {
-                bool protoCompatibility = _model.ProtoCompatibility.SuppressCollectionEnhancedFormat
-                                          || l.Collection.Format == CollectionFormat.Google
-                                          || l.Collection.Format == CollectionFormat.GoogleNotPacked;
+                bool protoCompatibility = l.Collection.Format == CollectionFormat.Google || l.Collection.Format == CollectionFormat.GoogleNotPacked;
 
-                WireType packedReadWt = CanPack(l.Collection.ItemType, l.ContentBinaryFormatHint) 
-                    ? l.Collection.PackedWireTypeForRead.GetValueOrDefault(wireType) 
-                    : WireType.None;
+                WireType packedReadWt;
+                if (!protoCompatibility)
+                {
+                    packedReadWt = WireType.None;
+                    isPacked = false;
+                }
+                else
+                {
+                    packedReadWt = CanPack(l.Collection.ItemType, l.ContentBinaryFormatHint)
+                                       ? l.Collection.PackedWireTypeForRead.GetValueOrDefault(wireType)
+                                       : WireType.None;
+                }
 
                 if (l.EffectiveType.IsArray)
                 {
@@ -254,7 +261,7 @@ namespace AqlaSerializer.Meta
         {
             return level.Collection.IsCollection
                    && CanPack(level.Collection.ItemType, level.ContentBinaryFormatHint)
-                   && level.Collection.Format == CollectionFormat.Google;
+                   && level.Collection.Format != CollectionFormat.GoogleNotPacked;
         }
 
         public bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint)
@@ -740,6 +747,14 @@ namespace AqlaSerializer.Meta
 
                             level.Collection.PackedWireTypeForRead = WireType.None;
                         }
+
+                        if (level.Collection.Format == CollectionFormat.NotSpecified)
+                        {
+                            level.Collection.Format = !_model.ProtoCompatibility.SuppressCollectionEnhancedFormat
+                                                          ? CollectionFormat.Enhanced
+                                                          : CollectionFormat.Google;
+                        }
+
                     }
                 }
             }
