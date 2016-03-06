@@ -33,16 +33,14 @@ namespace AqlaSerializer
         public PartialNonSerializableMemberAttribute(string memberName)
             : base()
         {
-            if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException("memberName");
-            this.memberName = memberName;
+            if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException(nameof(memberName));
+            this.MemberName = memberName;
         }
-
-        public object ModelId { get; set; }
+        
 
         /// <summary>
         /// The name of the member to be ignored.
         /// </summary>
-        public string MemberName { get { return memberName; } }
-        private readonly string memberName;
+        public string MemberName { get; }
     }
 }

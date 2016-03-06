@@ -3,7 +3,6 @@
 #if FEAT_COMPILER
 using System;
 using TriAxis.RunSharp;
-using TriAxis.RunSharp;
 #if FEAT_IKVM
 using IKVM.Reflection.Emit;
 using Type  = IKVM.Reflection.Type;

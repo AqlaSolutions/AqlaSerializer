@@ -22,8 +22,6 @@ using System.Reflection.Emit;
 #endif
 #endif
 
-using System;
-
 namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
 {
     public class SerializeDerivedTypeHandler : TypeAttributeMappingHandlerBase
