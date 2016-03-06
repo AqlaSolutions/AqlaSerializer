@@ -29,17 +29,17 @@ namespace AqlaSerializer.Meta
                 return x.FieldNumber.CompareTo(y.FieldNumber);
             }
         }
-        private readonly int fieldNumber;
+
         /// <summary>
         /// The field-number that is used to encapsulate the data (as a nested
         /// message) for the derived dype.
         /// </summary>
-        public int FieldNumber { get { return fieldNumber; } }
+        public int FieldNumber { get; }
+
         /// <summary>
         /// The sub-type to be considered.
         /// </summary>
-        public MetaType DerivedType { get { return derivedType; } }
-        private readonly MetaType derivedType;
+        public MetaType DerivedType { get; }
 
         /// <summary>
         /// Creates a new SubType instance.
@@ -47,37 +47,21 @@ namespace AqlaSerializer.Meta
         /// <param name="fieldNumber">The field-number that is used to encapsulate the data (as a nested
         /// message) for the derived dype.</param>
         /// <param name="derivedType">The sub-type to be considered.</param>
-        /// <param name="format">Specific encoding style to use; in particular, Grouped can be used to avoid buffering, but is not the default.</param>
-        public SubType(int fieldNumber, MetaType derivedType, BinaryDataFormat format)
+        public SubType(int fieldNumber, MetaType derivedType)
         {
-            if (derivedType == null) throw new ArgumentNullException("derivedType");
-            if (fieldNumber <= 0) throw new ArgumentOutOfRangeException("fieldNumber");
-            this.fieldNumber = fieldNumber;
-            this.derivedType = derivedType;
-            this.dataFormat = format;
+            if (derivedType == null) throw new ArgumentNullException(nameof(derivedType));
+            if (fieldNumber <= 0) throw new ArgumentOutOfRangeException(nameof(fieldNumber));
+            this.FieldNumber = fieldNumber;
+            this.DerivedType = derivedType;
         }
-
-        private readonly BinaryDataFormat dataFormat;
-
-        internal BinaryDataFormat DataFormat { get { return dataFormat; } }
-
-        private IProtoSerializerWithWireType serializer;
-        internal IProtoSerializerWithWireType Serializer
-        {
-            get
-            {
-                if (serializer == null) serializer = BuildSerializer();
-                return serializer;
-            }
-        }
+        
+        private IProtoSerializerWithWireType _serializer;
+        internal IProtoSerializerWithWireType Serializer => _serializer ?? (_serializer = BuildSerializer());
 
         private IProtoSerializerWithWireType BuildSerializer()
         {
             // note the caller here is MetaType.BuildSerializer, which already has the sync-lock
-            WireType wireType = WireType.String;
-            if(dataFormat == BinaryDataFormat.Group) wireType = WireType.StartGroup; // only one exception
-            
-            return new ModelTypeSerializer(derivedType.Type, derivedType.GetKey(false, false), derivedType);
+            return new ModelTypeSerializer(DerivedType.Type, DerivedType.GetKey(false, false), DerivedType);
         }
     }
 }

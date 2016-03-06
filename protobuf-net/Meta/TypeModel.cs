@@ -255,7 +255,6 @@ namespace AqlaSerializer.Meta
         /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
         /// data - useful with network IO.
         /// </summary>
-        /// <param name="type">The type being merged.</param>
         /// <param name="value">The existing instance to be modified (can be null).</param>
         /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
         /// <param name="style">How to encode the length prefix.</param>
@@ -569,7 +568,6 @@ namespace AqlaSerializer.Meta
         /// as DeserializeWithLengthPrefix can be used to read the single object back
         /// from an ongoing stream.
         /// </summary>
-        /// <param name="type">The type being serialized.</param>
         /// <param name="value">The existing instance to be serialized (cannot be null).</param>
         /// <param name="style">How to encode the length prefix.</param>
         /// <param name="dest">The destination stream to write to.</param>
@@ -1461,8 +1459,7 @@ namespace AqlaSerializer.Meta
         /// through an inheritance hierarchy.
         /// </summary>
         /// <remarks>No assumption of compatibility is made between the types.</remarks>
-        /// <typeparam name="TFrom">The type of the object being copied.</typeparam>
-        /// <typeparam name="TTo">The type of the new object to be created.</typeparam>
+        /// <param name="to">The type of the new object to be created.</param>
         /// <param name="instance">The existing instance to use as a template.</param>
         /// <returns>A new instane of type TNewType, with the data from TOldType.</returns>
         public object ChangeType(object instance, System.Type to)

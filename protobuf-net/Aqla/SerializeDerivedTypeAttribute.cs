@@ -35,10 +35,10 @@ namespace AqlaSerializer
         /// <param name="knownTypeName">The additional type to serialize/deserialize.</param>
         public SerializeDerivedTypeAttribute(int tag, string knownTypeName)
         {
-            if (tag <= 0) throw new ArgumentOutOfRangeException("tag", "Tags must be positive integers");
-            if (Helpers.IsNullOrEmpty(knownTypeName)) throw new ArgumentNullException("knownTypeName", "Known type cannot be blank");
-            this.tag = tag;
-            this.knownTypeName = knownTypeName;
+            if (tag <= 0) throw new ArgumentOutOfRangeException(nameof(tag), "Tags must be positive integers");
+            if (Helpers.IsNullOrEmpty(knownTypeName)) throw new ArgumentNullException(nameof(knownTypeName), "Known type cannot be blank");
+            this.Tag = tag;
+            this.KnownTypeName = knownTypeName;
         }
 
         public object ModelId { get; set; }
@@ -46,14 +46,12 @@ namespace AqlaSerializer
         /// <summary>
         /// Gets the unique index (within the type) that will identify this data.
         /// </summary>
-        public int Tag { get { return tag; } }
-        private readonly int tag;
+        public int Tag { get; }
 
         /// <summary>
         /// Gets the additional type to serialize/deserialize.
         /// </summary>
-        public string KnownTypeName { get { return knownTypeName; } }
-        private readonly string knownTypeName;
+        public string KnownTypeName { get; }
 
         /// <summary>
         /// Gets the additional type to serialize/deserialize.
@@ -65,17 +63,5 @@ namespace AqlaSerializer
                 return TypeModel.ResolveKnownType(KnownTypeName, null, null);
             }
         }
-
-        /// <summary>
-        /// Specifies whether the inherited sype's sub-message should be
-        /// written with a length-prefix (default), or with group markers.
-        /// </summary>
-        [DefaultValue(BinaryDataFormat.Default)]
-        public BinaryDataFormat DataFormat
-        {
-            get { return dataFormat; }
-            set { dataFormat = value; }
-        }
-        private BinaryDataFormat dataFormat = BinaryDataFormat.Default;
     }
 }

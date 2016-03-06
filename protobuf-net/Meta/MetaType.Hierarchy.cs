@@ -100,13 +100,6 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MetaType AddSubType(int fieldNumber, Type derivedType)
         {
-            return AddSubType(fieldNumber, derivedType, BinaryDataFormat.Default);
-        }
-        /// <summary>
-        /// Adds a known sub-type to the inheritance model
-        /// </summary>
-        public MetaType AddSubType(int fieldNumber, Type derivedType, BinaryDataFormat dataFormat)
-        {
             if (derivedType == null) throw new ArgumentNullException(nameof(derivedType));
             if (fieldNumber < 1) throw new ArgumentOutOfRangeException(nameof(fieldNumber));
 
@@ -140,7 +133,7 @@ namespace AqlaSerializer.Meta
             MetaType derivedMeta = _model[derivedType];
             ThrowIfFrozen();
             derivedMeta.ThrowIfFrozen();
-            SubType subType = new SubType(fieldNumber, derivedMeta, dataFormat);
+            SubType subType = new SubType(fieldNumber, derivedMeta);
             ThrowIfFrozen();
 
             derivedMeta.SetBaseType(this); // includes ThrowIfFrozen

@@ -694,7 +694,7 @@ namespace AqlaSerializer.Meta
                     foreach (var subType in data.Subtypes)
                     {
                         Add(subType.Type, false);
-                        t.AddSubType(subType.FieldNumber, subType.Type, subType.DataFormat);
+                        t.AddSubType(subType.FieldNumber, subType.Type);
                     }
                 return t;
             }
@@ -730,7 +730,6 @@ namespace AqlaSerializer.Meta
 
                         data.Subtypes[j] = new SubtypeData()
                         {
-                            DataFormat = metaSubType.DataFormat,
                             FieldNumber = metaSubType.FieldNumber,
                             Type = metaSubType.DerivedType.Type
                         };
@@ -1421,7 +1420,7 @@ namespace AqlaSerializer.Meta
                 var cloned = (MetaType)m.types[i];
 
                 foreach (SubType st in original.GetSubtypes())
-                    cloned.AddSubType(st.FieldNumber, st.DerivedType.Type, st.DataFormat);
+                    cloned.AddSubType(st.FieldNumber, st.DerivedType.Type);
             }
             return m;
         }

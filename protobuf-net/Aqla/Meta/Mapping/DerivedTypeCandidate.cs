@@ -28,11 +28,9 @@ namespace AqlaSerializer.Meta.Mapping
     {
         public int Tag { get; set; }
         public Type Type { get; set; }
-        public BinaryDataFormat DataFormat { get; set; }
-
-        public DerivedTypeCandidate(int tag, Type type, BinaryDataFormat dataFormat)
+        
+        public DerivedTypeCandidate(int tag, Type type)
         {
-            DataFormat = dataFormat;
             Tag = tag;
             Type = type;
         }

@@ -34,11 +34,6 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             object tmp;
             int tag = 0;
             if (item.TryGet("tag", out tmp)) tag = (int)tmp;
-            BinaryDataFormat dataFormat = BinaryDataFormat.Default;
-            if (item.TryGet("DataFormat", out tmp))
-            {
-                dataFormat = (BinaryDataFormat)(int)tmp;
-            }
             Type knownType = null;
             try
             {
@@ -53,7 +48,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             {
                 throw new InvalidOperationException("Unable to resolve sub-type of: " + s.Type.FullName);
             }
-            s.DerivedTypes.Add(new DerivedTypeCandidate(tag, knownType, dataFormat));
+            s.DerivedTypes.Add(new DerivedTypeCandidate(tag, knownType));
             return TypeAttributeHandlerResult.Done;
         }
     }

@@ -10,7 +10,6 @@ namespace AqlaSerializer.Meta.Data
     [SerializableType]
     public class SubtypeData
     {
-        public BinaryDataFormat DataFormat { get; set; }
         public int FieldNumber { get; set; }
         public Type Type { get; set; }
     }

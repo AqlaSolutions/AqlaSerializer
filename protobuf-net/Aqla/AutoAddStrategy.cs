@@ -90,7 +90,7 @@ namespace AqlaSerializer
                         });
 
                     foreach (var candidate in mapped.DerivedTypes)
-                        if (metaType.IsValidSubType(candidate.Type)) metaType.AddSubType(candidate.Tag, candidate.Type, candidate.DataFormat);
+                        if (metaType.IsValidSubType(candidate.Type)) metaType.AddSubType(candidate.Tag, candidate.Type);
 
                     metaType.SettingsValue = mapped.SettingsValue;
                 }

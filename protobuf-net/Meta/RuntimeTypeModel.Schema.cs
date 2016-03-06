@@ -133,7 +133,7 @@ namespace AqlaSerializer.Meta
             return b.ToString();
         }
 
-        // <summary>
+        /// <summary>
         /// Suggest a .proto definition for the given type
         /// </summary>
         /// <param name="type">The type to generate a .proto definition for, or <c>null</c> to generate a .proto that represents the entire model</param>
