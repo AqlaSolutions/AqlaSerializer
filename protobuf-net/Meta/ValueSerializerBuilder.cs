@@ -102,26 +102,21 @@ namespace AqlaSerializer.Meta
                 if (ser == null && itemIsNestedCollection)
                 {
                     // if we already tried to lookup registered type no need to do it again
-                    if (!tryHandleAsRegistered && nestedDefaultType == null)
-                    {
-                        MetaType metaType;
-                        if (_model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
-                            nestedDefaultType = metaType.ConstructType ?? metaType.Type;
-                    }
-                    
-                    if (nestedDefaultType == null)
-                    {
-                        MetaType metaType;
-                        if (_model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
-                            nestedDefaultType = metaType.ConstructType ?? metaType.Type;
-                    }
+
+                    MetaType metaType;
+                    if (_model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
+                        nestedDefaultType = metaType.ConstructType ?? nestedDefaultType ?? metaType.Type;
 
                     var nestedLevel = settings.GetSettingsCopy(levelNumber + 1);
+
+                    if (nestedLevel.Basic.Collection.ConcreteType == null)
+                        nestedLevel.Basic.Collection.ConcreteType = nestedDefaultType;
 
                     if (nestedLevel.IsNotAssignable)
                         throw new ProtoException("Nested collection item should be assignable");
 
-                    nestedLevel.Basic.Collection.Append = false; // TODO throw if set to true: throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
+                    nestedLevel.Basic.Collection.Append = false;
+                        // TODO throw if set to true: throw new ProtoException("AppendCollection is not supported for nested types: " + objectType.Name);
 
                     if (nestedLevel.Basic.Collection.ItemType == null)
                         nestedLevel.Basic.Collection.ItemType = nestedItemType;
