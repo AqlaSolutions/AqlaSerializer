@@ -55,9 +55,7 @@ namespace AqlaSerializer.Serializers
             }
         }
         private ProtoTypeCode GetTypeCode() {
-            Type type = Helpers.GetNullableUnderlyingType( ExpectedType);
-            if(type == null) type = ExpectedType;
-            return Helpers.GetTypeCode(type);
+            return Helpers.GetTypeCode(Helpers.GetNullableUnderlyingType( ExpectedType) ?? ExpectedType);
         }
 
         

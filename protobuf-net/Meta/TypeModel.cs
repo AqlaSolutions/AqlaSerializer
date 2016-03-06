@@ -53,7 +53,6 @@ namespace AqlaSerializer.Meta
 
         protected TypeModel()
         {
-            AllowStreamRewriting = true;
             ExtensibleUtil = new ExtensibleUtil(this);
         }
 
@@ -294,6 +293,7 @@ namespace AqlaSerializer.Meta
         /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
         /// <param name="style">How to encode the length prefix.</param>
         /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        /// <param name="context"></param>
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
@@ -355,6 +355,8 @@ namespace AqlaSerializer.Meta
         /// <param name="expectedField">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
         /// <param name="resolver">Used to resolve types on a per-field basis.</param>
         /// <param name="bytesRead">Returns the number of bytes consumed by this operation (includes length-prefix overheads and any skipped data).</param>
+        /// <param name="haveObject"></param>
+        /// <param name="context"></param>
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
@@ -366,17 +368,17 @@ namespace AqlaSerializer.Meta
             haveObject = false;
             bool skip;
             int len;
-            int tmpBytesRead;
             bytesRead = 0;
             if (type == null && (style != PrefixStyle.Base128 || resolver == null))
             {
                 throw new InvalidOperationException("A type must be provided unless base-128 prefixing is being used in combination with a resolver");
             }
-            int actualField;
             do
             {
 
                 bool expectPrefix = expectedField > 0 || resolver != null;
+                int tmpBytesRead;
+                int actualField;
                 len = ProtoReader.ReadLengthPrefix(source, expectPrefix, style, out actualField, out tmpBytesRead);
                 if (tmpBytesRead == 0) return value;
                 bytesRead += tmpBytesRead;
@@ -806,7 +808,6 @@ namespace AqlaSerializer.Meta
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            Type itemType = null;
             ProtoTypeCode typecode = Helpers.GetTypeCode(type);
             int modelKey;
             WireType wiretype = GetWireType(typecode, format, ref type, out modelKey);
@@ -814,7 +815,7 @@ namespace AqlaSerializer.Meta
             bool found = false;
             if (wiretype == WireType.None)
             {
-                itemType = GetListItemType(this, type);
+                Type itemType = GetListItemType(this, type);
                 if (itemType == null && type.IsArray && type.GetArrayRank() == 1 && type != typeof(byte[]))
                 {
                     itemType = type.GetElementType();
@@ -952,7 +953,7 @@ namespace AqlaSerializer.Meta
 #if !(WINRT || CF)
             // EF POCO
             string fullName = type.FullName;
-            if (fullName != null && fullName.StartsWith("System.Data.Entity.DynamicProxies.")) return type.BaseType;
+            if (fullName != null && fullName.StartsWith("System.Data.Entity.DynamicProxies.", StringComparison.Ordinal)) return type.BaseType;
 
             // NHibernate
             Type[] interfaces = type.GetInterfaces();
@@ -1007,19 +1008,23 @@ namespace AqlaSerializer.Meta
         /// Provides the key that represents a given type in the current model.
         /// </summary>
         protected abstract int GetKeyImpl(Type type);
+
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream.
         /// </summary>
         /// <param name="key">Represents the type (including inheritance) to consider.</param>
         /// <param name="value">The existing instance to be serialized (cannot be null).</param>
         /// <param name="dest">The destination stream to write to.</param>
+        /// <param name="isRoot"></param>
         protected internal abstract void Serialize(int key, object value, ProtoWriter dest, bool isRoot);
+
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
         /// <param name="key">Represents the type (including inheritance) to consider.</param>
         /// <param name="value">The existing instance to be modified (can be null).</param>
         /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="isRoot"></param>
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
@@ -1054,7 +1059,7 @@ namespace AqlaSerializer.Meta
             AfterDeserialize
         }
 
-        public bool ForceSerializationDuringClone { get; set; }
+        internal bool ForceSerializationDuringClone { get; set; }
 
 #if !NO_GENERICS && !IOS
         /// <summary>
@@ -1180,14 +1185,11 @@ namespace AqlaSerializer.Meta
         {
             string fullName = type == null ? "(unknown)" : type.FullName;
 #if !NO_GENERICS && !WINRT
-            if (type != null)
+            Type baseType = type?.BaseType;
+            if (baseType != null && baseType.IsGenericType && baseType.GetGenericTypeDefinition().Name == "GeneratedMessage`2")
             {
-                Type baseType = type.BaseType;
-                if (baseType != null && baseType.IsGenericType && baseType.GetGenericTypeDefinition().Name == "GeneratedMessage`2")
-                {
-                    throw new InvalidOperationException(
-                        "Are you mixing protobuf-net and protobuf-csharp-port? See http://stackoverflow.com/q/11564914; type: " + fullName);
-                }
+                throw new InvalidOperationException(
+                    "Are you mixing protobuf-net and protobuf-csharp-port? See http://stackoverflow.com/q/11564914; type: " + fullName);
             }
 #endif
             throw new InvalidOperationException("Type is not expected, and no contract can be inferred: " + fullName);
@@ -1202,36 +1204,29 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public static void ThrowCannotCreateInstance(Type type)
         {
-            throw new ProtoException("No parameterless constructor found for " + (type == null ? "(null)" : type.Name));
+            throw new ProtoException("No parameterless constructor found for " + (type?.Name ?? "(null)"));
         }
 
         internal static string SerializeType(TypeModel model, System.Type type)
         {
-            if (model != null)
+            TypeFormatEventHandler handler = model?.DynamicTypeFormatting;
+            if (handler != null)
             {
-                TypeFormatEventHandler handler = model.DynamicTypeFormatting;
-                if (handler != null)
-                {
-                    TypeFormatEventArgs args = new TypeFormatEventArgs(type);
-                    handler(model, args);
-                    if (!Helpers.IsNullOrEmpty(args.FormattedName)) return args.FormattedName;
-                }
+                TypeFormatEventArgs args = new TypeFormatEventArgs(type);
+                handler(model, args);
+                if (!Helpers.IsNullOrEmpty(args.FormattedName)) return args.FormattedName;
             }
             return type.AssemblyQualifiedName;
         }
 
         internal static System.Type DeserializeType(TypeModel model, string value)
         {
-
-            if (model != null)
+            TypeFormatEventHandler handler = model?.DynamicTypeFormatting;
+            if (handler != null)
             {
-                TypeFormatEventHandler handler = model.DynamicTypeFormatting;
-                if (handler != null)
-                {
-                    TypeFormatEventArgs args = new TypeFormatEventArgs(value);
-                    handler(model, args);
-                    if (args.Type != null) return args.Type;
-                }
+                TypeFormatEventArgs args = new TypeFormatEventArgs(value);
+                handler(model, args);
+                if (args.Type != null) return args.Type;
             }
             return System.Type.GetType(value);
         }

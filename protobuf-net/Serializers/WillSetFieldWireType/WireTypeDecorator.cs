@@ -106,7 +106,7 @@ namespace AqlaSerializer.Serializers
         public void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
         {
             IProtoTypeSerializer pts = Tail as IProtoTypeSerializer;
-            if (pts != null) pts.Callback(value, callbackType, context);
+            pts?.Callback(value, callbackType, context);
         }
 #endif
 #if FEAT_COMPILER

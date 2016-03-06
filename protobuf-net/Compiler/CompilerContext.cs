@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -961,7 +962,7 @@ namespace AqlaSerializer.Compiler
                 if (attrib.ConstructorArguments.Count == 1)
                 {
                     string privelegedAssembly = attrib.ConstructorArguments[0].Value as string;
-                    if (privelegedAssembly == _assemblyName || privelegedAssembly.StartsWith(_assemblyName + ","))
+                    if (privelegedAssembly == _assemblyName || privelegedAssembly.StartsWith(_assemblyName + ",", StringComparison.OrdinalIgnoreCase))
                     {
                         isTrusted = true;
                         break;
@@ -971,7 +972,7 @@ namespace AqlaSerializer.Compiler
 #else
             foreach (System.Runtime.CompilerServices.InternalsVisibleToAttribute attrib in assembly.GetCustomAttributes(attributeType, false))
             {
-                if (attrib.AssemblyName == _assemblyName || attrib.AssemblyName.StartsWith(_assemblyName + ","))
+                if (attrib.AssemblyName == _assemblyName || attrib.AssemblyName.StartsWith(_assemblyName + ",", StringComparison.Ordinal))
                 {
                     isTrusted = true;
                     break;
@@ -999,10 +1000,10 @@ namespace AqlaSerializer.Compiler
             }
 
             MemberTypes memberType = member.MemberType;
-            Type type;
             if (!NonPublic)
             {
                 bool isPublic;
+                Type type;
                 switch (memberType)
                 {
                     case MemberTypes.TypeInfo:

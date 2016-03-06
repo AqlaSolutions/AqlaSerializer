@@ -175,7 +175,7 @@ namespace AqlaSerializer
             string suffix;
             try
             {
-                suffix = obj == null ? "(null)" : obj.ToString();
+                suffix = obj?.ToString() ?? "(null)";
             }
             catch
             {
@@ -406,7 +406,7 @@ namespace AqlaSerializer
             return double.IsInfinity(value);
 #endif
         }
-        public readonly static Type[] EmptyTypes =
+        public static readonly Type[] EmptyTypes =
 #if PORTABLE || WINRT || CF2 || CF35
             new Type[0];
 #else

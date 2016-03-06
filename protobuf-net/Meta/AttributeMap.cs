@@ -15,7 +15,7 @@ namespace AqlaSerializer.Meta
     {
 #if DEBUG
         [Obsolete("Please use AttributeType instead", true)]
-        new public Type GetType() { return AttributeType; }
+        public new Type GetType() { return AttributeType; }
 #endif
 
         public bool TryGetNotDefault<T>(string memberName, ref T value, T notSpecifiedValue = default(T), bool publicOnly = true)

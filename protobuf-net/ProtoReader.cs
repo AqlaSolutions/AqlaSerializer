@@ -151,8 +151,8 @@ namespace AqlaSerializer
             UnderlyingStream = null;
             Model = null;
             BufferPool.ReleaseBufferToPool(ref _ioBuffer);
-            if(_stringInterner != null) _stringInterner.Clear();
-            if(NetCache != null) NetCache.Clear();
+            _stringInterner?.Clear();
+            NetCache?.Clear();
             _lateReferences.Reset();
         }
         
@@ -531,8 +531,10 @@ namespace AqlaSerializer
             string found;
             if (_stringInterner == null)
             {
-                _stringInterner = new System.Collections.Generic.Dictionary<string, string>();
-                _stringInterner.Add(value, value);        
+                _stringInterner = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    [value] = value
+                };
             }
             else if (_stringInterner.TryGetValue(value, out found))
             {
@@ -1007,7 +1009,7 @@ namespace AqlaSerializer
                 case WireType.String:
                     int len = (int)reader.ReadUInt32Variant(false);
                     reader.WireType = WireType.None;
-                    if (len == 0) return value == null ? EmptyBlob : value;
+                    if (len == 0) return value ?? EmptyBlob;
                     int offset;
                     if (value == null || value.Length == 0)
                     {

@@ -40,11 +40,12 @@ namespace AqlaSerializer.Serializers
                     _packedWireTypeForRead = packedWireTypeForRead;
                 else if (writePacked)
                     throw new ArgumentException("For writePacked wire type for read should be specified");
+
+                _writePacked = writePacked;
             }
             _tail = tail;
             _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;
-            _writePacked = writePacked;
         }
 #if FEAT_COMPILER
         public void EmitWrite(SerializerCodeGen g, Local value, Action subTypeWriter, Func<Operand> getLength, Action prepareInstance)
@@ -148,7 +149,6 @@ namespace AqlaSerializer.Serializers
             bool castNeeded = !Helpers.IsAssignableFrom(enumerableGenericType, enumerable.Type);
 
             using (var isFirst = g.ctx.Local(typeof(bool)))
-            using (var obj = g.ctx.Local(castNeeded ? g.ctx.MapType(typeof(object)) : _itemType))
             {
                 g.Assign(isFirst, true);
 
@@ -374,7 +374,7 @@ namespace AqlaSerializer.Serializers
                 if (subTypeWriter != null)
                 {
                     ProtoWriter.WriteFieldHeaderBegin(FieldSubtype, dest);
-                    subTypeWriter?.Invoke();
+                    subTypeWriter.Invoke();
                 }
                 if (length != null && length.Value > 0)
                 {

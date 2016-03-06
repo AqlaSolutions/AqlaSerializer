@@ -366,9 +366,11 @@ namespace AqlaSerializer.Meta
             BuildAllSerializers();
             return this;
 #endif
-            CompilerOptions options = new CompilerOptions();
-            options.TypeName = name;
-            options.OutputPath = path;
+            CompilerOptions options = new CompilerOptions
+            {
+                TypeName = name,
+                OutputPath = path
+            };
             return Compile(options);
         }
 

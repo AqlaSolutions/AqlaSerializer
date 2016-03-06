@@ -72,8 +72,7 @@ namespace AqlaSerializer.ServiceModel
             {
                 description.Behaviors.Remove(dcsOperationBehavior);
 
-                ProtoOperationBehavior newBehavior = new ProtoOperationBehavior(description);
-                newBehavior.MaxItemsInObjectGraph = dcsOperationBehavior.MaxItemsInObjectGraph;
+                ProtoOperationBehavior newBehavior = new ProtoOperationBehavior(description) { MaxItemsInObjectGraph = dcsOperationBehavior.MaxItemsInObjectGraph };
                 description.Behaviors.Add(newBehavior);
             }
         }

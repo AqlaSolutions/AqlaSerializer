@@ -48,7 +48,7 @@ namespace AqlaSerializer.Serializers
 
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
         {
-            if (_callbacks != null && _callbacks[callbackType] != null) return true;
+            if (_callbacks?[callbackType] != null) return true;
             for (int i = 0; i < _serializers.Length; i++)
             {
                 if (_serializers[i].ExpectedType != ExpectedType && ((_serializers[i] as IProtoTypeSerializer)?.HasCallbacks(callbackType) ?? false)) return true;
@@ -183,7 +183,7 @@ namespace AqlaSerializer.Serializers
         {
             if (_callbacks != null) InvokeCallback(_callbacks[callbackType], value, _constructType, context);
             IProtoTypeSerializer ser = (IProtoTypeSerializer)GetMoreSpecificSerializer(value);
-            if (ser != null) ser.Callback(value, callbackType, context);
+            ser?.Callback(value, callbackType, context);
         }
 
         public IProtoSerializerWithWireType GetMoreSpecificSerializer(object value)
@@ -251,12 +251,11 @@ namespace AqlaSerializer.Serializers
             var token = ProtoReader.StartSubItem(source);
             if (_isRootType && value != null) { Callback(value, TypeModel.CallbackType.BeforeDeserialize, source.Context); }
             int fieldNumber, lastFieldNumber = 0, lastFieldIndex = 0;
-            bool fieldHandled;
 
             //Helpers.DebugWriteLine(">> Reading fields for " + forType.FullName);
             while ((fieldNumber = source.ReadFieldHeader()) > 0)
             {
-                fieldHandled = false;
+                bool fieldHandled = false;
                 if (fieldNumber < lastFieldNumber)
                 {
                     lastFieldNumber = lastFieldIndex = 0;
@@ -307,11 +306,11 @@ namespace AqlaSerializer.Serializers
         internal static object InvokeCallback(MethodInfo method, object obj, Type constructType, SerializationContext context)
         {
             object result = null;
-            object[] args;
             if (method != null)
             {   // pass in a streaming context if one is needed, else null
                 bool handled;
                 ParameterInfo[] parameters = method.GetParameters();
+                object[] args;
                 switch (parameters.Length)
                 {
                     case 0:
@@ -509,9 +508,7 @@ namespace AqlaSerializer.Serializers
                     }
                     else if (parameterType == ctx.MapType(typeof(System.Type)))
                     {
-                        Type tmp = constructType;
-                        if (tmp == null) tmp = type; // no ?? in some C# profiles
-                        ctx.LoadValue(tmp);
+                        ctx.LoadValue(constructType ?? type);
                     }
 #if PLAT_BINARYFORMATTER
                     else if (parameterType == ctx.MapType(typeof(System.Runtime.Serialization.StreamingContext)))
@@ -574,7 +571,7 @@ namespace AqlaSerializer.Serializers
                 }
 
                 Helpers.DebugAssert(((IProtoTypeSerializer)this).HasCallbacks(callbackType), "Shouldn't be calling this if there is nothing to do");
-                MethodInfo method = _callbacks == null ? null : _callbacks[callbackType];
+                MethodInfo method = _callbacks?[callbackType];
                 if (method == null && !actuallyHasInheritance)
                 {
                     return;
@@ -615,7 +612,6 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
-                Type expected = ExpectedType;
                 var g = ctx.G;
                 Helpers.DebugAssert(!valueFrom.IsNullRef());
 
@@ -657,7 +653,7 @@ namespace AqlaSerializer.Serializers
                             Compiler.CodeLabel processThisField = ctx.DefineLabel();
                             ctx.BranchIfEqual(processThisField, true);
                             ctx.Branch(tryNextField, false);
-                            WriteFieldHandler(ctx, expected, loc, processThisField, @continue, (IProtoSerializer)group.Items[0]);
+                            WriteFieldHandler(ctx, loc, processThisField, @continue, (IProtoSerializer)group.Items[0]);
                         }
                         else
                         { // implement as a jump-table-based switch
@@ -674,7 +670,7 @@ namespace AqlaSerializer.Serializers
                             ctx.Branch(tryNextField, false);
                             for (int i = 0; i < groupItemCount; i++)
                             {
-                                WriteFieldHandler(ctx, expected, loc, jmp[i], @continue, (IProtoSerializer)group.Items[i]);
+                                WriteFieldHandler(ctx, loc, jmp[i], @continue, (IProtoSerializer)group.Items[i]);
                             }
                         }
                         ctx.MarkLabel(tryNextField);
@@ -712,7 +708,7 @@ namespace AqlaSerializer.Serializers
         }
 
         private void WriteFieldHandler(
-            Compiler.CompilerContext ctx, Type expected, Compiler.Local loc,
+            Compiler.CompilerContext ctx, Compiler.Local loc,
             Compiler.CodeLabel handler, Compiler.CodeLabel @continue, IProtoSerializer serializer)
         {
             ctx.MarkLabel(handler);

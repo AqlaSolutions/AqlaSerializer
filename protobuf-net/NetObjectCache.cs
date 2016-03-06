@@ -18,14 +18,7 @@ namespace AqlaSerializer
 
         private MutableList _underlyingList;
 
-        private MutableList List
-        {
-            get
-            {
-                if (_underlyingList == null) _underlyingList = new MutableList();
-                return _underlyingList;
-            }
-        }
+        private MutableList List => _underlyingList ?? (_underlyingList = new MutableList());
 
         public int LastNewKey => List.Count > 0 ? List.Count + 1 : Root;
         public object LastNewValue => List.Count > 0 ? List[List.Count - 1] : _rootObject;
@@ -251,7 +244,7 @@ namespace AqlaSerializer
         private System.Collections.Generic.Dictionary<object, int> _objectKeys;
         private sealed class ReferenceComparer : System.Collections.Generic.IEqualityComparer<object>
         {
-            public readonly static ReferenceComparer Default = new ReferenceComparer();
+            public static readonly ReferenceComparer Default = new ReferenceComparer();
             private ReferenceComparer() {}
 
             bool System.Collections.Generic.IEqualityComparer<object>.Equals(object x, object y)
@@ -272,10 +265,10 @@ namespace AqlaSerializer
         {
             _trapStartIndex = 0;
             _rootObject = null;
-            if (_underlyingList != null) _underlyingList.Clear();
-            if (_stringKeys != null) _stringKeys.Clear();
+            _underlyingList?.Clear();
+            _stringKeys?.Clear();
 #if !CF && !PORTABLE
-            if (_objectKeys != null) _objectKeys.Clear();
+            _objectKeys?.Clear();
 #endif
         }
 

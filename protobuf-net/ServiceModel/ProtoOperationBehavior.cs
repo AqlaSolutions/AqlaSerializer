@@ -22,7 +22,7 @@ namespace AqlaSerializer.ServiceModel
         {
             get { return _model; }
             set {
-                if (value == null) throw new ArgumentNullException("Model");
+                if (value == null) throw new ArgumentNullException(nameof(value));
                 _model = value;
             }
 

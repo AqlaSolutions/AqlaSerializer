@@ -37,9 +37,9 @@ namespace AqlaSerializer
                 value = null;
                 return token;
             }
-            int tmp;
             do
             {
+                int tmp;
                 switch (fieldNumber)
                 {
                     case FieldExistingObjectKey:

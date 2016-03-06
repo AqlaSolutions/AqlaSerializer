@@ -13,7 +13,7 @@ namespace AqlaSerializer
 
         int IExtension.GetLength()
         {
-            return _buffer == null ? 0 : _buffer.Length;
+            return _buffer?.Length ?? 0;
         }
 
         Stream IExtension.BeginAppend()

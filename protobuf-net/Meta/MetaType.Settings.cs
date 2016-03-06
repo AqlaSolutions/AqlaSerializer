@@ -37,7 +37,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MemberLevelSettingsValue GetNestedSettingsCopyWhenRoot(int level)
         {
-            if (level == 0) throw new ArgumentOutOfRangeException("Zero level settings should be obtained through DefaultX properties on MetaType");
+            if (level == 0) throw new ArgumentOutOfRangeException(nameof(level), "Zero level settings should be obtained through DefaultX properties on MetaType");
             return _rootNestedVs.GetSettingsCopy(level).Basic;
         }
         
@@ -46,7 +46,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public void SetNestedSettingsWhenRoot(MemberLevelSettingsValue value, int level)
         {
-            if (level == 0) throw new ArgumentOutOfRangeException("Zero level settings should be specified through DefaultX properties on MetaType");
+            if (level == 0) throw new ArgumentOutOfRangeException(nameof(level), "Zero level settings should be specified through DefaultX properties on MetaType");
             ThrowIfFrozen();
             Helpers.MemoryBarrier();
             _rootNestedVs.SetSettings(value, level);

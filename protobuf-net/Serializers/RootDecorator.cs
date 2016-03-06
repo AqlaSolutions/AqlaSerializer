@@ -27,14 +27,11 @@ namespace AqlaSerializer.Serializers
         
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility;
         readonly bool _protoCompatibility;
-        readonly TypeModel _model;
         private readonly IProtoTypeSerializer _serializer;
 
         public RootDecorator(Type type, bool wrap, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
         {
-            if (model == null) throw new ArgumentNullException(nameof(model));
             _protoCompatibility = protoCompatibility;
-            _model = model;
             _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, model) : serializer;
         }
 

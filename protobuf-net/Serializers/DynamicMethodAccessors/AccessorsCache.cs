@@ -84,7 +84,7 @@ namespace AqlaSerializer.Internal
         internal static GetHandler GetShadowGetter(MethodInfo method)
         {
             if (AccessorsCacheCheck.PropertiesDisabled)
-                return (inst) => method.Invoke(inst, null);
+                return inst => method.Invoke(inst, null);
 
             GetHandler getter;
             lock (ShadowGetters)
@@ -94,7 +94,7 @@ namespace AqlaSerializer.Internal
             }
             
             
-            getter = DynamicMethodCompiler.CreateGetHandler(method.ReflectedType, method) ?? ((inst) => method.Invoke(inst, null));
+            getter = DynamicMethodCompiler.CreateGetHandler(method.ReflectedType, method) ?? (inst => method.Invoke(inst, null));
 
             lock (ShadowGetters)
                 ShadowGetters[method] = getter;

@@ -27,15 +27,13 @@ namespace AqlaSerializer.Serializers
         public override Type ExpectedType => Tail.ExpectedType;
         public override bool RequiresOldValue => true;
         private readonly MethodInfo _getSpecified, _setSpecified;
-        readonly IProtoSerializerWithWireType _tail;
-
+        
         public MemberSpecifiedDecorator(MethodInfo getSpecified, MethodInfo setSpecified, IProtoSerializerWithWireType tail)
             : base(tail)
         {
             if (getSpecified == null && setSpecified == null) throw new InvalidOperationException();
             this._getSpecified = getSpecified;
             this._setSpecified = setSpecified;
-            _tail = tail;
         }
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
@@ -50,7 +48,7 @@ namespace AqlaSerializer.Serializers
         public override object Read(object value, ProtoReader source)
         {
             object result = Tail.Read(value, source);
-            if (_setSpecified != null) _setSpecified.Invoke(value, new object[] { true });
+            _setSpecified?.Invoke(value, new object[] { true });
             return result;
         }
 #endif

@@ -17,12 +17,12 @@ namespace AqlaSerializer.Serializers
 
         protected override void WriteStartIndent()
         {
-            AppendLineOnNextEmpty("{");
+            AppendLineOnNextEmpty(_openingBracket);
         }
 
         protected override void WriteEndIndent()
         {
-            AppendLineOnNextEmpty("}");
+            AppendLineOnNextEmpty(_closingBracket);
         }
     }
 }

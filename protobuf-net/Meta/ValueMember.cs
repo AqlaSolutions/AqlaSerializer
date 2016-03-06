@@ -479,8 +479,7 @@ namespace AqlaSerializer.Meta
         {
             var s = Serializer;
             s.GetHashCode();
-            Type effectiveType = GetSettingsCopy(0).Collection.ItemType;
-            if (effectiveType == null) effectiveType = MemberType;
+            Type effectiveType = GetSettingsCopy(0).Collection.ItemType ?? MemberType;
             return _model.GetSchemaTypeName(
                 effectiveType,
                 GetSettingsCopy(0).ContentBinaryFormatHint.GetValueOrDefault(),

@@ -66,13 +66,12 @@ namespace AqlaSerializer
         private static void WriteTimeSpanImpl(TimeSpan timeSpan, ProtoWriter dest, DateTimeKind kind)
         {
             if (dest == null) throw new ArgumentNullException(nameof(dest));
-            long value;
             switch(dest.WireType)
             {
                 case WireType.String:
                 case WireType.StartGroup:
                     TimeSpanScale scale;
-                    value = timeSpan.Ticks;
+                    long value = timeSpan.Ticks;
                     if (timeSpan == TimeSpan.MaxValue)
                     {
                         value = 1;

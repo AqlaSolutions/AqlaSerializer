@@ -12,13 +12,6 @@ namespace AqlaSerializer.ServiceModel
     public class ProtoBehaviorExtension : BehaviorExtensionElement
     {
         /// <summary>
-        /// Creates a new ProtoBehaviorExtension instance.
-        /// </summary>
-        public ProtoBehaviorExtension()
-        {
-        }
-
-        /// <summary>
         /// Gets the type of behavior.
         /// </summary>     
         public override Type BehaviorType => typeof(ProtoEndpointBehavior);

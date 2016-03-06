@@ -85,7 +85,7 @@ namespace AqlaSerializer
         /// </summary>
         public static T DeepClone<T>(T instance)
         {
-            return instance == null ? instance : (T)RuntimeTypeModel.Default.DeepClone(instance);
+            return instance != null ? (T)RuntimeTypeModel.Default.DeepClone(instance) : instance;
         }
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance.
@@ -212,7 +212,6 @@ namespace AqlaSerializer
 
             const int LEN = 4096;
             byte[] buffer = new byte[LEN];
-            int read;
             using (MemoryStream ms = new MemoryStream())
             {
                 int depth = reader.Depth;
@@ -220,6 +219,7 @@ namespace AqlaSerializer
                 {
                     if (reader.NodeType == System.Xml.XmlNodeType.Text)
                     {
+                        int read;
                         while ((read = reader.ReadContentAsBase64(buffer, 0, LEN)) > 0)
                         {
                             ms.Write(buffer, 0, read);
@@ -243,7 +243,7 @@ namespace AqlaSerializer
         /// <param name="info">The SerializationInfo containing the data to apply to the instance (cannot be null).</param>
         public static void Merge<T>(System.Runtime.Serialization.SerializationInfo info, T instance) where T : class, System.Runtime.Serialization.ISerializable
         {
-            Merge<T>(info, new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.Persistence), instance);
+            Merge(info, new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.Persistence), instance);
         }
         /// <summary>
         /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
@@ -375,7 +375,7 @@ namespace AqlaSerializer
         /// <param name="destination">The destination stream to write to.</param>
         public static void SerializeWithLengthPrefix<T>(Stream destination, T instance, PrefixStyle style)
         {
-            SerializeWithLengthPrefix<T>(destination, instance, style, 0);
+            SerializeWithLengthPrefix(destination, instance, style, 0);
         }
 
         /// <summary>

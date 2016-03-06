@@ -170,7 +170,7 @@ namespace AqlaSerializer.Serializers
                                 {
                                     dest.WriteFieldHeaderComplete(WireType.Variant);
                                     dest.WriteInt32(subType.FieldNumber + 1);
-                                    g.Goto(endLabel == null ? breakLabel : endLabel.Value);
+                                    g.Goto(endLabel ?? breakLabel);
                                 }
                                 g.End();
 
@@ -192,7 +192,7 @@ namespace AqlaSerializer.Serializers
                                 dest.WriteInt32(subType.FieldNumber + 1);
                                 EmitWrite(g, null, derivedType, actualValue, actualType, recursionLevel + 1);
                             }
-                            g.Goto(endLabel == null ? breakLabel : endLabel.Value);
+                            g.Goto(endLabel ?? breakLabel);
                         }
                         g.End();
                     }

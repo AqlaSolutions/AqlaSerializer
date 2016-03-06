@@ -84,7 +84,6 @@ namespace AqlaSerializer.Serializers
 
         readonly ListHelpers _listHelpers;
         readonly bool _writePacked;
-        readonly WireType _packedWireTypeForRead;
         readonly Type _arrayType; // this is, for example, typeof(int[])
         readonly bool _overwriteList;
         readonly Type _itemType; // this is, for example, typeof(int[])
@@ -101,18 +100,11 @@ namespace AqlaSerializer.Serializers
             _itemType = tail.ExpectedType;
             if (_itemType != arrayType.GetElementType()) throw new ArgumentException("Expected array type is " + arrayType.GetElementType() + " but tail type is " + _itemType);
             Helpers.DebugAssert(Tail.ExpectedType != model.MapType(typeof(byte)), "Should have used BlobSerializer");
-            if (!ListDecorator.CanPack(packedWireTypeForRead))
-            {
-                if (writePacked) throw new InvalidOperationException("Only simple data-types can use packed encoding");
-                _packedWireTypeForRead = WireType.None;
-            }
-            else
-                _packedWireTypeForRead = packedWireTypeForRead;
             _writePacked = writePacked;
             _arrayType = arrayType;
             _overwriteList = overwriteList;
             _protoCompatibility = protoCompatibility;
-            _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _protoCompatibility, tail);
+            _listHelpers = new ListHelpers(_writePacked, packedWireTypeForRead, _protoCompatibility, tail);
         }
 
         public override Type ExpectedType => _arrayType;

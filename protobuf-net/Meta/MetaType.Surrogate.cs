@@ -42,13 +42,10 @@ namespace AqlaSerializer.Meta
         public void SetSurrogate(Type surrogateType)
         {
             if (surrogateType == Type) surrogateType = null;
-            if (surrogateType != null)
+            // note that BuildSerializer checks the **CURRENT TYPE** is OK to be surrogated
+            if (surrogateType != null && Helpers.IsAssignableFrom(_model.MapType(typeof(IEnumerable)), surrogateType))
             {
-                // note that BuildSerializer checks the **CURRENT TYPE** is OK to be surrogated
-                if (surrogateType != null && Helpers.IsAssignableFrom(_model.MapType(typeof(IEnumerable)), surrogateType))
-                {
-                    throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a surrogate");
-                }
+                throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a surrogate");
             }
             ThrowIfFrozen();
             this._surrogate = surrogateType;

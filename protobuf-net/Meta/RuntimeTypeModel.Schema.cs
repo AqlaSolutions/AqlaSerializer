@@ -66,60 +66,58 @@ namespace AqlaSerializer.Meta
                 }
                 return this[effectiveType].GetSurrogateOrBaseOrSelf(true).GetSchemaTypeName();
             }
-            else
+
+            if (ser is ParseableSerializer)
             {
-                if (ser is ParseableSerializer)
-                {
+                if (asReference) requiresBclImport = true;
+                return asReference ? "bcl.NetObjectProxy" : "string";
+            }
+
+            switch (Helpers.GetTypeCode(effectiveType))
+            {
+                case ProtoTypeCode.Boolean: return "bool";
+                case ProtoTypeCode.Single: return "float";
+                case ProtoTypeCode.Double: return "double";
+                case ProtoTypeCode.Type:
+                case ProtoTypeCode.String:
                     if (asReference) requiresBclImport = true;
                     return asReference ? "bcl.NetObjectProxy" : "string";
-                }
-
-                switch (Helpers.GetTypeCode(effectiveType))
-                {
-                    case ProtoTypeCode.Boolean: return "bool";
-                    case ProtoTypeCode.Single: return "float";
-                    case ProtoTypeCode.Double: return "double";
-                    case ProtoTypeCode.Type:
-                    case ProtoTypeCode.String:
-                        if (asReference) requiresBclImport = true;
-                        return asReference ? "bcl.NetObjectProxy" : "string";
-                    case ProtoTypeCode.Byte:
-                    case ProtoTypeCode.Char:
-                    case ProtoTypeCode.UInt16:
-                    case ProtoTypeCode.UInt32:
-                        switch (dataFormat)
-                        {
-                            case BinaryDataFormat.FixedSize: return "fixed32";
-                            default: return "uint32";
-                        }
-                    case ProtoTypeCode.SByte:
-                    case ProtoTypeCode.Int16:
-                    case ProtoTypeCode.Int32:
-                        switch (dataFormat)
-                        {
-                            case BinaryDataFormat.ZigZag: return "sint32";
-                            case BinaryDataFormat.FixedSize: return "sfixed32";
-                            default: return "int32";
-                        }
-                    case ProtoTypeCode.UInt64:
-                        switch (dataFormat)
-                        {
-                            case BinaryDataFormat.FixedSize: return "fixed64";
-                            default: return "uint64";
-                        }
-                    case ProtoTypeCode.Int64:
-                        switch (dataFormat)
-                        {
-                            case BinaryDataFormat.ZigZag: return "sint64";
-                            case BinaryDataFormat.FixedSize: return "sfixed64";
-                            default: return "int64";
-                        }
-                    case ProtoTypeCode.DateTime: requiresBclImport = true; return "bcl.DateTime";
-                    case ProtoTypeCode.TimeSpan: requiresBclImport = true; return "bcl.TimeSpan";
-                    case ProtoTypeCode.Decimal: requiresBclImport = true; return "bcl.Decimal";
-                    case ProtoTypeCode.Guid: requiresBclImport = true; return "bcl.Guid";
-                    default: throw new NotSupportedException("No .proto map found for: " + effectiveType.FullName);
-                }
+                case ProtoTypeCode.Byte:
+                case ProtoTypeCode.Char:
+                case ProtoTypeCode.UInt16:
+                case ProtoTypeCode.UInt32:
+                    switch (dataFormat)
+                    {
+                        case BinaryDataFormat.FixedSize: return "fixed32";
+                        default: return "uint32";
+                    }
+                case ProtoTypeCode.SByte:
+                case ProtoTypeCode.Int16:
+                case ProtoTypeCode.Int32:
+                    switch (dataFormat)
+                    {
+                        case BinaryDataFormat.ZigZag: return "sint32";
+                        case BinaryDataFormat.FixedSize: return "sfixed32";
+                        default: return "int32";
+                    }
+                case ProtoTypeCode.UInt64:
+                    switch (dataFormat)
+                    {
+                        case BinaryDataFormat.FixedSize: return "fixed64";
+                        default: return "uint64";
+                    }
+                case ProtoTypeCode.Int64:
+                    switch (dataFormat)
+                    {
+                        case BinaryDataFormat.ZigZag: return "sint64";
+                        case BinaryDataFormat.FixedSize: return "sfixed64";
+                        default: return "int64";
+                    }
+                case ProtoTypeCode.DateTime: requiresBclImport = true; return "bcl.DateTime";
+                case ProtoTypeCode.TimeSpan: requiresBclImport = true; return "bcl.TimeSpan";
+                case ProtoTypeCode.Decimal: requiresBclImport = true; return "bcl.Decimal";
+                case ProtoTypeCode.Guid: requiresBclImport = true; return "bcl.Guid";
+                default: throw new NotSupportedException("No .proto map found for: " + effectiveType.FullName);
             }
 
         }
@@ -190,7 +188,7 @@ namespace AqlaSerializer.Meta
                     string tmp = meta.Type.Namespace;
                     if (!Helpers.IsNullOrEmpty(tmp))
                     {
-                        if (tmp.StartsWith("System.")) continue;
+                        if (tmp.StartsWith("System.", StringComparison.Ordinal)) continue;
                         if (package == null)
                         { // haven't seen any suggestions yet
                             package = tmp;
@@ -274,13 +272,7 @@ namespace AqlaSerializer.Meta
                     if (MetaType.ResolveTupleConstructor(metaType.Type, out mapping) != null)
                     {
                         for (int i = 0; i < mapping.Length; i++)
-                        {
-                            Type type = null;
-                            if (mapping[i] is PropertyInfo) type = ((PropertyInfo)mapping[i]).PropertyType;
-                            else if (mapping[i] is FieldInfo) type = ((FieldInfo)mapping[i]).FieldType;
-
-                            CscadeDependents_Member(list, type);
-                        }
+                            CscadeDependents_Member(list, (mapping[i] as PropertyInfo)?.PropertyType ?? (mapping[i] as FieldInfo)?.FieldType);
                     }
                 }
                 else
@@ -289,8 +281,7 @@ namespace AqlaSerializer.Meta
                     {
                         member.Serializer.GetHashCode();
                         var s = member.GetSettingsCopy(0);
-                        Type type = s.Collection.ItemType;
-                        if (type == null) type = member.MemberType;
+                        Type type = s.Collection.ItemType ?? member.MemberType;
                         var fieldMetaType = FindWithoutAdd(type);
                         if (fieldMetaType != null)
                             type = fieldMetaType.GetSurrogateOrSelf().Type;
@@ -311,7 +302,7 @@ namespace AqlaSerializer.Meta
                     }
                 }
                 tmp = metaType.BaseType;
-                if (tmp != null) tmp = tmp.GetSurrogateOrSelf(); // note: already walking base-types; exclude base
+                tmp = tmp?.GetSurrogateOrSelf(); // note: already walking base-types; exclude base
                 if (tmp != null && !list.Contains(tmp))
                 {
                     list.Add(tmp);

@@ -38,7 +38,6 @@ namespace AqlaSerializer.Serializers
         {
             public bool AnyElementWritten;
             public bool IsGroup;
-            public int Nested;
         }
 
         readonly Stack<LevelState> _nesting = new Stack<LevelState>(new[] { MakeRootState() });
@@ -128,7 +127,7 @@ namespace AqlaSerializer.Serializers
 
             State.AnyElementWritten = true;
             var s = State;
-            _nesting.Push(new LevelState() { Nested = _nesting.Count });
+            _nesting.Push(new LevelState());
 
             return new DisposableAction(
                 () =>

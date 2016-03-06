@@ -481,13 +481,12 @@ namespace AqlaSerializer
         MutableList _recursionStack;
         private void CheckRecursionStackAndPush(object instance)
         {
-            int hitLevel;
             if (_recursionStack == null) { _recursionStack = new MutableList(); }
             else if (instance != null)
             {
                 if (_recursionStack.HasReferences(instance, 5))
                 {
-                    hitLevel = _recursionStack.IndexOfReference(instance);
+                    int hitLevel = _recursionStack.IndexOfReference(instance);
 #if DEBUG
                     Helpers.DebugWriteLine("Stack:");
                     foreach(object obj in _recursionStack)

@@ -51,7 +51,7 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed partial class RuntimeTypeModel : TypeModel
     {
-        internal ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; } = new ProtoCompatibilitySettingsValue();
+        internal ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
         internal IValueSerializerBuilder ValueSerializerBuilder { get; }
 
@@ -320,8 +320,8 @@ namespace AqlaSerializer.Meta
         }
 
         static readonly BasicList.MatchPredicate
-            MetaTypeFinder = new BasicList.MatchPredicate(MetaTypeFinderImpl),
-            BasicTypeFinder = new BasicList.MatchPredicate(BasicTypeFinderImpl);
+            MetaTypeFinder = MetaTypeFinderImpl,
+            BasicTypeFinder = BasicTypeFinderImpl;
         static bool MetaTypeFinderImpl(object value, object ctx)
         {
             return ((MetaType)value).Type == (Type)ctx;
@@ -962,6 +962,7 @@ namespace AqlaSerializer.Meta
         /// <param name="key">Represents the type (including inheritance) to consider.</param>
         /// <param name="value">The existing instance to be serialized (cannot be null).</param>
         /// <param name="dest">The destination stream to write to.</param>
+        /// <param name="isRoot"></param>
         protected internal override void Serialize(int key, object value, ProtoWriter dest, bool isRoot)
         {
 #if FEAT_IKVM
@@ -1051,12 +1052,14 @@ namespace AqlaSerializer.Meta
             return rtm;
         }
 #endif
+
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
         /// <param name="key">Represents the type (including inheritance) to consider.</param>
         /// <param name="value">The existing instance to be modified (can be null).</param>
         /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="isRoot"></param>
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
@@ -1072,7 +1075,6 @@ namespace AqlaSerializer.Meta
             int initialSourcePosition = source.Position;
             long initialStreamPosition = initialSourcePosition + source.InitialUnderlyingStreamPosition;
             var refState = (!SkipCompiledVsNotCheck && isRoot) ? source.StoreReferenceState() : null;
-            int initialNumber = source.FieldNumber;
             var initialWireType = source.WireType;
 #endif
             object result;
@@ -1118,7 +1120,7 @@ namespace AqlaSerializer.Meta
                         else if (source.Position - initialSourcePosition != pr.Position)
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, wrong position after read");
                     }
-                    if (1.Equals(2))
+                    if (1.Equals(2)) // for debug
                     {
                         stream.Position = initialStreamPosition;
                         using (var pr = ProtoReader.Create(stream, this, source.Context, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
@@ -1129,6 +1131,7 @@ namespace AqlaSerializer.Meta
                             }
                             pr.LoadReferenceState(refState);
                             var copy2 = ser.Read(null, pr);
+                            copy2?.GetHashCode();
                         }
 
                     }
@@ -1181,7 +1184,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_COMPILER && !FX11
             if (compiled) return Compiler.CompilerContext.BuildSerializer(serializer, this);
 #endif
-            return new Compiler.ProtoSerializer(serializer.Write);
+            return serializer.Write;
 #endif
         }
 
@@ -1231,7 +1234,7 @@ namespace AqlaSerializer.Meta
             get { return _metadataTimeoutMilliseconds; }
             set
             {
-                if (value <= 0) throw new ArgumentOutOfRangeException("MetadataTimeoutMilliseconds");
+                if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
                 _metadataTimeoutMilliseconds = value;
             }
         }
@@ -1392,14 +1395,13 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Returns a full deep copy of a model with all settings and added types
         /// </summary>
-        public RuntimeTypeModel CloneAsUnfrozen(ProtoCompatibilitySettingsValue? compatibilitySettings = null)
+        public RuntimeTypeModel CloneAsUnfrozen()
         {
             var m = (RuntimeTypeModel)MemberwiseClone();
             m.SetOption(OPTIONS_Frozen, false);
             m.SetOption(OPTIONS_IsDefaultModel, false);
             m._types = new BasicList();
             m.AutoAddStrategy = AutoAddStrategy.Clone(this);
-            m.ProtoCompatibility = compatibilitySettings ?? ProtoCompatibility.Clone();
             m._basicTypes = new BasicList();
             m._overridingManager = m._overridingManager.CloneAsUnsubscribed();
             var cache = new MetaTypeCloneCache(m);

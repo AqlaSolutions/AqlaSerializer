@@ -80,7 +80,7 @@ namespace AqlaSerializer
         /// <param name="value">The value to append.</param>
         public static void AppendValue<TValue>(IExtensible instance, int tag, TValue value)
         {
-            AppendValue<TValue>(RuntimeTypeModel.Default, instance, tag, value);
+            AppendValue(RuntimeTypeModel.Default, instance, tag, value);
         }
 
         /// <summary>
@@ -92,12 +92,13 @@ namespace AqlaSerializer
         /// <remarks>Note that appending a value does not remove the old value from
         /// the stream; avoid repeatedly appending values for the same field.</remarks>
         /// <typeparam name="TValue">The type of the value to append.</typeparam>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to append the value to.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="value">The value to append.</param>
         public static void AppendValue<TValue>(TypeModel model, IExtensible instance, int tag, TValue value)
         {
-            AppendValue<TValue>(model, instance, tag, BinaryDataFormat.Default, value);
+            AppendValue(model, instance, tag, BinaryDataFormat.Default, value);
         }
 
         /// <summary>
@@ -115,7 +116,7 @@ namespace AqlaSerializer
         /// <param name="value">The value to append.</param>
         public static void AppendValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format, TValue value)
         {
-            AppendValue<TValue>(RuntimeTypeModel.Default, instance, tag, format, value);
+            AppendValue(RuntimeTypeModel.Default, instance, tag, format, value);
         }
 
         /// <summary>
@@ -128,6 +129,7 @@ namespace AqlaSerializer
         /// the stream; avoid repeatedly appending values for the same field.</remarks>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
         /// <param name="format">The data-format to use when encoding the value.</param>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to append the value to.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="value">The value to append.</param>
@@ -156,6 +158,7 @@ namespace AqlaSerializer
         /// value is "repeated" (a list), then use GetValues instead.
         /// </summary>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <returns>The effective value of the field, or the default value if not found.</returns>
@@ -185,6 +188,7 @@ namespace AqlaSerializer
         /// value is "repeated" (a list), then use GetValues instead.
         /// </summary>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
@@ -192,7 +196,7 @@ namespace AqlaSerializer
         public static TValue GetValue<TValue>(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format)
         {
             TValue value;
-            TryGetValue<TValue>(model, instance, tag, format, out value);
+            TryGetValue(model, instance, tag, format, out value);
             return value;
         }
 
@@ -208,7 +212,7 @@ namespace AqlaSerializer
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(IExtensible instance, int tag, out TValue value)
         {
-            return TryGetValue<TValue>(RuntimeTypeModel.Default, instance, tag, out value);
+            return TryGetValue(RuntimeTypeModel.Default, instance, tag, out value);
         }
 
         /// <summary>
@@ -218,12 +222,13 @@ namespace AqlaSerializer
         /// </summary>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
         /// <param name="value">The effective value of the field, or the default value if not found.</param>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(TypeModel model, IExtensible instance, int tag, out TValue value)
         {
-            return TryGetValue<TValue>(instance, tag, BinaryDataFormat.Default, out value);
+            return TryGetValue(model, instance, tag, BinaryDataFormat.Default, out value);
         }
 
         /// <summary>
@@ -239,7 +244,7 @@ namespace AqlaSerializer
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format, out TValue value)
         {
-            return TryGetValue<TValue>(RuntimeTypeModel.Default, instance, tag, format, out value);
+            return TryGetValue(RuntimeTypeModel.Default, instance, tag, format, out value);
         }
 
         /// <summary>
@@ -249,13 +254,14 @@ namespace AqlaSerializer
         /// </summary>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
         /// <param name="value">The effective value of the field, or the default value if not found.</param>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format, out TValue value)
         {
-            return TryGetValue<TValue>(model, instance, tag, format, false, out value);
+            return TryGetValue(model, instance, tag, format, false, out value);
         }
 
         /// <summary>
@@ -272,7 +278,7 @@ namespace AqlaSerializer
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(IExtensible instance, int tag, BinaryDataFormat format, bool allowDefinedTag, out TValue value)
         {
-            return TryGetValue<TValue>(RuntimeTypeModel.Default, instance, tag, format, allowDefinedTag, out value);
+            return TryGetValue(RuntimeTypeModel.Default, instance, tag, format, allowDefinedTag, out value);
         }
 
         /// <summary>
@@ -282,6 +288,7 @@ namespace AqlaSerializer
         /// </summary>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
         /// <param name="value">The effective value of the field, or the default value if not found.</param>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>
@@ -324,6 +331,7 @@ namespace AqlaSerializer
         /// </summary>
         /// <remarks>The extended data is processed lazily as the enumerator is iterated.</remarks>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <returns>An enumerator that yields each occurrence of the field.</returns>
@@ -355,6 +363,7 @@ namespace AqlaSerializer
         /// </summary>
         /// <remarks>The extended data is processed lazily as the enumerator is iterated.</remarks>
         /// <typeparam name="TValue">The data-type of the field.</typeparam>
+        /// <param name="model"></param>
         /// <param name="instance">The extensible object to obtain the value from.</param>
         /// <param name="tag">The field identifier; the tag should not be defined as a known data-field for the instance.</param>
         /// <param name="format">The data-format to use when decoding the value.</param>

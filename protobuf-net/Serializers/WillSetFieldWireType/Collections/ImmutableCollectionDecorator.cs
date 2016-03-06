@@ -47,7 +47,7 @@ namespace AqlaSerializer.Serializers
         static bool CheckIsIReadOnlyCollectionExactly(Type t)
 #endif
         {
-            if (t != null && t.IsGenericType && t.Name.StartsWith("IReadOnlyCollection`"))
+            if (t != null && t.IsGenericType && t.Name.StartsWith("IReadOnlyCollection`", StringComparison.Ordinal))
             {
 #if WINRT
                 Type[] typeArgs = t.GenericTypeArguments;
@@ -124,14 +124,14 @@ namespace AqlaSerializer.Serializers
                 break;
             }
             Type voidType = model.MapType(typeof(void));
-            if (builderFactory == null || builderFactory.ReturnType == null || builderFactory.ReturnType == voidType) return false;
+            if (builderFactory?.ReturnType == null || builderFactory.ReturnType == voidType) return false;
 
 
             add = Helpers.GetInstanceMethod(builderFactory.ReturnType, "Add", effectiveType);
             if (add == null) return false;
 
             finish = Helpers.GetInstanceMethod(builderFactory.ReturnType, "ToImmutable", Helpers.EmptyTypes);
-            if (finish == null || finish.ReturnType == null || finish.ReturnType == voidType) return false;
+            if (finish?.ReturnType == null || finish.ReturnType == voidType) return false;
 
             if (!(finish.ReturnType == declaredType || Helpers.IsAssignableFrom(declaredType, finish.ReturnType))) return false;
 
@@ -244,8 +244,7 @@ namespace AqlaSerializer.Serializers
                             ctx.LoadValue(value);
                             ctx.BranchIfFalse(done, false); // old value null; nothing to add
                         }
-                        PropertyInfo prop = Helpers.GetProperty(ExpectedType, "Length", false);
-                        if (prop == null) prop = Helpers.GetProperty(ExpectedType, "Count", false);
+                        PropertyInfo prop = Helpers.GetProperty(ExpectedType, "Length", false) ?? Helpers.GetProperty(ExpectedType, "Count", false);
 #if !NO_GENERICS
                         if (prop == null) prop = Helpers.GetProperty(ResolveIReadOnlyCollection(ExpectedType, Tail.ExpectedType), "Count", false);
 #endif

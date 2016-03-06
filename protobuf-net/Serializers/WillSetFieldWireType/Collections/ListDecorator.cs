@@ -144,8 +144,7 @@ namespace AqlaSerializer.Serializers
         bool SuppressIList => (_options & OPTIONS_SuppressIList) != 0;
         protected bool WritePacked => (_options & OPTIONS_WritePacked) != 0;
         protected readonly WireType PackedWireTypeForRead;
-
-        readonly Type _itemType;
+        
         readonly bool _protoCompatibility;
         readonly bool _writeSubType;
 
@@ -184,13 +183,7 @@ namespace AqlaSerializer.Serializers
             bool overwriteList, bool protoCompatibility, bool writeSubType)
             : base(tail)
         {
-            _itemType = tail.ExpectedType;
             if (overwriteList) _options |= OPTIONS_OverwriteList;
-            if (!CanPack(packedWireType))
-            {
-                if (writePacked) throw new InvalidOperationException("Only simple data-types can use packed encoding");
-                packedWireType = WireType.None;
-            }
 
             PackedWireTypeForRead = packedWireType;
             _protoCompatibility = protoCompatibility;
@@ -211,7 +204,7 @@ namespace AqlaSerializer.Serializers
                 {
                     _options |= OPTIONS_IsList;
                     string fullName = declaredType.FullName;
-                    if (fullName != null && fullName.StartsWith("System.Data.Linq.EntitySet`1[["))
+                    if (fullName != null && fullName.StartsWith("System.Data.Linq.EntitySet`1[[", StringComparison.Ordinal))
                     { // see http://stackoverflow.com/questions/6194639/entityset-is-there-a-sane-reason-that-ilist-add-doesnt-set-assigned
                         _options |= OPTIONS_SuppressIList;
                     }
@@ -459,7 +452,7 @@ namespace AqlaSerializer.Serializers
                 enumeratorType = tmp;
 #endif
             }
-            ;
+            
             if (enumeratorType != null && enumeratorType.IsAssignableFrom(expectedType))
             {
                 getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");

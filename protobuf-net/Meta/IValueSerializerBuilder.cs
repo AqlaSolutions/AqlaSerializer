@@ -22,7 +22,6 @@ namespace AqlaSerializer.Meta
         IProtoSerializerWithWireType BuildValueFinalSerializer(ValueSerializationSettings settings, bool isMemberOrNested, out WireType wireType);
 
         IProtoSerializerWithWireType TryGetSimpleCoreSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType);
-        bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint);
     }
 }
 #endif

@@ -45,14 +45,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Returns the set of callbacks defined for this type
         /// </summary>
-        public CallbackSet Callbacks
-        {
-            get
-            {
-                if (_callbacks == null) _callbacks = new CallbackSet(this);
-                return _callbacks;
-            }
-        }
+        public CallbackSet Callbacks => _callbacks ?? (_callbacks = new CallbackSet(this));
 
         private bool IsValueType
         {
