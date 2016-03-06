@@ -92,7 +92,7 @@ namespace AqlaSerializer.Serializers
             MethodInfo[] found = type.GetMethods(flags);
 #endif
             ParameterInfo[] paramTypes;
-            Type convertAttributeType = null;
+            
             for (int i = 0; i < found.Length; i++)
             {
                 MethodInfo m = found[i];
@@ -100,7 +100,7 @@ namespace AqlaSerializer.Serializers
                 paramTypes = m.GetParameters();
                 if (paramTypes.Length == 1 && paramTypes[0].ParameterType == from)
                 {
-                    if (AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "AqlaSerializer.ProtoConverterAttribute") != null
+                    if (AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "ProtoBuf.ProtoConverterAttribute") != null
                         || AttributeMap.GetAttribute(AttributeMap.Create(model, m, false), "AqlaSerializer.SurrogateConverterAttribute") != null)
                     {
                         op = m;
