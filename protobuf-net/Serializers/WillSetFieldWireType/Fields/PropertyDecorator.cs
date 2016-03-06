@@ -56,7 +56,7 @@ namespace AqlaSerializer.Serializers
 
         private static void SanityCheck(TypeModel model, PropertyInfo property, IProtoSerializer tail, out bool writeValue, bool nonPublic, bool allowInternal, bool forEmit)
         {
-            if (property == null) throw new ArgumentNullException("property");
+            if (property == null) throw new ArgumentNullException(nameof(property));
 
             writeValue =
 #if FEAT_COMPILER

@@ -240,7 +240,7 @@ namespace AqlaSerializer.Compiler
             {
                 if (methodPairs[i].MetaKey == metaKey) { return read ? methodPairs[i].Deserialize : methodPairs[i].Serialize; }
             }
-            throw new ArgumentException("Meta-key not found", "metaKey");
+            throw new ArgumentException("Meta-key not found", nameof(metaKey));
         }
 
         internal int MapMetaKeyToCompiledKey(int metaKey)
@@ -251,7 +251,7 @@ namespace AqlaSerializer.Compiler
             {
                 if (methodPairs[i].MetaKey == metaKey) return i;
             }
-            throw new ArgumentException("Key could not be mapped: " + metaKey.ToString(), "metaKey");
+            throw new ArgumentException("Key could not be mapped: " + metaKey.ToString(), nameof(metaKey));
         }
 #else
         internal int MapMetaKeyToCompiledKey(int metaKey)
@@ -276,9 +276,9 @@ namespace AqlaSerializer.Compiler
         internal CompilerContext(MethodContext context, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerPair[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
-            if (methodPairs == null) throw new ArgumentNullException("methodPairs");
-            if (model == null) throw new ArgumentNullException("model");
-            if (Helpers.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException("assemblyName");
+            if (methodPairs == null) throw new ArgumentNullException(nameof(methodPairs));
+            if (model == null) throw new ArgumentNullException(nameof(model));
+            if (Helpers.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException(nameof(assemblyName));
             this.assemblyName = assemblyName;
             this.isStatic = isStatic;
             this.methodPairs = methodPairs;
@@ -296,7 +296,7 @@ namespace AqlaSerializer.Compiler
 #if !(FX11 || FEAT_IKVM)
         private CompilerContext(Type associatedType, bool isWriter, bool isStatic, RuntimeTypeModel model, Type inputType)
         {
-            if (model == null) throw new ArgumentNullException("model");
+            if (model == null) throw new ArgumentNullException(nameof(model));
 #if FX11
             metadataVersion = ILVersion.Net1;
 #else
@@ -735,7 +735,7 @@ namespace AqlaSerializer.Compiler
         }
         internal void EmitBasicWrite(string methodName, Compiler.Local fromValue)
         {
-            if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException("methodName");
+            if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException(nameof(methodName));
 
             LoadValue(fromValue);
             LoadReaderWriter();
@@ -752,12 +752,12 @@ namespace AqlaSerializer.Compiler
                 ParameterInfo[] pis = method.GetParameters();
                 if (pis.Length == 2 && pis[1].ParameterType == writerType) return method;
             }
-            throw new ArgumentException("No suitable method found for: " + methodName, "methodName");
+            throw new ArgumentException("No suitable method found for: " + methodName, nameof(methodName));
         }
 
         internal void EmitWrite(Type helperType, string methodName, Compiler.Local valueFrom)
         {
-            if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException("methodName");
+            if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException(nameof(methodName));
             MethodInfo method = helperType.GetMethod(
                 methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
@@ -905,7 +905,7 @@ namespace AqlaSerializer.Compiler
 
         public void EmitCtor(ConstructorInfo ctor)
         {
-            if (ctor == null) throw new ArgumentNullException("ctor");
+            if (ctor == null) throw new ArgumentNullException(nameof(ctor));
             CheckAccessibility(ctor);
             il.Emit(OpCodes.Newobj, ctor);
 #if DEBUG_COMPILE
@@ -997,7 +997,7 @@ namespace AqlaSerializer.Compiler
         {
             if (member == null)
             {
-                throw new ArgumentNullException("member");
+                throw new ArgumentNullException(nameof(member));
             }
 
             MemberTypes memberType = member.MemberType;
@@ -1419,8 +1419,8 @@ namespace AqlaSerializer.Compiler
             /// </summary>
             public UsingBlock(CompilerContext ctx, Local local)
             {
-                if (ctx == null) throw new ArgumentNullException("ctx");
-                if (local.IsNullRef()) throw new ArgumentNullException("local");
+                if (ctx == null) throw new ArgumentNullException(nameof(ctx));
+                if (local.IsNullRef()) throw new ArgumentNullException(nameof(local));
 
                 Type type = local.Type;
                 // check if **never** disposable

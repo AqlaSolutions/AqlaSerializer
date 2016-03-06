@@ -83,23 +83,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                         SetLegacyFormat(ref level, member, model);
                 }
                 else
-                {
-                    // it depends on ValueMember.GetAsReferenceDefault() result!
-                    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                    if (notAsReference)
-                    {
-                        level.Format = GetDefaultLegacyFormat(type, model);
-                        // -x-
-                        //bool isNullable = !Helpers.IsValueType(memberType) || Helpers.GetNullableUnderlyingType(memberType) != null;
-                        //// supports null is also affected so we don't change anything or ref type: with compatibility mode Compact will be used otherwise Enhanced
-                        //if (!isNullable)
-                        // -x-
-                    }
-                    else
-                    {
-                        level.Format = ValueFormat.Reference;
-                    }
-                }
+                    level.Format = notAsReference ? GetDefaultLegacyFormat(type, model) : ValueFormat.Reference;
 
                 s.TagIsPinned = main.Tag > 0;
 

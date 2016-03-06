@@ -871,7 +871,7 @@ namespace AqlaSerializer
 
         public static bool CanWrite(TypeModel model, MemberInfo member)
         {
-            if (member == null) throw new ArgumentNullException("member");
+            if (member == null) throw new ArgumentNullException(nameof(member));
 
             PropertyInfo prop = member as PropertyInfo;
             if (prop != null) return CheckIfPropertyWritable(model, prop, true, true);

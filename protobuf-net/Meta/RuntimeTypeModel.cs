@@ -57,7 +57,7 @@ namespace AqlaSerializer.Meta
 
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
             if (type.IsArray)
             {
                 // byte arrays are handled internally
@@ -188,7 +188,7 @@ namespace AqlaSerializer.Meta
                 if (this == Default)
                     throw new InvalidOperationException("Not allowed on default " + this.GetType().Name + ", use TypeModel.Create()");
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
                 _autoAddStrategy = value;
             }
         }
@@ -765,7 +765,7 @@ namespace AqlaSerializer.Meta
         /// further configuration.</returns>
         public MetaType Add(Type type, bool applyDefaultBehaviourIfNew)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
             MetaType newType = FindWithoutAdd(type);
             if (newType != null) return newType; // return existing
             int opaqueToken = 0;
@@ -789,7 +789,7 @@ namespace AqlaSerializer.Meta
                     {
                         throw new ArgumentException(
                             "Default behaviour must be observed for certain types with special handling; " + type.FullName,
-                            "applyDefaultBehaviourIfNew");
+                            nameof(applyDefaultBehaviourIfNew));
                     }
                     // we should assume that type is fully configured, though; no need to re-run:
                     applyDefaultBehaviourIfNew = false;
@@ -798,7 +798,7 @@ namespace AqlaSerializer.Meta
                 newType.IsPending = true;
                 TakeLock(ref opaqueToken);
                 // double checked
-                if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", "type");
+                if (FindWithoutAdd(type) != null) throw new ArgumentException("Duplicate type", nameof(type));
                 ThrowIfFrozen();
                 Add(newType);
                 if (applyDefaultBehaviourIfNew) { newType.ApplyDefaultBehaviour(); }
@@ -1184,7 +1184,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            if (serializer == null) throw new ArgumentNullException("serializer");
+            if (serializer == null) throw new ArgumentNullException(nameof(serializer));
 #if FEAT_COMPILER && !FX11
             if (compiled) return Compiler.CompilerContext.BuildSerializer(serializer, this);
 #endif
@@ -1383,10 +1383,10 @@ namespace AqlaSerializer.Meta
             if (factory != null)
             {
                 if (type != null && Helpers.IsValueType(type)) throw new InvalidOperationException();
-                if (!factory.IsStatic) throw new ArgumentException("A factory-method must be static", "factory");
-                if ((type != null && factory.ReturnType != type) && factory.ReturnType != MapType(typeof(object))) throw new ArgumentException("The factory-method must return object" + (type == null ? "" : (" or " + type.FullName)), "factory");
+                if (!factory.IsStatic) throw new ArgumentException("A factory-method must be static", nameof(factory));
+                if ((type != null && factory.ReturnType != type) && factory.ReturnType != MapType(typeof(object))) throw new ArgumentException("The factory-method must return object" + (type == null ? "" : (" or " + type.FullName)), nameof(factory));
 
-                if (!CallbackSet.CheckCallbackParameters(this, factory)) throw new ArgumentException("Invalid factory signature in " + factory.DeclaringType.FullName + "." + factory.Name, "factory");
+                if (!CallbackSet.CheckCallbackParameters(this, factory)) throw new ArgumentException("Invalid factory signature in " + factory.DeclaringType.FullName + "." + factory.Name, nameof(factory));
             }
         }
 

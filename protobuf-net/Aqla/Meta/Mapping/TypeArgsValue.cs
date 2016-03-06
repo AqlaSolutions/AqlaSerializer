@@ -27,9 +27,9 @@ namespace AqlaSerializer.Meta.Mapping
 {
     public struct TypeArgsValue
     {
-        public Type Type { get; set; }
+        public Type Type { get; private set; }
+        public RuntimeTypeModel Model { get; private set; }
         public MetaType.AttributeFamily Family { get; set; }
-        public RuntimeTypeModel Model { get; set; }
         public AttributeMap[] Attributes { get; set; }
         public AttributeType AcceptableAttributes { get; set; }
         public ImplicitFieldsMode ImplicitFallbackMode { get; set; }

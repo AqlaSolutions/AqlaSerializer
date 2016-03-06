@@ -13,7 +13,7 @@ namespace AqlaSerializer
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            if (dest == null) throw new ArgumentNullException("dest");
+            if (dest == null) throw new ArgumentNullException(nameof(dest));
 
             dynamicTypeKey = -1;
 

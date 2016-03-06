@@ -191,7 +191,7 @@ namespace AqlaSerializer.Meta
 
         private void SerializeCore(ProtoWriter writer, object value, bool isRoot)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
             Type type = value.GetType();
             int key = GetKey(ref type);
             if (key >= 0)
@@ -242,7 +242,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            if (dest == null) throw new ArgumentNullException("dest");
+            if (dest == null) throw new ArgumentNullException(nameof(dest));
             dest.CheckDepthFlushlock();
             dest.SetRootObject(value);
             SerializeCore(dest, value, true);
@@ -608,7 +608,7 @@ namespace AqlaSerializer.Meta
         {
             if (type == null)
             {
-                if (value == null) throw new ArgumentNullException("value");
+                if (value == null) throw new ArgumentNullException(nameof(value));
                 type = MapType(value.GetType());
             }
             int key = GetKey(ref type);
@@ -625,7 +625,7 @@ namespace AqlaSerializer.Meta
                         ProtoWriter.WriteObject(value, key, writer, style, fieldNumber, true);
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException("style");
+                        throw new ArgumentOutOfRangeException(nameof(style));
                 }
                 writer.Close();
             }
@@ -691,7 +691,7 @@ namespace AqlaSerializer.Meta
             {
                 if (value == null)
                 {
-                    throw new ArgumentNullException("type");
+                    throw new ArgumentNullException(nameof(type));
                 }
                 else
                 {
@@ -770,7 +770,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            if (source == null) throw new ArgumentNullException("source");
+            if (source == null) throw new ArgumentNullException(nameof(source));
             bool autoCreate = PrepareDeserialize(value, ref type);
             if (value != null) source.SetRootObject(value);
             object obj = DeserializeCore(source, type, value, autoCreate, true);
@@ -804,7 +804,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         internal bool TryDeserializeAuxiliaryType(ProtoReader reader, BinaryDataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, bool isRoot)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
 
             Type itemType = null;
             ProtoTypeCode typecode = Helpers.GetTypeCode(type);
@@ -1267,7 +1267,7 @@ namespace AqlaSerializer.Meta
         }
         private bool CanSerialize(Type type, bool allowBasic, bool allowContract, bool allowLists)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
             Type tmp = Helpers.GetNullableUnderlyingType(type);
             if (tmp != null) type = tmp;
 
@@ -1338,8 +1338,8 @@ namespace AqlaSerializer.Meta
             private readonly Type type;
             internal Formatter(TypeModel model, Type type)
             {
-                if (model == null) throw new ArgumentNullException("model");
-                if (type == null) throw new ArgumentNullException("type");
+                if (model == null) throw new ArgumentNullException(nameof(model));
+                if (type == null) throw new ArgumentNullException(nameof(type));
                 this.model = model;
                 this.type = type;
             }

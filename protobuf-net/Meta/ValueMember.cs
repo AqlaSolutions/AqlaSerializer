@@ -445,7 +445,7 @@ namespace AqlaSerializer.Meta
                     || getSpecified.IsStatic
                     || getSpecified.GetParameters().Length != 0)
                 {
-                    throw new ArgumentException("Invalid pattern for checking member-specified", "getSpecified");
+                    throw new ArgumentException("Invalid pattern for checking member-specified", nameof(getSpecified));
                 }
             }
             if (setSpecified != null)
@@ -456,7 +456,7 @@ namespace AqlaSerializer.Meta
                     || (args = setSpecified.GetParameters()).Length != 1
                     || args[0].ParameterType != _model.MapType(typeof(bool)))
                 {
-                    throw new ArgumentException("Invalid pattern for setting member-specified", "setSpecified");
+                    throw new ArgumentException("Invalid pattern for setting member-specified", nameof(setSpecified));
                 }
             }
             ThrowIfFrozen();

@@ -198,8 +198,8 @@ namespace AqlaSerializer.Serializers
             _writeSubType = writeSubType && !protoCompatibility;
 
             if (writePacked) options |= OPTIONS_WritePacked;
-            if (declaredType == null) throw new ArgumentNullException("declaredType");
-            if (declaredType.IsArray) throw new ArgumentException("Cannot treat arrays as lists", "declaredType");
+            if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
+            if (declaredType.IsArray) throw new ArgumentException("Cannot treat arrays as lists", nameof(declaredType));
             this.declaredType = declaredType;
             this.concreteTypeDefault = concreteTypeDefault ?? declaredType;
 

@@ -168,7 +168,7 @@ namespace AqlaSerializer.Meta
                 {
                     //Agenerate just relative to the supplied type
                     int index = FindOrAddAuto(type, false, false, false);
-                    if (index < 0) throw new ArgumentException("The type specified is not a contract-type", "type");
+                    if (index < 0) throw new ArgumentException("The type specified is not a contract-type", nameof(type));
 
                     // get the required types
                     primaryType = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);

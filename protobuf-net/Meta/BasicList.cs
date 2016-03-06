@@ -163,7 +163,7 @@ namespace AqlaSerializer.Meta
                     {
                         return data[index];
                     }
-                    throw new ArgumentOutOfRangeException("index");
+                    throw new ArgumentOutOfRangeException(nameof(index));
                 }
                 set
                 {
@@ -173,7 +173,7 @@ namespace AqlaSerializer.Meta
                     }
                     else
                     {
-                        throw new ArgumentOutOfRangeException("index");
+                        throw new ArgumentOutOfRangeException(nameof(index));
                     }
                 }
             }
@@ -331,9 +331,9 @@ namespace AqlaSerializer.Meta
         }
         internal static BasicList GetContiguousGroups(int[] keys, object[] values)
         {
-            if (keys == null) throw new ArgumentNullException("keys");
-            if (values == null) throw new ArgumentNullException("values");
-            if (values.Length < keys.Length) throw new ArgumentException("Not all keys are covered by values", "values");
+            if (keys == null) throw new ArgumentNullException(nameof(keys));
+            if (values == null) throw new ArgumentNullException(nameof(values));
+            if (values.Length < keys.Length) throw new ArgumentException("Not all keys are covered by values", nameof(values));
             BasicList outer = new BasicList();
             Group group = null;
             for (int i = 0; i < keys.Length; i++)

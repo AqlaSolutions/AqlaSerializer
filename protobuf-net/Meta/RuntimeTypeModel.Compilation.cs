@@ -272,7 +272,7 @@ namespace AqlaSerializer.Meta
             /// </summary>
             public void SetFrameworkOptions(MetaType from)
             {
-                if (from == null) throw new ArgumentNullException("from");
+                if (from == null) throw new ArgumentNullException(nameof(@from));
                 AttributeMap[] attribs = AttributeMap.Create(from.Model, from.Type.Assembly);
                 foreach (AttributeMap attrib in attribs)
                 {
@@ -379,7 +379,7 @@ namespace AqlaSerializer.Meta
         /// <returns>An instance of the newly created compiled type-model</returns>
         public TypeModel Compile(CompilerOptions options)
         {
-            if (options == null) throw new ArgumentNullException("options");
+            if (options == null) throw new ArgumentNullException(nameof(options));
             string typeName = options.TypeName;
             string path = options.OutputPath;
             BuildAllSerializers();

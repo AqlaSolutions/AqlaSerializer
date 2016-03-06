@@ -34,8 +34,8 @@ namespace AqlaSerializer.Meta.Mapping
         public MemberInfo Member => Input.Member;
         public int MinAcceptFieldNumber => Input.InferTagByName ? -1 : 1;
         public bool TagIsPinned { get; set; }
-        public MemberMainSettingsValue MainValue { get; set; } = new MemberMainSettingsValue();
-        public ValueSerializationSettings SerializationSettings { get; set; } = new ValueSerializationSettings();
+        public MemberMainSettingsValue MainValue { get; set; }
+        public ValueSerializationSettings SerializationSettings { get; } = new ValueSerializationSettings();
         
         public MemberState(MemberArgsValue input)
         {

@@ -42,7 +42,7 @@ namespace AqlaSerializer.Meta.Mapping
 
         protected virtual bool CheckAqlaModelId(object actualId, RuntimeTypeModel model)
         {
-            return object.Equals(model.ModelId, actualId);
+            return Equals(model.ModelId, actualId);
         }
     }
 }

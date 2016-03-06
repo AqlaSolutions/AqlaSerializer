@@ -127,7 +127,7 @@ namespace AqlaSerializer.Serializers
 #if !NO_GENERICS
             if (Helpers.GetNullableUnderlyingType(forType) != null)
             {
-                throw new ArgumentException("Cannot create a TypeSerializer for nullable types", "forType");
+                throw new ArgumentException("Cannot create a TypeSerializer for nullable types", nameof(forType));
             }
 #endif
 
@@ -153,7 +153,7 @@ namespace AqlaSerializer.Serializers
 #endif
             if (constructType != forType && useConstructor && !hasConstructor)
             {
-                throw new ArgumentException("The supplied default implementation cannot be created: " + constructType.FullName, "constructType");
+                throw new ArgumentException("The supplied default implementation cannot be created: " + constructType.FullName, nameof(constructType));
             }
         }
 #if WINRT

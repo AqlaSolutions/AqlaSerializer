@@ -54,7 +54,7 @@ namespace AqlaSerializer.Serializers
                     _options |= BclHelpers.NetObjectOptions.WriteAsLateReference;
                 }
             }
-            else if (asLateReference) throw new ArgumentException("Can't serialize as late reference when asReference = false", "asReference");
+            else if (asLateReference) throw new ArgumentException("Can't serialize as late reference when asReference = false", nameof(asReference));
 
             int baseKey = model.GetKey(type, false, true);
             int key = model.GetKey(type, false, false);

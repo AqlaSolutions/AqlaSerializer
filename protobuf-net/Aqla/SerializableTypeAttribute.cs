@@ -119,7 +119,7 @@ namespace AqlaSerializer
             get { return _implicitFirstTag; }
             set
             {
-                if (value < 1) throw new ArgumentOutOfRangeException("value");
+                if (value < 1) throw new ArgumentOutOfRangeException(nameof(value));
                 _implicitFirstTag = value;
             }
         }

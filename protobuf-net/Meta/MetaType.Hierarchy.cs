@@ -144,7 +144,7 @@ namespace AqlaSerializer.Meta
         }
         private void SetBaseType(MetaType baseType)
         {
-            if (baseType == null) throw new ArgumentNullException("baseType");
+            if (baseType == null) throw new ArgumentNullException(nameof(baseType));
             if (this.BaseType == baseType) return;
             if (this.BaseType != null) throw new InvalidOperationException("A type can only participate in one inheritance hierarchy");
 

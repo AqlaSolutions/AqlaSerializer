@@ -65,7 +65,7 @@ namespace AqlaSerializer
 
         private static void WriteTimeSpanImpl(TimeSpan timeSpan, ProtoWriter dest, DateTimeKind kind)
         {
-            if (dest == null) throw new ArgumentNullException("dest");
+            if (dest == null) throw new ArgumentNullException(nameof(dest));
             long value;
             switch(dest.WireType)
             {
@@ -177,7 +177,7 @@ namespace AqlaSerializer
 
         private static void WriteDateTimeImpl(DateTime value, ProtoWriter dest, bool includeKind)
         {
-            if (dest == null) throw new ArgumentNullException("dest");
+            if (dest == null) throw new ArgumentNullException(nameof(dest));
             TimeSpan delta;
             switch (dest.WireType)
             {

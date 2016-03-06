@@ -62,7 +62,7 @@ namespace AqlaSerializer
             if (other == null) return -1;
             if ((object)this == (object)other) return 0;
             int result = Tag.CompareTo(other.Tag);
-            if (result == 0) result = string.CompareOrdinal(this.Name, other.Name);
+            if (result == 0) result = string.CompareOrdinal(Name, other.Name);
             return result;
         }
 

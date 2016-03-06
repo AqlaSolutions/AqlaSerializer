@@ -31,10 +31,10 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
     {
         protected override TypeAttributeHandlerResult TryMap(AttributeMap item, TypeState s, TypeArgsValue a, RuntimeTypeModel model)
         {
-            object tmp;
             var main = s.SettingsValue;
             if (a.HasFamily(MetaType.AttributeFamily.ProtoBuf))
             {
+                object tmp;
                 if (item.TryGet("Name", out tmp)) main.Name = (string)tmp;
                 if (Helpers.IsEnum(s.Type)) // note this is subtly different to AsEnum; want to do this even if [Flags]
                 {

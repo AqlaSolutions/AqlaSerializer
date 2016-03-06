@@ -19,7 +19,7 @@ namespace AqlaSerializer.Meta
         private readonly MetaType metaType;
         internal CallbackSet(MetaType metaType)
         {
-            if (metaType == null) throw new ArgumentNullException("metaType");
+            if (metaType == null) throw new ArgumentNullException(nameof(metaType));
             this.metaType = metaType;
         }
         internal MethodInfo this[TypeModel.CallbackType callbackType]
@@ -32,7 +32,7 @@ namespace AqlaSerializer.Meta
                     case TypeModel.CallbackType.AfterSerialize: return afterSerialize;
                     case TypeModel.CallbackType.BeforeDeserialize: return beforeDeserialize;
                     case TypeModel.CallbackType.AfterDeserialize: return afterDeserialize;
-                    default: throw new ArgumentException("Callback type not supported: " + callbackType.ToString(), "callbackType");
+                    default: throw new ArgumentException("Callback type not supported: " + callbackType.ToString(), nameof(callbackType));
                 }
             }
         }
@@ -55,7 +55,7 @@ namespace AqlaSerializer.Meta
         {
             metaType.ThrowIfFrozen();
             if (callback == null) return callback; // fine
-            if (callback.IsStatic) throw new ArgumentException("Callbacks cannot be static", "callback");
+            if (callback.IsStatic) throw new ArgumentException("Callbacks cannot be static", nameof(callback));
             if (callback.ReturnType != model.MapType(typeof(void))
                 || !CheckCallbackParameters(model, callback))
             {

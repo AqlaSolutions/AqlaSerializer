@@ -171,9 +171,9 @@ namespace AqlaSerializer
         public static void Serialize<T>(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context, T instance) where T : class, System.Runtime.Serialization.ISerializable
         {
             // note: also tried byte[]... it doesn't perform hugely well with either (compared to regular serialization)
-            if (info == null) throw new ArgumentNullException("info");
-            if (instance == null) throw new ArgumentNullException("instance");
-            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", "instance");
+            if (info == null) throw new ArgumentNullException(nameof(info));
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", nameof(instance));
             using (MemoryStream ms = new MemoryStream())
             {
                 RuntimeTypeModel.Default.Serialize(ms, instance, context);
@@ -190,8 +190,8 @@ namespace AqlaSerializer
         /// <param name="writer">The destination XmlWriter to write to.</param>
         public static void Serialize<T>(System.Xml.XmlWriter writer, T instance) where T : System.Xml.Serialization.IXmlSerializable
         {
-            if (writer == null) throw new ArgumentNullException("writer");
-            if (instance == null) throw new ArgumentNullException("instance");
+            if (writer == null) throw new ArgumentNullException(nameof(writer));
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
 
             using (MemoryStream ms = new MemoryStream())
             {
@@ -207,8 +207,8 @@ namespace AqlaSerializer
         /// <param name="reader">The XmlReader containing the data to apply to the instance (cannot be null).</param>
         public static void Merge<T>(System.Xml.XmlReader reader, T instance) where T : System.Xml.Serialization.IXmlSerializable
         {
-            if (reader == null) throw new ArgumentNullException("reader");
-            if (instance == null) throw new ArgumentNullException("instance");
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
 
             const int LEN = 4096;
             byte[] buffer = new byte[LEN];
@@ -255,9 +255,9 @@ namespace AqlaSerializer
         public static void Merge<T>(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context, T instance) where T : class, System.Runtime.Serialization.ISerializable
         {
             // note: also tried byte[]... it doesn't perform hugely well with either (compared to regular serialization)
-            if (info == null) throw new ArgumentNullException("info");
-            if (instance == null) throw new ArgumentNullException("instance");
-            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", "instance");
+            if (info == null) throw new ArgumentNullException(nameof(info));
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", nameof(instance));
 
             byte[] buffer = (byte[])info.GetValue(ProtoBinaryField, typeof(byte[]));
             using (MemoryStream ms = new MemoryStream(buffer))
@@ -483,7 +483,7 @@ namespace AqlaSerializer
             /// <returns>The updated instance</returns>
             public static object Merge(Stream source, object instance)
             {
-                if (instance == null) throw new ArgumentNullException("instance");
+                if (instance == null) throw new ArgumentNullException(nameof(instance));
                 return RuntimeTypeModel.Default.Deserialize(source, instance, instance.GetType(), null);
             }
 
@@ -499,7 +499,7 @@ namespace AqlaSerializer
             /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
             public static void SerializeWithLengthPrefix(Stream destination, object instance, PrefixStyle style, int fieldNumber)
             {
-                if (instance == null) throw new ArgumentNullException("instance");
+                if (instance == null) throw new ArgumentNullException(nameof(instance));
                 RuntimeTypeModel model = RuntimeTypeModel.Default;                
                 model.SerializeWithLengthPrefix(destination, instance, model.MapType(instance.GetType()), style, fieldNumber);
             }

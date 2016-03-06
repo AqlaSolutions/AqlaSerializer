@@ -114,8 +114,8 @@ namespace AqlaSerializer
 
         private static void Init(ProtoReader reader, Stream source, TypeModel model, SerializationContext context, int length)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (!source.CanRead) throw new ArgumentException("Cannot read from stream", "source");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (!source.CanRead) throw new ArgumentException("Cannot read from stream", nameof(source));
             reader.InitialUnderlyingStreamPosition = source.Position;
             reader.source = source;
             reader.ioBuffer = BufferPool.GetBuffer();
@@ -683,7 +683,7 @@ namespace AqlaSerializer
         /// </summary>
         public static void EndSubItem(SubItemToken token, bool skipToEnd, ProtoReader reader)
         {
-            if (reader == null) throw new ArgumentNullException("reader");
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
             int value = token.value;
             if (value == int.MinValue)
             {
@@ -741,7 +741,7 @@ namespace AqlaSerializer
         /// <remarks>The token returned must be help and used when callining EndSubItem</remarks>
         public static SubItemToken StartSubItem(ProtoReader reader)
         {
-            if (reader == null) throw new ArgumentNullException("reader");
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
             if (reader.expectRoot)
             {
                 reader.expectRoot = false;
@@ -1006,7 +1006,7 @@ namespace AqlaSerializer
         /// </summary>
         public static byte[] AppendBytes(byte[] value, ProtoReader reader)
         {
-            if (reader == null) throw new ArgumentNullException("reader");
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
             switch (reader.wireType)
             {
                 case WireType.String:
@@ -1122,7 +1122,7 @@ namespace AqlaSerializer
         public static void DirectReadBytes(Stream source, byte[] buffer, int offset, int count)
         {
             int read;
-            if (source == null) throw new ArgumentNullException("source");
+            if (source == null) throw new ArgumentNullException(nameof(source));
             while(count > 0 && (read = source.Read(buffer, offset, count)) > 0)
             {
                 count -= read;
@@ -1224,7 +1224,7 @@ namespace AqlaSerializer
                             | ReadByteOrThrow(source);
                     }
                 default:
-                    throw new ArgumentOutOfRangeException("style");
+                    throw new ArgumentOutOfRangeException(nameof(style));
             }
         }
         /// <returns>The number of bytes consumed; 0 if no data available</returns>
@@ -1323,7 +1323,7 @@ namespace AqlaSerializer
         /// </summary>
         public void AppendExtensionData(IExtensible instance)
         {
-            if (instance == null) throw new ArgumentNullException("instance");
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
             IExtension extn = instance.GetExtensionObject(true);
             bool commit = false;
             // unusually we *don't* want "using" here; the "finally" does that, with
@@ -1379,7 +1379,7 @@ namespace AqlaSerializer
         /// </summary>
         public static bool HasSubValue(AqlaSerializer.WireType wireType, ProtoReader source)
         {
-            if (source == null) throw new ArgumentNullException("source");
+            if (source == null) throw new ArgumentNullException(nameof(source));
             // check for virtual end of stream
             if (source.blockEnd <= source.position || wireType == WireType.EndGroup) { return false; }
             source.wireType = wireType;
@@ -1418,7 +1418,7 @@ namespace AqlaSerializer
         /// </summary>
         public static void NoteObject(object value, ProtoReader reader)
         {
-            if (reader == null) throw new ArgumentNullException("reader");
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
             if(reader.trapCount != 0)
             {
                 reader.netCache.SetKeyedObject(reader._trappedKey, value);
@@ -1431,7 +1431,7 @@ namespace AqlaSerializer
         /// </summary>
         public static void NoteReservedTrappedObject(int trappedKey, object value, ProtoReader reader)
         {
-            if (reader == null) throw new ArgumentNullException("reader");
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
             if (trappedKey == -1) return;
             if (reader.trapCount != 0) throw new InvalidOperationException("NoteReservedTrappedObject called while new not reserved trap present");
             var stack = reader._trapNoteReserved;

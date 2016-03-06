@@ -49,8 +49,8 @@ namespace AqlaSerializer
             throw new NotSupportedException();
 #else
 
-            if (instance == null) throw new ArgumentNullException("instance");
-            if (tag <= 0) throw new ArgumentOutOfRangeException("tag");
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            if (tag <= 0) throw new ArgumentOutOfRangeException(nameof(tag));
             IExtension extn = instance.GetExtensionObject(false);
 
             if (extn == null)
@@ -108,8 +108,8 @@ namespace AqlaSerializer
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            if(instance == null) throw new ArgumentNullException("instance");
-            if(value == null) throw new ArgumentNullException("value");
+            if(instance == null) throw new ArgumentNullException(nameof(instance));
+            if(value == null) throw new ArgumentNullException(nameof(value));
             
             // obtain the extension object and prepare to write
             IExtension extn = instance.GetExtensionObject(true);

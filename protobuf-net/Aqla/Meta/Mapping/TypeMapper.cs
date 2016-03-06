@@ -50,8 +50,7 @@ namespace AqlaSerializer.Meta.Mapping
 
         public virtual TypeState Map(TypeArgsValue args)
         {
-            var s = new TypeState(args);
-            s.InferTagByName = args.Model.InferTagFromNameDefault;
+            var s = new TypeState(args) { InferTagByName = args.Model.InferTagFromNameDefault };
             if (args.Family == MetaType.AttributeFamily.ImplicitFallback)
             {
                 s.ImplicitFields = args.ImplicitFallbackMode;

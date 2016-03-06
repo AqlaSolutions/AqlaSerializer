@@ -94,7 +94,7 @@ namespace AqlaSerializer
         private object rootObject;
         internal int AddObjectKey(object value, out bool existing)
         {
-            if (value == null) throw new ArgumentNullException("value");
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             if ((object)rootObject==null)
             {

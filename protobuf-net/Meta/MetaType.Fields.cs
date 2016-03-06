@@ -135,7 +135,7 @@ namespace AqlaSerializer.Meta
         /// </summary>     
         public MetaType Add(params string[] memberNames)
         {
-            if (memberNames == null) throw new ArgumentNullException("memberNames");
+            if (memberNames == null) throw new ArgumentNullException(nameof(memberNames));
             int next = GetNextFieldNumber();
             for (int i = 0; i < memberNames.Length; i++)
             {
@@ -183,7 +183,7 @@ namespace AqlaSerializer.Meta
             MemberInfo[] members = Type.GetMember(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (members != null && members.Length == 1) mi = members[0];
 #endif
-            if (mi == null) throw new ArgumentException("Unable to determine member: " + memberName, "memberName");
+            if (mi == null) throw new ArgumentException("Unable to determine member: " + memberName, nameof(memberName));
 
             Type miType;
 #if WINRT || PORTABLE

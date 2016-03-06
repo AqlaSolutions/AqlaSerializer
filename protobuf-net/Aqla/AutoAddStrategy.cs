@@ -56,7 +56,7 @@ namespace AqlaSerializer
         
         public virtual bool CanAutoAddType(Type type)
         {
-            if (type == null) throw new ArgumentNullException("type");
+            if (type == null) throw new ArgumentNullException(nameof(type));
             if (!RuntimeTypeModel.CheckTypeCanBeAdded(_model, type)) return false;
             return GetContractFamily(type) != AttributeFamily.None
                    || RuntimeTypeModel.CheckTypeDoesntRequireContract(_model, type);
@@ -603,7 +603,7 @@ namespace AqlaSerializer
             get { return _autoRegisteringSubtypesFirstTag; }
             set
             {
-                if (value < 0) throw new ArgumentOutOfRangeException("value", "Should be > 0");
+                if (value < 0) throw new ArgumentOutOfRangeException(nameof(value), "Should be > 0");
                 _autoRegisteringSubtypesFirstTag = value;
             }
         }
@@ -612,7 +612,7 @@ namespace AqlaSerializer
 
         public AutoAddStrategy(RuntimeTypeModel model)
         {
-            if (model == null) throw new ArgumentNullException("model");
+            if (model == null) throw new ArgumentNullException(nameof(model));
             _model = model;
             MemberMapper = new MemberMapper(
                 CreateDefaultMemberMapperHandlers());
