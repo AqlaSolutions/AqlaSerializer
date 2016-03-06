@@ -14,16 +14,16 @@ namespace AqlaSerializer.ServiceModel
     /// </summary>
     public sealed class ProtoOperationBehavior : DataContractSerializerOperationBehavior
     {
-        private TypeModel model;
+        private TypeModel _model;
         /// <summary>
         /// The type-model that should be used with this behaviour
         /// </summary>
         public TypeModel Model
         {
-            get { return model; }
+            get { return _model; }
             set {
                 if (value == null) throw new ArgumentNullException("Model");
-                model = value;
+                _model = value;
             }
 
         }
@@ -33,7 +33,7 @@ namespace AqlaSerializer.ServiceModel
         public ProtoOperationBehavior(OperationDescription operation) : base(operation)
         {
 #if !NO_RUNTIME
-            model = RuntimeTypeModel.Default;
+            _model = RuntimeTypeModel.Default;
 #endif
         }
         //public ProtoOperationBehavior(OperationDescription operation, DataContractFormatAttribute dataContractFormat) : base(operation, dataContractFormat) { }
@@ -43,8 +43,8 @@ namespace AqlaSerializer.ServiceModel
         /// </summary>
         public override XmlObjectSerializer CreateSerializer(Type type, System.Xml.XmlDictionaryString name, System.Xml.XmlDictionaryString ns, IList<Type> knownTypes)
         {
-            if (model == null) throw new InvalidOperationException("No Model instance has been assigned to the ProtoOperationBehavior");
-            return XmlProtoSerializer.TryCreate(model, type) ?? base.CreateSerializer(type, name, ns, knownTypes);
+            if (_model == null) throw new InvalidOperationException("No Model instance has been assigned to the ProtoOperationBehavior");
+            return XmlProtoSerializer.TryCreate(_model, type) ?? base.CreateSerializer(type, name, ns, knownTypes);
         }
     }
 }

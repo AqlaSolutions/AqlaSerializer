@@ -34,7 +34,7 @@ namespace AqlaSerializer.Serializers
                 subTypeWriter = () =>
                     {
                         Type t = value.GetType();
-                        if (concreteTypeDefault != t)
+                        if (_concreteTypeDefault != t)
                             _subTypeHelpers.Write(_metaType, t, dest);
                         else
                             ProtoWriter.WriteFieldHeaderCancelBegin(dest);
@@ -74,7 +74,7 @@ namespace AqlaSerializer.Serializers
                         if (value == null || (forceNewInstance && !createdNew))
                         {
                             createdNew = true;
-                            value = Activator.CreateInstance(concreteTypeDefault);
+                            value = Activator.CreateInstance(_concreteTypeDefault);
                             ProtoReader.NoteObject(value, source);
                             if (asList)
                             {
@@ -106,7 +106,7 @@ namespace AqlaSerializer.Serializers
                         else
                         {
                             args[0] = v;
-                            this.add.Invoke(value, args);
+                            this._add.Invoke(value, args);
                         }
                     },
                 source);
@@ -130,20 +130,20 @@ namespace AqlaSerializer.Serializers
             }
         }
 
-        readonly byte options;
+        readonly byte _options;
 
         const byte OPTIONS_IsList = 1;
         const byte OPTIONS_SuppressIList = 2;
         const byte OPTIONS_WritePacked = 4;
         const byte OPTIONS_OverwriteList = 16;
 
-        readonly Type concreteTypeDefault;
-        readonly MethodInfo add;
+        readonly Type _concreteTypeDefault;
+        readonly MethodInfo _add;
 
-        bool IsList => (options & OPTIONS_IsList) != 0;
-        bool SuppressIList => (options & OPTIONS_SuppressIList) != 0;
-        protected bool WritePacked => (options & OPTIONS_WritePacked) != 0;
-        protected readonly WireType _packedWireTypeForRead;
+        bool IsList => (_options & OPTIONS_IsList) != 0;
+        bool SuppressIList => (_options & OPTIONS_SuppressIList) != 0;
+        protected bool WritePacked => (_options & OPTIONS_WritePacked) != 0;
+        protected readonly WireType PackedWireTypeForRead;
 
         readonly Type _itemType;
         readonly bool _protoCompatibility;
@@ -185,41 +185,41 @@ namespace AqlaSerializer.Serializers
             : base(tail)
         {
             _itemType = tail.ExpectedType;
-            if (overwriteList) options |= OPTIONS_OverwriteList;
+            if (overwriteList) _options |= OPTIONS_OverwriteList;
             if (!CanPack(packedWireType))
             {
                 if (writePacked) throw new InvalidOperationException("Only simple data-types can use packed encoding");
                 packedWireType = WireType.None;
             }
 
-            _packedWireTypeForRead = packedWireType;
+            PackedWireTypeForRead = packedWireType;
             _protoCompatibility = protoCompatibility;
             _writeSubType = writeSubType && !protoCompatibility;
 
-            if (writePacked) options |= OPTIONS_WritePacked;
+            if (writePacked) _options |= OPTIONS_WritePacked;
             if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
             if (declaredType.IsArray) throw new ArgumentException("Cannot treat arrays as lists", nameof(declaredType));
             this.ExpectedType = declaredType;
-            this.concreteTypeDefault = concreteTypeDefault ?? declaredType;
+            this._concreteTypeDefault = concreteTypeDefault ?? declaredType;
 
             // look for a public list.Add(typedObject) method
             if (RequireAdd)
             {
                 bool isList;
-                add = TypeModel.ResolveListAdd(model, declaredType, tail.ExpectedType, out isList);
+                _add = TypeModel.ResolveListAdd(model, declaredType, tail.ExpectedType, out isList);
                 if (isList)
                 {
-                    options |= OPTIONS_IsList;
+                    _options |= OPTIONS_IsList;
                     string fullName = declaredType.FullName;
                     if (fullName != null && fullName.StartsWith("System.Data.Linq.EntitySet`1[["))
                     { // see http://stackoverflow.com/questions/6194639/entityset-is-there-a-sane-reason-that-ilist-add-doesnt-set-assigned
-                        options |= OPTIONS_SuppressIList;
+                        _options |= OPTIONS_SuppressIList;
                     }
                 }
-                if (add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
+                if (_add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            ListHelpers = new ListHelpers(WritePacked, _packedWireTypeForRead, _protoCompatibility, tail);
+            ListHelpers = new ListHelpers(WritePacked, PackedWireTypeForRead, _protoCompatibility, tail);
 
             if (!protoCompatibility)
             {
@@ -237,7 +237,7 @@ namespace AqlaSerializer.Serializers
 
         public override bool RequiresOldValue => true;
 
-        protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;
+        protected bool AppendToCollection => (_options & OPTIONS_OverwriteList) == 0;
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue => true;
@@ -336,18 +336,18 @@ namespace AqlaSerializer.Serializers
                                 {
                                     ctx.MarkDebug("// using Add method");
                                     Operand instance = value;
-                                    if (add != null && !Helpers.IsAssignableFrom(add.DeclaringType, ExpectedType))
-                                        instance = instance.Cast(add.DeclaringType); // TODO optimize to local
+                                    if (_add != null && !Helpers.IsAssignableFrom(_add.DeclaringType, ExpectedType))
+                                        instance = instance.Cast(_add.DeclaringType); // TODO optimize to local
                                     g.Invoke(instance, "Add", v);
                                 }
                                 else
                                 {
                                     ctx.MarkDebug("// using add delegate");
                                     ctx.LoadAddress(value, ExpectedType);
-                                    if (!Helpers.IsAssignableFrom(add.DeclaringType, ExpectedType))
-                                        ctx.Cast(add.DeclaringType);
+                                    if (!Helpers.IsAssignableFrom(_add.DeclaringType, ExpectedType))
+                                        ctx.Cast(_add.DeclaringType);
                                     ctx.LoadValue(v);
-                                    ctx.EmitCall(this.add);
+                                    ctx.EmitCall(this._add);
                                 }
                             }
                         }
@@ -374,7 +374,7 @@ namespace AqlaSerializer.Serializers
                     subTypeWriter = () =>
                         {
                             g.Assign(t, value.AsOperand.InvokeGetType());
-                            g.If(concreteTypeDefault != t.AsOperand);
+                            g.If(_concreteTypeDefault != t.AsOperand);
                             {
                                 _subTypeHelpers.EmitWrite(g, _metaType, value);
                             }
@@ -505,7 +505,7 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public virtual object CreateInstance(ProtoReader source)
         {
-            var r = Activator.CreateInstance(concreteTypeDefault);
+            var r = Activator.CreateInstance(_concreteTypeDefault);
             ProtoReader.NoteObject(r, source);
             return r;
         }
@@ -525,7 +525,7 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.EmitCtor(concreteTypeDefault);
+                ctx.EmitCtor(_concreteTypeDefault);
                 ctx.CopyValue();
                 // we can use stack value here because note object on reader is static (backwards API)
                 ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(ExpectedType));

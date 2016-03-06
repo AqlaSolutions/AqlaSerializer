@@ -145,9 +145,9 @@ namespace AqlaSerializer.Meta
             bool isInbuiltType = false;
             if (type == null)
             { // generate for the entire model
-                for (int i = _serviceTypesCount; i < types.Count; i++)
+                for (int i = _serviceTypesCount; i < _types.Count; i++)
                 {
-                    MetaType meta = (MetaType)types[i];
+                    MetaType meta = (MetaType)_types[i];
                     MetaType tmp = meta.GetSurrogateOrBaseOrSelf(false);
                     if (!requiredTypes.Contains(tmp))
                     {
@@ -171,7 +171,7 @@ namespace AqlaSerializer.Meta
                     if (index < 0) throw new ArgumentException("The type specified is not a contract-type", nameof(type));
 
                     // get the required types
-                    primaryType = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
+                    primaryType = ((MetaType)_types[index]).GetSurrogateOrBaseOrSelf(false);
                     requiredTypes.Add(primaryType);
                     CascadeDependents(requiredTypes, primaryType);
                 }
@@ -257,7 +257,7 @@ namespace AqlaSerializer.Meta
                     int index = FindOrAddAuto(itemType, false, false, false);
                     if (index >= 0)
                     {
-                        tmp = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
+                        tmp = ((MetaType)_types[index]).GetSurrogateOrBaseOrSelf(false);
                         if (!list.Contains(tmp))
                         { // could perhaps also implement as a queue, but this should work OK for sane models
                             list.Add(tmp);
@@ -330,7 +330,7 @@ namespace AqlaSerializer.Meta
                 int index = FindOrAddAuto(type, false, false, false);
                 if (index >= 0)
                 {
-                    var tmp = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
+                    var tmp = ((MetaType)_types[index]).GetSurrogateOrBaseOrSelf(false);
                     if (!list.Contains(tmp))
                     { // could perhaps also implement as a queue, but this should work OK for sane models
                         list.Add(tmp);

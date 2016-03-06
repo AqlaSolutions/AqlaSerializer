@@ -18,10 +18,10 @@ namespace AqlaSerializer.Serializers
         public void WriteDebugSchema(IDebugSchemaBuilder builder)
         {
             using (builder.SingleTailDecorator(this))
-                rootTail.WriteDebugSchema(builder);
+                _rootTail.WriteDebugSchema(builder);
         }
         
-        public bool DemandWireTypeStabilityStatus() => rootTail.DemandWireTypeStabilityStatus();
+        public bool DemandWireTypeStabilityStatus() => _rootTail.DemandWireTypeStabilityStatus();
 
         bool IProtoTypeSerializer.HasCallbacks(AqlaSerializer.Meta.TypeModel.CallbackType callbackType)
         {
@@ -57,9 +57,9 @@ namespace AqlaSerializer.Serializers
 
         public bool RequiresOldValue { get { return true; } }
         public Type ExpectedType { get; }
-        private readonly Type declaredType;
-        private readonly MethodInfo toTail, fromTail;
-        IProtoTypeSerializer rootTail;
+        private readonly Type _declaredType;
+        private readonly MethodInfo _toTail, _fromTail;
+        IProtoTypeSerializer _rootTail;
 
         public SurrogateSerializer(TypeModel model, Type forType, Type declaredType, IProtoTypeSerializer rootTail)
         {
@@ -72,10 +72,10 @@ namespace AqlaSerializer.Serializers
 #endif
             Helpers.DebugAssert(declaredType == rootTail.ExpectedType || Helpers.IsSubclassOf(declaredType, rootTail.ExpectedType));
             this.ExpectedType = forType;
-            this.declaredType = declaredType;
-            this.rootTail = rootTail;
-            toTail = GetConversion(model, true);
-            fromTail = GetConversion(model, false);
+            this._declaredType = declaredType;
+            this._rootTail = rootTail;
+            _toTail = GetConversion(model, true);
+            _fromTail = GetConversion(model, false);
         }
 
         private static bool HasCast(TypeModel model, Type type, Type from, Type to, out MethodInfo op)
@@ -129,22 +129,22 @@ namespace AqlaSerializer.Serializers
 
         public MethodInfo GetConversion(TypeModel model, bool toTail)
         {
-            Type to = toTail ? declaredType : ExpectedType;
-            Type from = toTail ? ExpectedType : declaredType;
+            Type to = toTail ? _declaredType : ExpectedType;
+            Type from = toTail ? ExpectedType : _declaredType;
             MethodInfo op;
-            if (HasCast(model, declaredType, from, to, out op) || HasCast(model, ExpectedType, from, to, out op))
+            if (HasCast(model, _declaredType, from, to, out op) || HasCast(model, ExpectedType, from, to, out op))
             {
                 return op;
             }
             throw new InvalidOperationException(
                 "No suitable conversion operator found for surrogate: " +
-                ExpectedType.FullName + " / " + declaredType.FullName);
+                ExpectedType.FullName + " / " + _declaredType.FullName);
         }
 
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter writer)
         {
-            rootTail.Write(toTail.Invoke(null, new object[] { value }), writer);
+            _rootTail.Write(_toTail.Invoke(null, new object[] { value }), writer);
         }
 
         public object Read(object value, ProtoReader source)
@@ -155,10 +155,10 @@ namespace AqlaSerializer.Serializers
                 reservedTrap = ProtoReader.ReserveNoteObject(source);
             // convert the incoming value
             object[] args = { value };
-            value = toTail.Invoke(null, args); // don't note, references are not to surrogate but to the final object
+            value = _toTail.Invoke(null, args); // don't note, references are not to surrogate but to the final object
             // invoke the tail and convert the outgoing value
-            args[0] = rootTail.Read(value, source);
-            var r = fromTail.Invoke(null, args);
+            args[0] = _rootTail.Read(value, source);
+            var r = _fromTail.Invoke(null, args);
 
             if (!Helpers.IsValueType(ExpectedType))
                 ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
@@ -174,7 +174,7 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
-                using (Compiler.Local converted = new Compiler.Local(ctx, declaredType)) // declare/re-use local
+                using (Compiler.Local converted = new Compiler.Local(ctx, _declaredType)) // declare/re-use local
                 using (Compiler.Local reservedTrap = new Compiler.Local(ctx, typeof(int)))
                 {
                     var g = ctx.G;
@@ -183,17 +183,17 @@ namespace AqlaSerializer.Serializers
                         g.Assign(reservedTrap, g.ReaderFunc.ReserveNoteObject_int());
 
                     ctx.LoadValue(value); // load primary onto stack
-                    ctx.EmitCall(toTail); // static convert op, primary-to-surrogate
+                    ctx.EmitCall(_toTail); // static convert op, primary-to-surrogate
 
                     ctx.StoreValue(converted); // store into surrogate local
 
-                    rootTail.EmitRead(ctx, rootTail.RequiresOldValue ? converted : null); // downstream processing against surrogate local
+                    _rootTail.EmitRead(ctx, _rootTail.RequiresOldValue ? converted : null); // downstream processing against surrogate local
 
-                    if (rootTail.EmitReadReturnsValue)
+                    if (_rootTail.EmitReadReturnsValue)
                         ctx.StoreValue(converted);
 
                     ctx.LoadValue(converted); // load from surrogate local
-                    ctx.EmitCall(fromTail); // static convert op, surrogate-to-primary
+                    ctx.EmitCall(_fromTail); // static convert op, surrogate-to-primary
                     ctx.StoreValue(value); // store back into primary
 
                     if (!ExpectedType.IsValueType)
@@ -210,8 +210,8 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             {
                 ctx.LoadValue(valueFrom);
-                ctx.EmitCall(toTail);
-                rootTail.EmitWrite(ctx, null);
+                ctx.EmitCall(_toTail);
+                _rootTail.EmitWrite(ctx, null);
             }
         }
 #endif

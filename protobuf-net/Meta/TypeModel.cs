@@ -529,36 +529,36 @@ namespace AqlaSerializer.Meta
         private class DeserializeItemsIterator : IEnumerator, IEnumerable
         {
             IEnumerator IEnumerable.GetEnumerator() { return this; }
-            private bool haveObject;
+            private bool _haveObject;
 
             public bool MoveNext()
             {
-                if (haveObject)
+                if (_haveObject)
                 {
                     int bytesRead;
-                    Current = model.DeserializeWithLengthPrefix(source, null, type, style, expectedField, resolver, out bytesRead, out haveObject, context);
+                    Current = _model.DeserializeWithLengthPrefix(_source, null, _type, _style, _expectedField, _resolver, out bytesRead, out _haveObject, _context);
                 }
-                return haveObject;
+                return _haveObject;
             }
             void IEnumerator.Reset() { throw new NotSupportedException(); }
             public object Current { get; set; }
-            private readonly Stream source;
-            private readonly Type type;
-            private readonly PrefixStyle style;
-            private readonly int expectedField;
-            private readonly Serializer.TypeResolver resolver;
-            private readonly TypeModel model;
-            private readonly SerializationContext context;
+            private readonly Stream _source;
+            private readonly Type _type;
+            private readonly PrefixStyle _style;
+            private readonly int _expectedField;
+            private readonly Serializer.TypeResolver _resolver;
+            private readonly TypeModel _model;
+            private readonly SerializationContext _context;
             public DeserializeItemsIterator(TypeModel model, Stream source, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, SerializationContext context)
             {
-                haveObject = true;
-                this.source = source;
-                this.type = type;
-                this.style = style;
-                this.expectedField = expectedField;
-                this.resolver = resolver;
-                this.model = model;
-                this.context = context;
+                _haveObject = true;
+                this._source = source;
+                this._type = type;
+                this._style = style;
+                this._expectedField = expectedField;
+                this._resolver = resolver;
+                this._model = model;
+                this._context = context;
             }
         }
 
@@ -1334,14 +1334,14 @@ namespace AqlaSerializer.Meta
 
         internal sealed class Formatter : System.Runtime.Serialization.IFormatter
         {
-            private readonly TypeModel model;
-            private readonly Type type;
+            private readonly TypeModel _model;
+            private readonly Type _type;
             internal Formatter(TypeModel model, Type type)
             {
                 if (model == null) throw new ArgumentNullException(nameof(model));
                 if (type == null) throw new ArgumentNullException(nameof(type));
-                this.model = model;
-                this.type = type;
+                this._model = model;
+                this._type = type;
             }
 
             public System.Runtime.Serialization.SerializationBinder Binder { get; set; }
@@ -1353,13 +1353,13 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
                 throw new NotSupportedException();
 #else
-                return model.Deserialize(source, null, type, -1, Context);
+                return _model.Deserialize(source, null, _type, -1, Context);
 #endif
             }
 
             public void Serialize(Stream destination, object graph)
             {
-                model.Serialize(destination, graph, Context);
+                _model.Serialize(destination, graph, Context);
             }
 
             public System.Runtime.Serialization.ISurrogateSelector SurrogateSelector { get; set; }

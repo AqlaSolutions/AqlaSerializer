@@ -23,7 +23,7 @@ namespace AqlaSerializer
         // predict sub-classes
 
 
-        private IExtension extensionObject;
+        private IExtension _extensionObject;
 
         IExtension IExtensible.GetExtensionObject(bool createIfMissing)
         {
@@ -41,7 +41,7 @@ namespace AqlaSerializer
         /// and true during deserialization upon encountering unexpected fields.</remarks>
         protected virtual IExtension GetExtensionObject(bool createIfMissing)
         {
-            return GetExtensionObject(ref extensionObject, createIfMissing);
+            return GetExtensionObject(ref _extensionObject, createIfMissing);
         }
 
         /// <summary>

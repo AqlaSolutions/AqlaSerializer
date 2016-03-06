@@ -21,17 +21,17 @@ namespace AqlaSerializer.Meta
         /*  Like BasicList, but allows existing values to be changed
          */ 
         public new object this[int index] {
-            get { return head[index]; }
-            set { head[index] = value; }
+            get { return Head[index]; }
+            set { Head[index] = value; }
         }
         public void RemoveLast()
         {
-            head.RemoveLastWithMutate();
+            Head.RemoveLastWithMutate();
         }
 
         public void Clear()
         {
-            head.Clear();
+            Head.Clear();
         }
 
         protected override void HandleIListClear()
@@ -63,21 +63,21 @@ namespace AqlaSerializer.Meta
             foreach (var el in enumerable) Add(el);
         }
 
-        private static readonly Node nil = new Node(null, 0);
+        private static readonly Node Nil = new Node(null, 0);
         public void CopyTo(Array array, int offset)
         {
-            head.CopyTo(array, offset);
+            Head.CopyTo(array, offset);
         }
         
         public void CopyTo(Array array, int sourceStart, int destinationStart, int length)
         {
-            head.CopyTo(array, sourceStart, destinationStart, length);
+            Head.CopyTo(array, sourceStart, destinationStart, length);
         }
 
-        protected Node head = nil;
+        protected Node Head = Nil;
         public int Add(object value)
         {
-            return (head = head.Append(value)).Length - 1;
+            return (Head = Head.Append(value)).Length - 1;
         }
 
         bool IList.Contains(object value)
@@ -121,36 +121,36 @@ namespace AqlaSerializer.Meta
 
         bool IList.IsFixedSize { get { return false; } }
 
-        public object this[int index] { get { return head[index]; } }
+        public object this[int index] { get { return Head[index]; } }
         //public object TryGet(int index)
         //{
         //    return head.TryGet(index);
         //}
-        public void Trim() { head = head.Trim(); }
-        public int Count { get { return head.Length; } }
+        public void Trim() { Head = Head.Trim(); }
+        public int Count { get { return Head.Length; } }
 
         object ICollection.SyncRoot { get; } = new object();
 
         bool ICollection.IsSynchronized { get { return false; } }
 
-        IEnumerator IEnumerable.GetEnumerator() { return new NodeEnumerator(head); }
-        public NodeEnumerator GetEnumerator() { return new NodeEnumerator(head); }
+        IEnumerator IEnumerable.GetEnumerator() { return new NodeEnumerator(Head); }
+        public NodeEnumerator GetEnumerator() { return new NodeEnumerator(Head); }
 
         public struct NodeEnumerator : IEnumerator
         {
-            private int position;
-            private readonly Node node;
+            private int _position;
+            private readonly Node _node;
             internal NodeEnumerator(Node node)
             {
-                this.position = -1;
-                this.node = node;
+                this._position = -1;
+                this._node = node;
             }
-            void IEnumerator.Reset() { position = -1; }
-            public object Current { get { return node[position]; } }
+            void IEnumerator.Reset() { _position = -1; }
+            public object Current { get { return _node[_position]; } }
             public bool MoveNext()
             {
-                int len = node.Length;
-                return (position <= len) && (++position < len);
+                int len = _node.Length;
+                return (_position <= len) && (++_position < len);
             }
         }
         internal sealed class Node
@@ -160,7 +160,7 @@ namespace AqlaSerializer.Meta
                 get {
                     if (index >= 0 && index < Length)
                     {
-                        return data[index];
+                        return _data[index];
                     }
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
@@ -168,7 +168,7 @@ namespace AqlaSerializer.Meta
                 {
                     if (index >= 0 && index < Length)
                     {
-                        data[index] = value;
+                        _data[index] = value;
                     }
                     else
                     {
@@ -180,7 +180,7 @@ namespace AqlaSerializer.Meta
             //{
             //    return (index >= 0 && index < length) ? data[index] : null;
             //}
-            private readonly object[] data;
+            private readonly object[] _data;
 
             public int Length { get; set; }
 
@@ -188,7 +188,7 @@ namespace AqlaSerializer.Meta
             {
                 Helpers.DebugAssert((data == null && length == 0) ||
                     (data != null && length > 0 && length <= data.Length));
-                this.data = data;
+                this._data = data;
 
                 this.Length = length;
             }
@@ -201,26 +201,26 @@ namespace AqlaSerializer.Meta
             {
                 object[] newData;
                 int newLength = Length + 1;
-                if (data == null)
+                if (_data == null)
                 {
                     newData = new object[10];
                 }
-                else if (Length == data.Length)
+                else if (Length == _data.Length)
                 {
-                    newData = new object[data.Length * 2];
-                    Array.Copy(data, newData, Length);
+                    newData = new object[_data.Length * 2];
+                    Array.Copy(_data, newData, Length);
                 } else
                 {
-                    newData = data;
+                    newData = _data;
                 }
                 newData[Length] = value;
                 return new Node(newData, newLength);
             }
             public Node Trim()
             {
-                if (Length == 0 || Length == data.Length) return this;
+                if (Length == 0 || Length == _data.Length) return this;
                 object[] newData = new object[Length];
-                Array.Copy(data, newData, Length);
+                Array.Copy(_data, newData, Length);
                 return new Node(newData, Length);
             }
 
@@ -228,7 +228,7 @@ namespace AqlaSerializer.Meta
             {
                 for (int i = 0; i < Length; i++)
                 {
-                    if ((string)value == (string)data[i]) return i;
+                    if ((string)value == (string)_data[i]) return i;
                 }
                 return -1;
             }
@@ -236,7 +236,7 @@ namespace AqlaSerializer.Meta
             {
                 for (int i = 0; i < Length; i++)
                 {
-                    if ((object)instance == (object)data[i]) return i;
+                    if ((object)instance == (object)_data[i]) return i;
                 } // ^^^ (object) above should be preserved, even if this was typed; needs
                   // to be a reference check
                 return -1;
@@ -246,7 +246,7 @@ namespace AqlaSerializer.Meta
                 int count = 0;
                 for (int i = 0; i < Length; i++)
                 {
-                    if ((object)instance == (object)data[i])
+                    if ((object)instance == (object)_data[i])
                     {
                         if (++count >= required) return true;
                     }
@@ -258,7 +258,7 @@ namespace AqlaSerializer.Meta
             {
                 for (int i = 0; i < Length; i++)
                 {
-                    if (predicate(data[i], ctx)) return i;
+                    if (predicate(_data[i], ctx)) return i;
                 }
                 return -1;
             }
@@ -270,21 +270,21 @@ namespace AqlaSerializer.Meta
 
             internal void CopyTo(Array array, int sourceStart, int destinationStart, int length)
             {
-                if (data == null)
+                if (_data == null)
                 {
                     if (sourceStart > 0 || length < 0)
                         throw new ArgumentOutOfRangeException();
                     return;
                 }
                 Helpers.MemoryBarrier();
-                Array.Copy(data, sourceStart, array, destinationStart, length);
+                Array.Copy(_data, sourceStart, array, destinationStart, length);
             }
 
             internal void Clear()
             {
-                if(data != null)
+                if(_data != null)
                 {
-                    Array.Clear(data, 0, data.Length);
+                    Array.Clear(_data, 0, _data.Length);
                 }
                 Length = 0;
             }
@@ -292,20 +292,20 @@ namespace AqlaSerializer.Meta
 
         internal int IndexOf(MatchPredicate predicate, object ctx)
         {
-            return head.IndexOf(predicate, ctx);
+            return Head.IndexOf(predicate, ctx);
         }
         internal int IndexOfString(string value)
         {
-            return head.IndexOfString(value);
+            return Head.IndexOfString(value);
         }
         internal int IndexOfReference(object instance)
         {
-            return head.IndexOfReference(instance);
+            return Head.IndexOfReference(instance);
         }
 
         internal bool HasReferences(object instance, int max)
         {
-            return head.HasReferences(instance, max);
+            return Head.HasReferences(instance, max);
         }
 
         internal delegate bool MatchPredicate(object value, object ctx);

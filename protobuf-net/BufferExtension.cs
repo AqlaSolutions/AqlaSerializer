@@ -9,11 +9,11 @@ namespace AqlaSerializer
     /// </summary>
     public sealed class BufferExtension : IExtension
     {
-        private byte[] buffer;
+        private byte[] _buffer;
 
         int IExtension.GetLength()
         {
-            return buffer == null ? 0 : buffer.Length;
+            return _buffer == null ? 0 : _buffer.Length;
         }
 
         Stream IExtension.BeginAppend()
@@ -30,16 +30,16 @@ namespace AqlaSerializer
                 {
                     MemoryStream ms = (MemoryStream)stream;
 
-                    if (buffer == null)
+                    if (_buffer == null)
                     {   // allocate new buffer
-                        buffer = ms.ToArray();
+                        _buffer = ms.ToArray();
                     }
                     else
                     {   // resize and copy the data
                         // note: Array.Resize not available on CF
-                        int offset = buffer.Length;
+                        int offset = _buffer.Length;
                         byte[] tmp = new byte[offset + len];
-                        Helpers.BlockCopy(buffer, 0, tmp, 0, offset);
+                        Helpers.BlockCopy(_buffer, 0, tmp, 0, offset);
 
 #if PORTABLE || WINRT // no GetBuffer() - fine, we'll use Read instead
                         int bytesRead;
@@ -55,7 +55,7 @@ namespace AqlaSerializer
 #else
                         Helpers.BlockCopy(ms.GetBuffer(), 0, tmp, offset, len);
 #endif
-                        buffer = tmp;
+                        _buffer = tmp;
                     }
                 }
             }
@@ -63,7 +63,7 @@ namespace AqlaSerializer
 
         Stream IExtension.BeginQuery()
         {
-            return buffer == null ? Stream.Null : new MemoryStream(buffer);
+            return _buffer == null ? Stream.Null : new MemoryStream(_buffer);
         }
 
         void IExtension.EndQuery(Stream stream)

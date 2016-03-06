@@ -13,20 +13,20 @@ namespace AqlaSerializer.ServiceModel
     /// </summary>
     public sealed class XmlProtoSerializer : XmlObjectSerializer
     {
-        private readonly TypeModel model;
-        private readonly int key;
-        private readonly bool isList, isEnum;
-        private readonly Type type;
+        private readonly TypeModel _model;
+        private readonly int _key;
+        private readonly bool _isList, _isEnum;
+        private readonly Type _type;
         internal XmlProtoSerializer(TypeModel model, int key, Type type, bool isList)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
             if (type == null) throw new ArgumentOutOfRangeException(nameof(type));
-            this.model = model;
-            this.key = key;
-            this.isList = isList;
-            this.type = type;
-            this.isEnum = Helpers.IsEnum(type);
+            this._model = model;
+            this._key = key;
+            this._isList = isList;
+            this._type = type;
+            this._isEnum = Helpers.IsEnum(type);
         }
         /// <summary>
         /// Attempt to create a new serializer for the given model and type
@@ -53,11 +53,11 @@ namespace AqlaSerializer.ServiceModel
             if (model == null) throw new ArgumentNullException(nameof(model));
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            key = GetKey(model, ref type, out isList);
-            this.model = model;
-            this.type = type;
-            this.isEnum = Helpers.IsEnum(type);
-            if (key < 0) throw new ArgumentOutOfRangeException(nameof(type), "Type not recognised by the model: " + type.FullName);
+            _key = GetKey(model, ref type, out _isList);
+            this._model = model;
+            this._type = type;
+            this._isEnum = Helpers.IsEnum(type);
+            if (_key < 0) throw new ArgumentOutOfRangeException(nameof(type), "Type not recognised by the model: " + type.FullName);
         }
         static int GetKey(TypeModel model, ref Type type, out bool isList)
         {
@@ -116,15 +116,15 @@ namespace AqlaSerializer.ServiceModel
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    if (isList)
+                    if (_isList)
                     {
-                        model.Serialize(ms, graph, null);
+                        _model.Serialize(ms, graph, null);
                     }
                     else
                     {
-                        using (ProtoWriter protoWriter = new ProtoWriter(ms, model, null))
+                        using (ProtoWriter protoWriter = new ProtoWriter(ms, _model, null))
                         {
-                            model.Serialize(key, graph, protoWriter, true);
+                            _model.Serialize(_key, graph, protoWriter, true);
                         }
                     }
                     byte[] buffer = ms.GetBuffer();
@@ -161,15 +161,15 @@ namespace AqlaSerializer.ServiceModel
             }
             if(isSelfClosed) // no real content
             {
-                if (isList || isEnum)
+                if (_isList || _isEnum)
                 {
-                    return model.Deserialize(Stream.Null, null, type, null);
+                    return _model.Deserialize(Stream.Null, null, _type, null);
                 }
                 ProtoReader protoReader = null;
                 try
                 {
-                    protoReader = ProtoReader.Create(Stream.Null, model, null, ProtoReader.TO_EOF);
-                    return model.Deserialize(key, null, protoReader, true);
+                    protoReader = ProtoReader.Create(Stream.Null, _model, null, ProtoReader.TO_EOF);
+                    return _model.Deserialize(_key, null, protoReader, true);
                 }
                 finally
                 {
@@ -181,17 +181,17 @@ namespace AqlaSerializer.ServiceModel
             Helpers.DebugAssert(reader.CanReadBinaryContent, "CanReadBinaryContent");
             using (MemoryStream ms = new MemoryStream(reader.ReadContentAsBase64()))
             {
-                if (isList || isEnum)
+                if (_isList || _isEnum)
                 {
-                    result = model.Deserialize(ms, null, type, null);
+                    result = _model.Deserialize(ms, null, _type, null);
                 }
                 else
                 {
                     ProtoReader protoReader = null;
                     try
                     {
-                        protoReader = ProtoReader.Create(ms, model, null, ProtoReader.TO_EOF);
-                        result = model.Deserialize(key, null, protoReader, true);
+                        protoReader = ProtoReader.Create(ms, _model, null, ProtoReader.TO_EOF);
+                        result = _model.Deserialize(_key, null, protoReader, true);
                     }
                     finally
                     {

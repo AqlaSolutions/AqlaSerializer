@@ -149,15 +149,15 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 
-        private readonly MethodInfo builderFactory, add, addRange, finish;
+        private readonly MethodInfo _builderFactory, _add, _addRange, _finish;
         internal ImmutableCollectionDecorator(RuntimeTypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType, bool overwriteList,
             MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish, bool protoCompatibility)
             : base(model, declaredType, concreteType, tail, writePacked, packedWireType, overwriteList, protoCompatibility, false)
         {
-            this.builderFactory = builderFactory;
-            this.add = add;
-            this.addRange = addRange;
-            this.finish = finish;
+            this._builderFactory = builderFactory;
+            this._add = add;
+            this._addRange = addRange;
+            this._finish = finish;
         }
         
 #if !FEAT_IKVM
@@ -165,8 +165,8 @@ namespace AqlaSerializer.Serializers
 
         public override object CreateInstance(ProtoReader source)
         {
-            object builderInstance = builderFactory.Invoke(null, null);
-            var r = finish.Invoke(builderInstance, null);
+            object builderInstance = _builderFactory.Invoke(null, null);
+            var r = _finish.Invoke(builderInstance, null);
             ProtoReader.NoteObject(r, source);
             return r;
         }
@@ -174,22 +174,22 @@ namespace AqlaSerializer.Serializers
         public override object Read(object value, ProtoReader source)
         {
             int trappedKey = ProtoReader.ReserveNoteObject(source);
-            object builderInstance = builderFactory.Invoke(null, null);
+            object builderInstance = _builderFactory.Invoke(null, null);
             object[] args = new object[1];
 
             if (AppendToCollection && value != null && ((IList)value).Count != 0)
             {   
-                if(addRange !=null)
+                if(_addRange !=null)
                 {
                     args[0] = value;
-                    addRange.Invoke(builderInstance, args);
+                    _addRange.Invoke(builderInstance, args);
                 }
                 else
                 {
                     foreach(object item in (IList)value)
                     {
                         args[0] = item;
-                        add.Invoke(builderInstance, args);
+                        _add.Invoke(builderInstance, args);
                     }
                 }
             }
@@ -198,11 +198,11 @@ namespace AqlaSerializer.Serializers
                 o =>
                     {
                         args[0] = o;
-                        add.Invoke(builderInstance, args);
+                        _add.Invoke(builderInstance, args);
                     },
                 source);
             
-            var r = finish.Invoke(builderInstance, null);
+            var r = _finish.Invoke(builderInstance, null);
             ProtoReader.NoteReservedTrappedObject(trappedKey, r, source);
             return r;
         }
@@ -212,11 +212,11 @@ namespace AqlaSerializer.Serializers
 
         public override void EmitCreateInstance(CompilerContext ctx)
         {
-            using (Compiler.Local builder = new Compiler.Local(ctx, builderFactory.ReturnType))
+            using (Compiler.Local builder = new Compiler.Local(ctx, _builderFactory.ReturnType))
             {
-                ctx.EmitCall(builderFactory);
+                ctx.EmitCall(_builderFactory);
                 ctx.LoadAddress(builder, builder.Type);
-                ctx.EmitCall(finish);
+                ctx.EmitCall(_finish);
                 ctx.CopyValue();
                 ctx.CastToObject(ExpectedType);
                 ctx.EmitCallNoteObject();
@@ -229,11 +229,11 @@ namespace AqlaSerializer.Serializers
             {
                 Type voidType = ctx.MapType(typeof(void));
                 using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
-                using (Compiler.Local builderInstance = new Compiler.Local(ctx, builderFactory.ReturnType))
+                using (Compiler.Local builderInstance = new Compiler.Local(ctx, _builderFactory.ReturnType))
                 using (Compiler.Local trappedKey = new Compiler.Local(ctx, typeof(int)))
                 {
                     ctx.G.Assign(trappedKey, ctx.G.ReaderFunc.ReserveNoteObject_int());
-                    ctx.EmitCall(builderFactory);
+                    ctx.EmitCall(_builderFactory);
                     ctx.StoreValue(builderInstance);
 
                     if (AppendToCollection)
@@ -253,12 +253,12 @@ namespace AqlaSerializer.Serializers
                         ctx.EmitCall(Helpers.GetGetMethod(prop, false, false));
                         ctx.BranchIfFalse(done, false); // old list is empty; nothing to add
 
-                        if (addRange != null)
+                        if (_addRange != null)
                         {
                             ctx.LoadValue(builderInstance);
                             ctx.LoadValue(value);
-                            ctx.EmitCall(addRange);
-                            if (addRange.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
+                            ctx.EmitCall(_addRange);
+                            if (_addRange.ReturnType != null && _add.ReturnType != voidType) ctx.DiscardValue();
                         }
                         else
                         {
@@ -283,8 +283,8 @@ namespace AqlaSerializer.Serializers
                                     ctx.LoadAddress(builderInstance, builderInstance.Type);
                                     ctx.LoadAddress(iter, enumeratorType);
                                     ctx.EmitCall(current);
-                                    ctx.EmitCall(add);
-                                    if (add.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
+                                    ctx.EmitCall(_add);
+                                    if (_add.ReturnType != null && _add.ReturnType != voidType) ctx.DiscardValue();
 
                                     ctx.MarkLabel(@next);
                                     ctx.LoadAddress(iter, enumeratorType);
@@ -308,14 +308,14 @@ namespace AqlaSerializer.Serializers
                                 {
                                     ctx.LoadAddress(builderInstance, builderInstance.Type);
                                     ctx.LoadValue(o);
-                                    ctx.EmitCall(add);
-                                    if (add.ReturnType != null && add.ReturnType != voidType) ctx.DiscardValue();
+                                    ctx.EmitCall(_add);
+                                    if (_add.ReturnType != null && _add.ReturnType != voidType) ctx.DiscardValue();
                                 }
                             });
 
                     ctx.LoadAddress(builderInstance, builderInstance.Type);
-                    ctx.EmitCall(finish);
-                    if (ExpectedType != finish.ReturnType)
+                    ctx.EmitCall(_finish);
+                    if (ExpectedType != _finish.ReturnType)
                     {
                         ctx.Cast(ExpectedType);
                     }

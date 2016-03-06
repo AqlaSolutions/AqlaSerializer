@@ -14,16 +14,16 @@ namespace AqlaSerializer
                 for (int i = 0; i < pool.Length; i++) pool[i] = null;
             }
 #else
-            for (int i = 0; i < pool.Length; i++)
+            for (int i = 0; i < Pool.Length; i++)
             {
-                Interlocked.Exchange(ref pool[i], null); // and drop the old value on the floor
+                Interlocked.Exchange(ref Pool[i], null); // and drop the old value on the floor
             }
 #endif
         }
         private BufferPool() { }
         const int PoolSize = 20;
         internal const int BufferLength = 1024;
-        private static readonly object[] pool = new object[PoolSize];
+        private static readonly object[] Pool = new object[PoolSize];
 
         internal static byte[] GetBuffer()
         {
@@ -41,9 +41,9 @@ namespace AqlaSerializer
                 }
             }
 #else
-            for (int i = 0; i < pool.Length; i++)
+            for (int i = 0; i < Pool.Length; i++)
             {
-                if ((tmp = Interlocked.Exchange(ref pool[i], null)) != null) return (byte[])tmp;
+                if ((tmp = Interlocked.Exchange(ref Pool[i], null)) != null) return (byte[])tmp;
             }
 #endif
             return new byte[BufferLength];
@@ -94,9 +94,9 @@ namespace AqlaSerializer
                     }
                 }
 #else
-                for (int i = 0; i < pool.Length; i++)
+                for (int i = 0; i < Pool.Length; i++)
                 {
-                    if (Interlocked.CompareExchange(ref pool[i], buffer, null) == null)
+                    if (Interlocked.CompareExchange(ref Pool[i], buffer, null) == null)
                     {
                         break; // found a null; swapped it in
                     }

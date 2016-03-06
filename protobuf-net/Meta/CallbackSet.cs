@@ -16,11 +16,11 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public class CallbackSet
     {
-        private readonly MetaType metaType;
+        private readonly MetaType _metaType;
         internal CallbackSet(MetaType metaType)
         {
             if (metaType == null) throw new ArgumentNullException(nameof(metaType));
-            this.metaType = metaType;
+            this._metaType = metaType;
         }
         internal MethodInfo this[TypeModel.CallbackType callbackType]
         {
@@ -28,10 +28,10 @@ namespace AqlaSerializer.Meta
             {
                 switch (callbackType)
                 {
-                    case TypeModel.CallbackType.BeforeSerialize: return beforeSerialize;
-                    case TypeModel.CallbackType.AfterSerialize: return afterSerialize;
-                    case TypeModel.CallbackType.BeforeDeserialize: return beforeDeserialize;
-                    case TypeModel.CallbackType.AfterDeserialize: return afterDeserialize;
+                    case TypeModel.CallbackType.BeforeSerialize: return _beforeSerialize;
+                    case TypeModel.CallbackType.AfterSerialize: return _afterSerialize;
+                    case TypeModel.CallbackType.BeforeDeserialize: return _beforeDeserialize;
+                    case TypeModel.CallbackType.AfterDeserialize: return _afterDeserialize;
                     default: throw new ArgumentException("Callback type not supported: " + callbackType.ToString(), nameof(callbackType));
                 }
             }
@@ -53,7 +53,7 @@ namespace AqlaSerializer.Meta
         }
         private MethodInfo SanityCheckCallback(TypeModel model, MethodInfo callback)
         {
-            metaType.ThrowIfFrozen();
+            _metaType.ThrowIfFrozen();
             if (callback == null) return callback; // fine
             if (callback.IsStatic) throw new ArgumentException("Callbacks cannot be static", nameof(callback));
             if (callback.ReturnType != model.MapType(typeof(void))
@@ -67,30 +67,30 @@ namespace AqlaSerializer.Meta
         {
             return new NotSupportedException("Invalid callback signature in " + method.DeclaringType.FullName + "." + method.Name);
         }
-        private MethodInfo beforeSerialize, afterSerialize, beforeDeserialize, afterDeserialize;
+        private MethodInfo _beforeSerialize, _afterSerialize, _beforeDeserialize, _afterDeserialize;
         /// <summary>Called before serializing an instance</summary>
         public MethodInfo BeforeSerialize
         {
-            get { return beforeSerialize; }
-            set { beforeSerialize = SanityCheckCallback(metaType.Model, value); }
+            get { return _beforeSerialize; }
+            set { _beforeSerialize = SanityCheckCallback(_metaType.Model, value); }
         }
         /// <summary>Called before deserializing an instance</summary>
         public MethodInfo BeforeDeserialize
         {
-            get { return beforeDeserialize; }
-            set { beforeDeserialize = SanityCheckCallback(metaType.Model, value); }
+            get { return _beforeDeserialize; }
+            set { _beforeDeserialize = SanityCheckCallback(_metaType.Model, value); }
         }
         /// <summary>Called after serializing an instance</summary>
         public MethodInfo AfterSerialize
         {
-            get { return afterSerialize; }
-            set { afterSerialize = SanityCheckCallback(metaType.Model, value); }
+            get { return _afterSerialize; }
+            set { _afterSerialize = SanityCheckCallback(_metaType.Model, value); }
         }
         /// <summary>Called after deserializing an instance</summary>
         public MethodInfo AfterDeserialize
         {
-            get { return afterDeserialize; }
-            set { afterDeserialize = SanityCheckCallback(metaType.Model, value); }
+            get { return _afterDeserialize; }
+            set { _afterDeserialize = SanityCheckCallback(_metaType.Model, value); }
         }
         /// <summary>
         /// True if any callback is set, else False
@@ -99,8 +99,8 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                return beforeSerialize != null || beforeDeserialize != null
-                    || afterSerialize != null || afterDeserialize != null;
+                return _beforeSerialize != null || _beforeDeserialize != null
+                    || _afterSerialize != null || _afterDeserialize != null;
             }
         }
     }

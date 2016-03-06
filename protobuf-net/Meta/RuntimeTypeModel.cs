@@ -106,7 +106,7 @@ namespace AqlaSerializer.Meta
         }
 
 
-        private short options;
+        private short _options;
         private const short
             OPTIONS_InferTagFromNameDefault = 1,
             OPTIONS_IsDefaultModel = 2,
@@ -121,12 +121,12 @@ namespace AqlaSerializer.Meta
 
         private bool GetOption(short option)
         {
-            return (options & option) == option;
+            return (_options & option) == option;
         }
         private void SetOption(short option, bool value)
         {
-            if (value) options |= option;
-            else options &= (short)~option;
+            if (value) _options |= option;
+            else _options &= (short)~option;
         }
         /// <summary>
         /// Global default that
@@ -247,8 +247,8 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                MetaType[] r = new MetaType[types.Count - _serviceTypesCount];
-                types.CopyTo(r, _serviceTypesCount, 0, types.Count - _serviceTypesCount);
+                MetaType[] r = new MetaType[_types.Count - _serviceTypesCount];
+                _types.CopyTo(r, _serviceTypesCount, 0, _types.Count - _serviceTypesCount);
                 return r;
             }
         }
@@ -261,10 +261,10 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                Type[] r = new Type[types.Count - _serviceTypesCount];
+                Type[] r = new Type[_types.Count - _serviceTypesCount];
                 for (int i = 0, j = _serviceTypesCount; i < r.Length; i++, j++)
                 {
-                    r[i] = ((MetaType)types[j]).Type;
+                    r[i] = ((MetaType)_types[j]).Type;
                 }
                 return r;
             }
@@ -293,7 +293,7 @@ namespace AqlaSerializer.Meta
 #if !FEAT_IKVM
             Add(MapType(typeof(ModelTypeRelationsData)), true);
 #endif
-            _serviceTypesCount = types.Count;
+            _serviceTypesCount = _types.Count;
             IsInitialized = true;
         }
 
@@ -305,14 +305,14 @@ namespace AqlaSerializer.Meta
         /// Obtains the MetaType associated with a given Type for the current model,
         /// allowing additional configuration.
         /// </summary>
-        public MetaType this[Type type] { get { return (MetaType)types[FindOrAddAuto(type, true, false, false)]; } }
+        public MetaType this[Type type] { get { return (MetaType)_types[FindOrAddAuto(type, true, false, false)]; } }
         
-        internal MetaType this[int key] { get { return (MetaType)types[key]; } }
+        internal MetaType this[int key] { get { return (MetaType)_types[key]; } }
 
         internal MetaType FindWithoutAdd(Type type)
         {
             // this list is thread-safe for reading
-            foreach (MetaType metaType in types)
+            foreach (MetaType metaType in _types)
             {
                 if (metaType.Type == type)
                 {
@@ -349,7 +349,7 @@ namespace AqlaSerializer.Meta
                 ReleaseLock(opaqueToken);
             }
         }
-        BasicList basicTypes = new BasicList();
+        BasicList _basicTypes = new BasicList();
 
         sealed class BasicType
         {
@@ -365,16 +365,16 @@ namespace AqlaSerializer.Meta
         internal IProtoSerializer TryGetBasicTypeSerializer(Type type)
         {
             if (type.IsArray) return null;
-            int idx = basicTypes.IndexOf(BasicTypeFinder, type);
+            int idx = _basicTypes.IndexOf(BasicTypeFinder, type);
 
-            if (idx >= 0) return ((BasicType)basicTypes[idx]).Serializer;
+            if (idx >= 0) return ((BasicType)_basicTypes[idx]).Serializer;
 
-            lock (basicTypes)
+            lock (_basicTypes)
             { // don't need a full model lock for this
 
                 // double-checked
-                idx = basicTypes.IndexOf(BasicTypeFinder, type);
-                if (idx >= 0) return ((BasicType)basicTypes[idx]).Serializer;
+                idx = _basicTypes.IndexOf(BasicTypeFinder, type);
+                if (idx >= 0) return ((BasicType)_basicTypes[idx]).Serializer;
 
                 WireType defaultWireType;
                 MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
@@ -382,7 +382,7 @@ namespace AqlaSerializer.Meta
                     ? this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType)
                     : null;
 
-                if (ser != null) basicTypes.Add(new BasicType(type, ser));
+                if (ser != null) _basicTypes.Add(new BasicType(type, ser));
                 return ser;
             }
 
@@ -397,12 +397,12 @@ namespace AqlaSerializer.Meta
         internal int FindOrAddAuto(Type type, bool demand, bool addWithContractOnly, bool addEvenIfAutoDisabled, out MetaType metaType)
         {
             metaType = null;
-            int key = types.IndexOf(MetaTypeFinder, type);
+            int key = _types.IndexOf(MetaTypeFinder, type);
 
             // the fast happy path: meta-types we've already seen
             if (key >= 0)
             {
-                metaType = (MetaType)types[key];
+                metaType = (MetaType)_types[key];
                 if (metaType.IsPending)
                 {
                     WaitOnLock(metaType);
@@ -425,7 +425,7 @@ namespace AqlaSerializer.Meta
             Type underlyingType = ResolveProxies(type);
             if (underlyingType != null)
             {
-                key = types.IndexOf(MetaTypeFinder, underlyingType);
+                key = _types.IndexOf(MetaTypeFinder, underlyingType);
                 type = underlyingType; // if new added, make it reflect the underlying type
             }
 
@@ -462,7 +462,7 @@ namespace AqlaSerializer.Meta
                     bool weAdded = false;
 
                     // double-checked
-                    int winner = types.IndexOf(MetaTypeFinder, type);
+                    int winner = _types.IndexOf(MetaTypeFinder, type);
                     if (winner < 0)
                     {
                         ThrowIfFrozen();
@@ -480,7 +480,7 @@ namespace AqlaSerializer.Meta
                     }
                     else
                     {
-                        metaType = (MetaType)types[winner];
+                        metaType = (MetaType)_types[winner];
                     }
                 }
                 finally
@@ -507,7 +507,7 @@ namespace AqlaSerializer.Meta
         int Add(MetaType metaType)
         {
             _overridingManager.SubscribeTo(metaType);
-            return types.Add(metaType);
+            return _types.Add(metaType);
         }
 
         /// <summary>
@@ -575,7 +575,7 @@ namespace AqlaSerializer.Meta
         private MetaType Create(Type type)
         {
             ThrowIfFrozen();
-            return new MetaType(this, type, defaultFactory);
+            return new MetaType(this, type, _defaultFactory);
         }
         
         /// <summary>
@@ -856,7 +856,7 @@ namespace AqlaSerializer.Meta
             SetOption(OPTIONS_Frozen, true);
         }
 
-        private BasicList types = new BasicList();
+        private BasicList _types = new BasicList();
 
         /// <summary>
         /// Provides the key that represents a given type in the current model.
@@ -876,7 +876,7 @@ namespace AqlaSerializer.Meta
                 int typeIndex = FindOrAddAuto(type, demand, true, false);
                 if (typeIndex >= 0)
                 {
-                    MetaType mt = (MetaType)types[typeIndex];
+                    MetaType mt = (MetaType)_types[typeIndex];
                     if (getBaseKey)
                     {
                         mt = MetaType.GetRootType(mt);
@@ -973,7 +973,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            var metaType = ((MetaType)types[key]);
+            var metaType = ((MetaType)_types[key]);
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 
             ser.Write(value, dest);
@@ -1025,7 +1025,7 @@ namespace AqlaSerializer.Meta
 
             bool compiled = IsFrozen || metaType.IsCompiledInPlace;
             RuntimeTypeModel rtm;
-            bool canCompileDll = types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
+            bool canCompileDll = _types.Cast<MetaType>().All(t => t.Type.IsPublic || t.Type.IsNestedPublic);
             if (!compiled)
             {
                 if (_compiledVersionCache != null)
@@ -1071,7 +1071,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            var metaType = ((MetaType)types[key]);
+            var metaType = ((MetaType)_types[key]);
 
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 #if CHECK_COMPILED_VS_NOT
@@ -1222,23 +1222,23 @@ namespace AqlaSerializer.Meta
             if (index < 0) return null;
             else
             {
-                var metaType = ((MetaType)types[index]);
+                var metaType = ((MetaType)_types[index]);
                 metaType.Serializer.GetHashCode();
                 return metaType.GetEnumMap();
             }
         }
 
-        private int metadataTimeoutMilliseconds = 5000;
+        private int _metadataTimeoutMilliseconds = 5000;
         /// <summary>
         /// The amount of time to wait if there are concurrent metadata access operations
         /// </summary>
         public int MetadataTimeoutMilliseconds
         {
-            get { return metadataTimeoutMilliseconds; }
+            get { return _metadataTimeoutMilliseconds; }
             set
             {
                 if (value <= 0) throw new ArgumentOutOfRangeException("MetadataTimeoutMilliseconds");
-                metadataTimeoutMilliseconds = value;
+                _metadataTimeoutMilliseconds = value;
             }
         }
 
@@ -1253,8 +1253,8 @@ namespace AqlaSerializer.Meta
             const string message = "Timeout while inspecting metadata; this may indicate a deadlock. This can often be avoided by preparing necessary serializers during application initialization, rather than allowing multiple threads to perform the initial metadata inspection; please also see the LockContended event";
             opaqueToken = 0;
 #if PORTABLE
-            if(!Monitor.TryEnter(types, metadataTimeoutMilliseconds)) throw new TimeoutException(message);
-            opaqueToken = Interlocked.CompareExchange(ref contentionCounter, 0, 0); // just fetch current value (starts at 1)
+            if(!Monitor.TryEnter(_types, _metadataTimeoutMilliseconds)) throw new TimeoutException(message);
+            opaqueToken = Interlocked.CompareExchange(ref _contentionCounter, 0, 0); // just fetch current value (starts at 1)
 #elif CF2 || CF35
             int remaining = metadataTimeoutMilliseconds;
             bool lockTaken;
@@ -1269,7 +1269,7 @@ namespace AqlaSerializer.Meta
             } while(!lockTaken);
             opaqueToken = Interlocked.CompareExchange(ref contentionCounter, 0, 0); // just fetch current value (starts at 1)
 #else
-            if (Monitor.TryEnter(types, metadataTimeoutMilliseconds))
+            if (Monitor.TryEnter(_types, _metadataTimeoutMilliseconds))
             {
                 opaqueToken = GetContention(); // just fetch current value (starts at 1)
             }
@@ -1289,7 +1289,7 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-        private int contentionCounter = 1;
+        private int _contentionCounter = 1;
 #if PLAT_NO_INTERLOCKED
         private readonly object contentionLock = new object();
 #endif
@@ -1301,7 +1301,7 @@ namespace AqlaSerializer.Meta
                 return contentionCounter;
             }
 #else
-            return Interlocked.CompareExchange(ref contentionCounter, 0, 0);
+            return Interlocked.CompareExchange(ref _contentionCounter, 0, 0);
 #endif
         }
         private void AddContention()
@@ -1312,7 +1312,7 @@ namespace AqlaSerializer.Meta
                 contentionCounter++;
             }
 #else
-            Interlocked.Increment(ref contentionCounter);
+            Interlocked.Increment(ref _contentionCounter);
 #endif
         }
 
@@ -1320,7 +1320,7 @@ namespace AqlaSerializer.Meta
         {
             if (opaqueToken != 0)
             {
-                Monitor.Exit(types);
+                Monitor.Exit(_types);
                 if (opaqueToken != GetContention()) // contention-count changes since we looked!
                 {
                     LockContentedEventHandler handler = LockContended;
@@ -1372,9 +1372,9 @@ namespace AqlaSerializer.Meta
         public void SetDefaultFactory(MethodInfo methodInfo)
         {
             VerifyFactory(methodInfo, null);
-            defaultFactory = methodInfo;
+            _defaultFactory = methodInfo;
         }
-        private MethodInfo defaultFactory;
+        private MethodInfo _defaultFactory;
 
         internal void VerifyFactory(MethodInfo factory, Type type)
         {
@@ -1403,19 +1403,19 @@ namespace AqlaSerializer.Meta
             var m = (RuntimeTypeModel)MemberwiseClone();
             m.SetOption(OPTIONS_Frozen, false);
             m.SetOption(OPTIONS_IsDefaultModel, false);
-            m.types = new BasicList();
+            m._types = new BasicList();
             m.AutoAddStrategy = AutoAddStrategy.Clone(this);
             m.ProtoCompatibility = compatibilitySettings ?? ProtoCompatibility.Clone();
-            m.basicTypes = new BasicList();
+            m._basicTypes = new BasicList();
             m._overridingManager = m._overridingManager.CloneAsUnsubscribed();
             var cache = new MetaTypeCloneCache(m);
-            m.types = new BasicList();
-            foreach (MetaType metaType in types.Cast<MetaType>().Select(cache.CloneMetaTypeWithoutDerived).Select(mt => (object)mt))
+            m._types = new BasicList();
+            foreach (MetaType metaType in _types.Cast<MetaType>().Select(cache.CloneMetaTypeWithoutDerived).Select(mt => (object)mt))
                 m.Add(metaType);
-            for (int i = 0; i < m.types.Count; i++)
+            for (int i = 0; i < m._types.Count; i++)
             {
-                var original = (MetaType)types[i];
-                var cloned = (MetaType)m.types[i];
+                var original = (MetaType)_types[i];
+                var cloned = (MetaType)m._types[i];
 
                 foreach (SubType st in original.GetSubtypes())
                     cloned.AddSubType(st.FieldNumber, st.DerivedType.Type);

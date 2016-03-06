@@ -16,26 +16,26 @@ namespace AqlaSerializer
             
         }
 
-        private MutableList underlyingList;
+        private MutableList _underlyingList;
 
         private MutableList List
         {
             get
             {
-                if (underlyingList == null) underlyingList = new MutableList();
-                return underlyingList;
+                if (_underlyingList == null) _underlyingList = new MutableList();
+                return _underlyingList;
             }
         }
 
         public int LastNewKey => List.Count > 0 ? List.Count + 1 : Root;
-        public object LastNewValue => List.Count > 0 ? List[List.Count - 1] : rootObject;
+        public object LastNewValue => List.Count > 0 ? List[List.Count - 1] : _rootObject;
 
         internal object GetKeyedObject(int key)
         {
             if (key-- == Root)
             {
-                if (rootObject == null) throw new ProtoException("No root object assigned");
-                return rootObject;
+                if (_rootObject == null) throw new ProtoException("No root object assigned");
+                return _rootObject;
             }
             BasicList list = List;
 
@@ -62,8 +62,8 @@ namespace AqlaSerializer
         {
             if (key-- == Root)
             {
-                if (rootObject != null && ((object)rootObject != (object)value)) throw new ProtoException("The root object cannot be reassigned");
-                rootObject = value;
+                if (_rootObject != null && ((object)_rootObject != (object)value)) throw new ProtoException("The root object cannot be reassigned");
+                _rootObject = value;
             }
             else
             {
@@ -91,19 +91,19 @@ namespace AqlaSerializer
             }
         }
 
-        private object rootObject;
+        private object _rootObject;
         internal int AddObjectKey(object value, out bool existing)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            if ((object)rootObject==null)
+            if ((object)_rootObject==null)
             {
-                rootObject = value;
+                _rootObject = value;
                 existing = false;
                 return Root;
             }
 
-            if ((object)value == (object)rootObject) // (object) here is no-op, but should be
+            if ((object)value == (object)_rootObject) // (object) here is no-op, but should be
             {                                        // preserved even if this was typed - needs ref-check
                 existing = true;
                 return Root;
@@ -148,27 +148,27 @@ namespace AqlaSerializer
 #if CF || PORTABLE // CF has very limited proper object ref-tracking; so instead, we'll search it the hard way
                 index = list.IndexOfReference(value);
 #else
-                if (objectKeys == null) 
+                if (_objectKeys == null) 
                 {
-                    objectKeys = new System.Collections.Generic.Dictionary<object, int>(ReferenceComparer.Default);
+                    _objectKeys = new System.Collections.Generic.Dictionary<object, int>(ReferenceComparer.Default);
                     index = -1;
                 }
                 else
                 {
-                    if (!objectKeys.TryGetValue(value, out index)) index = -1;
+                    if (!_objectKeys.TryGetValue(value, out index)) index = -1;
                 }
 #endif
             }
             else
             {
-                if (stringKeys == null)
+                if (_stringKeys == null)
                 {
-                    stringKeys = new System.Collections.Generic.Dictionary<string, int>();
+                    _stringKeys = new System.Collections.Generic.Dictionary<string, int>();
                     index = -1;
                 } 
                 else
                 {
-                    if (!stringKeys.TryGetValue(s, out index)) index = -1;
+                    if (!_stringKeys.TryGetValue(s, out index)) index = -1;
                 }
             }
 #endif
@@ -180,25 +180,25 @@ namespace AqlaSerializer
                 if (s == null)
                 {
 #if !CF && !PORTABLE // CF can't handle the object keys very well
-                    objectKeys.Add(value, index);
+                    _objectKeys.Add(value, index);
 #endif
                 }
                 else
                 {
-                    stringKeys.Add(s, index);
+                    _stringKeys.Add(s, index);
                 }
             }
             return index + 1;
         }
 
-        private int trapStartIndex; // defaults to 0 - optimization for RegisterTrappedObject
+        private int _trapStartIndex; // defaults to 0 - optimization for RegisterTrappedObject
                                     // to make it faster at seeking to find deferred-objects
 
         internal bool RegisterTrappedRootObject(object value)
         {
-            if (rootObject == null)
+            if (_rootObject == null)
             {
-                rootObject = value;
+                _rootObject = value;
                 return true;
             }
             return false;
@@ -206,23 +206,23 @@ namespace AqlaSerializer
 
         internal void RegisterTrappedObject(object value)
         {
-            if (rootObject == null)
+            if (_rootObject == null)
             {
-                rootObject = value;
+                _rootObject = value;
             }
             else
             {
-                if(underlyingList != null)
+                if(_underlyingList != null)
                 {
-                    for (int i = trapStartIndex; i < underlyingList.Count; i++)
+                    for (int i = _trapStartIndex; i < _underlyingList.Count; i++)
                     {
-                        trapStartIndex = i + 1; // things never *become* null; whether or
+                        _trapStartIndex = i + 1; // things never *become* null; whether or
                                                 // not the next item is null, it will never
                                                 // need to be checked again
 
-                        if(underlyingList[i] == null)
+                        if(_underlyingList[i] == null)
                         {
-                            underlyingList[i] = value;    
+                            _underlyingList[i] = value;    
                             break;
                         }
                     }
@@ -245,10 +245,10 @@ namespace AqlaSerializer
         }   
 #else
 
-        private System.Collections.Generic.Dictionary<string, int> stringKeys;
+        private System.Collections.Generic.Dictionary<string, int> _stringKeys;
 
 #if !CF && !PORTABLE // CF lacks the ability to get a robust reference-based hash-code, so we'll do it the harder way instead
-        private System.Collections.Generic.Dictionary<object, int> objectKeys;
+        private System.Collections.Generic.Dictionary<object, int> _objectKeys;
         private sealed class ReferenceComparer : System.Collections.Generic.IEqualityComparer<object>
         {
             public readonly static ReferenceComparer Default = new ReferenceComparer();
@@ -270,26 +270,26 @@ namespace AqlaSerializer
 
         internal void Clear()
         {
-            trapStartIndex = 0;
-            rootObject = null;
-            if (underlyingList != null) underlyingList.Clear();
-            if (stringKeys != null) stringKeys.Clear();
+            _trapStartIndex = 0;
+            _rootObject = null;
+            if (_underlyingList != null) _underlyingList.Clear();
+            if (_stringKeys != null) _stringKeys.Clear();
 #if !CF && !PORTABLE
-            if (objectKeys != null) objectKeys.Clear();
+            if (_objectKeys != null) _objectKeys.Clear();
 #endif
         }
 
         public NetObjectCache Clone()
         {
             var c = (NetObjectCache)MemberwiseClone();
-            if (stringKeys != null)
-                c.stringKeys = new Dictionary<string, int>(stringKeys);
+            if (_stringKeys != null)
+                c._stringKeys = new Dictionary<string, int>(_stringKeys);
 #if !CF && !PORTABLE
-            if (objectKeys != null)
-                c.objectKeys = new Dictionary<object, int>(objectKeys);
+            if (_objectKeys != null)
+                c._objectKeys = new Dictionary<object, int>(_objectKeys);
 #endif
-            if (underlyingList != null)
-                c.underlyingList = new MutableList(underlyingList.Cast<object>());
+            if (_underlyingList != null)
+                c._underlyingList = new MutableList(_underlyingList.Cast<object>());
             return c;
         }
 

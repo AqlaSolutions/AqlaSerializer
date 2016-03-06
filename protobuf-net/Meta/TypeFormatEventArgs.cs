@@ -9,21 +9,21 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public class TypeFormatEventArgs : EventArgs
     {
-        private Type type;
-        private string formattedName;
-        private readonly bool typeFixed;
+        private Type _type;
+        private string _formattedName;
+        private readonly bool _typeFixed;
         /// <summary>
         /// The type involved in this map; if this is initially null, a Type is expected to be provided for the string in FormattedName.
         /// </summary>
         public Type Type
         {
-            get { return type; }
+            get { return _type; }
             set
             {
-                if(type != value)
+                if(_type != value)
                 {
-                    if (typeFixed) throw new InvalidOperationException("The type is fixed and cannot be changed");
-                    type = value;
+                    if (_typeFixed) throw new InvalidOperationException("The type is fixed and cannot be changed");
+                    _type = value;
                 }
             }
         }
@@ -32,27 +32,27 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public string FormattedName
         {
-            get { return formattedName; }
+            get { return _formattedName; }
             set
             {
-                if (formattedName != value)
+                if (_formattedName != value)
                 {
-                    if (!typeFixed) throw new InvalidOperationException("The formatted-name is fixed and cannot be changed");
-                    formattedName = value;
+                    if (!_typeFixed) throw new InvalidOperationException("The formatted-name is fixed and cannot be changed");
+                    _formattedName = value;
                 }
             }
         }
         internal TypeFormatEventArgs(string formattedName)
         {
             if (Helpers.IsNullOrEmpty(formattedName)) throw new ArgumentNullException(nameof(formattedName));
-            this.formattedName = formattedName;
+            this._formattedName = formattedName;
             // typeFixed = false; <== implicit
         }
         internal TypeFormatEventArgs(System.Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            this.type = type;
-            typeFixed = true;
+            this._type = type;
+            _typeFixed = true;
         }
 
     }

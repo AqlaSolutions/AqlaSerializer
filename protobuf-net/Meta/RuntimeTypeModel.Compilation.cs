@@ -65,7 +65,7 @@ namespace AqlaSerializer.Meta
         public void CompileInPlace()
         {
             BuildAllSerializers();
-            foreach (MetaType type in types)
+            foreach (MetaType type in _types)
             {
                 type.CompileInPlace();
             }
@@ -119,10 +119,10 @@ namespace AqlaSerializer.Meta
         {
             // note that types.Count may increase during this operation, as some serializers
             // bring other types into play
-            for (int i = 0; i < types.Count; i++)
+            for (int i = 0; i < _types.Count; i++)
             {
                 // the primary purpose of this is to force the creation of the Serializer
-                MetaType mt = (MetaType)types[i];
+                MetaType mt = (MetaType)_types[i];
                 if (mt.Serializer == null)
                     throw new InvalidOperationException("No serializer available for " + mt.Type.Name);
             }
@@ -508,7 +508,7 @@ namespace AqlaSerializer.Meta
             {
                 case KnownTypes_Array:
                     {
-                        Compiler.CompilerContext.LoadValue(il, types.Count);
+                        Compiler.CompilerContext.LoadValue(il, _types.Count);
                         il.Emit(OpCodes.Newarr, ctx.MapType(typeof(System.Type)));
                         index = 0;
                         foreach (SerializerPair pair in methodPairs)
@@ -526,7 +526,7 @@ namespace AqlaSerializer.Meta
                     break;
                 case KnownTypes_Dictionary:
                     {
-                        Compiler.CompilerContext.LoadValue(il, types.Count);
+                        Compiler.CompilerContext.LoadValue(il, _types.Count);
                         //LocalBuilder loc = il.DeclareLocal(knownTypesLookupType);
                         il.Emit(OpCodes.Newobj, knownTypesLookupType.GetConstructor(new Type[] { MapType(typeof(int)) }));
                         il.Emit(OpCodes.Stsfld, knownTypes);
@@ -557,7 +557,7 @@ namespace AqlaSerializer.Meta
                     break;
                 case KnownTypes_Hashtable:
                     {
-                        Compiler.CompilerContext.LoadValue(il, types.Count);
+                        Compiler.CompilerContext.LoadValue(il, _types.Count);
                         il.Emit(OpCodes.Newobj, knownTypesLookupType.GetConstructor(new Type[] { MapType(typeof(int)) }));
                         il.Emit(OpCodes.Stsfld, knownTypes);
                         int typeIndex = 0;
@@ -600,7 +600,7 @@ namespace AqlaSerializer.Meta
                 var genInfo = Override(type, "Serialize");
                 il = genInfo.GetILGenerator();
                 ctx = new Compiler.CompilerContext(genInfo, false, true, methodPairs, this, ilVersion, assemblyName, MapType(typeof(object)));
-                jumpTable = new Compiler.CodeLabel[types.Count];
+                jumpTable = new Compiler.CodeLabel[_types.Count];
                 for (int i = 0; i < jumpTable.Length; i++)
                 {
                     jumpTable[i] = ctx.DefineLabel();
@@ -694,7 +694,7 @@ namespace AqlaSerializer.Meta
             il = genInfo.GetILGenerator();
             Compiler.CompilerContext ctx = new Compiler.CompilerContext(genInfo, false, false, methodPairs, this, ilVersion, assemblyName, MapType(typeof(System.Type), true));
 
-            if (types.Count <= KnownTypes_ArrayCutoff)
+            if (_types.Count <= KnownTypes_ArrayCutoff)
             {
                 knownTypesCategory = KnownTypes_Array;
                 knownTypesLookupType = MapType(typeof(System.Type[]), true);
@@ -869,8 +869,8 @@ namespace AqlaSerializer.Meta
 
             index = 0;
             hasInheritance = false;
-            methodPairs = new SerializerPair[types.Count];
-            foreach (MetaType metaType in types)
+            methodPairs = new SerializerPair[_types.Count];
+            foreach (MetaType metaType in _types)
             {
                 string writeName = "Write";
                 if (root) writeName += "Root";
@@ -1011,7 +1011,7 @@ namespace AqlaSerializer.Meta
             if (internalsVisibleToAttribType != null)
             {
                 BasicList internalAssemblies = new BasicList(), consideredAssemblies = new BasicList();
-                foreach (MetaType metaType in types)
+                foreach (MetaType metaType in _types)
                 {
                     Assembly assembly = metaType.Type.Assembly;
                     if (consideredAssemblies.IndexOfReference(assembly) >= 0) continue;
