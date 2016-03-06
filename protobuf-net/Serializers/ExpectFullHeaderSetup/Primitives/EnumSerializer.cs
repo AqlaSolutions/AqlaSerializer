@@ -63,8 +63,8 @@ namespace AqlaSerializer.Serializers
         
         public Type ExpectedType { get; }
 
-        bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        
+        bool IProtoSerializer.RequiresOldValue => false;
+
 #if !FEAT_IKVM
         private int EnumToWire(object value)
         {
@@ -139,7 +139,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

@@ -64,13 +64,9 @@ namespace AqlaSerializer.Serializers
 #if FEAT_COMPILER
         public void EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, Meta.TypeModel.CallbackType callbackType){}
 #endif
-        public Type ExpectedType
-        {
-            get { return _ctor.DeclaringType; }
-        }
+        public Type ExpectedType => _ctor.DeclaringType;
 
 
-        
 #if !FEAT_IKVM
         void IProtoTypeSerializer.Callback(object value, Meta.TypeModel.CallbackType callbackType, SerializationContext context) { }
         object IProtoTypeSerializer.CreateInstance(ProtoReader source) { throw new NotSupportedException(); }
@@ -153,10 +149,7 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.EndSubItem(token, dest);
         }
 #endif
-        public bool RequiresOldValue
-        {
-            get { return true; }
-        }
+        public bool RequiresOldValue => true;
 
         Type GetMemberType(int index)
         {
@@ -168,10 +161,8 @@ namespace AqlaSerializer.Serializers
 
 #if FEAT_COMPILER
 
-        public bool EmitReadReturnsValue
-        {
-            get { return false; }
-        }
+        public bool EmitReadReturnsValue => false;
+
         public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (ctx.StartDebugBlockAuto(this))

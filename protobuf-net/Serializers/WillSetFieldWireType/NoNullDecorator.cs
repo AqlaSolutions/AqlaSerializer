@@ -66,7 +66,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        public override bool EmitReadReturnsValue { get { return true; } }
+        public override bool EmitReadReturnsValue => true;
 
         protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

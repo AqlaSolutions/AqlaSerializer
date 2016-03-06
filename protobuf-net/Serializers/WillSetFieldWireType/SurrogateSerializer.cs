@@ -55,7 +55,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 
-        public bool RequiresOldValue { get { return true; } }
+        public bool RequiresOldValue => true;
         public Type ExpectedType { get; }
         private readonly Type _declaredType;
         private readonly MethodInfo _toTail, _fromTail;
@@ -167,7 +167,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        public bool EmitReadReturnsValue { get { return false; } }
+        public bool EmitReadReturnsValue => false;
 
         void IProtoSerializer.EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

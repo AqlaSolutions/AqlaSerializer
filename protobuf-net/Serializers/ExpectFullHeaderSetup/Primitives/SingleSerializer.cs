@@ -20,7 +20,7 @@ namespace AqlaSerializer.Serializers
 #else
         static readonly Type expectedType = typeof(float);
 #endif
-        public Type ExpectedType { get { return expectedType; } }
+        public Type ExpectedType => expectedType;
 
         public SingleSerializer(TypeModel model)
         {
@@ -28,7 +28,7 @@ namespace AqlaSerializer.Serializers
             expectedType = model.MapType(typeof(float));
 #endif
         }
-        bool IProtoSerializer.RequiresOldValue { get { return false; } }
+        bool IProtoSerializer.RequiresOldValue => false;
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
@@ -42,7 +42,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

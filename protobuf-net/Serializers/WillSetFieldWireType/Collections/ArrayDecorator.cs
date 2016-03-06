@@ -115,11 +115,12 @@ namespace AqlaSerializer.Serializers
             _listHelpers = new ListHelpers(_writePacked, _packedWireTypeForRead, _protoCompatibility, tail);
         }
 
-        public override Type ExpectedType { get { return _arrayType; } }
-        public override bool RequiresOldValue { get { return AppendToCollection; } }
+        public override Type ExpectedType => _arrayType;
+        public override bool RequiresOldValue => AppendToCollection;
 
 #if FEAT_COMPILER
-        public override bool EmitReadReturnsValue { get { return true; } }
+        public override bool EmitReadReturnsValue => true;
+
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             using (ctx.StartDebugBlockAuto(this))

@@ -25,9 +25,9 @@ namespace AqlaSerializer.Serializers
             expectedType = model.MapType(typeof(uint));
 #endif
         }
-        public Type ExpectedType { get { return expectedType; } }
+        public Type ExpectedType => expectedType;
 
-        bool IProtoSerializer.RequiresOldValue { get { return false; } }
+        bool IProtoSerializer.RequiresOldValue => false;
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

@@ -23,10 +23,10 @@ namespace AqlaSerializer.Serializers
 #endif
         }
 
-        public Type ExpectedType { get { return expectedType; } }
+        public Type ExpectedType => expectedType;
 
-        bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        
+        bool IProtoSerializer.RequiresOldValue => false;
+
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
         {
@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

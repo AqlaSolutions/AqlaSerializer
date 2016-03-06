@@ -18,10 +18,10 @@ namespace AqlaSerializer.Serializers
 #else
         static readonly Type expectedType = typeof(DateTime);
 #endif
-        public Type ExpectedType { get { return expectedType; } }
+        public Type ExpectedType => expectedType;
 
-        bool IProtoSerializer.RequiresOldValue { get { return false; } }
-        
+        bool IProtoSerializer.RequiresOldValue => false;
+
 
         private readonly bool _includeKind;
 
@@ -47,7 +47,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

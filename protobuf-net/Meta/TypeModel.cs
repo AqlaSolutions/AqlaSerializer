@@ -519,7 +519,7 @@ namespace AqlaSerializer.Meta
             System.Collections.Generic.IEnumerable<T>
         {
             System.Collections.Generic.IEnumerator<T> System.Collections.Generic.IEnumerable<T>.GetEnumerator() { return this; }
-            public new T Current { get { return (T)base.Current; } }
+            public new T Current => (T)base.Current;
             void IDisposable.Dispose() { }
             public DeserializeItemsIterator(TypeModel model, Stream source, PrefixStyle style, int expectedField, SerializationContext context)
                 : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context)

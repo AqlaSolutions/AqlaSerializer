@@ -25,7 +25,7 @@ namespace AqlaSerializer.Serializers
             expectedType = model.MapType(typeof(char));
 #endif
         }
-        public override Type ExpectedType { get { return expectedType; } }
+        public override Type ExpectedType => expectedType;
 
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)

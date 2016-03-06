@@ -117,21 +117,21 @@ namespace AqlaSerializer.Meta
 
         object IList.this[int index] { get { return this[index]; } set { throw new NotSupportedException(); } }
 
-        bool IList.IsReadOnly { get { return false; } }
+        bool IList.IsReadOnly => false;
 
-        bool IList.IsFixedSize { get { return false; } }
+        bool IList.IsFixedSize => false;
 
-        public object this[int index] { get { return Head[index]; } }
+        public object this[int index] => Head[index];
         //public object TryGet(int index)
         //{
         //    return head.TryGet(index);
         //}
         public void Trim() { Head = Head.Trim(); }
-        public int Count { get { return Head.Length; } }
+        public int Count => Head.Length;
 
         object ICollection.SyncRoot { get; } = new object();
 
-        bool ICollection.IsSynchronized { get { return false; } }
+        bool ICollection.IsSynchronized => false;
 
         IEnumerator IEnumerable.GetEnumerator() { return new NodeEnumerator(Head); }
         public NodeEnumerator GetEnumerator() { return new NodeEnumerator(Head); }
@@ -146,7 +146,8 @@ namespace AqlaSerializer.Meta
                 this._node = node;
             }
             void IEnumerator.Reset() { _position = -1; }
-            public object Current { get { return _node[_position]; } }
+            public object Current => _node[_position];
+
             public bool MoveNext()
             {
                 int len = _node.Length;

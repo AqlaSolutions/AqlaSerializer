@@ -56,12 +56,6 @@ namespace AqlaSerializer
         /// <summary>
         /// Gets the additional type to serialize/deserialize.
         /// </summary>
-        public Type KnownType
-        {
-            get
-            {
-                return TypeModel.ResolveKnownType(KnownTypeName, null, null);
-            }
-        }
+        public Type KnownType => TypeModel.ResolveKnownType(KnownTypeName, null, null);
     }
 }

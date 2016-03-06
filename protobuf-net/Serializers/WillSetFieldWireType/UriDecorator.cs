@@ -29,9 +29,9 @@ namespace AqlaSerializer.Serializers
 #endif
         }
 
-        public override Type ExpectedType { get { return expectedType; } }
-        public override bool RequiresOldValue { get { return false; } }
-        
+        public override Type ExpectedType => expectedType;
+        public override bool RequiresOldValue => false;
+
 
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
@@ -47,7 +47,8 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        public override bool EmitReadReturnsValue { get { return true; } }
+        public override bool EmitReadReturnsValue => true;
+
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (ctx.StartDebugBlockAuto(this))

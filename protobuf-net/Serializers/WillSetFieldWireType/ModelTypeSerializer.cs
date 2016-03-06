@@ -57,7 +57,8 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        bool IProtoSerializer.EmitReadReturnsValue { get { return true; } }
+        bool IProtoSerializer.EmitReadReturnsValue => true;
+
         bool EmitDedicatedMethod(Compiler.CompilerContext ctx, Compiler.Local valueFrom, bool read)
         {
 #if SILVERLIGHT

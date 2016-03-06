@@ -122,10 +122,7 @@ namespace AqlaSerializer.Serializers
             ((IProtoTypeSerializer)Tail).EmitCreateInstance(ctx);
         }
 #endif
-        public override Type ExpectedType
-        {
-            get { return Tail.ExpectedType; }
-        }
+        public override Type ExpectedType => Tail.ExpectedType;
     }
 
 }

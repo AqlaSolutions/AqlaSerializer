@@ -95,14 +95,8 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// True if any callback is set, else False
         /// </summary>
-        public bool NonTrivial
-        {
-            get
-            {
-                return _beforeSerialize != null || _beforeDeserialize != null
-                    || _afterSerialize != null || _afterDeserialize != null;
-            }
-        }
+        public bool NonTrivial => _beforeSerialize != null || _beforeDeserialize != null
+                                  || _afterSerialize != null || _afterDeserialize != null;
     }
 }
 #endif

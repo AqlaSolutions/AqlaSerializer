@@ -219,10 +219,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// The default model, used to support AqlaSerializer.Serializer
         /// </summary>
-        public static RuntimeTypeModel Default
-        {
-            get { return Singleton.Value; }
-        }
+        public static RuntimeTypeModel Default => Singleton.Value;
 
         private sealed class SingletonCompatible
         {
@@ -232,12 +229,9 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// The default model, used to support AqlaSerializer.Serializer
         /// </summary>
-        public static RuntimeTypeModel ProtoCompatible
-        {
-            get { return SingletonCompatible.Value; }
-        }
+        public static RuntimeTypeModel ProtoCompatible => SingletonCompatible.Value;
 
-        public static AutoAddStrategy DefaultAutoAddStrategy { get { return (AutoAddStrategy) Default.AutoAddStrategy; } }
+        public static AutoAddStrategy DefaultAutoAddStrategy => (AutoAddStrategy) Default.AutoAddStrategy;
 
         /// <summary>
         /// Returns list of the MetaType instances that can be
@@ -305,9 +299,9 @@ namespace AqlaSerializer.Meta
         /// Obtains the MetaType associated with a given Type for the current model,
         /// allowing additional configuration.
         /// </summary>
-        public MetaType this[Type type] { get { return (MetaType)_types[FindOrAddAuto(type, true, false, false)]; } }
-        
-        internal MetaType this[int key] { get { return (MetaType)_types[key]; } }
+        public MetaType this[Type type] => (MetaType)_types[FindOrAddAuto(type, true, false, false)];
+
+        internal MetaType this[int key] => (MetaType)_types[key];
 
         internal MetaType FindWithoutAdd(Type type)
         {

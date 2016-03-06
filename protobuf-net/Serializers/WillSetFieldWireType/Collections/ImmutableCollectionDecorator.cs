@@ -19,7 +19,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class ImmutableCollectionDecorator : ListDecorator
     {
-        protected override bool RequireAdd { get { return false; } }
+        protected override bool RequireAdd => false;
 #if !NO_GENERICS
 
         static Type ResolveIReadOnlyCollection(Type declaredType, Type t)

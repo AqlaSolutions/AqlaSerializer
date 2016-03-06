@@ -35,15 +35,9 @@ namespace AqlaSerializer.Serializers
             _number = number;
         }
 
-        public Type ExpectedType
-        {
-            get { return _serializer.ExpectedType; }
-        }
-        
-        public bool RequiresOldValue
-        {
-            get { return _serializer.RequiresOldValue; }
-        }
+        public Type ExpectedType => _serializer.ExpectedType;
+
+        public bool RequiresOldValue => _serializer.RequiresOldValue;
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
@@ -58,10 +52,8 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        public bool EmitReadReturnsValue
-        {
-            get { return _serializer.EmitReadReturnsValue; }
-        }
+        public bool EmitReadReturnsValue => _serializer.EmitReadReturnsValue;
+
         public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (ctx.StartDebugBlockAuto(this))
