@@ -239,7 +239,7 @@ namespace FX11
 
 #endif
             model = TypeModel.Create();
-            model.Add(typeof(Customer), false)
+            model.Add(typeof(SampleDto.Customer), false)
                .Add(1, "Id")
                .Add(3, "Name")
 #if !FX11
@@ -303,7 +303,7 @@ namespace FX11
             orderModel.Compile("OrderSerializer", "OrderSerializer.dll");
 
             RuntimeTypeModel model = BuildMeta();
-            Customer cust1 = new Customer();
+            SampleDto.Customer cust1 = new SampleDto.Customer();
             CustomerStruct cust2 = new CustomerStruct();
             cust2.Id = cust1.Id = 123;
             cust2.Name = cust1.Name = "Fred";

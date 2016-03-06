@@ -684,24 +684,7 @@ namespace AqlaSerializer.Meta
         /// <param name="context">Additional information about this serialization operation.</param>
         public object Deserialize(Stream source, object value, System.Type type, SerializationContext context)
         {
-#if FEAT_IKVM
-            throw new NotSupportedException();
-#else
-            bool autoCreate = PrepareDeserialize(value, ref type);
-            ProtoReader reader = null;
-            try
-            {
-                reader = ProtoReader.Create(source, this, context, ProtoReader.TO_EOF);
-                if (value != null) reader.SetRootObject(value);
-                object obj = DeserializeCore(reader, type, value, autoCreate, true);
-                reader.CheckFullyConsumed();
-                return obj;
-            }
-            finally
-            {
-                ProtoReader.Recycle(reader);
-            }
-#endif
+            return Deserialize(source, value, type, ProtoReader.TO_EOF, context);
         }
 
         private bool PrepareDeserialize(object value, ref Type type)

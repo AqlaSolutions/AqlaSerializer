@@ -107,44 +107,30 @@ namespace Examples
         [Test]
         public void ReadStreamingParentFixedLength()
         {
-            MemoryStream ms = new MemoryStream();
-            IMLParent a, b, c;
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), PrefixStyle.Fixed32);
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), PrefixStyle.Fixed32);
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), PrefixStyle.Fixed32);
-            ms.Position = 0;
-            var list = Serializer.DeserializeItems<IMLParent>(ms, PrefixStyle.Fixed32, 0).ToList();
-            Assert.AreEqual(3, list.Count, "Count");
-            InheritanceMidLevel.CheckParent(a, list[0]);
-            InheritanceMidLevel.CheckParent(b, list[1]);
-            InheritanceMidLevel.CheckParent(c, list[2]);
+            ReadStreamingBase128Parent(PrefixStyle.Fixed32, 0);
         }
         [Test]
         public void ReadStreamingParentBase128Tag()
         {
-            MemoryStream ms = new MemoryStream();
-            IMLParent a, b, c;
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), PrefixStyle.Base128, 3);
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), PrefixStyle.Base128, 3);
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), PrefixStyle.Base128, 3);
-            ms.Position = 0;
-            var list = Serializer.DeserializeItems<IMLParent>(ms, PrefixStyle.Base128, 3).ToList();
-            Assert.AreEqual(3, list.Count, "Count");
-            InheritanceMidLevel.CheckParent(a, list[0]);
-            InheritanceMidLevel.CheckParent(b, list[1]);
-            InheritanceMidLevel.CheckParent(c, list[2]);
+            ReadStreamingBase128Parent(PrefixStyle.Base128, 3);
         }
 
         [Test]
         public void ReadStreamingParentBase128NoTag()
         {
+            ReadStreamingBase128Parent(PrefixStyle.Base128, 0);
+        }
+
+
+        public void ReadStreamingBase128Parent(PrefixStyle style, int tag)
+        {
             MemoryStream ms = new MemoryStream();
             IMLParent a, b, c;
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), PrefixStyle.Base128, 0);
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), PrefixStyle.Base128, 0);
-            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), PrefixStyle.Base128, 0);
+            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), style, tag);
+            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), style, tag);
+            Serializer.SerializeWithLengthPrefix<IMLParent>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), style, tag);
             ms.Position = 0;
-            var list = Serializer.DeserializeItems<IMLParent>(ms, PrefixStyle.Base128, 0).ToList();
+            var list = Serializer.DeserializeItems<IMLParent>(ms, style, tag).ToList();
             Assert.AreEqual(3, list.Count, "Count");
             InheritanceMidLevel.CheckParent(a, list[0]);
             InheritanceMidLevel.CheckParent(b, list[1]);
@@ -155,13 +141,18 @@ namespace Examples
         [Test]
         public void ReadStreamingChildFixedLength()
         {
+            ReadStreamingChild(PrefixStyle.Fixed32, 0);
+        }
+
+        public void ReadStreamingChild(PrefixStyle style, int tag)
+        {
             MemoryStream ms = new MemoryStream();
             IMLChild a, b, c;
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), PrefixStyle.Fixed32);
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), PrefixStyle.Fixed32);
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), PrefixStyle.Fixed32);
+            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), style, tag);
+            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), style, tag);
+            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), style, tag);
             ms.Position = 0;
-            var list = Serializer.DeserializeItems<IMLChild>(ms, PrefixStyle.Fixed32, 0).ToList();
+            var list = Serializer.DeserializeItems<IMLChild>(ms, style, tag).ToList();
             Assert.AreEqual(3, list.Count, "Count");
             InheritanceMidLevel.CheckChild(a, list[0]);
             InheritanceMidLevel.CheckChild(b, list[1]);
@@ -170,33 +161,13 @@ namespace Examples
         [Test]
         public void ReadStreamingChildBase128Tag()
         {
-            MemoryStream ms = new MemoryStream();
-            IMLChild a, b, c;
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), PrefixStyle.Base128, 3);
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), PrefixStyle.Base128, 3);
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), PrefixStyle.Base128, 3);
-            ms.Position = 0;
-            var list = Serializer.DeserializeItems<IMLChild>(ms, PrefixStyle.Base128, 3).ToList();
-            Assert.AreEqual(3, list.Count, "Count");
-            InheritanceMidLevel.CheckChild(a, list[0]);
-            InheritanceMidLevel.CheckChild(b, list[1]);
-            InheritanceMidLevel.CheckChild(c, list[2]);
+            ReadStreamingChild(PrefixStyle.Base128, 3);
         }
 
         [Test]
         public void ReadStreamingChildBase128NoTag()
         {
-            MemoryStream ms = new MemoryStream();
-            IMLChild a, b, c;
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, a = InheritanceMidLevel.CreateChild(123, 456, 789), PrefixStyle.Base128, 0);
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, b = InheritanceMidLevel.CreateChild(100, 200, 300), PrefixStyle.Base128, 0);
-            Serializer.SerializeWithLengthPrefix<IMLChild>(ms, c = InheritanceMidLevel.CreateChild(400, 500, 600), PrefixStyle.Base128, 0);
-            ms.Position = 0;
-            var list = Serializer.DeserializeItems<IMLChild>(ms, PrefixStyle.Base128, 0).ToList();
-            Assert.AreEqual(3, list.Count, "Count");
-            InheritanceMidLevel.CheckChild(a, list[0]);
-            InheritanceMidLevel.CheckChild(b, list[1]);
-            InheritanceMidLevel.CheckChild(c, list[2]);
+            ReadStreamingChild(PrefixStyle.Base128, 0);
         }
 
         [Test]

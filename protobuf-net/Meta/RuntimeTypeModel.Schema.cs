@@ -279,21 +279,7 @@ namespace AqlaSerializer.Meta
                             if (mapping[i] is PropertyInfo) type = ((PropertyInfo)mapping[i]).PropertyType;
                             else if (mapping[i] is FieldInfo) type = ((FieldInfo)mapping[i]).FieldType;
 
-                            WireType defaultWireType;
-                            IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType);
-                            if (coreSerializer == null)
-                            {
-                                int index = FindOrAddAuto(type, false, false, false);
-                                if (index >= 0)
-                                {
-                                    tmp = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
-                                    if (!list.Contains(tmp))
-                                    { // could perhaps also implement as a queue, but this should work OK for sane models
-                                        list.Add(tmp);
-                                        CascadeDependents(list, tmp);
-                                    }
-                                }
-                            }
+                            CscadeDependents_Member(list, type);
                         }
                     }
                 }
@@ -308,22 +294,8 @@ namespace AqlaSerializer.Meta
                         var fieldMetaType = FindWithoutAdd(type);
                         if (fieldMetaType != null)
                             type = fieldMetaType.GetSurrogateOrSelf().Type;
-                        WireType defaultWireType;
-                        IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType);
-                        if (coreSerializer == null)
-                        {
-                            // is an interesting type
-                            int index = FindOrAddAuto(type, false, false, false);
-                            if (index >= 0)
-                            {
-                                tmp = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
-                                if (!list.Contains(tmp))
-                                { // could perhaps also implement as a queue, but this should work OK for sane models
-                                    list.Add(tmp);
-                                    CascadeDependents(list, tmp);
-                                }
-                            }
-                        }
+
+                        CscadeDependents_Member(list, type);
                     }
                 }
                 if (metaType.HasSubtypes)
@@ -344,6 +316,26 @@ namespace AqlaSerializer.Meta
                 {
                     list.Add(tmp);
                     CascadeDependents(list, tmp);
+                }
+            }
+        }
+
+        void CscadeDependents_Member(BasicList list, Type type)
+        {
+
+            WireType defaultWireType;
+            IProtoSerializer coreSerializer = this.ValueSerializerBuilder.TryGetSimpleCoreSerializer(BinaryDataFormat.Default, type, out defaultWireType);
+            if (coreSerializer == null)
+            {
+                int index = FindOrAddAuto(type, false, false, false);
+                if (index >= 0)
+                {
+                    var tmp = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
+                    if (!list.Contains(tmp))
+                    { // could perhaps also implement as a queue, but this should work OK for sane models
+                        list.Add(tmp);
+                        CascadeDependents(list, tmp);
+                    }
                 }
             }
         }

@@ -41,9 +41,9 @@ namespace AqlaSerializer.Meta.Mapping
         public int ImplicitFirstTag { get; set; } = 1;
         public bool InferTagByName { get; set; }
         
-        public List<DerivedTypeCandidate> DerivedTypes { get; set; } = new List<DerivedTypeCandidate>();
+        public List<DerivedTypeCandidate> DerivedTypes { get; } = new List<DerivedTypeCandidate>();
 
-        public List<AttributeMap> PartialMembers { get; set; } = new List<AttributeMap>();
+        public List<AttributeMap> PartialMembers { get; } = new List<AttributeMap>();
 
         public TypeState(TypeArgsValue input)
         {

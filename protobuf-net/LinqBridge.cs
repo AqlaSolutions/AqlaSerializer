@@ -3107,6 +3107,7 @@ namespace AltLinq
 #endif
 namespace AltLinq
 {
+    [Serializable]
     class AltArgumentOutOfRangeException : ArgumentOutOfRangeException
     {
         public AltArgumentOutOfRangeException()

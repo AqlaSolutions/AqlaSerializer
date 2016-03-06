@@ -199,31 +199,17 @@ namespace Examples
 
             using (var ms = new MemoryStream())
             {
-                try
-                {
-                    model.Serialize(ms, obj);
-                } catch(Exception ex)
-                {
-                    throw new ProtoException(caption + ":serialize", ex);
-                }
+                model.Serialize(ms, obj);
+
                 ms.Position = 0;
-                T clone;
-                try
-                {
-                    clone = (T)model.Deserialize(ms, null, typeof(T));
-                } catch(Exception ex)
-                {
-                    throw new ProtoException(caption + ":deserialize", ex);
-                }
+
+                var clone = (T)model.Deserialize(ms, null, typeof(T));
+
                 AssertSequence(new[] { 1, 2, 3, 4 }, clone.List, caption);
                 ms.Position = 0;
-                try
-                {
-                    model.Deserialize(ms, clone, null); // this is append!
-                } catch(Exception ex)
-                {
-                    throw new ProtoException(caption + ":serialize", ex);
-                }
+
+                model.Deserialize(ms, clone, null); // this is append!
+
                 AssertSequence(new[] { 1, 2, 3, 4, 1, 2, 3, 4 }, clone.List, caption);
             }
         }
@@ -321,32 +307,15 @@ namespace Examples
             where T : class, IImmutableCollectionWrapper, new()
         {
             var obj = new T { HashSet = ImmutableHashSet.Create(1, 3, 2) };
-            using (var ms = new MemoryStream())
-            {
-                try
-                {
-                    model.Serialize(ms, obj);
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":serialize", ex);
-                }
-                ms.Position = 0;
-                T clone;
-                try
-                {
-                    clone = (T)model.Deserialize(ms, null, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":deserialize", ex);
-                }
-                Assert.AreEqual(3, clone.HashSet.Count, caption);
-                Assert.IsTrue(clone.HashSet.Contains(1), caption);
-                Assert.IsTrue(clone.HashSet.Contains(2), caption);
-                Assert.IsTrue(clone.HashSet.Contains(3), caption);
-            }
+            model.ForceSerializationDuringClone = true;
+            T clone = model.DeepClone(obj);
+
+            Assert.AreEqual(3, clone.HashSet.Count, caption);
+            Assert.IsTrue(clone.HashSet.Contains(1), caption);
+            Assert.IsTrue(clone.HashSet.Contains(2), caption);
+            Assert.IsTrue(clone.HashSet.Contains(3), caption);
         }
+
         private static void TestSortedSetImpl<T>([CallerMemberName] string name = null)
     where T : class, IImmutableCollectionWrapper, new()
         {
@@ -367,29 +336,11 @@ namespace Examples
             where T : class, IImmutableCollectionWrapper, new()
         {
             var obj = new T { SortedSet = ImmutableSortedSet.Create(1, 3, 2) };
-            using (var ms = new MemoryStream())
-            {
-                try
-                {
-                    model.Serialize(ms, obj);
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":serialize", ex);
-                }
-                ms.Position = 0;
-                T clone;
-                try
-                {
-                    clone = (T)model.Deserialize(ms, null, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":deserialize", ex);
-                }
-                AssertSequence(new[] { 1, 2, 3 }, clone.SortedSet, caption);
-            }
+            model.ForceSerializationDuringClone = true;
+            var clone = model.DeepClone(obj);
+            AssertSequence(new[] { 1, 2, 3 }, clone.SortedSet, caption);
         }
+
         private static void TestSortedDictionaryImpl<T>([CallerMemberName] string name = null)
     where T : class, IImmutableCollectionWrapper, new()
         {
@@ -409,38 +360,20 @@ namespace Examples
         private static void TestSortedDictionaryImpl<T>(TypeModel model, string caption)
             where T : class, IImmutableCollectionWrapper, new()
         {
-            var dict = new Dictionary<int,string> {
-                {1,"a"},
-                {3,"c"},
-                {2,"b"}
+            var dict = new Dictionary<int, string>
+            {
+                { 1, "a" },
+                { 3, "c" },
+                { 2, "b" }
             };
             var obj = new T { SortedDictionary = ImmutableSortedDictionary.Create<int, string>().AddRange(dict) };
-            using (var ms = new MemoryStream())
-            {
-                try
-                {
-                    model.Serialize(ms, obj);
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":serialize", ex);
-                }
-                ms.Position = 0;
-                T clone;
-                try
-                {
-                    clone = (T)model.Deserialize(ms, null, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(caption + ":deserialize", ex);
-                }
-                Assert.AreEqual(3, clone.SortedDictionary.Count, caption);
-                Assert.AreEqual("a", clone.SortedDictionary[1], caption);
-                Assert.AreEqual("b", clone.SortedDictionary[2], caption);
-                Assert.AreEqual("c", clone.SortedDictionary[3], caption);
-                AssertSequence(new[] { 1, 2, 3 }, clone.SortedDictionary.Keys, caption);
-            }
+            model.ForceSerializationDuringClone = true;
+            var clone = model.DeepClone(obj);
+            Assert.AreEqual(3, clone.SortedDictionary.Count, caption);
+            Assert.AreEqual("a", clone.SortedDictionary[1], caption);
+            Assert.AreEqual("b", clone.SortedDictionary[2], caption);
+            Assert.AreEqual("c", clone.SortedDictionary[3], caption);
+            AssertSequence(new[] { 1, 2, 3 }, clone.SortedDictionary.Keys, caption);
         }
 
         interface IImmutableCollectionWrapper

@@ -444,14 +444,14 @@ namespace AqlaSerializer.Meta
             bool hasInheritance;
             SerializerPair[] methodPairs;
             Compiler.CompilerContext.ILVersion ilVersion;
-            WriteSerializers(options, assemblyName, type, out index, out hasInheritance, out methodPairs, out ilVersion);
+            WriteSerializers(options, assemblyName, type, false, null, out index, out hasInheritance, out methodPairs, out ilVersion);
 
             int basicIndex = index;
             bool basicHasInheritance = hasInheritance;
             SerializerPair[] basicMethodPairs = methodPairs;
             var basicIlVersion = ilVersion;
 
-            WriteRootSerializers(options, assemblyName, type, out index, out hasInheritance, out methodPairs, basicMethodPairs, out ilVersion);
+            WriteSerializers(options, assemblyName, type, true, basicMethodPairs, out index, out hasInheritance, out methodPairs, out ilVersion);
 
             ILGenerator il;
             int knownTypesCategory;
@@ -862,7 +862,7 @@ namespace AqlaSerializer.Meta
             return m;
         }
 
-        private void WriteSerializers(CompilerOptions options, string assemblyName, TypeBuilder type, out int index, out bool hasInheritance, out SerializerPair[] methodPairs, out Compiler.CompilerContext.ILVersion ilVersion)
+        private void WriteSerializers(CompilerOptions options, string assemblyName, TypeBuilder type, bool root, SerializerPair[] basicMethodPairs, out int index, out bool hasInheritance, out SerializerPair[] methodPairs, out Compiler.CompilerContext.ILVersion ilVersion)
         {
             Compiler.CompilerContext ctx;
 
@@ -872,6 +872,7 @@ namespace AqlaSerializer.Meta
             foreach (MetaType metaType in types)
             {
                 string writeName = "Write";
+                if (root) writeName += "Root";
 #if DEBUG
                 writeName += metaType.Type.Name;
 #endif
@@ -893,6 +894,7 @@ namespace AqlaSerializer.Meta
 
                 
                 string readName = "Read";
+                if (root) readName += "Root";
 #if DEBUG
                 readName += metaType.Type.Name;
 #endif
@@ -931,104 +933,24 @@ namespace AqlaSerializer.Meta
             for (index = 0; index < methodPairs.Length; index++)
             {
                 SerializerPair pair = methodPairs[index];
-                ctx = new Compiler.CompilerContext(pair.SerializeBody, true, true, methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
+
+                var ser = root ? pair.Type.RootSerializer : pair.Type.Serializer;
+
+                ctx = new Compiler.CompilerContext(pair.SerializeBody, true, true, basicMethodPairs ?? methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
                 ctx.CheckAccessibility(pair.Deserialize.ReturnType);
-                pair.Type.Serializer.EmitWrite(ctx, ctx.InputValue);
+                ser.EmitWrite(ctx, ctx.InputValue);
                 ctx.Return();
 
-                ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
-                pair.Type.Serializer.EmitRead(ctx, ctx.InputValue);
-                if (!pair.Type.Serializer.EmitReadReturnsValue)
+                ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, basicMethodPairs ?? methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
+                ser.EmitRead(ctx, ctx.InputValue);
+                if (!ser.EmitReadReturnsValue)
                 {
                     ctx.LoadValue(ctx.InputValue);
                 }
                 ctx.Return();
             }
         }
-
-        private void WriteRootSerializers(CompilerOptions options, string assemblyName, TypeBuilder type, out int index, out bool hasInheritance, out SerializerPair[] methodPairs, SerializerPair[] baseMethodPairs, out Compiler.CompilerContext.ILVersion ilVersion)
-        {
-            Compiler.CompilerContext ctx;
-
-            index = 0;
-            hasInheritance = false;
-            methodPairs = new SerializerPair[types.Count];
-            foreach (MetaType metaType in types)
-            {
-                string writeName = "WriteRoot";
-#if DEBUG
-                writeName += metaType.Type.Name;
-#endif
-                MethodContext writeGenCtx;
-                MethodBuilder writeMethod = EmitDefineMethod(
-                    type,
-                    writeName,
-                    MethodAttributes.Private | MethodAttributes.Static,
-                    CallingConventions.Standard,
-                    MapType(typeof(void)),
-                    new[]
-                    {
-                        new MethodContext.ParameterGenInfo(metaType.Type, "obj", 1),
-                        new MethodContext.ParameterGenInfo(MapType(typeof(ProtoWriter)), "dest", 2)
-                    },
-                    false,
-                    out writeGenCtx
-                    );
-
-                string readName = "ReadRoot";
-#if DEBUG
-                readName += metaType.Type.Name;
-#endif
-                MethodContext readGenCtx;
-                MethodBuilder readMethod = EmitDefineMethod(
-                    type,
-                    readName,
-                    MethodAttributes.Private | MethodAttributes.Static,
-                    CallingConventions.Standard,
-                    metaType.Type,
-                    new[]
-                    {
-                        new MethodContext.ParameterGenInfo(metaType.Type, "obj", 1),
-                        new MethodContext.ParameterGenInfo(MapType(typeof(ProtoReader)), "source", 2)
-                    },
-                    false,
-                    out readGenCtx);
-
-                SerializerPair pair = new SerializerPair(
-                    GetKey(metaType.Type, true, false), GetKey(metaType.Type, true, true), metaType,
-                    writeMethod, readMethod, writeGenCtx, readGenCtx);
-                methodPairs[index++] = pair;
-                if (pair.MetaKey != pair.BaseKey) hasInheritance = true;
-            }
-
-            if (hasInheritance)
-            {
-                Array.Sort(methodPairs);
-            }
-
-            ilVersion = Compiler.CompilerContext.ILVersion.Net2;
-            if (options.MetaDataVersion == 0x10000)
-            {
-                ilVersion = Compiler.CompilerContext.ILVersion.Net1; // old-school!
-            }
-            for (index = 0; index < methodPairs.Length; index++)
-            {
-                SerializerPair pair = methodPairs[index];
-                ctx = new Compiler.CompilerContext(pair.SerializeBody, true, true, baseMethodPairs, this, ilVersion, assemblyName, pair.Type.Type);
-                ctx.CheckAccessibility(pair.Deserialize.ReturnType);
-                pair.Type.RootSerializer.EmitWrite(ctx, ctx.InputValue);
-                ctx.Return();
-
-                ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, baseMethodPairs, this, ilVersion, assemblyName, pair.Type.Type);
-                pair.Type.RootSerializer.EmitRead(ctx, ctx.InputValue);
-                if (!pair.Type.RootSerializer.EmitReadReturnsValue)
-                {
-                    ctx.LoadValue(ctx.InputValue);
-                }
-                ctx.Return();
-            }
-        }
-
+        
         private TypeBuilder WriteBasicTypeModel(CompilerOptions options, string typeName, ModuleBuilder module)
         {
             Type baseType = MapType(typeof(TypeModel));

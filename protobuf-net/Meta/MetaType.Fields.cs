@@ -40,6 +40,7 @@ namespace AqlaSerializer.Meta
 
         public int GetNextFreeFieldNumber(int start)
         {
+            if (start <= 0) start = 1;
             int number = start - 1;
             bool found;
             do
