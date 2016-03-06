@@ -21,16 +21,16 @@ namespace AqlaSerializer
             set { if (context != value) { ThrowIfFrozen(); context = value; } }
         }
 
-        private static readonly SerializationContext @default;
         static SerializationContext()
         {
-            @default = new SerializationContext();
-            @default.Freeze();
+            Default = new SerializationContext();
+            Default.Freeze();
         }
         /// <summary>
         /// A default SerializationContext, with minimal information.
         /// </summary>
-        internal static SerializationContext Default { get {return @default;}}
+        internal static SerializationContext Default { get; }
+
 #if PLAT_BINARYFORMATTER || (SILVERLIGHT && NET_4_0)
 
 #if !(WINRT || PHONE7 || PHONE8)

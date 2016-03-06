@@ -286,40 +286,41 @@ namespace AqlaSerializer.Meta
                 }
             }
 
-            private string targetFrameworkName, targetFrameworkDisplayName, typeName, outputPath, imageRuntimeVersion;
-            private int metaDataVersion;
             /// <summary>
             /// The TargetFrameworkAttribute FrameworkName value to burn into the generated assembly
             /// </summary>
-            public string TargetFrameworkName { get { return targetFrameworkName; } set { targetFrameworkName = value; } }
+            public string TargetFrameworkName { get; set; }
 
             /// <summary>
             /// The TargetFrameworkAttribute FrameworkDisplayName value to burn into the generated assembly
             /// </summary>
-            public string TargetFrameworkDisplayName { get { return targetFrameworkDisplayName; } set { targetFrameworkDisplayName = value; } }
+            public string TargetFrameworkDisplayName { get; set; }
+
             /// <summary>
             /// The name of the TypeModel class to create
             /// </summary>
-            public string TypeName { get { return typeName; } set { typeName = value; } }
+            public string TypeName { get; set; }
+
             /// <summary>
             /// The path for the new dll
             /// </summary>
-            public string OutputPath { get { return outputPath; } set { outputPath = value; } }
+            public string OutputPath { get; set; }
+
             /// <summary>
             /// The runtime version for the generated assembly
             /// </summary>
-            public string ImageRuntimeVersion { get { return imageRuntimeVersion; } set { imageRuntimeVersion = value; } }
+            public string ImageRuntimeVersion { get; set; }
+
             /// <summary>
             /// The runtime version for the generated assembly
             /// </summary>
-            public int MetaDataVersion { get { return metaDataVersion; } set { metaDataVersion = value; } }
+            public int MetaDataVersion { get; set; }
 
 
-            private Accessibility accessibility = Accessibility.Public;
             /// <summary>
             /// The acecssibility of the generated serializer
             /// </summary>
-            public Accessibility Accessibility { get { return accessibility; } set { accessibility = value; } }
+            public Accessibility Accessibility { get; set; } = Accessibility.Public;
 
 #if FEAT_IKVM
             /// <summary>

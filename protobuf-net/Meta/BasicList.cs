@@ -129,8 +129,7 @@ namespace AqlaSerializer.Meta
         public void Trim() { head = head.Trim(); }
         public int Count { get { return head.Length; } }
 
-        readonly object _syncRoot = new object();
-        object ICollection.SyncRoot { get { return _syncRoot; } }
+        object ICollection.SyncRoot { get; } = new object();
 
         bool ICollection.IsSynchronized { get { return false; } }
 
@@ -159,7 +158,7 @@ namespace AqlaSerializer.Meta
             public object this[int index]
             {
                 get {
-                    if (index >= 0 && index < length)
+                    if (index >= 0 && index < Length)
                     {
                         return data[index];
                     }
@@ -167,7 +166,7 @@ namespace AqlaSerializer.Meta
                 }
                 set
                 {
-                    if (index >= 0 && index < length)
+                    if (index >= 0 && index < Length)
                     {
                         data[index] = value;
                     }
@@ -182,52 +181,52 @@ namespace AqlaSerializer.Meta
             //    return (index >= 0 && index < length) ? data[index] : null;
             //}
             private readonly object[] data;
-            
-            private int length;
-            public int Length { get { return length; } }
+
+            public int Length { get; set; }
+
             internal Node(object[] data, int length)
             {
                 Helpers.DebugAssert((data == null && length == 0) ||
                     (data != null && length > 0 && length <= data.Length));
                 this.data = data;
 
-                this.length = length;
+                this.Length = length;
             }
             public void RemoveLastWithMutate()
             {
-                if (length == 0) throw new InvalidOperationException();
-                length -= 1;
+                if (Length == 0) throw new InvalidOperationException();
+                Length -= 1;
             }
             public Node Append(object value)
             {
                 object[] newData;
-                int newLength = length + 1;
+                int newLength = Length + 1;
                 if (data == null)
                 {
                     newData = new object[10];
                 }
-                else if (length == data.Length)
+                else if (Length == data.Length)
                 {
                     newData = new object[data.Length * 2];
-                    Array.Copy(data, newData, length);
+                    Array.Copy(data, newData, Length);
                 } else
                 {
                     newData = data;
                 }
-                newData[length] = value;
+                newData[Length] = value;
                 return new Node(newData, newLength);
             }
             public Node Trim()
             {
-                if (length == 0 || length == data.Length) return this;
-                object[] newData = new object[length];
-                Array.Copy(data, newData, length);
-                return new Node(newData, length);
+                if (Length == 0 || Length == data.Length) return this;
+                object[] newData = new object[Length];
+                Array.Copy(data, newData, Length);
+                return new Node(newData, Length);
             }
 
             internal int IndexOfString(string value)
             {
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < Length; i++)
                 {
                     if ((string)value == (string)data[i]) return i;
                 }
@@ -235,7 +234,7 @@ namespace AqlaSerializer.Meta
             }
             internal int IndexOfReference(object instance)
             {
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < Length; i++)
                 {
                     if ((object)instance == (object)data[i]) return i;
                 } // ^^^ (object) above should be preserved, even if this was typed; needs
@@ -245,7 +244,7 @@ namespace AqlaSerializer.Meta
             internal bool HasReferences(object instance, int required)
             {
                 int count = 0;
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < Length; i++)
                 {
                     if ((object)instance == (object)data[i])
                     {
@@ -257,7 +256,7 @@ namespace AqlaSerializer.Meta
             }
             internal int IndexOf(MatchPredicate predicate, object ctx)
             {
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < Length; i++)
                 {
                     if (predicate(data[i], ctx)) return i;
                 }
@@ -266,7 +265,7 @@ namespace AqlaSerializer.Meta
 
             internal void CopyTo(Array array, int offset)
             {
-                CopyTo(array, 0, offset, length);
+                CopyTo(array, 0, offset, Length);
             }
 
             internal void CopyTo(Array array, int sourceStart, int destinationStart, int length)
@@ -287,7 +286,7 @@ namespace AqlaSerializer.Meta
                 {
                     Array.Clear(data, 0, data.Length);
                 }
-                length = 0;
+                Length = 0;
             }
         }
 

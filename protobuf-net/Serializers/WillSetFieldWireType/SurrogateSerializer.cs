@@ -56,8 +56,8 @@ namespace AqlaSerializer.Serializers
 #endif
 
         public bool RequiresOldValue { get { return true; } }
-        public Type ExpectedType { get { return forType; } }
-        private readonly Type forType, declaredType;
+        public Type ExpectedType { get; }
+        private readonly Type declaredType;
         private readonly MethodInfo toTail, fromTail;
         IProtoTypeSerializer rootTail;
 
@@ -71,7 +71,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(!rootTail.EmitReadReturnsValue, "ReturnsValue"); // old check, may work without!
 #endif
             Helpers.DebugAssert(declaredType == rootTail.ExpectedType || Helpers.IsSubclassOf(declaredType, rootTail.ExpectedType));
-            this.forType = forType;
+            this.ExpectedType = forType;
             this.declaredType = declaredType;
             this.rootTail = rootTail;
             toTail = GetConversion(model, true);
@@ -129,16 +129,16 @@ namespace AqlaSerializer.Serializers
 
         public MethodInfo GetConversion(TypeModel model, bool toTail)
         {
-            Type to = toTail ? declaredType : forType;
-            Type from = toTail ? forType : declaredType;
+            Type to = toTail ? declaredType : ExpectedType;
+            Type from = toTail ? ExpectedType : declaredType;
             MethodInfo op;
-            if (HasCast(model, declaredType, from, to, out op) || HasCast(model, forType, from, to, out op))
+            if (HasCast(model, declaredType, from, to, out op) || HasCast(model, ExpectedType, from, to, out op))
             {
                 return op;
             }
             throw new InvalidOperationException(
                 "No suitable conversion operator found for surrogate: " +
-                forType.FullName + " / " + declaredType.FullName);
+                ExpectedType.FullName + " / " + declaredType.FullName);
         }
 
 #if !FEAT_IKVM

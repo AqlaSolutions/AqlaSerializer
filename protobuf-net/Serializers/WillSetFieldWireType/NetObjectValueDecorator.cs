@@ -35,8 +35,6 @@ namespace AqlaSerializer.Serializers
 
         IProtoSerializerWithWireType DelegationHandler => (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? null : (_tail ?? _keySerializer);
 
-        readonly Type _type;
-
         readonly BclHelpers.NetObjectOptions _options;
         readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
 
@@ -72,7 +70,7 @@ namespace AqlaSerializer.Serializers
             // if this type is nullable it's ok
             // we'll unwrap it
             // and for non emit it's already boxed as not nullable
-            this._type = type;
+            this.ExpectedType = type;
         }
 
         public NetObjectValueDecorator(IProtoSerializerWithWireType tail, bool returnNullable, bool asReference, bool asLateReference, RuntimeTypeModel model)
@@ -121,7 +119,8 @@ namespace AqlaSerializer.Serializers
             else builder.SingleValueSerializer(this, _options.ToString());
         }
 
-        public Type ExpectedType => _type;
+        public Type ExpectedType { get; }
+
         public bool RequiresOldValue { get; } = true;
 
 #if !FEAT_IKVM
@@ -132,7 +131,7 @@ namespace AqlaSerializer.Serializers
             int newTypeRefKey;
             int newObjectKey;
             int typeKey = _key;
-            var type = _type;
+            var type = ExpectedType;
             bool isDynamic;
             bool isLateReference;
             BclHelpers.NetObjectOptions options = _options;
@@ -203,8 +202,8 @@ namespace AqlaSerializer.Serializers
             }
             else
             {
-                if (Helpers.IsValueType(_type) && value == null)
-                    value = Activator.CreateInstance(_type);
+                if (Helpers.IsValueType(ExpectedType) && value == null)
+                    value = Activator.CreateInstance(ExpectedType);
                 ProtoReader.EndSubItem(token, source);
             }
             return value;
@@ -277,7 +276,7 @@ namespace AqlaSerializer.Serializers
                 //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
 
                 Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
-                using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(_type))
+                using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(ExpectedType))
                 using (Local innerValue = nullableUnderlying == null ? nullableValue.AsCopy() : ctx.Local(nullableUnderlying))
                 using (Local shouldEnd = ctx.Local(typeof(bool)))
                 using (Local isLateReference = ctx.Local(typeof(bool)))
@@ -298,7 +297,7 @@ namespace AqlaSerializer.Serializers
                         g.Assign(inputValueBoxed, nullableValue); // box
 
                     g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_key));
-                    g.Assign(type, _type);
+                    g.Assign(type, ExpectedType);
                     g.Assign(
                         token,
                         s.Invoke(
@@ -365,14 +364,14 @@ namespace AqlaSerializer.Serializers
                                     g.Else();
                                     {
                                         g.Assign(inputValueBoxed, g.ReaderFunc.ReadObject(inputValueBoxed, typeKey));
-                                        g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? _type));
+                                        g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? ExpectedType));
                                     }
                                     g.End();
                                 }
                                 else
                                 {
                                     g.Assign(inputValueBoxed, g.ReaderFunc.ReadObject(inputValueBoxed, typeKey));
-                                    g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? _type));
+                                    g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? ExpectedType));
                                 }
                             }
                             g.Else();
@@ -384,7 +383,7 @@ namespace AqlaSerializer.Serializers
                                     g.If(g.ReaderFunc.TryReadBuiltinType_bool(inputValueBoxed, g.HelpersFunc.GetTypeCode(type), true));
                                     {
                                         g.Assign(options, _options | BclHelpers.NetObjectOptions.LateSet);
-                                        g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? _type));
+                                        g.Assign(innerValue, inputValueBoxed.AsOperand.Cast(nullableUnderlying ?? ExpectedType));
                                     }
                                     g.Else();
                                     {
@@ -435,7 +434,7 @@ namespace AqlaSerializer.Serializers
                     }
                     g.Else();
                     {
-                        if (Helpers.IsValueType(_type) && (EmitReadReturnsValue || RequiresOldValue))
+                        if (Helpers.IsValueType(ExpectedType) && (EmitReadReturnsValue || RequiresOldValue))
                         {
                             g.If(inputValueBoxed.AsOperand == null);
                             {
@@ -445,12 +444,12 @@ namespace AqlaSerializer.Serializers
                             }
                             g.Else();
                             {
-                                g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(_type));
+                                g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(ExpectedType));
                             }
                             g.End();
                         }
                         else
-                            g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(_type));
+                            g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(ExpectedType));
 
                         g.Reader.EndSubItem(token);
                     }
@@ -481,7 +480,7 @@ namespace AqlaSerializer.Serializers
             {
                 Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
                 bool canBeLateRef = (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0;
-                using (Local inputValue = ctx.GetLocalWithValue(_type, valueFrom))
+                using (Local inputValue = ctx.GetLocalWithValue(ExpectedType, valueFrom))
                 using (Local value = nullableUnderlying == null ? inputValue.AsCopy() : ctx.Local(nullableUnderlying))
                 {
                     var g = ctx.G;

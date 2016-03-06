@@ -137,7 +137,6 @@ namespace AqlaSerializer.Serializers
         const byte OPTIONS_WritePacked = 4;
         const byte OPTIONS_OverwriteList = 16;
 
-        readonly Type declaredType;
         readonly Type concreteTypeDefault;
         readonly MethodInfo add;
 
@@ -200,7 +199,7 @@ namespace AqlaSerializer.Serializers
             if (writePacked) options |= OPTIONS_WritePacked;
             if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
             if (declaredType.IsArray) throw new ArgumentException("Cannot treat arrays as lists", nameof(declaredType));
-            this.declaredType = declaredType;
+            this.ExpectedType = declaredType;
             this.concreteTypeDefault = concreteTypeDefault ?? declaredType;
 
             // look for a public list.Add(typedObject) method
@@ -234,7 +233,8 @@ namespace AqlaSerializer.Serializers
 
         protected virtual bool RequireAdd => true;
 
-        public override Type ExpectedType => declaredType;
+        public override Type ExpectedType { get; }
+
         public override bool RequiresOldValue => true;
 
         protected bool AppendToCollection => (options & OPTIONS_OverwriteList) == 0;

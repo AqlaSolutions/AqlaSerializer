@@ -26,18 +26,13 @@ namespace AqlaSerializer
     /// </summary>
     public sealed class ProtoReader : IDisposable
     {
-        Stream source;
-
-        internal Stream UnderlyingStream => source;
+        internal Stream UnderlyingStream { get; set; }
 
         internal int FixedLength { get; private set; }
 
         byte[] ioBuffer;
-        TypeModel model;
-        int fieldNumber, depth, dataRemaining, ioIndex, position, available, blockEnd;
-        WireType wireType;
-        bool isFixedLength, internStrings;
-        private NetObjectCache netCache;
+        int depth, dataRemaining, ioIndex, available, blockEnd;
+        bool isFixedLength;
 
         // this is how many outstanding objects do not currently have
         // values for the purposes of reference tracking; we'll default
@@ -59,24 +54,25 @@ namespace AqlaSerializer
 
         internal object StoreReferenceState()
         {
-            return new ReferenceState(netCache.Clone(), _lateReferences.Clone());
+            return new ReferenceState(NetCache.Clone(), _lateReferences.Clone());
         }
 
         internal void LoadReferenceState(object state)
         {
             var s = (ReferenceState)state;
             _lateReferences = s.LateReferencesCache.Clone();
-            netCache = s.NetObjectCache.Clone();
+            NetCache = s.NetObjectCache.Clone();
         }
 
         /// <summary>
         /// Gets the number of the field being processed.
         /// </summary>
-        public int FieldNumber { get { return fieldNumber; } }
+        public int FieldNumber { get; set; }
+
         /// <summary>
         /// Indicates the underlying proto serialization format on the wire.
         /// </summary>
-        public WireType WireType { get { return wireType; } }
+        public WireType WireType { get; set; }
 
         /// <summary>
         /// Creates a new reader against a stream
@@ -98,7 +94,7 @@ namespace AqlaSerializer
         /// than a second instance of the same string. Enabled by default. Note that this uses
         /// a <i>custom</i> interner - the system-wide string interner is not used.
         /// </summary>
-        public bool InternStrings { get { return internStrings; } set { internStrings = value; } }
+        public bool InternStrings { get; set; }
 
         /// <summary>
         /// Creates a new reader against a stream
@@ -117,9 +113,9 @@ namespace AqlaSerializer
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (!source.CanRead) throw new ArgumentException("Cannot read from stream", nameof(source));
             reader.InitialUnderlyingStreamPosition = source.Position;
-            reader.source = source;
+            reader.UnderlyingStream = source;
             reader.ioBuffer = BufferPool.GetBuffer();
-            reader.model = model;
+            reader.Model = model;
             bool isFixedLength = length >= 0;
             reader.FixedLength = length;
             reader.isFixedLength = isFixedLength;
@@ -127,24 +123,23 @@ namespace AqlaSerializer
 
             if (context == null) { context = SerializationContext.Default; }
             else { context.Freeze(); }
-            reader.context = context;
-            reader.position = reader.available = reader.depth = reader.fieldNumber = reader.ioIndex = 0;
+            reader.Context = context;
+            reader.Position = reader.available = reader.depth = reader.FieldNumber = reader.ioIndex = 0;
             reader.blockEnd = int.MaxValue;
-            reader.internStrings = true;
-            reader.wireType = WireType.None;
+            reader.InternStrings = true;
+            reader.WireType = WireType.None;
             reader.trapCount = 0;
             reader._trappedKey = 0;
             reader._trapNoteReserved.Clear();
-            if(reader.netCache == null) reader.netCache = new NetObjectCache();
-            reader.netCache.ResetRoot();
+            if(reader.NetCache == null) reader.NetCache = new NetObjectCache();
+            reader.NetCache.ResetRoot();
         }
-
-        private SerializationContext context;
 
         /// <summary>
         /// Addition information about this deserialization operation.
         /// </summary>
-        public SerializationContext Context { get { return context; } }
+        public SerializationContext Context { get; set; }
+
         /// <summary>
         /// Releases resources used by the reader, but importantly <b>does not</b> Dispose the 
         /// underlying stream; in many typical use-cases the stream is used for different
@@ -153,11 +148,11 @@ namespace AqlaSerializer
         public void Dispose()
         {
             // importantly, this does **not** own the stream, and does not dispose it
-            source = null;
-            model = null;
+            UnderlyingStream = null;
+            Model = null;
             BufferPool.ReleaseBufferToPool(ref ioBuffer);
             if(stringInterner != null) stringInterner.Clear();
-            if(netCache != null) netCache.Clear();
+            if(NetCache != null) NetCache.Clear();
             _lateReferences.Reset();
         }
         
@@ -168,9 +163,9 @@ namespace AqlaSerializer
         {
 #if DEBUG
             Debug.Assert(value != null);
-            Debug.Assert(ReferenceEquals(value, reader.netCache.LastNewValue));
+            Debug.Assert(ReferenceEquals(value, reader.NetCache.LastNewValue));
 #endif
-            reader._lateReferences.AddLateReference(new LateReferencesCache.LateReference(typeKey, value, reader.netCache.LastNewKey));
+            reader._lateReferences.AddLateReference(new LateReferencesCache.LateReference(typeKey, value, reader.NetCache.LastNewKey));
         }
 
         public static bool TryGetNextLateReference(out int typeKey, out object value, out int referenceKey, ProtoReader reader)
@@ -243,7 +238,7 @@ namespace AqlaSerializer
             {
                 ioIndex += read;
                 available -= read;
-                position += read;
+                Position += read;
                 return value;
             }
             throw EoF(this);
@@ -255,7 +250,7 @@ namespace AqlaSerializer
             {
                 ioIndex += read;
                 available -= read;
-                position += read;
+                Position += read;
                 return true;
             }
             return false;
@@ -265,13 +260,13 @@ namespace AqlaSerializer
         /// </summary>
         public uint ReadUInt32()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Variant:
                     return ReadUInt32Variant(false);
                 case WireType.Fixed32:
                     if (available < 4) Ensure(4, true);
-                    position += 4;
+                    Position += 4;
                     available -= 4;
                     return ((uint)ioBuffer[ioIndex++])
                         | (((uint)ioBuffer[ioIndex++]) << 8)
@@ -289,7 +284,7 @@ namespace AqlaSerializer
         /// Returns the position of the current reader (note that this is not necessarily the same as the position
         /// in the underlying stream, if multiple readers are used on the same stream)
         /// </summary>
-        public int Position { get { return position; } }
+        public int Position { get; set; }
 
         internal long InitialUnderlyingStreamPosition { get; private set; }
 
@@ -314,7 +309,7 @@ namespace AqlaSerializer
             {   // throttle it if needed
                 if (dataRemaining < canRead) canRead = dataRemaining;
             }
-            while (count > 0 && canRead > 0 && (bytesRead = source.Read(ioBuffer, writePos, canRead)) > 0)
+            while (count > 0 && canRead > 0 && (bytesRead = UnderlyingStream.Read(ioBuffer, writePos, canRead)) > 0)
             {
                 available += bytesRead;
                 count -= bytesRead;
@@ -364,13 +359,13 @@ namespace AqlaSerializer
         /// </summary>
         public int ReadInt32()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Variant:
                     return (int)ReadUInt32Variant(true);
                 case WireType.Fixed32:
                     if (available < 4) Ensure(4, true);
-                    position += 4;
+                    Position += 4;
                     available -= 4;
                     return ((int)ioBuffer[ioIndex++])
                         | (((int)ioBuffer[ioIndex++]) << 8)
@@ -403,7 +398,7 @@ namespace AqlaSerializer
         /// </summary>
         public long ReadInt64()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Variant:
                     return (long)ReadUInt64Variant();
@@ -411,7 +406,7 @@ namespace AqlaSerializer
                     return ReadInt32();
                 case WireType.Fixed64:
                     if (available < 8) Ensure(8, true);
-                    position += 8;
+                    Position += 8;
                     available -= 8;
 
                     return ((long)ioBuffer[ioIndex++])
@@ -500,7 +495,7 @@ namespace AqlaSerializer
             {
                 ioIndex += read;
                 available -= read;
-                position += read;
+                Position += read;
                 return value;
             }
             throw EoF(this);
@@ -557,7 +552,7 @@ namespace AqlaSerializer
         /// </summary>
         public string ReadString()
         {
-            if (wireType == WireType.String)
+            if (WireType == WireType.String)
             {
                 int bytes = (int)ReadUInt32Variant(false);
                 if (bytes == 0) return "";
@@ -575,9 +570,9 @@ namespace AqlaSerializer
 #else
                 string s = encoding.GetString(ioBuffer, ioIndex, bytes);
 #endif
-                if (internStrings) { s = Intern(s); }
+                if (InternStrings) { s = Intern(s); }
                 available -= bytes;
-                position += bytes;
+                Position += bytes;
                 ioIndex += bytes;
                 return s;
             }
@@ -608,7 +603,7 @@ namespace AqlaSerializer
 #endif
  double ReadDouble()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Fixed32:
                     return ReadSingle();
@@ -637,18 +632,18 @@ namespace AqlaSerializer
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
-            if (reader.model == null)
+            if (reader.Model == null)
             {
                 throw AddErrorData(new InvalidOperationException("Cannot deserialize sub-objects unless a model is provided"), reader);
             }
             if (key >= 0)
             {
-                value = reader.model.Deserialize(key, value, reader, false);
+                value = reader.Model.Deserialize(key, value, reader, false);
             }
             else if (type != null)
             {
                 SubItemToken token = ProtoReader.StartSubItem(reader);
-                if (reader.model.TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
+                if (reader.Model.TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, false))
                 {
                     // ok
                 }
@@ -695,27 +690,27 @@ namespace AqlaSerializer
             if (skipToEnd)
                 while (reader.ReadFieldHeader() != 0) reader.SkipField(); // skip field will recursively go through nested objects
             
-            switch (reader.wireType)
+            switch (reader.WireType)
             {
                 case WireType.EndGroup:
                     endGroup:
                     if (value >= 0) throw AddErrorData(new ArgumentException("token"), reader);
-                    if (-value != reader.fieldNumber) throw reader.CreateException("Wrong group was ended"); // wrong group ended!
-                    reader.wireType = WireType.None; // this releases ReadFieldHeader
+                    if (-value != reader.FieldNumber) throw reader.CreateException("Wrong group was ended"); // wrong group ended!
+                    reader.WireType = WireType.None; // this releases ReadFieldHeader
                     reader.depth--;
                     break;
                 // case WireType.None: // TODO reinstate once reads reset the wire-type
                 default:
-                    if (value < reader.position)
+                    if (value < reader.Position)
                     {
                         if (value < 0)
                         {
-                            if (reader.ReadFieldHeader() != 0 || reader.wireType != WireType.EndGroup) throw reader.CreateException("Group not read entirely or other group end problem");
+                            if (reader.ReadFieldHeader() != 0 || reader.WireType != WireType.EndGroup) throw reader.CreateException("Group not read entirely or other group end problem");
                             goto endGroup;
                         }
                         throw reader.CreateException("Sub-message not read entirely");
                     }
-                    if (reader.blockEnd != reader.position && reader.blockEnd != int.MaxValue)
+                    if (reader.blockEnd != reader.Position && reader.blockEnd != int.MaxValue)
                         throw reader.CreateException("Sub-message not read correctly");
                     reader.blockEnd = value;
                     reader.depth--;
@@ -747,21 +742,21 @@ namespace AqlaSerializer
                 reader.expectRoot = false;
                 return new SubItemToken(int.MinValue);
             }
-            switch (reader.wireType)
+            switch (reader.WireType)
             {
                 case WireType.StartGroup:
-                    reader.wireType = WireType.None; // to prevent glitches from double-calling
+                    reader.WireType = WireType.None; // to prevent glitches from double-calling
                     reader.depth++;
-                    if (reader.depth > (reader.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit))
+                    if (reader.depth > (reader.Model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit))
                         TypeModel.ThrowRecursionDepthLimitExceeded();
-                    return new SubItemToken(-reader.fieldNumber);
+                    return new SubItemToken(-reader.FieldNumber);
                 case WireType.String:
                     int len = (int)reader.ReadUInt32Variant(false);
                     if (len < 0) throw AddErrorData(new InvalidOperationException(), reader);
                     int lastEnd = reader.blockEnd;
-                    reader.blockEnd = reader.position + len;
+                    reader.blockEnd = reader.Position + len;
                     reader.depth++;
-                    if (reader.depth > (reader.model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit))
+                    if (reader.depth > (reader.Model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit))
                         TypeModel.ThrowRecursionDepthLimitExceeded();
                     return new SubItemToken(lastEnd);
                 default:
@@ -779,25 +774,25 @@ namespace AqlaSerializer
             // at the end of a group the caller must call EndSubItem to release the
             // reader (which moves the status to Error, since ReadFieldHeader must
             // then be called)
-            if (blockEnd <= position || wireType == WireType.EndGroup) { return 0; }
+            if (blockEnd <= Position || WireType == WireType.EndGroup) { return 0; }
             uint tag;
             if (TryReadUInt32Variant(out tag) && tag != 0)
             {
-                wireType = (WireType)(tag & 7);
-                fieldNumber = (int)(tag >> 3);
-                if(fieldNumber < 1) throw new ProtoException("Invalid field in source data: " + fieldNumber.ToString());
+                WireType = (WireType)(tag & 7);
+                FieldNumber = (int)(tag >> 3);
+                if(FieldNumber < 1) throw new ProtoException("Invalid field in source data: " + FieldNumber.ToString());
             }
             else
             {
-                wireType = WireType.None;
-                fieldNumber = 0;
+                WireType = WireType.None;
+                FieldNumber = 0;
             }
-            if (wireType == AqlaSerializer.WireType.EndGroup)
+            if (WireType == AqlaSerializer.WireType.EndGroup)
             {
                 if (depth > 0) return 0; // spoof an end, but note we still set the field-number
                 throw new ProtoException("Unexpected end-group in source data; this usually means the source data is corrupt");
             }
-            return fieldNumber;
+            return FieldNumber;
         }
         /// <summary>
         /// Looks ahead to see whether the next field in the stream is what we expect
@@ -807,16 +802,16 @@ namespace AqlaSerializer
         {
             expectRoot = false;
             // check for virtual end of stream
-            if (blockEnd <= position || wireType == WireType.EndGroup) { return false; }
+            if (blockEnd <= Position || WireType == WireType.EndGroup) { return false; }
             uint tag;
             int read = TryReadUInt32VariantWithoutMoving(false, out tag);
             WireType tmpWireType; // need to catch this to exclude (early) any "end group" tokens
             if (read > 0 && ((int)tag >> 3) == field
                 && (tmpWireType = (WireType)(tag & 7)) != WireType.EndGroup)
             {
-                wireType = tmpWireType;
-                fieldNumber = field;
-                position += read;
+                WireType = tmpWireType;
+                FieldNumber = field;
+                Position += read;
                 ioIndex += read;
                 available -= read;
                 return true;
@@ -827,7 +822,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Get the TypeModel associated with this reader
         /// </summary>
-        public TypeModel Model { get { return model; } }
+        public TypeModel Model { get; set; }
 
         /// <summary>
         /// Compares the streams current wire-type to the hinted wire-type, updating the reader if necessary; for example,
@@ -835,10 +830,10 @@ namespace AqlaSerializer
         /// </summary>
         public void Hint(WireType wireType)
         {
-            if (this.wireType == wireType) { }  // fine; everything as we expect
-            else if (((int)wireType & 7) == (int)this.wireType)
+            if (this.WireType == wireType) { }  // fine; everything as we expect
+            else if (((int)wireType & 7) == (int)this.WireType)
             {   // the underling type is a match; we're customising it with an extension
-                this.wireType = wireType;
+                this.WireType = wireType;
             }
             // note no error here; we're OK about using alternative data
         }
@@ -849,10 +844,10 @@ namespace AqlaSerializer
         /// </summary>
         public void Assert(WireType wireType)
         {
-            if (this.wireType == wireType) { }  // fine; everything as we expect
-            else if (((int)wireType & 7) == (int)this.wireType)
+            if (this.WireType == wireType) { }  // fine; everything as we expect
+            else if (((int)wireType & 7) == (int)this.WireType)
             {   // the underling type is a match; we're customising it with an extension
-                this.wireType = wireType;
+                this.WireType = wireType;
             }
             else
             {   // nope; that is *not* what we were expecting!
@@ -865,19 +860,19 @@ namespace AqlaSerializer
         /// </summary>
         public void SkipField()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Fixed32:
                     if(available < 4) Ensure(4, true);
                     available -= 4;
                     ioIndex += 4;
-                    position += 4;
+                    Position += 4;
                     return;
                 case WireType.Fixed64:
                     if (available < 8) Ensure(8, true);
                     available -= 8;
                     ioIndex += 8;
-                    position += 8;
+                    Position += 8;
                     return;
                 case WireType.String:
                     int len = (int)ReadUInt32Variant(false);
@@ -885,11 +880,11 @@ namespace AqlaSerializer
                     { // just jump it!
                         available -= len;
                         ioIndex += len;
-                        position += len;
+                        Position += len;
                         return;
                     }
                     // everything remaining in the buffer is garbage
-                    position += len; // assumes success, but if it fails we're screwed anyway
+                    Position += len; // assumes success, but if it fails we're screwed anyway
                     len -= available; // discount anything we've got to-hand
                     ioIndex = available = 0; // note that we have no data in the buffer
                     if (isFixedLength)
@@ -898,20 +893,20 @@ namespace AqlaSerializer
                         // else assume we're going to be OK
                         dataRemaining -= len;
                     }
-                    ProtoReader.Seek(source, len, ioBuffer);
+                    ProtoReader.Seek(UnderlyingStream, len, ioBuffer);
                     return;
                 case WireType.Variant:
                 case WireType.SignedVariant:
                     ReadUInt64Variant(); // and drop it
                     return;
                 case WireType.StartGroup:
-                    int originalFieldNumber = this.fieldNumber;
+                    int originalFieldNumber = this.FieldNumber;
                     depth++; // need to satisfy the sanity-checks in ReadFieldHeader
                     while (ReadFieldHeader() > 0) { SkipField(); }
                     depth--;
-                    if (wireType == WireType.EndGroup && fieldNumber == originalFieldNumber)
+                    if (WireType == WireType.EndGroup && FieldNumber == originalFieldNumber)
                     { // we expect to exit in a similar state to how we entered
-                        wireType = AqlaSerializer.WireType.None;
+                        WireType = AqlaSerializer.WireType.None;
                         return;
                     }
                     throw CreateWireTypeException();
@@ -927,7 +922,7 @@ namespace AqlaSerializer
         /// </summary>
         public ulong ReadUInt64()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Variant:
                     return ReadUInt64Variant();
@@ -935,7 +930,7 @@ namespace AqlaSerializer
                     return ReadUInt32();
                 case WireType.Fixed64:
                     if (available < 8) Ensure(8, true);
-                    position += 8;
+                    Position += 8;
                     available -= 8;
 
                     return ((ulong)ioBuffer[ioIndex++])
@@ -959,7 +954,7 @@ namespace AqlaSerializer
 #endif
  float ReadSingle()
         {
-            switch (wireType)
+            switch (WireType)
             {
                 case WireType.Fixed32:
                     {
@@ -1007,11 +1002,11 @@ namespace AqlaSerializer
         public static byte[] AppendBytes(byte[] value, ProtoReader reader)
         {
             if (reader == null) throw new ArgumentNullException(nameof(reader));
-            switch (reader.wireType)
+            switch (reader.WireType)
             {
                 case WireType.String:
                     int len = (int)reader.ReadUInt32Variant(false);
-                    reader.wireType = WireType.None;
+                    reader.WireType = WireType.None;
                     if (len == 0) return value == null ? EmptyBlob : value;
                     int offset;
                     if (value == null || value.Length == 0)
@@ -1028,7 +1023,7 @@ namespace AqlaSerializer
                     }
                     // value is now sized with the final length, and (if necessary)
                     // contains the old data up to "offset"
-                    reader.position += len; // assume success
+                    reader.Position += len; // assume success
                     while (len > reader.available)
                     {
                         if (reader.available > 0)
@@ -1307,7 +1302,7 @@ namespace AqlaSerializer
             if (exception != null && source != null && !exception.Data.Contains("protoSource"))
             {
                 exception.Data.Add("protoSource", string.Format("tag={0}; wire-type={1}; offset={2}; depth={3}",
-                    source.fieldNumber, source.wireType, source.position, source.depth));
+                    source.FieldNumber, source.WireType, source.Position, source.depth));
             }
 #endif
             return exception;
@@ -1332,7 +1327,7 @@ namespace AqlaSerializer
             try
             {
                 //TODO: replace this with stream-based, buffered raw copying
-                using (ProtoWriter writer = new ProtoWriter(dest, model, null))
+                using (ProtoWriter writer = new ProtoWriter(dest, Model, null))
                 {
                     AppendExtensionField(writer);
                     writer.Close();
@@ -1344,8 +1339,8 @@ namespace AqlaSerializer
         private void AppendExtensionField(ProtoWriter writer)
         {
             //TODO: replace this with stream-based, buffered raw copying
-            ProtoWriter.WriteFieldHeaderAnyType(fieldNumber, wireType, writer);
-            switch (wireType)
+            ProtoWriter.WriteFieldHeaderAnyType(FieldNumber, WireType, writer);
+            switch (WireType)
             {
                 case WireType.Fixed32:
                     ProtoWriter.WriteInt32(ReadInt32(), writer);
@@ -1381,9 +1376,9 @@ namespace AqlaSerializer
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             // check for virtual end of stream
-            if (source.blockEnd <= source.position || wireType == WireType.EndGroup) { return false; }
-            source.wireType = wireType;
-            source.fieldNumber = GroupNumberForIgnoredFields;
+            if (source.blockEnd <= source.Position || wireType == WireType.EndGroup) { return false; }
+            source.WireType = wireType;
+            source.FieldNumber = GroupNumberForIgnoredFields;
             return true;
         }
 
@@ -1394,17 +1389,14 @@ namespace AqlaSerializer
 
         internal int GetTypeKey(ref Type type)
         {
-            return model.GetKey(ref type);
+            return Model.GetKey(ref type);
         }
 
-        internal NetObjectCache NetCache
-        {
-            get { return netCache; }
-        }
+        internal NetObjectCache NetCache { get; set; }
 
         internal System.Type DeserializeType(string value)
         {
-            return TypeModel.DeserializeType(model, value);
+            return TypeModel.DeserializeType(Model, value);
         }
 
         internal void SetRootObject(object value)
@@ -1421,7 +1413,7 @@ namespace AqlaSerializer
             if (reader == null) throw new ArgumentNullException(nameof(reader));
             if(reader.trapCount != 0)
             {
-                reader.netCache.SetKeyedObject(reader._trappedKey, value);
+                reader.NetCache.SetKeyedObject(reader._trappedKey, value);
                 reader.trapCount--;
             }
         }
@@ -1438,7 +1430,7 @@ namespace AqlaSerializer
             var trueKey = (int) stack.Peek();
             if (trappedKey != trueKey) throw new InvalidOperationException("NoteReservedTrappedObject called for " + trappedKey + " but waiting for " + trueKey);
             stack.Pop();
-            reader.netCache.SetKeyedObject(trueKey, value);
+            reader.NetCache.SetKeyedObject(trueKey, value);
         }
 
         /// <summary>
@@ -1446,7 +1438,7 @@ namespace AqlaSerializer
         /// </summary>
         public System.Type ReadType()
         {
-            return TypeModel.DeserializeType(model, ReadString());
+            return TypeModel.DeserializeType(Model, ReadString());
         }
 
         public bool TryReadBuiltinType(ref object value, ProtoTypeCode typecode, bool allowSystemType)
@@ -1538,7 +1530,7 @@ namespace AqlaSerializer
             trapCount++;
             if (trapCount > 1)
                 throw new ProtoException("Trap count > 1, will be mismatched with next NoteObject");
-            netCache.SetKeyedObject(newObjectKey, null); // use null as a temp
+            NetCache.SetKeyedObject(newObjectKey, null); // use null as a temp
             _trappedKey = newObjectKey;
         }
 

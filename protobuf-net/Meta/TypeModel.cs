@@ -530,18 +530,18 @@ namespace AqlaSerializer.Meta
         {
             IEnumerator IEnumerable.GetEnumerator() { return this; }
             private bool haveObject;
-            private object current;
+
             public bool MoveNext()
             {
                 if (haveObject)
                 {
                     int bytesRead;
-                    current = model.DeserializeWithLengthPrefix(source, null, type, style, expectedField, resolver, out bytesRead, out haveObject, context);
+                    Current = model.DeserializeWithLengthPrefix(source, null, type, style, expectedField, resolver, out bytesRead, out haveObject, context);
                 }
                 return haveObject;
             }
             void IEnumerator.Reset() { throw new NotSupportedException(); }
-            public object Current { get { return current; } }
+            public object Current { get; set; }
             private readonly Stream source;
             private readonly Type type;
             private readonly PrefixStyle style;
@@ -1343,19 +1343,10 @@ namespace AqlaSerializer.Meta
                 this.model = model;
                 this.type = type;
             }
-            private System.Runtime.Serialization.SerializationBinder binder;
-            public System.Runtime.Serialization.SerializationBinder Binder
-            {
-                get { return binder; }
-                set { binder = value; }
-            }
 
-            private System.Runtime.Serialization.StreamingContext context;
-            public System.Runtime.Serialization.StreamingContext Context
-            {
-                get { return context; }
-                set { context = value; }
-            }
+            public System.Runtime.Serialization.SerializationBinder Binder { get; set; }
+
+            public System.Runtime.Serialization.StreamingContext Context { get; set; }
 
             public object Deserialize(Stream source)
             {
@@ -1371,25 +1362,16 @@ namespace AqlaSerializer.Meta
                 model.Serialize(destination, graph, Context);
             }
 
-            private System.Runtime.Serialization.ISurrogateSelector surrogateSelector;
-            public System.Runtime.Serialization.ISurrogateSelector SurrogateSelector
-            {
-                get { return surrogateSelector; }
-                set { surrogateSelector = value; }
-            }
+            public System.Runtime.Serialization.ISurrogateSelector SurrogateSelector { get; set; }
         }
 #endif
 
 #if DEBUG // this is used by some unit tests only, to ensure no buffering when buffering is disabled
-        private bool forwardsOnly;
+
         /// <summary>
         /// If true, buffering of nested objects is disabled
         /// </summary>
-        public bool ForwardsOnly
-        {
-            get { return forwardsOnly; }
-            set { forwardsOnly = value; }
-        }
+        public bool ForwardsOnly { get; set; }
 #endif
 
         internal virtual Type GetType(string fullName, Assembly context)

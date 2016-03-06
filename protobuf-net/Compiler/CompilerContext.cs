@@ -35,7 +35,7 @@ namespace AqlaSerializer.Compiler
     }
     internal sealed class CompilerContext
     {
-        public TypeModel Model { get { return model; } }
+        public TypeModel Model { get; }
 
 #if !(FX11 || FEAT_IKVM)
         readonly DynamicMethod method;
@@ -113,7 +113,7 @@ namespace AqlaSerializer.Compiler
             
             using (Local typedVal = new Local(ctx, type))
             {
-                ctx.StoreValueOrDefaultFromObject(ctx.inputValue, typedVal);
+                ctx.StoreValueOrDefaultFromObject(ctx.InputValue, typedVal);
                 head.EmitRead(ctx, typedVal);
 
                 if (head.EmitReadReturnsValue) {
@@ -264,13 +264,11 @@ namespace AqlaSerializer.Compiler
 #if FX11 || FEAT_IKVM
         internal bool NonPublic { get { return false; } }
 #else
-        private readonly bool nonPublic;
-        internal bool NonPublic { get { return nonPublic; } }
+        internal bool NonPublic { get; }
 #endif
 
 
-        private readonly Local inputValue;
-        public Local InputValue { get { return inputValue; } }
+        public Local InputValue { get; }
 #if !(SILVERLIGHT || PHONE8)
         private readonly string assemblyName;
         internal CompilerContext(MethodContext context, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerPair[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
@@ -286,9 +284,9 @@ namespace AqlaSerializer.Compiler
             this.il = context.GetILGenerator();
             // nonPublic = false; <== implicit
             this.isWriter = isWriter;
-            this.model = model;
-            this.metadataVersion = metadataVersion;
-            if (inputType != null) this.inputValue = new Local(this, inputType, false);
+            this.Model = model;
+            this.MetadataVersion = metadataVersion;
+            if (inputType != null) this.InputValue = new Local(this, inputType, false);
         }
 #endif
         public ICodeGenContext RunSharpContext { get; }
@@ -300,12 +298,12 @@ namespace AqlaSerializer.Compiler
 #if FX11
             metadataVersion = ILVersion.Net1;
 #else
-            metadataVersion = ILVersion.Net2;
+            MetadataVersion = ILVersion.Net2;
 #endif
             this.isStatic = isStatic;
             this.isWriter = isWriter;
-            this.model = model;
-            nonPublic = true;
+            this.Model = model;
+            NonPublic = true;
             Type returnType;
             MethodContext.ParameterGenInfo[] pars;
 
@@ -356,7 +354,7 @@ namespace AqlaSerializer.Compiler
                 pars);
             RunSharpContext = new MethodContext(methodGen,il,model.RunSharpTypeMapper);
 
-            if (inputType != null) this.inputValue = new Local(this, inputType, false);
+            if (inputType != null) this.InputValue = new Local(this, inputType, false);
         }
 
 #endif
@@ -1686,8 +1684,6 @@ namespace AqlaSerializer.Compiler
             LoadValue((isWriter ? typeof(ProtoWriter) : typeof(ProtoReader)).GetProperty("Context"));
         }
 
-        private readonly TypeModel model;
-
         public Local Local(Type type, bool zeroed = false)
         {
             return new Local(this, type, zeroed: zeroed);
@@ -1701,7 +1697,7 @@ namespace AqlaSerializer.Compiler
 #endif
         internal Type MapType(System.Type type)
         {
-            return model.MapType(type);
+            return Model.MapType(type);
         }
 
 #if FEAT_IKVM
@@ -1711,8 +1707,8 @@ namespace AqlaSerializer.Compiler
         }
 #endif
 
-        private readonly ILVersion metadataVersion;
-        public ILVersion MetadataVersion { get { return metadataVersion; } }
+        public ILVersion MetadataVersion { get; }
+
         public enum ILVersion
         {
             Net1, Net2

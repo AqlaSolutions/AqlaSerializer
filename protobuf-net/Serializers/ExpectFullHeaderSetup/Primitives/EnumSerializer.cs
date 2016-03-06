@@ -29,13 +29,13 @@ namespace AqlaSerializer.Serializers
                 TypedValue = (Enum)Enum.ToObject(type, raw);
 #endif
             }
-        } 
-        private readonly Type _enumType; 
+        }
+
         private readonly EnumPair[] _map;
         public EnumSerializer(Type enumType, EnumPair[] map)
         {
             if (enumType == null) throw new ArgumentNullException(nameof(enumType));
-            this._enumType = enumType;
+            this.ExpectedType = enumType;
             this._map = map;
             if (map != null)
             {
@@ -55,14 +55,14 @@ namespace AqlaSerializer.Serializers
             }
         }
         private ProtoTypeCode GetTypeCode() {
-            Type type = Helpers.GetNullableUnderlyingType( _enumType);
-            if(type == null) type = _enumType;
+            Type type = Helpers.GetNullableUnderlyingType( ExpectedType);
+            if(type == null) type = ExpectedType;
             return Helpers.GetTypeCode(type);
         }
 
         
-        public Type ExpectedType { get { return _enumType; } }
-        
+        public Type ExpectedType { get; }
+
         bool IProtoSerializer.RequiresOldValue { get { return false; } }
         
 #if !FEAT_IKVM
@@ -90,14 +90,14 @@ namespace AqlaSerializer.Serializers
             {
                 switch (GetTypeCode())
                 { // convert from int then box 
-                    case ProtoTypeCode.Byte: return Enum.ToObject(_enumType, (byte)value);
-                    case ProtoTypeCode.SByte: return Enum.ToObject(_enumType, (sbyte)value);
-                    case ProtoTypeCode.Int16: return Enum.ToObject(_enumType, (short)value);
-                    case ProtoTypeCode.Int32: return Enum.ToObject(_enumType, value);
-                    case ProtoTypeCode.Int64: return Enum.ToObject(_enumType, (long)value);
-                    case ProtoTypeCode.UInt16: return Enum.ToObject(_enumType, (ushort)value);
-                    case ProtoTypeCode.UInt32: return Enum.ToObject(_enumType, (uint)value);
-                    case ProtoTypeCode.UInt64: return Enum.ToObject(_enumType, (ulong)value);
+                    case ProtoTypeCode.Byte: return Enum.ToObject(ExpectedType, (byte)value);
+                    case ProtoTypeCode.SByte: return Enum.ToObject(ExpectedType, (sbyte)value);
+                    case ProtoTypeCode.Int16: return Enum.ToObject(ExpectedType, (short)value);
+                    case ProtoTypeCode.Int32: return Enum.ToObject(ExpectedType, value);
+                    case ProtoTypeCode.Int64: return Enum.ToObject(ExpectedType, (long)value);
+                    case ProtoTypeCode.UInt16: return Enum.ToObject(ExpectedType, (ushort)value);
+                    case ProtoTypeCode.UInt32: return Enum.ToObject(ExpectedType, (uint)value);
+                    case ProtoTypeCode.UInt64: return Enum.ToObject(ExpectedType, (ulong)value);
                     default: throw new InvalidOperationException();
                 }
             }

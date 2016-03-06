@@ -19,12 +19,11 @@ namespace AqlaSerializer.Compiler
         CompilerContext _ctx;
 
         readonly bool _fromPool;
-        readonly Type _type;
 
         Local(CompilerContext ctx, LocalBuilder value, Type type)
         {
             _value = value;
-            _type = type;
+            Type = type;
             _ctx = ctx;
             _fromPool = false;
             AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
@@ -44,7 +43,7 @@ namespace AqlaSerializer.Compiler
             _ctx = ctx;
             if (fromPool)
                 _value = ctx.GetFromPool(type, zeroed);
-            _type = type;
+            Type = type;
             _fromPool = fromPool;
             AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
         }
@@ -85,7 +84,7 @@ namespace AqlaSerializer.Compiler
             return null;
         }
 
-        public Type Type => _type;
+        public Type Type { get; }
 
         internal LocalBuilder Value
         {
@@ -110,7 +109,7 @@ namespace AqlaSerializer.Compiler
         public Local AsCopy()
         {
             if (!_fromPool) return this; // can re-use if context-free
-            return new Local(_ctx, _value, _type);
+            return new Local(_ctx, _value, Type);
         }
 
         public event EventHandler Disposing;
@@ -168,12 +167,12 @@ namespace AqlaSerializer.Compiler
             {
                 LeakedState = false;
                 if (_local._ctx == null) throw new ObjectDisposedException("Local");
-                _local._ctx.LoadRefArg(_local, _local._type);
+                _local._ctx.LoadRefArg(_local, _local.Type);
             }
 
             public override Type GetReturnType(ITypeMapper typeMapper)
             {
-                return _local._type;
+                return _local.Type;
             }
 
             protected override bool TrivialAccess => true;

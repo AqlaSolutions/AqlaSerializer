@@ -57,9 +57,9 @@ namespace AqlaSerializer
         public virtual bool CanAutoAddType(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            if (!RuntimeTypeModel.CheckTypeCanBeAdded(_model, type)) return false;
+            if (!RuntimeTypeModel.CheckTypeCanBeAdded(Model, type)) return false;
             return GetContractFamily(type) != AttributeFamily.None
-                   || RuntimeTypeModel.CheckTypeDoesntRequireContract(_model, type);
+                   || RuntimeTypeModel.CheckTypeDoesntRequireContract(Model, type);
         }
 
         public virtual void ApplyDefaultBehaviour(MetaType metaType)
@@ -70,7 +70,7 @@ namespace AqlaSerializer
                 && CanAutoAddType(baseType)
                 && MetaType.CanHaveSubType(baseType))
             {
-                _model.FindOrAddAuto(baseType, true, false, false);
+                Model.FindOrAddAuto(baseType, true, false, false);
             }
 
             try
@@ -79,7 +79,7 @@ namespace AqlaSerializer
                 TypeState mapped;
 
                 {
-                    AttributeMap[] typeAttribs = AttributeMap.Create(_model, type, false);
+                    AttributeMap[] typeAttribs = AttributeMap.Create(Model, type, false);
                     family = GetContractFamily(type, typeAttribs);
 
                     mapped = TypeMapper.Map(
@@ -133,7 +133,7 @@ namespace AqlaSerializer
                 foreach (MemberInfo member in foundList)
                 {
                     if (member.DeclaringType != type) continue;
-                    var map = AttributeMap.Create(_model, member, true);
+                    var map = AttributeMap.Create(Model, member, true);
 
                     {
                         var args = new MemberArgsValue(member, map, AcceptableAttributes, Model)
@@ -218,7 +218,7 @@ namespace AqlaSerializer
                     MethodInfo method;
                     if ((method = member as MethodInfo) != null)
                     {
-                        AttributeMap[] memberAttribs = AttributeMap.Create(_model, method, false);
+                        AttributeMap[] memberAttribs = AttributeMap.Create(Model, method, false);
                         if (memberAttribs != null && memberAttribs.Length > 0)
                         {
                             const int max = 11;
@@ -280,12 +280,12 @@ namespace AqlaSerializer
                                     memberType = memberType.GetElementType();
                                 else continue;
                             }
-                            memberType = TypeModel.GetListItemType(_model, memberType) ?? memberType;
+                            memberType = TypeModel.GetListItemType(Model, memberType) ?? memberType;
                             if (memberType == null) continue;
 
                             if (CanAutoAddType(memberType))
                             {
-                                _model.FindOrAddAuto(memberType, true, false, false);
+                                Model.FindOrAddAuto(memberType, true, false, false);
                             }
                         }
                     }
@@ -294,9 +294,9 @@ namespace AqlaSerializer
             {
                 if (baseType != null && GetContractFamily(baseType) != AttributeFamily.None)
                 {
-                    if (_model.FindWithoutAdd(baseType) != null)
+                    if (Model.FindWithoutAdd(baseType) != null)
                     {
-                        MetaType baseMeta = _model[baseType];
+                        MetaType baseMeta = Model[baseType];
                         // we can't add to frozen base type
                         // but this is not always an error
                         // e.g. dynamic member of base type doesn't need registered subtype
@@ -311,7 +311,7 @@ namespace AqlaSerializer
         {
             var memberType = Helpers.GetMemberType(argsValue.Member);
             // we just don't like delegate types ;p
-            if (memberType == null || Helpers.IsSubclassOf(memberType, _model.MapType(typeof(Delegate)))) return null;
+            if (memberType == null || Helpers.IsSubclassOf(memberType, Model.MapType(typeof(Delegate)))) return null;
 
             var normalized= MemberMapper.Map(argsValue);
             if (normalized != null)
@@ -337,7 +337,7 @@ namespace AqlaSerializer
 
         public AttributeFamily GetContractFamily(Type type)
         {
-            var attributes = AttributeMap.Create(_model, type, false);
+            var attributes = AttributeMap.Create(Model, type, false);
             return GetContractFamily(type, attributes);
         }
 
@@ -346,7 +346,7 @@ namespace AqlaSerializer
             if (Helpers.GetNullableUnderlyingType(type) != null) return AttributeFamily.None;
             if (!Helpers.IsEnum(type) && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
             AttributeFamily family = AttributeFamily.None;
-            bool isList = type.IsArray || TypeModel.GetListItemType(_model, type) != null;
+            bool isList = type.IsArray || TypeModel.GetListItemType(Model, type) != null;
             for (int i = 0; i < attributes.Length; i++)
             {
                 switch (attributes[i].AttributeType.FullName)
@@ -419,8 +419,8 @@ namespace AqlaSerializer
                 if (family == AttributeFamily.None && ImplicitFallbackMode != ImplicitFieldsMode.None && !isList)
                 {
                     if (Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown
-                        && type != _model.MapType(typeof(object))
-                        && type != _model.MapType(typeof(ValueType)))
+                        && type != Model.MapType(typeof(object))
+                        && type != Model.MapType(typeof(ValueType)))
                     {
                         family = AttributeFamily.ImplicitFallback;
                     }
@@ -472,7 +472,7 @@ namespace AqlaSerializer
             if (mappedMember == null || (member = mappedMember.Member) == null) return; // nix
             var s = mappedMember.MappingState;
 
-            AttributeMap[] attribs = AttributeMap.Create(_model, member, true);
+            AttributeMap[] attribs = AttributeMap.Create(Model, member, true);
             AttributeMap attrib;
             
             if (s.SerializationSettings.DefaultValue == null && (attrib = AttributeMap.GetAttribute(attribs, "System.ComponentModel.DefaultValueAttribute")) != null)
@@ -552,8 +552,7 @@ namespace AqlaSerializer
             return null;
         }
 
-        RuntimeTypeModel _model;
-        protected RuntimeTypeModel Model { get { return _model; } }
+        protected RuntimeTypeModel Model { get; set; }
 
         static bool CanUse(AttributeType check, AttributeType required)
         {
@@ -613,7 +612,7 @@ namespace AqlaSerializer
         public AutoAddStrategy(RuntimeTypeModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
-            _model = model;
+            Model = model;
             MemberMapper = new MemberMapper(
                 CreateDefaultMemberMapperHandlers());
             TypeMapper = new TypeMapper(
@@ -659,7 +658,7 @@ namespace AqlaSerializer
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             var s = (AutoAddStrategy)MemberwiseClone();
-            s._model = model;
+            s.Model = model;
             return s;
         }
     }

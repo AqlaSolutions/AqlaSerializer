@@ -353,14 +353,13 @@ namespace AqlaSerializer.Meta
 
         sealed class BasicType
         {
-            private readonly Type type;
-            public Type Type { get { return type; } }
-            private readonly IProtoSerializer serializer;
-            public IProtoSerializer Serializer { get { return serializer; } }
+            public Type Type { get; }
+            public IProtoSerializer Serializer { get; }
+
             public BasicType(Type type, IProtoSerializer serializer)
             {
-                this.type = type;
-                this.serializer = serializer;
+                this.Type = type;
+                this.Serializer = serializer;
             }
         }
         internal IProtoSerializer TryGetBasicTypeSerializer(Type type)
@@ -1244,11 +1243,10 @@ namespace AqlaSerializer.Meta
         }
 
 #if DEBUG
-        int lockCount;
         /// <summary>
         /// Gets how many times a model lock was taken
         /// </summary>
-        public int LockCount { get { return lockCount; } }
+        public int LockCount { get; set; }
 #endif
         internal void TakeLock(ref int opaqueToken)
         {
@@ -1287,7 +1285,7 @@ namespace AqlaSerializer.Meta
 #endif
 
 #if DEBUG // note that here, through all code-paths: we have the lock
-            lockCount++;
+            LockCount++;
 #endif
         }
 
@@ -1458,15 +1456,14 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed class LockContentedEventArgs : EventArgs
     {
-        private readonly string ownerStackTrace;
         internal LockContentedEventArgs(string ownerStackTrace)
         {
-            this.ownerStackTrace = ownerStackTrace;
+            this.OwnerStackTrace = ownerStackTrace;
         }
         /// <summary>
         /// The stack-trace of the code that owned the lock when a lock-contention scenario occurred
         /// </summary>
-        public string OwnerStackTrace { get { return ownerStackTrace; } }
+        public string OwnerStackTrace { get; }
     }
     /// <summary>
     /// Event-type that is raised when a lock-contention scenario is detected
