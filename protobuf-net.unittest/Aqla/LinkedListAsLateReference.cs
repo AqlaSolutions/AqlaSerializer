@@ -7,7 +7,7 @@ namespace AqlaSerializer.unittest.Aqla
     [TestFixture]
     public class LinkedListAsLateReference
     {
-        [SerializableType(ImplicitFirstTag = 3)]
+        [SerializableType]
         public class Node
         {
             [SerializableMember(1, ValueFormat.LateReference)]

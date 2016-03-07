@@ -255,7 +255,7 @@ namespace AqlaSerializer
                     }
                 }
 
-                foreach (var member in members)
+                foreach (var member in members.OrderBy(m => m.MappingState.TagIsPinned ? 0 : 1))
                 {
                     ApplyDefaultBehaviour(metaType, member,
                         (inferTagByName || implicitMode != ImplicitFieldsMode.None) ? (int?)implicitFirstTag : null);

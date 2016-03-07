@@ -15,7 +15,7 @@ namespace AqlaSerializer.unittest.Aqla
             public Referenced Value { get; set; }
         }
 
-        [SerializableType(ImplicitFirstTag = 2)]
+        [SerializableType]
         public class Referenced
         {
             public int Data { get; set; }
