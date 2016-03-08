@@ -76,12 +76,14 @@ namespace AqlaSerializer.Meta
                     var nestedLevel = settings.GetSettingsCopy(levelNumber + 1);
                     nestedLevel = PrepareNestedLevelForBuild(nestedLevel, itemType);
                     settings.SetSettings(nestedLevel, levelNumber + 1);
+                    // should use its level settings and merge from type, ...
+                    ser = BuildValueFinalSerializer(settings, true, out wireType, levelNumber + 1);
 
-                    object dummy = null;
+                    //object dummy = null;
                     
-                    ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, nestedLevel.Basic.EffectiveType, out wireType, ref nestedLevel.Basic.Format, nestedLevel.Basic.WriteAsDynamicType.GetValueOrDefault(), l.Collection.Append.Value, isPacked, true, ref dummy);
-                    if (ser != null)
-                        ThrowIfHasMoreLevels(settings, levelNumber + 1, l, ", no more nested type detected");
+                    //ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, nestedLevel.Basic.EffectiveType, out wireType, ref nestedLevel.Basic.Format, nestedLevel.Basic.WriteAsDynamicType.GetValueOrDefault(), l.Collection.Append.Value, isPacked, true, ref dummy);
+                    //if (ser != null)
+                    //    ThrowIfHasMoreLevels(settings, levelNumber + 1, l, ", no more nested type detected");
                 }
                 else if (!itemIsNestedCollection)
                 {
@@ -340,7 +342,8 @@ namespace AqlaSerializer.Meta
                 throw new ProtoException(
                     "Nested collection type " + nestedLevel.Basic.EffectiveType + " is not assignable to " + itemType);
 
-            EnsureCorrectFormatSpecified(_model, ref nestedLevel.Basic.Format, nestedLevel.Basic.EffectiveType, ref nestedLevel.Basic.WriteAsDynamicType, true);
+            // no no until we merge from type
+            //EnsureCorrectFormatSpecified(_model, ref nestedLevel.Basic.Format, nestedLevel.Basic.EffectiveType, ref nestedLevel.Basic.WriteAsDynamicType, true);
             return nestedLevel;
         }
 
