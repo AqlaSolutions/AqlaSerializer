@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections.Generic;
+using AltLinq;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
 #endif
@@ -31,30 +32,18 @@ namespace AqlaSerializer.Serializers
         }
         
         public bool DemandWireTypeStabilityStatus() => true;
-        readonly MemberInfo[] _members;
+        readonly ValueMember[] _members;
         readonly bool _prefixLength;
         readonly ConstructorInfo _ctor;
         readonly IProtoSerializerWithWireType[] _tails;
-        public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, MemberInfo[] members, bool prefixLength)
+        public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, ValueMember[] members, bool prefixLength)
         {
             if (ctor == null) throw new ArgumentNullException(nameof(ctor));
             if (members == null) throw new ArgumentNullException(nameof(members));
             this._ctor = ctor;
             this._members = members;
             _prefixLength = prefixLength;
-            this._tails = new IProtoSerializerWithWireType[members.Length];
-
-            ParameterInfo[] parameters = ctor.GetParameters();
-            for (int i = 0; i < members.Length; i++)
-            {
-                var level = new MemberLevelSettingsValue { EffectiveType = parameters[i].ParameterType };
-                var vs = new ValueSerializationSettings();
-                vs.SetSettings(new ValueSerializationSettings.LevelValue(level) { IsNotAssignable = true }, 0);
-                vs.DefaultLevel = new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevel());
-
-                WireType wt;
-                _tails[i] = model.ValueSerializerBuilder.BuildValueFinalSerializer(vs, true, out wt);
-            }
+            this._tails = members.Select(x => x.Serializer).ToArray();
         }
         public bool HasCallbacks(Meta.TypeModel.CallbackType callbackType)
         {
@@ -75,13 +64,13 @@ namespace AqlaSerializer.Serializers
             PropertyInfo prop;
             FieldInfo field;
             
-            if ((prop = _members[index] as PropertyInfo) != null)
+            if ((prop = _members[index].Member as PropertyInfo) != null)
             {
                 if (obj == null)
                     return Helpers.IsValueType(prop.PropertyType) ? Activator.CreateInstance(prop.PropertyType) : null;
                 return Helpers.GetPropertyValue(prop, obj);
             }
-            else if ((field = _members[index] as FieldInfo) != null)
+            else if ((field = _members[index].Member as FieldInfo) != null)
             {
                 if (obj == null)
                     return Helpers.IsValueType(field.FieldType) ? Activator.CreateInstance(field.FieldType) : null;
@@ -153,7 +142,7 @@ namespace AqlaSerializer.Serializers
 
         Type GetMemberType(int index)
         {
-            Type result = Helpers.GetMemberType(_members[index]);
+            Type result = _members[index].MemberType;
             if (result == null) throw new InvalidOperationException();
             return result;
         }
@@ -176,13 +165,13 @@ namespace AqlaSerializer.Serializers
                     {
                         Type type = GetMemberType(i);
                         ctx.LoadAddress(value, ExpectedType);
-                        switch (_members[i].MemberType)
+                        switch (_members[i].Member.MemberType)
                         {
                             case MemberTypes.Field:
-                                ctx.LoadValue((FieldInfo)_members[i]);
+                                ctx.LoadValue((FieldInfo)_members[i].Member);
                                 break;
                             case MemberTypes.Property:
-                                ctx.LoadValue((PropertyInfo)_members[i]);
+                                ctx.LoadValue((PropertyInfo)_members[i].Member);
                                 break;
                         }
                         ctx.LoadValue(i + 1);
@@ -282,13 +271,13 @@ namespace AqlaSerializer.Serializers
                         for (int i = 0; i < _members.Length; i++)
                         {
                             ctx.LoadAddress(objValue, ExpectedType);
-                            switch (_members[i].MemberType)
+                            switch (_members[i].Member.MemberType)
                             {
                                 case MemberTypes.Field:
-                                    ctx.LoadValue((FieldInfo)_members[i]);
+                                    ctx.LoadValue((FieldInfo)_members[i].Member);
                                     break;
                                 case MemberTypes.Property:
-                                    ctx.LoadValue((PropertyInfo)_members[i]);
+                                    ctx.LoadValue((PropertyInfo)_members[i].Member);
                                     break;
                             }
                             ctx.StoreValue(locals[i]);

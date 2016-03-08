@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -309,6 +310,27 @@ namespace AqlaSerializer.Meta
                 {
                     if (x.Member == member) return x;
                 }
+                foreach (ValueMember x in _tupleFields)
+                {
+                    if (x.Member == member) return x;
+                }
+                return null;
+            }
+        }
+        /// <summary>
+        /// Returns the ValueMember that matchs a given member (property/field), or null if not found
+        /// </summary>
+        public ValueMember this[string member]
+        {
+            get
+            {
+                if (member == null) return null;
+                IEnumerable<ValueMember> fieldsEn = _fields.Cast<ValueMember>();
+                var fields = IsAutoTuple ? _tupleFields.Concat(fieldsEn) : fieldsEn.Concat(_tupleFields);
+                foreach (ValueMember x in fields)
+                {
+                    if (x.Member.Name == x.Name) return x;
+                }
                 return null;
             }
         }
@@ -323,6 +345,10 @@ namespace AqlaSerializer.Meta
             return arr;
         }
 
+        public ValueMember[] GetTupleFields()
+        {
+            return _tupleFields.ToArray();
+        }
 
     }
 }

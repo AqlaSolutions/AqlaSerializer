@@ -24,6 +24,7 @@ namespace AqlaSerializer.Meta
     public class ValueMember
     {
         MemberMainSettingsValue _main;
+        readonly bool _isAccessHandledOutside;
 
         ValueSerializationSettings _vs;
 
@@ -74,7 +75,7 @@ namespace AqlaSerializer.Meta
         /// Creates a new ValueMember instance
         /// </summary>
         public ValueMember(
-            MemberMainSettingsValue memberSettings, ValueSerializationSettings valueSerializationSettings, MemberInfo member, Type parentType, RuntimeTypeModel model)
+            MemberMainSettingsValue memberSettings, ValueSerializationSettings valueSerializationSettings, MemberInfo member, Type parentType, RuntimeTypeModel model, bool isAccessHandledOutside = false)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
             if (parentType == null) throw new ArgumentNullException(nameof(parentType));
@@ -84,6 +85,7 @@ namespace AqlaSerializer.Meta
             ParentType = parentType;
             _model = model;
             _main = memberSettings;
+            _isAccessHandledOutside = isAccessHandledOutside;
             _vs = valueSerializationSettings.Clone();
         }
 
@@ -114,13 +116,15 @@ namespace AqlaSerializer.Meta
 
                 FinalizingSettings?.Invoke(this, new FinalizingSettingsArgs(this));
 
-                if (FieldNumber < 1 && !Helpers.IsEnum(ParentType)) throw new ProtoException("FieldNumber < 1 for member " + Member);
+                if (FieldNumber < 1 && !Helpers.IsEnum(ParentType) && !_isAccessHandledOutside) throw new ProtoException("FieldNumber < 1 for member " + Member);
 
                 if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
                 var level0 = _vs.GetSettingsCopy(0);
-                level0.Basic.EffectiveType = MemberType;
-                level0.IsNotAssignable = !Helpers.CanWrite(_model, Member);
+                if (level0.Basic.EffectiveType == null)
+                    level0.Basic.EffectiveType = MemberType;
+                if (!level0.IsNotAssignable)
+                    level0.IsNotAssignable = !Helpers.CanWrite(_model, Member);
                 _vs.SetSettings(level0, 0);
                 
                 if (_vs.DefaultValue != null && _getSpecified != null)
@@ -194,20 +198,24 @@ namespace AqlaSerializer.Meta
                         true,
                         out wt);
 
-                    PropertyInfo prop = Member as PropertyInfo;
-                    if (prop != null)
-                        ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
-                    else
+                    if (!_isAccessHandledOutside)
                     {
-                        FieldInfo fld = Member as FieldInfo;
-                        if (fld != null)
-                            ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
-                        else
-                            throw new InvalidOperationException();
-                    }
-                    if (_getSpecified != null || _setSpecified != null)
-                        ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
 
+                        PropertyInfo prop = Member as PropertyInfo;
+                        if (prop != null)
+                            ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
+                        else
+                        {
+                            FieldInfo fld = Member as FieldInfo;
+                            if (fld != null)
+                                ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
+                            else
+                                throw new InvalidOperationException();
+                        }
+
+                        if (_getSpecified != null || _setSpecified != null)
+                            ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
+                    }
                     _serializer = ser;
 
                     return ser;
@@ -436,6 +444,7 @@ namespace AqlaSerializer.Meta
         /// when data is found.</param>
         public void SetSpecified(MethodInfo getSpecified, MethodInfo setSpecified)
         {
+            if (_isAccessHandledOutside) throw new InvalidOperationException("Member access is handled from outside");
             if (getSpecified != null)
             {
                 if (getSpecified.ReturnType != _model.MapType(typeof(bool))

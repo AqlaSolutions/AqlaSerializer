@@ -182,10 +182,8 @@ namespace AqlaSerializer.Meta
             }
             if (IsAutoTuple)
             {
-                MemberInfo[] mapping;
-                ConstructorInfo ctor = ResolveTupleConstructor(Type, out mapping);
-                if (ctor == null) throw new InvalidOperationException();
-                return new TupleSerializer(_model, ctor, mapping, _settingsValue.PrefixLength.GetValueOrDefault(true));
+                if (_tupleCtor == null) throw new InvalidOperationException("Can't find tuple constructor");
+                return new TupleSerializer(_model, _tupleCtor, _tupleFields.ToArray(), _settingsValue.PrefixLength.GetValueOrDefault(true));
             }
 
 

@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -75,6 +76,9 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        List<ValueMember> _tupleFields = new List<ValueMember>();
+        readonly ConstructorInfo _tupleCtor;
+
         internal MetaType(RuntimeTypeModel model, Type type, MethodInfo factory)
         {
             this._factory = factory;
@@ -94,6 +98,29 @@ namespace AqlaSerializer.Meta
 #if WINRT
             this._typeInfo = type.GetTypeInfo();
 #endif
+
+            MemberInfo[] members;
+
+            _tupleCtor = ResolveTupleConstructor(Type, out members);
+            if (_tupleCtor != null)
+            {
+                foreach (MemberInfo memberInfo in members)
+                {
+                    var level = new MemberLevelSettingsValue();
+                    var vs = new ValueSerializationSettings();
+                    vs.SetSettings(new ValueSerializationSettings.LevelValue(level) { IsNotAssignable = true }, 0);
+                    vs.DefaultLevel = new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevel());
+                    var main = new MemberMainSettingsValue() { Name = memberInfo.Name };
+                    var vm = new ValueMember(main, vs, memberInfo, Type, model, isAccessHandledOutside: true);
+                    AddTupleField(vm);
+                }
+            }
+        }
+
+        void AddTupleField(ValueMember vm)
+        {
+            vm.FinalizingSettings += (s, a) => FinalizingMemberSettings?.Invoke(this, a);
+            _tupleFields.Add(vm);
         }
 
         internal int GetKey(bool demand, bool getBaseKey)
@@ -152,6 +179,9 @@ namespace AqlaSerializer.Meta
             mt._rootNestedVs = _rootNestedVs.Clone();
             foreach (ValueMember field in _fields.Cast<ValueMember>().Select(f => (object)f.CloneAsUnfrozen(model)))
                 mt.Add(field);
+            mt._tupleFields = new List<ValueMember>();
+            foreach (ValueMember vm in _tupleFields.Select(f => f.CloneAsUnfrozen(model)))
+                mt.AddTupleField(vm);
             return mt;
         }
         
