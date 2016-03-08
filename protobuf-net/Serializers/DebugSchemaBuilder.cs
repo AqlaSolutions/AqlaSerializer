@@ -34,6 +34,18 @@ namespace AqlaSerializer.Serializers
 
     class DebugSchemaBuilder : IDebugSchemaBuilder
     {
+        readonly bool _internal;
+
+        DebugSchemaBuilder(Dictionary<object, IDebugSchemaBuilder> contracts)
+        {
+            _contracts = contracts;
+            _internal = true;
+        }
+
+        public DebugSchemaBuilder()
+        {
+        }
+
         class LevelState
         {
             public bool AnyElementWritten;
@@ -111,7 +123,7 @@ namespace AqlaSerializer.Serializers
         {
             using (Item()) _sb.AppendLine("LinkTo [" + id + "]");
             if (_contracts.ContainsKey(id)) return null;
-            var b = new DebugSchemaBuilder();
+            var b = new DebugSchemaBuilder(_contracts);
             _contracts.Add(id, b);
             return b;
         }
@@ -148,11 +160,12 @@ namespace AqlaSerializer.Serializers
             if (_nesting.Count > 1) throw new InvalidOperationException("Can't generate debug schema because not all nested levels were closed");
             var sb = new StringBuilder();
             sb.AppendLine(_sb.ToString());
-            foreach (var b in _contracts)
-            {
-                sb.AppendLine(b.Key + ":");
-                sb.AppendLine(b.Value.ToString());
-            }
+            if (!_internal)
+                foreach (var b in _contracts)
+                {
+                    sb.AppendLine(b.Key + ":");
+                    sb.AppendLine(b.Value.ToString());
+                }
             return sb.ToString();
         }
 
