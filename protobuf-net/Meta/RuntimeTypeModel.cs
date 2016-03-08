@@ -1269,7 +1269,7 @@ namespace AqlaSerializer.Meta
                     Thread.Sleep(50);
                 }
             } while(!lockTaken);
-            opaqueToken = Interlocked.CompareExchange(ref contentionCounter, 0, 0); // just fetch current value (starts at 1)
+            opaqueToken = Interlocked.CompareExchange(ref _contentionCounter, 0, 0); // just fetch current value (starts at 1)
 #else
             if (Monitor.TryEnter(_types, _metadataTimeoutMilliseconds))
             {
@@ -1293,14 +1293,14 @@ namespace AqlaSerializer.Meta
 
         private int _contentionCounter = 1;
 #if PLAT_NO_INTERLOCKED
-        private readonly object contentionLock = new object();
+        private readonly object _contentionLock = new object();
 #endif
         private int GetContention()
         {
 #if PLAT_NO_INTERLOCKED
-            lock(contentionLock)
+            lock(_contentionLock)
             {
-                return contentionCounter;
+                return _contentionCounter;
             }
 #else
             return Interlocked.CompareExchange(ref _contentionCounter, 0, 0);
@@ -1309,9 +1309,9 @@ namespace AqlaSerializer.Meta
         private void AddContention()
         {
 #if PLAT_NO_INTERLOCKED
-            lock(contentionLock)
+            lock(_contentionLock)
             {
-                contentionCounter++;
+                _contentionCounter++;
             }
 #else
             Interlocked.Increment(ref _contentionCounter);

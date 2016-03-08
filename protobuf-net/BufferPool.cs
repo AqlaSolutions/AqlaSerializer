@@ -9,9 +9,9 @@ namespace AqlaSerializer
         internal static void Flush()
         {
 #if PLAT_NO_INTERLOCKED
-            lock(pool)
+            lock(Pool)
             {
-                for (int i = 0; i < pool.Length; i++) pool[i] = null;
+                for (int i = 0; i < Pool.Length; i++) Pool[i] = null;
             }
 #else
             for (int i = 0; i < Pool.Length; i++)
@@ -29,13 +29,13 @@ namespace AqlaSerializer
         {
             object tmp;
             #if PLAT_NO_INTERLOCKED
-            lock(pool)
+            lock(Pool)
             {
-                for (int i = 0; i < pool.Length; i++)
+                for (int i = 0; i < Pool.Length; i++)
                 {
-                    if((tmp = pool[i]) != null)
+                    if((tmp = Pool[i]) != null)
                     {
-                        pool[i] = null;
+                        Pool[i] = null;
                         return (byte[])tmp;
                     }
                 }
@@ -82,13 +82,13 @@ namespace AqlaSerializer
             if (buffer.Length == BufferLength)
             {
 #if PLAT_NO_INTERLOCKED
-                lock (pool)
+                lock (Pool)
                 {
-                    for (int i = 0; i < pool.Length; i++)
+                    for (int i = 0; i < Pool.Length; i++)
                     {
-                        if(pool[i] == null)
+                        if(Pool[i] == null)
                         {
-                            pool[i] = buffer;
+                            Pool[i] = buffer;
                             break;
                         }
                     }

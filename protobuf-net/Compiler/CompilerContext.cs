@@ -330,7 +330,7 @@ namespace AqlaSerializer.Compiler
             Type[] paramTypes = pars.Select(p => p.Type).ToArray();
             int uniqueIdentifier;
 #if PLAT_NO_INTERLOCKED
-            uniqueIdentifier = ++next;
+            uniqueIdentifier = ++_next;
 #else
             uniqueIdentifier = Interlocked.Increment(ref _next);
 #endif
