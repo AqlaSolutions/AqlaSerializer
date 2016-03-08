@@ -28,20 +28,27 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            Action subTypeWriter = null;
-            if (_writeSubType)
-            {
-                subTypeWriter = () =>
+            Action metaWriter =
+                () =>
                     {
-                        Type t = value.GetType();
-                        if (_concreteTypeDefault != t)
-                            _subTypeHelpers.Write(_metaType, t, dest);
-                        else
-                            ProtoWriter.WriteFieldHeaderCancelBegin(dest);
+                        // we still write length in case it will be read as array
+                        int length = (value as ICollection)?.Count ?? 0;
+                        if (length > 0)
+                        {
+                            ProtoWriter.WriteFieldHeader(ListHelpers.FieldLength, WireType.Variant, dest);
+                            ProtoWriter.WriteInt32(length, dest);
+                        }
+                        if (_writeSubType)
+                        {
+                            Type t = value.GetType();
+                            if (_concreteTypeDefault != t)
+                            {
+                                ProtoWriter.WriteFieldHeaderBegin(ListHelpers.FieldSubtype, dest);
+                                _subTypeHelpers.Write(_metaType, t, dest);
+                            }
+                        }
                     };
-            }
-            // we still write length in case it will be read as array
-            ListHelpers.Write(value, subTypeWriter, !_protoCompatibility ? (value as ICollection)?.Count : null, null, dest);
+            ListHelpers.Write(value, metaWriter, null, dest);
         }
 
         public override object Read(object value, ProtoReader source)
@@ -53,23 +60,23 @@ namespace AqlaSerializer.Serializers
 
             // can't call clear? => create new!
             bool forceNewInstance = !AppendToCollection && !asList;
-
-            Action subTypeHandler = () =>
-                {
-                    MetaType mt = _subTypeHelpers.TryRead(_metaType, forceNewInstance ? null : value?.GetType(), source);
-                    if (mt != null)
-                    {
-                        value = mt.Serializer.CreateInstance(source);
-                        createdNew = true;
-                    }
-                };
-
-            if (_metaType == null)
-                subTypeHandler = null;
-
+            
             ListHelpers.Read(
-                subTypeHandler,
-                length =>
+                () =>
+                    {
+                        if (_metaType != null && source.TryReadFieldHeader(ListHelpers.FieldSubtype))
+                        {
+                            MetaType mt = _subTypeHelpers.TryRead(_metaType, forceNewInstance ? null : value?.GetType(), source);
+                            if (mt != null)
+                            {
+                                value = mt.Serializer.CreateInstance(source);
+                                createdNew = true;
+                            }
+                            return true;
+                        }
+                        return false;
+                    },
+                () =>
                     {
                         if (value == null || (forceNewInstance && !createdNew))
                         {
@@ -212,7 +219,7 @@ namespace AqlaSerializer.Serializers
                 if (_add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            ListHelpers = new ListHelpers(WritePacked, PackedWireTypeForRead, _protoCompatibility, tail);
+            ListHelpers = new ListHelpers(WritePacked, PackedWireTypeForRead, _protoCompatibility, tail, false);
 
             if (!protoCompatibility)
             {
@@ -247,39 +254,51 @@ namespace AqlaSerializer.Serializers
 
                 // can't call clear? => create new!
                 bool forceNewInstance = !AppendToCollection && !asList;
-
-                Action subTypeHandler = () =>
-                {
-                    using (ctx.StartDebugBlockAuto(this, "subtype handler"))
-                    {
-                        g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value.AsOperand);
-                        _subTypeHelpers.EmitTryRead(
-                            g,
-                            oldValueForSubTypeHelpers,
-                            _metaType,
-                            r =>
-                                {
-                                    using (ctx.StartDebugBlockAuto(this, "subtype handler - read"))
-                                    {
-                                        if (r != null)
-                                        {
-                                            ctx.MarkDebug("// creating list subtype");
-                                            r.Serializer.EmitCreateInstance(ctx);
-                                            ctx.StoreValue(value);
-                                            g.Assign(createdNew, true);
-                                        }
-                                    }
-                                });
-
-                    }
-                };
-
-                if (_metaType == null) subTypeHandler = null;
-
+                
                 ListHelpers.EmitRead(
                     ctx.G,
-                    subTypeHandler,
-                    length =>
+                    (onSuccess, onFail) =>
+                        {
+                            using (ctx.StartDebugBlockAuto(this, "readNextMeta"))
+                            {
+                                if (_metaType != null)
+                                {
+                                    g.If(g.ReaderFunc.TryReadFieldHeader_bool(ListHelpers.FieldSubtype));
+                                    {
+                                        using (ctx.StartDebugBlockAuto(this, "subtype handler"))
+                                        {
+                                            g.Assign(oldValueForSubTypeHelpers, forceNewInstance ? null : value.AsOperand);
+                                            _subTypeHelpers.EmitTryRead(
+                                                g,
+                                                oldValueForSubTypeHelpers,
+                                                _metaType,
+                                                r =>
+                                                    {
+                                                        using (ctx.StartDebugBlockAuto(this, "subtype handler - read"))
+                                                        {
+                                                            if (r != null)
+                                                            {
+                                                                ctx.MarkDebug("// creating list subtype");
+                                                                r.Serializer.EmitCreateInstance(ctx);
+                                                                ctx.StoreValue(value);
+                                                                g.Assign(createdNew, true);
+                                                            }
+                                                        }
+                                                    });
+                                        }
+                                        onSuccess();
+                                    }
+                                    g.Else();
+                                    {
+                                        onFail();
+                                    }
+                                    g.End();
+                                }
+                                else onFail();
+                            }
+                        }
+                    ,
+                    () =>
                         {
                             using (ctx.StartDebugBlockAuto(this, "prepareInstance"))
                             {
@@ -301,14 +320,15 @@ namespace AqlaSerializer.Serializers
                                     g.If(!createdNew.AsOperand);
                                     {
                                         g.Reader.NoteObject(value);
+
+                                        if (asList && !AppendToCollection)
+                                        {
+                                            ctx.MarkDebug("// clearing existing list");
+                                            // ReSharper disable once PossibleNullReferenceException
+                                            g.Invoke(value, "Clear");
+                                        }
                                     }
                                     g.End();
-                                    if (asList && !AppendToCollection)
-                                    {
-                                        ctx.MarkDebug("// clearing existing list");
-                                        // ReSharper disable once PossibleNullReferenceException
-                                        g.Invoke(value, "Clear");
-                                    }
                                 }
                                 g.End();
                             }
@@ -359,35 +379,35 @@ namespace AqlaSerializer.Serializers
             using (ctx.StartDebugBlockAuto(this))
             using (Compiler.Local value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             using (Compiler.Local t = ctx.Local(typeof(System.Type)))
+            using (Compiler.Local length = ctx.Local(typeof(int)))
             using (var icol = !_protoCompatibility ? ctx.Local(typeof(ICollection)) : null)
             {
-                Action subTypeWriter = null;
-                if (_writeSubType)
-                {
-                    subTypeWriter = () =>
-                        {
-                            g.Assign(t, value.AsOperand.InvokeGetType());
-                            g.If(_concreteTypeDefault != t.AsOperand);
-                            {
-                                _subTypeHelpers.EmitWrite(g, _metaType, value);
-                            }
-                            g.Else();
-                            {
-                                g.Writer.WriteFieldHeaderCancelBegin();
-                            }
-                            g.End();
-                        };
-                }
-                Func<Operand> getLength = null;
-                if (!_protoCompatibility)
-                {
-                    getLength = () =>
+                ListHelpers.EmitWrite(
+                    ctx.G,
+                    value,
+                    () =>
                         {
                             g.Assign(icol, value.AsOperand.As(icol.Type));
-                            return (icol.AsOperand != null).Conditional(icol.AsOperand.Property("Count"), -1);
-                        };
-                }
-                ListHelpers.EmitWrite(ctx.G, value, subTypeWriter, getLength, null);
+                            g.Assign(length, (icol.AsOperand != null).Conditional(icol.AsOperand.Property("Count"), -1));
+                            g.If(length.AsOperand > 0);
+                            {
+                                g.Writer.WriteFieldHeader(ListHelpers.FieldLength, WireType.Variant);
+                                g.Writer.WriteInt32(length);
+                            }
+                            g.End();
+
+                            if (_writeSubType)
+                            {
+                                g.Assign(t, value.AsOperand.InvokeGetType());
+                                g.If(_concreteTypeDefault != t.AsOperand);
+                                {
+                                    g.Writer.WriteFieldHeaderBegin(ListHelpers.FieldSubtype);
+                                    _subTypeHelpers.EmitWrite(g, _metaType, value);
+                                }
+                                g.End();
+                            }
+                        },
+                    null);
             }
         }
 

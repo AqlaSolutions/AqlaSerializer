@@ -443,6 +443,7 @@
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BooleanSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\Collections\ArrayDecorator.cs" />
     <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\ByteSerializer.cs" />
+    <Compile Include="Serializers\WillSetFieldWireType\Collections\MultiDimensionalArrayDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\LateReferenceSerializer.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\NoNullDecorator.cs" />
     <Compile Include="Serializers\WillSetFieldWireType\SubTypeHelpers.cs" />

@@ -85,9 +85,6 @@ namespace AqlaSerializer.Meta
             _model = model;
             _main = memberSettings;
             _vs = valueSerializationSettings.Clone();
-            // this doesn't depend on anything so can check right now 
-            if (MemberType.IsArray && MemberType.GetArrayRank() != 1)
-                throw new NotSupportedException("Multi-dimension arrays are not supported");
         }
 
         internal class FinalizingSettingsArgs : EventArgs

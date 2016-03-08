@@ -54,7 +54,7 @@ namespace AqlaSerializer.Meta
         internal ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
         internal IValueSerializerBuilder ValueSerializerBuilder { get; }
-
+        
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -62,7 +62,7 @@ namespace AqlaSerializer.Meta
             {
                 // byte arrays are handled internally
                 if (Helpers.GetTypeCode(type.GetElementType()) == ProtoTypeCode.Byte) return false;
-                return type.GetArrayRank() == 1;
+                return true;
             }
             return type != model.MapType(typeof(Enum))
                    && type != model.MapType(typeof(object))
@@ -71,9 +71,14 @@ namespace AqlaSerializer.Meta
             //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
         
+        /// <summary>
+        /// Some types which can't be handled by Auxiliary should be always registered even without a contract
+        /// </summary>
         internal static bool CheckTypeDoesntRequireContract(RuntimeTypeModel model, Type type)
         {
             if (!CheckTypeCanBeAdded(model, type)) return false;
+            if (type.IsArray && type.GetArrayRank() != 1) return true;
+
             Type defaultType = null;
             Type itemType = null;
             model.ResolveListTypes(type, ref itemType, ref defaultType);

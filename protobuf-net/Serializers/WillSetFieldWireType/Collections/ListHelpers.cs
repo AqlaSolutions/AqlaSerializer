@@ -28,11 +28,13 @@ namespace AqlaSerializer.Serializers
         readonly bool _protoCompatibility;
         readonly bool _writePacked;
         readonly Type _itemType;
+        readonly bool _skipIList;
+
         public const int FieldItem = 1;
         public const int FieldSubtype = 2;
         public const int FieldLength = 3;
         
-        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail)
+        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
         {
             if (protoCompatibility)
             {
@@ -44,16 +46,16 @@ namespace AqlaSerializer.Serializers
                 _writePacked = writePacked;
             }
             _tail = tail;
+            _skipIList = skipIList;
             _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;
         }
 #if FEAT_COMPILER
-        public void EmitWrite(SerializerCodeGen g, Local value, Action subTypeWriter, Func<Operand> getLength, Action prepareInstance)
+        public void EmitWrite(SerializerCodeGen g, Local value, Action metaWriter, Action prepareInstance)
         {
             using (g.ctx.StartDebugBlockAuto(this))
             {
                 using (var token = g.ctx.Local(typeof(SubItemToken)))
-                using (var length = getLength != null ? g.ctx.Local(typeof(int)) : null)
                 using (var fieldNumber = _protoCompatibility ? g.ctx.Local(typeof(int)) : null)
                 {
                     if (!fieldNumber.IsNullRef())
@@ -87,21 +89,7 @@ namespace AqlaSerializer.Serializers
                         bool pack = _tail.DemandWireTypeStabilityStatus();
                         g.Assign(token, g.WriterFunc.StartSubItem(null, pack));
 
-                        if (subTypeWriter != null)
-                        {
-                            g.Writer.WriteFieldHeaderBegin(FieldSubtype);
-                            subTypeWriter?.Invoke();
-                        }
-                        if (!getLength.IsNullRef())
-                        {
-                            g.Assign(length, getLength());
-                            g.If(length.AsOperand > 0);
-                            {
-                                g.Writer.WriteFieldHeader(FieldLength, WireType.Variant);
-                                g.Writer.WriteInt32(length);
-                            }
-                            g.End();
-                        }
+                        metaWriter?.Invoke();
 
                         prepareInstance?.Invoke();
 
@@ -115,7 +103,7 @@ namespace AqlaSerializer.Serializers
         void EmitWriteContent(SerializerCodeGen g, Local enumerable, Operand fieldNumber, bool pack, Action first = null)
         {
             Type listType = g.ctx.MapType(typeof(IList<>)).MakeGenericType(_itemType);
-            if (!enumerable.Type.IsArray && !Helpers.IsAssignableFrom(listType, enumerable.Type))
+            if (_skipIList || (!enumerable.Type.IsArray && !Helpers.IsAssignableFrom(listType, enumerable.Type)))
             {
                 EmitWriteContentEnumerable(g, enumerable, fieldNumber, pack, first);
                 return;
@@ -198,19 +186,19 @@ namespace AqlaSerializer.Serializers
             _tail.EmitWrite(g.ctx, null);
         }
 
-        public delegate void EmitReadPrepareInstanceDelegate(Operand length);
+        public delegate void EmitReadMetaDelegate(Action onSuccess, Action onFail);
 
-        public void EmitRead(SerializerCodeGen g, Action subTypeHandler, EmitReadPrepareInstanceDelegate prepareInstance, Action<Local> add)
+        public void EmitRead(SerializerCodeGen g, EmitReadMetaDelegate readNextMeta, Action prepareInstance, Action<Local> add)
         {
+            if (readNextMeta == null) readNextMeta = (s, f) => f();
             using (g.ctx.StartDebugBlockAuto(this))
             {
                 WireType packedWireType = _packedWireTypeForRead;
                 bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
                 using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
                 using (var token = g.ctx.Local(typeof(SubItemToken)))
-                using (var length = g.ctx.Local(typeof(int?), true))
                 using (var fieldNumber = _protoCompatibility ? g.ctx.Local(typeof(int)):null)
-                using (var read = g.ctx.Local(typeof(bool)))
+                using (var loop = g.ctx.Local(typeof(bool)))
                 {
                     if (!fieldNumber.IsNullRef())
                         g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
@@ -225,44 +213,15 @@ namespace AqlaSerializer.Serializers
                         g.Assign(token, g.ReaderFunc.StartSubItem());
                         if (!subItemNeededStatic) g.End();
                     }
-
-                    if (!_protoCompatibility)
-                    {
-                        g.DoWhile();
-                        {
-                            g.Assign(read, false);
-
-                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldLength));
-                            {
-                                // we write length to construct an array before deserializing
-                                // so we can handle references to array from inside it
-
-                                g.Assign(length, g.ReaderFunc.ReadInt32());
-                                g.Assign(read, true);
-                            }
-                            g.End();
-
-                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldSubtype));
-                            {
-                                if (subTypeHandler == null)
-                                    g.Reader.SkipField();
-                                else
-                                    subTypeHandler();
-                                g.Assign(read, true);
-                            }
-                            g.End();
-                        }
-                        g.EndDoWhile(read);
-                    }
-
-                    // this is not an error that we don't wait for the first item
-                    // if we are here it's either not compatible mode (so should call anyway)
-                    // or there is at least one element
-                    prepareInstance?.Invoke(length);
-
+                    
                     g.ctx.MarkDebug("ProtoCompatibility: " + _protoCompatibility);
                     if (_protoCompatibility)
                     {
+                        // this is not an error that we don't wait for the first item
+                        // if field is present there is at least one element
+
+                        prepareInstance?.Invoke();
+
                         if (packedAllowedStatic)
                         {
                             g.If(packed);
@@ -286,9 +245,48 @@ namespace AqlaSerializer.Serializers
                     }
                     else
                     {
-                        g.If(packed);
+                        var breakLabel = g.DefineLabel();
+
+                        g.DoWhile();
                         {
-                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
+                            g.Assign(loop, false);
+
+                            readNextMeta(
+                                () =>
+                                    {
+                                        using (g.ctx.StartDebugBlockAuto(this, "readNextMeta.OnSuccess"))
+                                        {
+                                            g.Assign(loop, true);
+                                        }
+                                    },
+                                () =>
+                                    {
+                                        using (g.ctx.StartDebugBlockAuto(this, "readNextMeta.OnFail"))
+                                        {
+                                            g.If(!g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
+                                            {
+                                                g.If(g.ReaderFunc.ReadFieldHeader_int() == 0);
+                                                {
+                                                    g.Goto(breakLabel);
+                                                }
+                                                g.End();
+
+                                                g.Reader.SkipField();
+                                                g.Assign(loop, true);
+                                            }
+                                            g.End();
+                                        }
+                                    });
+                        }
+                        g.EndDoWhile(loop);
+
+                        g.MarkLabel(breakLabel);
+
+                        prepareInstance?.Invoke();
+                        
+                        g.If(g.ReaderFunc.FieldNumber() == FieldItem);
+                        {
+                            g.If(packed);
                             {
                                 using (var packedWireTypeDynamic = g.ctx.Local(typeof(WireType)))
                                 {
@@ -300,13 +298,13 @@ namespace AqlaSerializer.Serializers
                                     g.EndDoWhile(g.ReaderFunc.HasSubValue_bool(packedWireTypeDynamic));
                                 }
                             }
-                            g.End();
-                        }
-                        g.Else();
-                        {
-                            g.While(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
+                            g.Else();
                             {
-                                EmitReadElementContent(g, add);
+                                g.DoWhile();
+                                {
+                                    EmitReadElementContent(g, add);
+                                }
+                                g.EndDoWhile(g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
                             }
                             g.End();
                         }
@@ -338,7 +336,7 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if !FEAT_IKVM
-        public void Write(object value, Action subTypeWriter, int? length, Action prepareInstance, ProtoWriter dest)
+        public void Write(object value, Action metaWriter, Action prepareInstance, ProtoWriter dest)
         {
             SubItemToken token = new SubItemToken();
             int fieldNumber = dest.FieldNumber;
@@ -371,16 +369,7 @@ namespace AqlaSerializer.Serializers
                 bool pack = _tail.DemandWireTypeStabilityStatus();
                 token = ProtoWriter.StartSubItem(null, pack, dest);
 
-                if (subTypeWriter != null)
-                {
-                    ProtoWriter.WriteFieldHeaderBegin(FieldSubtype, dest);
-                    subTypeWriter.Invoke();
-                }
-                if (length != null && length.Value > 0)
-                {
-                    ProtoWriter.WriteFieldHeader(FieldLength, WireType.Variant, dest);
-                    ProtoWriter.WriteInt32(length.Value, dest);
-                }
+                metaWriter?.Invoke();
 
                 prepareInstance?.Invoke();
 
@@ -391,7 +380,7 @@ namespace AqlaSerializer.Serializers
 
         void WriteContent(object value, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
         {
-            var list = value as IList;
+            var list = !_skipIList ? value as IList : null;
             if (list == null)
             {
                 WriteContent((IEnumerable)value, fieldNumber, pack, dest, first);
@@ -446,9 +435,9 @@ namespace AqlaSerializer.Serializers
             _tail.Write(obj, dest);
         }
 
-        public delegate void ReadPrepareInstanceDelegate(int? length);
+        public delegate bool TryReadMetaDelegate();
 
-        public void Read(Action subTypeHandler, ReadPrepareInstanceDelegate prepareInstance, Action<object> add, ProtoReader source)
+        public void Read(TryReadMetaDelegate readNextMeta, Action prepareInstance, Action<object> add, ProtoReader source)
         {
             WireType packedWireType = _packedWireTypeForRead;
             bool packed = (!_protoCompatibility || packedWireType != WireType.None) && source.WireType == WireType.String;
@@ -457,44 +446,14 @@ namespace AqlaSerializer.Serializers
             bool subItemNeeded = packed || !_protoCompatibility;
 
             SubItemToken token = subItemNeeded ? ProtoReader.StartSubItem(source) : new SubItemToken();
-
-            int? length = null;
-            if (!_protoCompatibility)
-            {
-                bool read;
-
-                do
-                {
-                    read = false;
-
-                    if (source.TryReadFieldHeader(FieldLength))
-                    {
-                        // we write length to construct an array before deserializing
-                        // so we can handle references to array from inside it
-
-                        length = source.ReadInt32();
-                        read = true;
-                    }
-
-                    if (source.TryReadFieldHeader(FieldSubtype))
-                    {
-                        if (subTypeHandler == null)
-                            source.SkipField();
-                        else
-                            subTypeHandler();
-                        read = true;
-                    }
-
-                } while (read);
-            }
-
-            // this is not an error that we don't wait for the first item
-            // if we are here it's either not compatible mode (so should call anyway)
-            // or there is at least one element
-            prepareInstance?.Invoke(length);
-
+            
             if (_protoCompatibility)
             {
+                // this is not an error that we don't wait for the first item
+                // if field is present there is at least one element
+
+                prepareInstance?.Invoke();
+
                 if (packed)
                 {
                     while (ProtoReader.HasSubValue(packedWireType, source))
@@ -510,9 +469,29 @@ namespace AqlaSerializer.Serializers
             }
             else
             {
-                if (packed)
+                bool loop;
+
+                do
                 {
-                    if (source.TryReadFieldHeader(FieldItem))
+                    loop = false;
+
+                    if (readNextMeta?.Invoke() ?? false)
+                    {
+                        loop = true;
+                    }
+                    else if (!source.TryReadFieldHeader(FieldItem))
+                    {
+                        if (source.ReadFieldHeader() == 0) break; // empty
+                        source.SkipField();
+                        loop = true;
+                    }
+                } while (loop);
+
+                prepareInstance?.Invoke();
+
+                if (source.FieldNumber == FieldItem)
+                {
+                    if (packed)
                     {
                         packedWireType = source.WireType;
                         do
@@ -520,11 +499,13 @@ namespace AqlaSerializer.Serializers
                             ReadElementContent(add, source);
                         } while (ProtoReader.HasSubValue(packedWireType, source));
                     }
-                }
-                else
-                {
-                    while (source.TryReadFieldHeader(FieldItem))
-                        ReadElementContent(add, source);
+                    else
+                    {
+                        do
+                        {
+                            ReadElementContent(add, source);
+                        } while (source.TryReadFieldHeader(FieldItem));
+                    }
                 }
             }
 

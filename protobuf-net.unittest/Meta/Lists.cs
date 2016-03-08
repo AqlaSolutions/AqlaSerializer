@@ -336,14 +336,7 @@ namespace AqlaSerializer.unittest.Meta
 
             public List<byte[]> Blobs{ get; set; }
         }
-
-        [Test, ExpectedException(typeof(NotSupportedException))]
-        public void MultiDimArrayShouldThrow()
-        {
-            var model = RuntimeTypeModel.Create();
-            model.Add(typeof(NastyType), true).Add(1, "MultiDimArray");
-            model.CompileInPlace();
-        }
+        
         [Test]
         public void BasicListIsFine()
         {

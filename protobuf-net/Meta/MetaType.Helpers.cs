@@ -173,9 +173,6 @@ namespace AqlaSerializer.Meta
             // handle arrays
             if (type.IsArray)
             {
-                if (type.GetArrayRank() != 1)
-                    return;
-
                 itemType = type.GetElementType();
                 if (itemType == model.MapType(typeof(byte)))
                 {

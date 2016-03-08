@@ -275,11 +275,7 @@ namespace AqlaSerializer
                             Type memberType = Helpers.GetMemberType(member.Member);
                             memberType = Helpers.GetNullableUnderlyingType(memberType) ?? memberType;
                             if (memberType.IsArray)
-                            {
-                                if (memberType.GetArrayRank() == 1)
-                                    memberType = memberType.GetElementType();
-                                else continue;
-                            }
+                                memberType = memberType.GetElementType();
                             memberType = TypeModel.GetListItemType(Model, memberType) ?? memberType;
                             if (memberType == null) continue;
 

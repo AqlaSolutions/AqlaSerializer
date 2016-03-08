@@ -174,6 +174,24 @@ namespace AqlaSerializer.Meta
                         });
             }
         }
+        
+        /// <summary>
+        /// Maximum allowed array allocation length counting all 
+        /// </summary>
+        public int? ArrayLengthReadLimit
+        {
+            get { return _settingsValue.Member.Collection.ArrayLengthReadLimit; }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                        {
+                            if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
+                            sv.Member.Collection.ArrayLengthReadLimit = value;
+                            return sv;
+                        });
+            }
+        }
 
         /// <summary>
         /// Gets or sets whether the type should use a parameterless constructor (the default),

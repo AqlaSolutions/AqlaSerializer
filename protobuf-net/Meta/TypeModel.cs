@@ -32,6 +32,8 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AllowStreamRewriting { get; set; } = true;
 
+        internal const int DefaultArrayLengthReadLimit = 100000;
+
         internal const int DefaultRecursionDepthLimit = 500;
 
         public int RecursionDepthLimit { get; set; } = DefaultRecursionDepthLimit;
@@ -1284,7 +1286,7 @@ namespace AqlaSerializer.Meta
                 Type itemType = null;
                 if (type.IsArray)
                 {   // note we don't need to exclude byte[], as that is handled by GetTypeCode already
-                    if (type.GetArrayRank() == 1) itemType = type.GetElementType();
+                    itemType = type.GetElementType();
                 }
                 else
                 {

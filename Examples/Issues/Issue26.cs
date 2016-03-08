@@ -75,17 +75,17 @@ namespace Examples.Issues
     public class Station
     {
         [ProtoBuf.ProtoMember(1)]
-        public int Number { get; internal set; }
+        public int Number { get; set; }
 
         [ProtoBuf.ProtoMember(8)]
-        public int Ticket { get; internal set; }
+        public int Ticket { get; set; }
 
         public Station(int number, int ticket)
         {
             this.Number = number;
             this.Ticket = ticket;
         }
-        private Station() { }
+        public Station() { }
 
     }
 
@@ -95,7 +95,7 @@ namespace Examples.Issues
     public class StationList
     {
         [ProtoBuf.ProtoMember(1)]
-        private readonly List<Station> _liststations = new List<Station>();
+        public List<Station> _liststations = new List<Station>();
         public List<Station> Stations { get { return _liststations; } }
 
     }
@@ -103,7 +103,7 @@ namespace Examples.Issues
     [ProtoBuf.ProtoContract]
     public class WithoutParameterlessCtor {
         [ProtoBuf.ProtoMember(1)]
-        public int Foo {get; internal set;}
+        public int Foo {get; set;}
 
         public WithoutParameterlessCtor(int foo)
         {

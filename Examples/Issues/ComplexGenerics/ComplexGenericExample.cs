@@ -1,4 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
+using AqlaSerializer.Meta;
+
 namespace Examples.Issues.ComplexGenerics
 {
 /* Written in response to a question about how to handle multiple "packet" subclasses;
@@ -16,11 +19,18 @@ namespace Examples.Issues.ComplexGenerics
     public class ComplexGenericTest
     {
         [Test]
+        public void EnsureNoSkipInMiddle()
+        {
+            Assert.That(RuntimeTypeModel.Default.SkipCompiledVsNotCheck, Is.False);
+        }
+
+        [Test]
         public void TestX()
         {
             Query query = new X { Result = "abc" };
             Assert.AreEqual(typeof(string), query.GetQueryType());
-            Query clone = Serializer.DeepClone<Query>(query);
+            var tm = TypeModel.Create();
+            Query clone = tm.DeepClone<Query>(query);
             Assert.IsNotNull(clone);
             Assert.AreNotSame(clone, query);
             Assert.IsInstanceOfType(query.GetType(), clone);
@@ -75,7 +85,7 @@ namespace Examples.Issues.ComplexGenerics
             get { return ResultString; }
             set { ResultString = value; }
         }
-        protected abstract string ResultString { get; set; }
+        public abstract string ResultString { get; set; }
 
         protected static string FormatQueryString<T>(T value)
         {
@@ -96,7 +106,7 @@ namespace Examples.Issues.ComplexGenerics
         public new DataSet Result { get; set; }
 
         [ProtoBuf.ProtoMember(1)]
-        protected override string ResultString
+        public override string ResultString
         {
             get {
                 if (Result == null) return null;
@@ -123,7 +133,7 @@ namespace Examples.Issues.ComplexGenerics
         [ProtoBuf.ProtoMember(1)]
         public new bool Result { get; set; }
 
-        protected override string ResultString
+        public override string ResultString
         {
             get {return FormatQueryString(Result); }
             set { Result = ParseQueryString<bool>(value); }
@@ -135,7 +145,7 @@ namespace Examples.Issues.ComplexGenerics
         [ProtoBuf.ProtoMember(1)]
         public new string Result { get; set; }
 
-        protected override string ResultString
+        public override string ResultString
         {
             get { return Result ; }
             set { Result = value; }
@@ -147,7 +157,7 @@ namespace Examples.Issues.ComplexGenerics
         [ProtoBuf.ProtoMember(1)]
         public new int Result { get; set; }
 
-        protected override string ResultString
+        public override string ResultString
         {
             get { return FormatQueryString(Result); }
             set { Result = ParseQueryString<int>(value); }

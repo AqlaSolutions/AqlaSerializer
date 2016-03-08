@@ -162,11 +162,11 @@ namespace Examples.Issues
         public class Node<T>
         {
             [ProtoBuf.ProtoMember(3)]
-            private readonly List<Node<T>> children = new List<Node<T>>();
+            public List<Node<T>> children = new List<Node<T>>();
             [ProtoBuf.ProtoMember(1)]
-            private readonly string key;
+            public string key;
             [ProtoBuf.ProtoMember(2)]
-            private T value;
+            public T value;
 
             public string Key { get { return key; } }
             public T Value { get { return value; } }
@@ -177,7 +177,7 @@ namespace Examples.Issues
                 this.value = value;
             }
 
-            private Node()
+            public Node()
             {
             }
 

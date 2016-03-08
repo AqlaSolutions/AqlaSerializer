@@ -51,13 +51,7 @@ namespace AqlaSerializer.Meta
             // do not allow EnumPassthru and other settings to affect anything until buildling serializer
             wireType = 0;
             Type itemType = l.Collection.ItemType ?? l.EffectiveType;
-
-            if (itemType.IsArray && itemType.GetArrayRank() != 1)
-                throw new NotSupportedException("Multi-dimension arrays are not supported");
-
-            if (l.EffectiveType.IsArray && l.EffectiveType.GetArrayRank() != 1)
-                throw new NotSupportedException("Multi-dimension arrays are not supported");
-
+            
             bool itemTypeCanBeNull = CanTypeBeNull(itemType);
 
             bool isPacked = CanBePackedCollection(l);
@@ -194,14 +188,30 @@ namespace AqlaSerializer.Meta
 
                 if (l.EffectiveType.IsArray)
                 {
-                    ser = new ArrayDecorator(
-                                     _model,
-                                     ser,
-                                     isPacked,
-                                     packedReadWt,
-                                     l.EffectiveType,
-                                     !l.Collection.Append.Value,
-                                     protoCompatibility);
+                    if (l.EffectiveType.GetArrayRank() == 1)
+                    {
+                        ser = new ArrayDecorator(
+                            _model,
+                            ser,
+                            isPacked,
+                            packedReadWt,
+                            l.EffectiveType,
+                            !l.Collection.Append.Value,
+                            l.Collection.ArrayLengthReadLimit.Value,
+                            protoCompatibility);
+                    }
+                    else
+                    {
+                        if (protoCompatibility)
+                            throw new NotSupportedException("Multi-dimensional arrays are supported only in Enhanced collection format");
+
+                        ser = new MultiDimensionalArrayDecorator(
+                            _model,
+                            ser,
+                            l.EffectiveType,
+                            !l.Collection.Append.Value,
+                            l.Collection.ArrayLengthReadLimit.Value);
+                    }
                 }
                 else
                 {
@@ -754,6 +764,15 @@ namespace AqlaSerializer.Meta
 
                     }
                 }
+
+                if (!level.EffectiveType.IsArray)
+                {
+                    if (level.Collection.ArrayLengthReadLimit != null) throw new ProtoException("ArrayLengthReadLimit specified for non-array");
+                }
+                else if (level.Collection.ArrayLengthReadLimit == null)
+                    level.Collection.ArrayLengthReadLimit = TypeModel.DefaultArrayLengthReadLimit;
+                else if (level.Collection.ArrayLengthReadLimit <= 0)
+                    throw new ProtoException("ArrayLengthReadLimit should be greater than zero or not specified");
             }
 
             #endregion
@@ -773,6 +792,7 @@ namespace AqlaSerializer.Meta
             level0.Collection.PackedWireTypeForRead = null;
             level0.Collection.Format = CollectionFormat.NotSpecified;
             level0.Collection.ConcreteType = null;
+            level0.Collection.ArrayLengthReadLimit = null;
         }
     }
 }

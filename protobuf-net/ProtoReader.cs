@@ -380,6 +380,7 @@ namespace AqlaSerializer
                     throw CreateWireTypeException();
             }
         }
+        
         private const long Int64Msb = ((long)1) << 63;
         private const int Int32Msb = ((int)1) << 31;
         private static int Zag(uint ziggedValue)

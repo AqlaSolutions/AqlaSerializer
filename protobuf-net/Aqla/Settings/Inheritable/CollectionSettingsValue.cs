@@ -42,6 +42,8 @@ namespace AqlaSerializer.Settings
         /// </summary>
         public bool? Append;
 
+        public int? ArrayLengthReadLimit;
+
         /// <summary>
         /// Returns true if ItemType != null, otherwise false
         /// </summary>
@@ -55,6 +57,7 @@ namespace AqlaSerializer.Settings
             if (r.ItemType == null) r.ItemType = baseValue.ItemType;
             if (r.PackedWireTypeForRead == null) r.PackedWireTypeForRead = baseValue.PackedWireTypeForRead;
             if (r.Append == null) r.Append = baseValue.Append;
+            if (r.ArrayLengthReadLimit != null) r.ArrayLengthReadLimit = baseValue.ArrayLengthReadLimit;
             return r;
         }
     }

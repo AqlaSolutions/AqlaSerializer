@@ -349,14 +349,7 @@ namespace Examples
                 Assert.AreEqual(oldArr[i], newArr[i], "Item " + i.ToString());
             }
         }
-
-        [Test, ExpectedException(typeof(NotSupportedException))]
-        public void TestMultidimArray()
-        {
-            MultiDim md = new MultiDim { Values = new int[1, 2] { { 3, 4 } } };
-            Serializer.DeepClone(md);
-        }
-
+        
         [Test]
         public void TestArrayList([Values(false,true)] bool compile)
         {

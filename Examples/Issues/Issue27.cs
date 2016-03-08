@@ -86,9 +86,9 @@ namespace Examples.Issues
        }
        // Stupid tuple public class for datacontract
        [DataMember(Order = 1)]
-       public TKey1 Key1 { get;  internal set; }
+       public TKey1 Key1 { get;  set; }
        [DataMember(Order = 2)]
-       public TKey2 Key2 { get;  internal set; }
+       public TKey2 Key2 { get;  set; }
 
        public override string ToString() {
            return Key1.ToString() + ", " + Key2.ToString();

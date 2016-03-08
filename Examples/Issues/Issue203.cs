@@ -15,7 +15,7 @@ namespace Examples.Issues
         public class SerializeClass
         {
             [ProtoBuf.ProtoMember(1, AsReference = true)]
-            private SomeCollection _someList = null;
+            public SomeCollection _someList = null;
             public SomeCollection SomeList
             {
                 get

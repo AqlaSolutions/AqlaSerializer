@@ -168,17 +168,17 @@ namespace Examples.Issues
             Assert.IsTrue(model.CanSerialize(typeof(DateTime?[][])));
         }
         [Test]
-        public void TestPrimitiveMultidimArraysCannotSerialize()
+        public void TestPrimitiveMultidimArraysCanSerialize()
         {
             var model = TypeModel.Create();
-            Assert.IsFalse(model.CanSerialize(typeof(int[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(int?[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(short[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(short?[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(byte[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(string[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(DateTime[,])));
-            Assert.IsFalse(model.CanSerialize(typeof(DateTime?[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(int[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(int?[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(short[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(short?[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(byte[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(string[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(DateTime[,])));
+            Assert.IsTrue(model.CanSerialize(typeof(DateTime?[,])));
 
             Assert.IsFalse(model.CanSerialize(typeof(System.Windows.Media.Color[,])));
             Assert.IsFalse(model.CanSerialize(typeof(DateTimeOffset[,])));
