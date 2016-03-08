@@ -70,7 +70,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                         if ((bool)tmp)
                             main.Member.Format = ValueFormat.Reference;
                         else
-                            main.Member.Format = ProtobufNetMemberHandlerStrategy.GetDefaultLegacyFormat(s.Type, model);
+                            main.Member.Format = ValueSerializerBuilder.GetDefaultLegacyFormat(s.Type, model);
                     }
                     if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) s.ImplicitFirstTag = (int)tmp;
                     if (item.TryGet("ConstructType", out tmp)) main.ConstructType = (Type)tmp;

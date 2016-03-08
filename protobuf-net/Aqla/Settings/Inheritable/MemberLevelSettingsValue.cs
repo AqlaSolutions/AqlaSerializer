@@ -20,11 +20,8 @@ namespace AqlaSerializer.Settings
         /// Has value if != NotSpecified
         /// </summary>
         public ValueFormat Format;
-
-        /// <summary>
-        /// Used when no enhanced format specified, required to support not as reference default behavior on legacy proto members of non-contract types.
-        /// </summary>
-        public ValueFormat DefaultFormatFallback;
+        
+        public bool? UseLegacyDefaults;
         
         /// <summary>
         /// Embeds the type information into the stream, allowing usage with types not known in advance.
@@ -48,6 +45,7 @@ namespace AqlaSerializer.Settings
             // we don't change PackedWireTypeForRead because any non-null value would be not default
             x.ContentBinaryFormatHint = x.ContentBinaryFormatHint.GetValueOrDefault();
             x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
+            x.UseLegacyDefaults = x.UseLegacyDefaults.GetValueOrDefault();
             return x;
         }
 
@@ -74,7 +72,7 @@ namespace AqlaSerializer.Settings
             if (r.Format == ValueFormat.NotSpecified) r.Format = baseValue.Format;
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
-            if (r.DefaultFormatFallback == ValueFormat.NotSpecified) r.DefaultFormatFallback = baseValue.DefaultFormatFallback;
+            if (r.UseLegacyDefaults == null) r.UseLegacyDefaults = baseValue.UseLegacyDefaults;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
         }

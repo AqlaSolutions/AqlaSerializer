@@ -49,6 +49,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
 
             var l = s.SerializationSettings.GetSettingsCopy(0);
+            l.Basic.UseLegacyDefaults = true;
             _strategy.SetLegacyFormat(ref l.Basic, member, model);
             s.SerializationSettings.SetSettings(l, 0);
 

@@ -34,6 +34,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             try
             {
                 MemberLevelSettingsValue level = s.SerializationSettings.GetSettingsCopy(0).Basic;
+                level.UseLegacyDefaults = true;
+
                 if (main.Tag <= 0) attribute.TryGetNotDefault("Tag", ref main.Tag);
                 if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotEmpty("Name", ref main.Name);
                 if (!main.IsRequiredInSchema) attribute.TryGetNotDefault("IsRequired", ref main.IsRequiredInSchema);
@@ -83,7 +85,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                         SetLegacyFormat(ref level, member, model);
                 }
                 else
-                    level.Format = notAsReference ? GetDefaultLegacyFormat(type, model) : ValueFormat.Reference;
+                    level.Format = notAsReference ? ValueSerializerBuilder.GetDefaultLegacyFormat(type, model) : ValueFormat.Reference;
 
                 s.TagIsPinned = main.Tag > 0;
 
@@ -119,25 +121,10 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             }
         }
         
-        public static ValueFormat GetDefaultLegacyFormat(Type type, RuntimeTypeModel model)
-        {
-            return ValueSerializerBuilder.CanTypeBeNull(type)
-#if FORCE_ADVANCED_VERSIONING
-                   || !model.SkipForcedAdvancedVersioning
-#endif
-                       ? ValueFormat.MinimalEnhancement
-                       : ValueFormat.Compact;
-        }
-
         public void SetLegacyFormat(ref MemberLevelSettingsValue level, MemberInfo member, RuntimeTypeModel model)
         {
             Type type = Helpers.GetMemberType(member);
-            ValueFormat legacyFormat = GetDefaultLegacyFormat(type, model);
-            if (level.WriteAsDynamicType.GetValueOrDefault())
-            {
-                level.DefaultFormatFallback = legacyFormat;
-                return;
-            }
+            ValueFormat legacyFormat = ValueSerializerBuilder.GetDefaultLegacyFormat(type, model);
             switch (Helpers.GetTypeCode(type))
             {
                 // these can't be registered and don't have AsReferenceDefault
@@ -149,14 +136,6 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                     level.Format = legacyFormat;
                     break;
                 default:
-                    // we could check GetContactFamily == null
-                    // but type still may be force-added even without contract
-                    // so we have to implicitely set fallback to false
-                    // the downside is that noone will know why
-                    // the default is not as reference for this member
-                    // if its EffectiveType is not registered
-                    level.DefaultFormatFallback = legacyFormat;
-
                     if (!RuntimeTypeModel.CheckTypeCanBeAdded(model, type))
                     {
                         // for primitive types - explicitly

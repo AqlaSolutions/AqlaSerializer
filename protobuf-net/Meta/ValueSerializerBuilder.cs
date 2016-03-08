@@ -320,6 +320,18 @@ namespace AqlaSerializer.Meta
             }
         }
 
+
+        public static ValueFormat GetDefaultLegacyFormat(Type type, RuntimeTypeModel model)
+        {
+            return CanTypeBeNull(type)
+#if FORCE_ADVANCED_VERSIONING
+                   || !model.SkipForcedAdvancedVersioning
+#endif
+                       ? ValueFormat.MinimalEnhancement
+                       : ValueFormat.Compact;
+        }
+
+
         internal static bool CanTypeBeNull(Type type)
         {
             return !Helpers.IsValueType(type) || Helpers.GetNullableUnderlyingType(type) != null;
@@ -673,8 +685,8 @@ namespace AqlaSerializer.Meta
                 level = MemberLevelSettingsValue.Merge(typeSettings.Member, level);
             }
 
-            if (level.Format == ValueFormat.NotSpecified)
-                level.Format = level.DefaultFormatFallback;
+            if (level.Format == ValueFormat.NotSpecified && level.UseLegacyDefaults.GetValueOrDefault())
+                level.Format = GetDefaultLegacyFormat(level.EffectiveType, _model);
 
             if (level.Format == ValueFormat.LateReference)
             {
