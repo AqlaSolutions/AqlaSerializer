@@ -16,7 +16,7 @@ using Type = IKVM.Reflection.Type;
 #endif
 
 namespace AqlaSerializer
-{ 
+{
     /// <summary>
     /// Represents an output stream for writing protobuf data.
     /// 
@@ -312,6 +312,7 @@ namespace AqlaSerializer
 #if DEBUG
             switch (wireType)
             {   // validate requested header-type
+                case WireType.Null:
                 case WireType.Fixed32:
                 case WireType.Fixed64:
                 case WireType.String:
@@ -327,7 +328,10 @@ namespace AqlaSerializer
 #endif
             writer._expectRoot = false;
             writer._fieldNumber = fieldNumber;
-            writer._wireType = wireType;
+            if (wireType != WireType.Null)
+                writer._wireType = wireType;
+            else
+                writer._wireType = WireType.None;
             WriteHeaderCore(fieldNumber, wireType, writer);
         }
         internal static void WriteHeaderCore(int fieldNumber, WireType wireType, ProtoWriter writer)

@@ -55,42 +55,42 @@ namespace AqlaSerializer.unittest.Aqla
 {
     #1
      -> Foo.SimpleCollectionInherited
-     -> NetObject : Int32[] = UseConstructor
-     -> Array : Int32[]
+     -> NetObject : Int32[] = UseConstructor, WithNullWireType
+     -> Array : Int32[] = NewPacked
      -> WireType : Int32 = Variant
      -> Int32
     ,
     #2
      -> Foo.SimpleCollectionInheritedReference
-     -> NetObject : Int32[] = AsReference, UseConstructor
-     -> Array : Int32[]
+     -> NetObject : Int32[] = AsReference, UseConstructor, WithNullWireType
+     -> Array : Int32[] = NewPacked
      -> WireType : Int32 = Variant
      -> Int32
     ,
     #3
      -> Foo.SimpleCollectionSpecifiedCompact
-     -> NetObject : Int32[] = UseConstructor
-     -> Array : Int32[]
+     -> NetObject : Int32[] = UseConstructor, WithNullWireType
+     -> Array : Int32[] = NewPacked
      -> WireType : Int32 = Variant
      -> Int32
     ,
     #4
      -> Foo.NestedCollection
      -> NoNull : NestedCollectionClass[]
-     -> Array : NestedCollectionClass[]
+     -> Array : NestedCollectionClass[] = NewPacked
      -> NetObject : NestedCollectionClass = AsReference, UseConstructor
-     -> List : NestedCollectionClass
+     -> List : NestedCollectionClass = NewPacked
      -> NetObject : List`1 = AsReference, UseConstructor
-     -> List : List`1
+     -> List : List`1 = NewPacked
      -> NoNull : Int32[]
-     -> Array : Int32[]
+     -> Array : Int32[] = NewPacked
      -> WireType : Int32 = Variant
      -> Int32
     ,
     #5
      -> Foo.SimpleCollectionSpecifiedMinimal
-     -> NetObject : Int32[] = UseConstructor
-     -> Array : Int32[]
+     -> NetObject : Int32[] = UseConstructor, WithNullWireType
+     -> Array : Int32[] = NewPacked
      -> NetObject : Int32 = UseConstructor
      -> WireType : Int32 = Variant
      -> Int32

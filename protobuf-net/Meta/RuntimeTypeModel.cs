@@ -51,7 +51,7 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed partial class RuntimeTypeModel : TypeModel
     {
-        internal ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
+        public ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
         internal IValueSerializerBuilder ValueSerializerBuilder { get; }
         

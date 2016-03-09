@@ -21,10 +21,9 @@ namespace AqlaSerializer.Serializers
 {
     sealed class NetObjectValueDecorator : IProtoTypeSerializer // type here is just for wrapping
     {
-        
-
         public bool DemandWireTypeStabilityStatus()
         {
+            _allowNullWireType = false;
             return true; // always subitem
         }
 
@@ -38,11 +37,14 @@ namespace AqlaSerializer.Serializers
         readonly BclHelpers.NetObjectOptions _options;
         readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
 
+        bool _allowNullWireType;
+
         // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
-        NetObjectValueDecorator(Type type, bool asReference, bool asLateReference, RuntimeTypeModel model)
+        NetObjectValueDecorator(Type type, bool asReference, bool asLateReference, bool allowNullWireType, RuntimeTypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
+            _allowNullWireType = allowNullWireType;
             _options = BclHelpers.NetObjectOptions.UseConstructor;
             if (asReference)
             {
@@ -73,8 +75,8 @@ namespace AqlaSerializer.Serializers
             this.ExpectedType = type;
         }
 
-        public NetObjectValueDecorator(IProtoSerializerWithWireType tail, bool returnNullable, bool asReference, bool asLateReference, RuntimeTypeModel model)
-            : this(type: MakeReturnNullable(tail.ExpectedType, returnNullable, model), asReference: asReference, asLateReference: asLateReference, model: model)
+        public NetObjectValueDecorator(IProtoSerializerWithWireType tail, bool returnNullable, bool asReference, bool asLateReference, bool allowNullWireType, RuntimeTypeModel model)
+            : this(type: MakeReturnNullable(tail.ExpectedType, returnNullable, model), asReference: asReference, asLateReference: asLateReference, allowNullWireType: allowNullWireType, model: model)
         {
             _tail = tail;
             RequiresOldValue = _tail.RequiresOldValue || (_lateReferenceTail?.RequiresOldValue ?? false);
@@ -89,8 +91,8 @@ namespace AqlaSerializer.Serializers
         /// <summary>
         /// Dynamic type
         /// </summary>
-        public NetObjectValueDecorator(Type dynamicBase, bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, RuntimeTypeModel model)
-            : this(type: dynamicBase, asReference: asReference, asLateReference: false, model: model)
+        public NetObjectValueDecorator(Type dynamicBase, bool asReference, BinaryDataFormat dataFormatForDynamicBuiltins, bool allowNullWireType, RuntimeTypeModel model)
+            : this(type: dynamicBase, asReference: asReference, asLateReference: false, allowNullWireType: allowNullWireType, model: model)
         {
             _dataFormatForDynamicBuiltins = dataFormatForDynamicBuiltins;
             _options |= BclHelpers.NetObjectOptions.DynamicType;
@@ -100,8 +102,8 @@ namespace AqlaSerializer.Serializers
             // may be support later...
         }
 
-        public NetObjectValueDecorator(Type type, int key, bool asReference, bool asLateReference, ISerializerProxy serializerProxy, RuntimeTypeModel model)
-            : this(type: type, asReference: asReference, asLateReference: asLateReference, model: model)
+        public NetObjectValueDecorator(Type type, int key, bool asReference, bool asLateReference, ISerializerProxy serializerProxy, bool allowNullWireType, RuntimeTypeModel model)
+            : this(type: type, asReference: asReference, asLateReference: asLateReference, allowNullWireType: allowNullWireType, model: model)
         {
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
             _key = key;
@@ -110,13 +112,19 @@ namespace AqlaSerializer.Serializers
 
         public void WriteDebugSchema(IDebugSchemaBuilder builder)
         {
+            string description = _options.ToString();
+            if (_allowNullWireType)
+            {
+                if (!string.IsNullOrEmpty(description)) description += ", ";
+                description += "WithNullWireType";
+            }
             var s = (_tail ?? _keySerializer);
             if (s != null)
             {
-                using (builder.SingleTailDecorator(this, _options.ToString()))
+                using (builder.SingleTailDecorator(this, description))
                     s.WriteDebugSchema(builder);
             }
-            else builder.SingleValueSerializer(this, _options.ToString());
+            else builder.SingleValueSerializer(this, description);
         }
 
         public Type ExpectedType { get; }
@@ -126,12 +134,14 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
+            var type = ExpectedType;
+            if (source.WireType == WireType.Null) return Helpers.IsValueType(type) ? Activator.CreateInstance(type) : null;
+
             if (!RequiresOldValue) value = null;
             bool shouldEnd;
             int newTypeRefKey;
             int newObjectKey;
             int typeKey = _key;
-            var type = ExpectedType;
             bool isDynamic;
             bool isLateReference;
             BclHelpers.NetObjectOptions options = _options;
@@ -211,6 +221,12 @@ namespace AqlaSerializer.Serializers
 
         public void Write(object value, ProtoWriter dest)
         {
+            if (_allowNullWireType && value == null)
+            {
+                ProtoWriter.WriteFieldHeaderComplete(WireType.Null, dest);
+                return;
+            }
+
             bool write;
             int dynamicTypeKey;
 
@@ -268,15 +284,24 @@ namespace AqlaSerializer.Serializers
 
         public void EmitRead(CompilerContext ctx, Local valueFrom)
         {
+            var g = ctx.G;
+            var s = g.StaticFactory;
+
+            //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
+
+            Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
             using (ctx.StartDebugBlockAuto(this))
+            using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(ExpectedType))
             {
-                var g = ctx.G;
-                var s = g.StaticFactory;
+                g.If(g.ReaderFunc.WireType() == WireType.Null);
+                {
+                    if (Helpers.IsValueType(ExpectedType))
+                        g.InitObj(nullableValue);
+                    else
+                        g.Assign(nullableValue, null);
+                }
+                g.Else();
 
-                //bool shouldUnwrapNullable = _serializer != null && ExpectedType != _serializer.ExpectedType && Helpers.GetNullableUnderlyingType(ExpectedType) == _serializer.ExpectedType;
-
-                Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
-                using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(ExpectedType))
                 using (Local innerValue = nullableUnderlying == null ? nullableValue.AsCopy() : ctx.Local(nullableUnderlying))
                 using (Local shouldEnd = ctx.Local(typeof(bool)))
                 using (Local isLateReference = ctx.Local(typeof(bool)))
@@ -319,7 +344,7 @@ namespace AqlaSerializer.Serializers
                         using (ctx.StartDebugBlockAuto(this, "ShouldEnd=True"))
                         {
                             g.Assign(oldValueBoxed, inputValueBoxed);
-                            
+
                             // now valueBoxed is not null otherwise it would go to else
 
                             // unwrap nullable
@@ -454,10 +479,12 @@ namespace AqlaSerializer.Serializers
                         g.Reader.EndSubItem(token);
                     }
                     g.End();
-
-                    if (EmitReadReturnsValue)
-                        ctx.LoadValue(nullableValue);
                 }
+                
+                g.End(); // null check
+
+                if (EmitReadReturnsValue)
+                    ctx.LoadValue(nullableValue);
             }
         }
 
@@ -484,6 +511,17 @@ namespace AqlaSerializer.Serializers
                 using (Local value = nullableUnderlying == null ? inputValue.AsCopy() : ctx.Local(nullableUnderlying))
                 {
                     var g = ctx.G;
+                    bool canBeNull = nullableUnderlying != null || !Helpers.IsValueType(ExpectedType);
+                    bool allowNullWireType = _allowNullWireType;
+                    if (canBeNull && allowNullWireType)
+                    {
+                        g.If(inputValue.AsOperand == null);
+                        {
+                            g.Writer.WriteFieldHeaderComplete(WireType.Null);
+                        }
+                        g.Else();
+                    }
+
                     using (Local write = ctx.Local(typeof(bool)))
                     using (Local dynamicTypeKey = ctx.Local(typeof(int)))
                     using (Local optionsLocal = canBeLateRef ? ctx.Local(typeof(BclHelpers.NetObjectOptions)) : null)
@@ -588,7 +626,11 @@ namespace AqlaSerializer.Serializers
                         g.End();
                         g.Writer.EndSubItem(token);
                     }
+
+                    if (canBeNull && allowNullWireType)
+                        g.End();
                 }
+
             }
         }
 #endif

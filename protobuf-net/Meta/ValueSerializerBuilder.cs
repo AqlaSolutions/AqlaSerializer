@@ -231,7 +231,6 @@ namespace AqlaSerializer.Meta
 
                 if (isMemberOrNested)
                 {
-                    // dynamic type is not applied to lists
                     if (MetaType.IsNetObjectValueDecoratorNecessary(_model, l.Format))
                     {
                         ser = new NetObjectValueDecorator(
@@ -239,6 +238,7 @@ namespace AqlaSerializer.Meta
                             Helpers.GetNullableUnderlyingType(l.EffectiveType) != null,
                             l.Format == ValueFormat.Reference || l.Format == ValueFormat.LateReference,
                             l.Format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(_model.GetKey(l.EffectiveType, false, true), _model),
+                            !_model.ProtoCompatibility.SuppressNullWireType,
                             _model);
                     }
                     else if (!Helpers.IsValueType(l.EffectiveType) || Helpers.GetNullableUnderlyingType(l.EffectiveType) != null)
@@ -431,13 +431,13 @@ namespace AqlaSerializer.Meta
                 if (key >= 0 || dynamicType)
                 {
                     if (dynamicType)
-                        return new NetObjectValueDecorator(originalType, format == ValueFormat.Reference || format == ValueFormat.LateReference, dataFormat, _model);
+                        return new NetObjectValueDecorator(originalType, format == ValueFormat.Reference || format == ValueFormat.LateReference, dataFormat, !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(key, _model))
                     {
-                        return new NetObjectValueDecorator(originalType, key, true, true, _model[type], _model);
+                        return new NetObjectValueDecorator(originalType, key, true, true, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
-                        return new NetObjectValueDecorator(originalType, key, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], _model);
+                        return new NetObjectValueDecorator(originalType, key, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else
                         return new ModelTypeSerializer(type, key, _model[type]);
                 }
@@ -464,7 +464,7 @@ namespace AqlaSerializer.Meta
 #endif
             if (dynamicTypeDataFormat != null)
             {
-                ser = new NetObjectValueDecorator(type, format == ValueFormat.Reference || format == ValueFormat.LateReference, dynamicTypeDataFormat.Value, _model);
+                ser = new NetObjectValueDecorator(type, format == ValueFormat.Reference || format == ValueFormat.LateReference, dynamicTypeDataFormat.Value, !_model.ProtoCompatibility.SuppressNullWireType, _model);
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
             {
@@ -473,6 +473,7 @@ namespace AqlaSerializer.Meta
                     Helpers.GetNullableUnderlyingType(type) != null,
                     format == ValueFormat.Reference || format == ValueFormat.LateReference,
                     format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(_model.GetKey(type, false, true), _model),
+                    !_model.ProtoCompatibility.SuppressNullWireType,
                     _model);
             }
             else

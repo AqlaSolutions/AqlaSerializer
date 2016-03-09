@@ -522,7 +522,11 @@ namespace AqlaSerializer.Serializers
         public string MakeDebugSchemaDescription(bool append)
         {
             string desc = "";
-            if (_protoCompatibility) desc += "Compatibility";
+            if (_protoCompatibility)
+                desc += "Compatibility";
+            else if (_tail.DemandWireTypeStabilityStatus())
+                desc += "NewPacked";
+
             if (_writePacked)
             {
                 if (desc.Length != 0)

@@ -867,6 +867,8 @@ namespace AqlaSerializer
         {
             switch (_wireType)
             {
+                case WireType.Null:
+                    return;
                 case WireType.Fixed32:
                     if(_available < 4) Ensure(4, true);
                     _available -= 4;

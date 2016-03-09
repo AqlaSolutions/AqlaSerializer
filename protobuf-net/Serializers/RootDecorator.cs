@@ -32,7 +32,7 @@ namespace AqlaSerializer.Serializers
         public RootDecorator(Type type, bool wrap, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
         {
             _protoCompatibility = protoCompatibility;
-            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, model) : serializer;
+            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
         }
 
         public Type ExpectedType => _serializer.ExpectedType;

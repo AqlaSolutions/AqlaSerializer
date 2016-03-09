@@ -46,6 +46,13 @@ namespace AqlaSerializer
         /// denotes a variant integer that should be interpreted using
         /// zig-zag semantics (so -ve numbers aren't a significant overhead)
         /// </summary>
-        SignedVariant = WireType.Variant | (1 << 3),
+        SignedVariant = WireType.Variant | 1 << 3, // [1000], [1] is not written, so [000] is read as variant
+
+        /// <summary>
+        /// No field content expected
+        /// </summary>
+        Null = 7,
+
+        
     }
 }
