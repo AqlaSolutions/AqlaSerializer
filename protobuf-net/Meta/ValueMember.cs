@@ -25,6 +25,7 @@ namespace AqlaSerializer.Meta
     {
         MemberMainSettingsValue _main;
         readonly bool _isAccessHandledOutside;
+        readonly bool _canHaveDefaultValue;
 
         ValueSerializationSettings _vs;
 
@@ -54,7 +55,16 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// The default value of the item (members with this value will not be serialized)
         /// </summary>
-        public object DefaultValue { get { return _vs.DefaultValue; } set { ThrowIfFrozen(); _vs.DefaultValue = value; } }
+        public object DefaultValue
+        {
+            get { return _vs.DefaultValue; }
+            set
+            {
+                ThrowIfFrozen();
+                if (!_canHaveDefaultValue) throw new ArgumentException("Member " + Name + " can't have a default value");
+                _vs.DefaultValue = value;
+            }
+        }
 
         /// <summary>
         /// Gets the member (field/property) which this member relates to.
@@ -75,7 +85,7 @@ namespace AqlaSerializer.Meta
         /// Creates a new ValueMember instance
         /// </summary>
         public ValueMember(
-            MemberMainSettingsValue memberSettings, ValueSerializationSettings valueSerializationSettings, MemberInfo member, Type parentType, RuntimeTypeModel model, bool isAccessHandledOutside = false)
+            MemberMainSettingsValue memberSettings, ValueSerializationSettings valueSerializationSettings, MemberInfo member, Type parentType, RuntimeTypeModel model, bool isAccessHandledOutside = false, bool canHaveDefaultValue = true)
         {
             if (member == null) throw new ArgumentNullException(nameof(member));
             if (parentType == null) throw new ArgumentNullException(nameof(parentType));
@@ -84,9 +94,12 @@ namespace AqlaSerializer.Meta
             Member = member;
             ParentType = parentType;
             _model = model;
+            _canHaveDefaultValue = canHaveDefaultValue;
             _main = memberSettings;
             _isAccessHandledOutside = isAccessHandledOutside;
             _vs = valueSerializationSettings.Clone();
+            if (!canHaveDefaultValue && _vs.DefaultValue != null)
+                throw new ArgumentException("Default value was already set but the member " + Name + " can't have a default value", nameof(valueSerializationSettings));
         }
 
         internal class FinalizingSettingsArgs : EventArgs

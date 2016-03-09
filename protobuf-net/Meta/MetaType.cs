@@ -111,7 +111,7 @@ namespace AqlaSerializer.Meta
                     vs.SetSettings(new ValueSerializationSettings.LevelValue(level) { IsNotAssignable = true }, 0);
                     vs.DefaultLevel = new ValueSerializationSettings.LevelValue(level.MakeDefaultNestedLevel());
                     var main = new MemberMainSettingsValue() { Name = memberInfo.Name };
-                    var vm = new ValueMember(main, vs, memberInfo, Type, model, isAccessHandledOutside: true);
+                    var vm = new ValueMember(main, vs, memberInfo, Type, model, canHaveDefaultValue: false, isAccessHandledOutside: true);
                     AddTupleField(vm);
                 }
             }
