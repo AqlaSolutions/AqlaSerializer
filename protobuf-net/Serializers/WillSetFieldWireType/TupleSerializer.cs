@@ -2,7 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections.Generic;
-using AltLinq;
+using AltLinq; using System.Linq;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
 #endif
