@@ -293,6 +293,16 @@ namespace AqlaSerializer.Meta
 
         #region Setting accessors
 
+        internal void SetLegacy()
+        {
+            _vs.SetForAllLevels(
+                x =>
+                    {
+                        x.UseLegacyDefaults = true;
+                        return x;
+                    });
+        }
+
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
             return _vs.GetSettingsCopy(level).Basic;

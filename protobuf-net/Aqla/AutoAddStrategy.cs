@@ -30,6 +30,11 @@ namespace AqlaSerializer
     using AttributeFamily = MetaType.AttributeFamily;
     public class AutoAddStrategy : IAutoAddStrategy
     {
+        /// <summary>
+        /// Tuple members are mapped as protobuf-net members
+        /// </summary>
+        public bool UseLegacyTupleFields { get; set; }
+
         IMemberMapper _memberMapper;
 
         public IMemberMapper MemberMapper
@@ -268,6 +273,7 @@ namespace AqlaSerializer
                 }
 
                 if (!DisableAutoAddingMemberTypes)
+                {
                     foreach (var member in members)
                     {
                         if (!member.MappingState.Input.IsEnumValueMember && member.Tag > 0)
@@ -285,6 +291,13 @@ namespace AqlaSerializer
                             }
                         }
                     }
+                }
+
+                if (UseLegacyTupleFields)
+                {
+                    foreach (ValueMember vm in metaType.GetTupleFields())
+                        vm.SetLegacy();
+                }
             }
             finally
             {
