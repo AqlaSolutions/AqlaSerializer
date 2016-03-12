@@ -125,6 +125,8 @@ namespace AqlaSerializer
             writer._model.Serialize(key, value, writer, false);
         }
 
+        // not used anymore because we don't want aux on members
+
         internal static void WriteObject(object value, int key, ProtoWriter writer, PrefixStyle style, int fieldNumber)
         {
             WriteObject(value, key, writer, style, fieldNumber, false);

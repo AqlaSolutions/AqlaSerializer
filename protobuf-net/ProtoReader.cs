@@ -632,6 +632,7 @@ namespace AqlaSerializer
         {
             return ReadTypedObject(value, key, reader, null);
         }
+        // not used anymore because we don't want aux on members
         public static object ReadTypedObject(object value, int key, ProtoReader reader, Type type)
         {
 #if FEAT_IKVM

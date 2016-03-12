@@ -58,16 +58,22 @@ namespace AqlaSerializer.Meta
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type.IsGenericTypeDefinition) return false;
             if (type.IsArray)
             {
                 // byte arrays are handled internally
                 if (Helpers.GetTypeCode(type.GetElementType()) == ProtoTypeCode.Byte) return false;
                 return true;
             }
+
+            var underlying = Helpers.GetNullableUnderlyingType(type);
+            if (underlying != null)
+                return CheckTypeCanBeAdded(model, underlying);
+
             return type != model.MapType(typeof(Enum))
                    && type != model.MapType(typeof(object))
                    && type != model.MapType(typeof(ValueType))
-                   && (Helpers.GetNullableUnderlyingType(type) == null && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown));
+                   && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown);
             //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
         
@@ -512,7 +518,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Type overrides are run before preparing type serializer
         /// </summary>
-        public void AddOverride(TypeSettingsOverride @override)
+        public void AddTypeOverride(TypeSettingsOverride @override)
         {
             if (@override == null) throw new ArgumentNullException(nameof(@override));
             int opaqueToken = 0;
@@ -531,7 +537,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Member overrides are run before preparing member serializer
         /// </summary>
-        public void AddOverride(MemberSettingsOverride @override)
+        public void AddFieldOverride(FieldSettingsOverride @override)
         {
             if (@override == null) throw new ArgumentNullException(nameof(@override));
             int opaqueToken = 0;
@@ -945,7 +951,7 @@ namespace AqlaSerializer.Meta
 
         string TryGetWrappedExceptionMessage(Exception ex, Type t)
         {
-            return ex.Message.IndexOf(t.FullName, System.StringComparison.Ordinal) >= 0
+            return ex.Message.IndexOf(t.FullName, System.StringComparison.Ordinal) < 0
                        ? (ex.Message + " (" + t.FullName + ")")
                        : null;
         }

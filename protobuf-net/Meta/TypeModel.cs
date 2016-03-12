@@ -947,9 +947,9 @@ namespace AqlaSerializer.Meta
             if (type == null) return null;
 #if !NO_GENERICS
             if (type.IsGenericParameter) return null;
-            // Nullable<T>
-            Type tmp = Helpers.GetNullableUnderlyingType(type);
-            if (tmp != null) return tmp;
+            var underlying = Helpers.GetNullableUnderlyingType(type);
+            if (underlying != null && Helpers.GetTypeCode(underlying) != ProtoTypeCode.Unknown)
+                return underlying;
 #endif
 
 #if !(WINRT || CF)

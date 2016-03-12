@@ -185,6 +185,32 @@ namespace AqlaSerializer.unittest.Meta
 
         }
 
+        [Test]
+        public void TestTypeWithNullablePropsComplex()
+        {
+            var model = TypeModel.Create();
+            var obj = new TypeWithNullsComplex() { First = new Foo(123) };
+            
+            var clone1 = model.DeepClone(obj);
+            
+            model.CompileInPlace();
+            var clone2 = model.DeepClone(obj);
+            
+            TypeModel compiled = model.Compile("TestTypeWithNullablePropsComplex", "TestTypeWithNullablePropsComplex.dll");
+            PEVerify.Verify("TestTypeWithNullablePropsComplex.dll");
+            var clone3 = compiled.DeepClone(obj);
+
+            Assert.AreEqual(123, clone1.First.Value.Value);
+            Assert.AreEqual(null, clone1.Second);
+            
+            Assert.AreEqual(123, clone2.First.Value.Value);
+            Assert.AreEqual(null, clone2.Second);
+
+            Assert.AreEqual(123, clone3.First.Value.Value);
+            Assert.AreEqual(null, clone3.Second);
+
+        }
+
         [ProtoBuf.ProtoContract]
         public class TypeWithNulls
         {
@@ -193,6 +219,29 @@ namespace AqlaSerializer.unittest.Meta
 
             [ProtoBuf.ProtoMember(2)]
             public decimal? Second { get; set; }
+        }
+
+        [ProtoBuf.ProtoContract]
+        public class TypeWithNullsComplex
+        {
+            [ProtoBuf.ProtoMember(1)]
+            public Foo? First { get; set; }
+            
+            [ProtoBuf.ProtoMember(2)]
+            public Foo? Second { get; set; }
+            
+        }
+
+        [ProtoBuf.ProtoContract]
+        public struct Foo
+        {
+            [ProtoBuf.ProtoMember(1)]
+            public int Value { get; set; }
+
+            public Foo(int value)
+            {
+                Value = value;
+            }
         }
     }
 }

@@ -32,7 +32,7 @@ namespace AqlaSerializer.Meta
     /// <summary>
     /// Returns true if it's a final override and others should not be invoked
     /// </summary>
-    public delegate bool MemberSettingsOverride(ValueMember member);
+    public delegate bool FieldSettingsOverride(ValueMember member);
 
     /// <summary>
     /// Returns true if it's a final override and others should not be invoked
@@ -41,10 +41,10 @@ namespace AqlaSerializer.Meta
 
     class OverridingManager
     {
-        List<MemberSettingsOverride> _memberOverrides = new List<MemberSettingsOverride>();
+        List<FieldSettingsOverride> _memberOverrides = new List<FieldSettingsOverride>();
         List<TypeSettingsOverride> _typeOverrides = new List<TypeSettingsOverride>();
         
-        public void Add(MemberSettingsOverride @override)
+        public void Add(FieldSettingsOverride @override)
         {
             if (@override == null) throw new ArgumentNullException(nameof(@override));
             _memberOverrides.Add(@override);
@@ -82,7 +82,7 @@ namespace AqlaSerializer.Meta
         {
             return new OverridingManager()
             {
-                _memberOverrides = new List<MemberSettingsOverride>(_memberOverrides),
+                _memberOverrides = new List<FieldSettingsOverride>(_memberOverrides),
                 _typeOverrides = new List<TypeSettingsOverride>(_typeOverrides),
             };
         }
