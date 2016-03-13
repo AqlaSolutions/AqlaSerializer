@@ -39,11 +39,12 @@ a serialization assembly (this also needs to be referenced and deployed from you
 
 Additional:
 
-Note that each framework contains 3 files:
+Note that each framework contains of files:
 
 - aqlaserializer.dll  the library itself
-- protobuf-net.xml  intellisense xml, used by thre IDE when developing
-- protobuf-net.pdb	debugging symbols, useful when debugging
+- aqlaserializer.xml  intellisense xml, used by thre IDE when developing
+- aqlaserializer.pdb	debugging symbols, useful when debugging
+- runsharp.dll
 
 Of these - the only one you **need** to deploy is the dll; the pdb may be useful for investigating crash reports. The
 xml is used only by the IDE.

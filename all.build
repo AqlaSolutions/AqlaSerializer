@@ -123,9 +123,6 @@
     <WinRTFiles Include="protobuf-net_WinRT\bin\Release\RunSharp.*"/>
     <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
 
-<!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/> -->
-<!--    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\RunSharp.*"/> -->
-
     <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
 </ItemGroup>
 
@@ -151,15 +148,15 @@
     
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     
-    <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl4"/>
-    <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl4"/>
+    <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl5"/>
+    <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
     
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
 
 
-    <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl4+net40+wp7+windows8"/>
-    <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable"/>
+    <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl5+net40+wp81+windows8+android+ios"/>
+    <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
 
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(NugetDirectory)\netcore45"/>
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(ZipDirectory)\Full\winrt"/>
@@ -167,11 +164,10 @@
 
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
-    <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl4"/>
+    <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl5"/>
     <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
 
-<!--    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/> -->
     <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30+enyim"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>

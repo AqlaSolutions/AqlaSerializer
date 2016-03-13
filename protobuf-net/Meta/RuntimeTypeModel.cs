@@ -58,7 +58,7 @@ namespace AqlaSerializer.Meta
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            if (type.IsGenericTypeDefinition) return false;
+            if (Helpers.IsGenericTypeDefinition(type)) return false;
             if (type.IsArray)
             {
                 // byte arrays are handled internally

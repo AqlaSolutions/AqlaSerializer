@@ -1,45 +1,26 @@
-The current used build machine has everything installed on Windows 7.
+The current used build machine has everything installed on Windows 10.
 
-Also I have Visual Studio 2012 installed there.
+Also I have Visual Studio 2015 installed there.
 
-1. mono 2.6.7 to c:\Program Files (x86)\Mono-2.6\
-
-http://download.mono-project.com/archive/2.6.7/windows-installer/2/
-
-share/nant/bin/nant.exe.config:
-
-replace
-                            key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0A\WinSDKNetFxTools\InstallationFolder"
-with
-                            key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.0A\WinSDK-NetFx35Tools\InstallationFolder"
-for 3.5
-
-reg copy HKLM\Software\Wow6432Node\Novell\Mono to  HKLM\Software\Novell\Mono
-
-2. .net 2.0 sdk
-http://www.microsoft.com/en-us/download/details.aspx?id=19988
-
-3. possible required .net 3.5 sdk 
+1. possible required .net 3.5 sdk 
 http://www.microsoft.com/en-us/download/details.aspx?id=3138
 
-4. adt (android bundle) + all platfroms sdks
+2. adt (android bundle) + all platfroms sdks
 
-5. xamarin
+3. xamarin
 (possible required http://download.xamarin.com/GTKforWindows/Windows/gtk-sharp-2.12.22.msi)
 
-6. Windows Phone 8 sdk http://www.microsoft.com/ru-ru/download/details.aspx?id=35471
+4. Windows Phone 8 sdk http://www.microsoft.com/ru-ru/download/details.aspx?id=35471
 
 For Windows 7:
 https://github.com/Xlab/wp8sdk-installer/tree/master/bin
 http://habrahabr.ru/post/157427/
 
-7. may be 
+5. may be 
 Download Application Builder for Windows Embedded Compact 2013 
 http://www.microsoft.com/en-us/download/details.aspx?id=38819
 
-8. nunit http://launchpad.net/nunitv2/trunk/2.6.2/+download/NUnit-2.6.2.msi
-
-9. MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases 
+6. MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases 
 
 edit .targets in installed, replace:
 
@@ -49,10 +30,10 @@ with
 
 <MSBuildCommunityTasksLib>$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.dll
 
-10. Silverlight 4, 5 SDK
+7. Silverlight 5 SDK
 http://www.microsoft.com/en-us/download/details.aspx?id=28359
 
-11. ASP .NET MVC (1.0, 2,) 3
+8. ASP .NET MVC (1.0, 2,) 3
 
 http://www.microsoft.com/en-us/download/details.aspx?id=5388
 http://www.microsoft.com/en-us/download/details.aspx?id=22079
