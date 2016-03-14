@@ -329,7 +329,7 @@ namespace AqlaSerializer.Meta
                 var fields = IsAutoTuple ? _tupleFields.Concat(fieldsEn) : fieldsEn.Concat(_tupleFields);
                 foreach (ValueMember x in fields)
                 {
-                    if (x.Member.Name == x.Name) return x;
+                    if (x.Member.Name == member) return x;
                 }
                 return null;
             }
