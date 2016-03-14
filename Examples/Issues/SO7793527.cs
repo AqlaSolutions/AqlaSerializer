@@ -43,8 +43,8 @@ namespace Examples.Issues
             var model = TypeModel.Create();
             var member = model[typeof(Foo)][1];
             member.Serializer.GetHashCode();
-            Assert.AreEqual(typeof(Bar), member.GetSettingsCopy().Collection.ItemType);
-            Assert.AreEqual(typeof(List<Bar>), member.GetSettingsCopy().Collection.ConcreteType);
+            Assert.AreEqual(typeof(Bar), member.GetFinalSettingsCopy().Collection.ItemType);
+            Assert.AreEqual(typeof(List<Bar>), member.GetFinalSettingsCopy().Collection.ConcreteType);
         }
         [Test]
         public void DefaultToListT()

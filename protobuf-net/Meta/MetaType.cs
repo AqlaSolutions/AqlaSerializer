@@ -177,6 +177,7 @@ namespace AqlaSerializer.Meta
             mt.BaseType = baseType;
             mt._fields = new BasicList();
             mt._rootNestedVs = _rootNestedVs.Clone();
+            mt._settingsValueFinal = new TypeSettingsValue();
             foreach (ValueMember field in _fields.Cast<ValueMember>().Select(f => (object)f.CloneAsUnfrozen(model)))
                 mt.Add(field);
             mt._tupleFields = new List<ValueMember>();

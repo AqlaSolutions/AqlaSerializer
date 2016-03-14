@@ -63,7 +63,8 @@ namespace AqlaSerializer.Meta
                 Type nestedItemType = null;
                 Type nestedDefaultType = null;
                 int idx = _model.FindOrAddAuto(itemType, false, true, false);
-                if (idx < 0 || !_model[itemType].IgnoreListHandling)
+                MetaType type = idx < 0 ? null : _model[itemType];
+                if (!type?.GetFinalSettingsCopy().IgnoreListHandling ?? true)
                     MetaType.ResolveListTypes(_model, itemType, ref nestedItemType, ref nestedDefaultType);
 
                 bool itemIsNestedCollection = nestedItemType != null;
@@ -101,7 +102,7 @@ namespace AqlaSerializer.Meta
 
                     MetaType metaType;
                     if (_model.FindOrAddAuto(itemType, false, true, false, out metaType) >= 0)
-                        nestedDefaultType = metaType.ConstructType ?? nestedDefaultType ?? metaType.Type;
+                        nestedDefaultType = metaType.GetFinalSettingsCopy().ConstructType ?? nestedDefaultType ?? metaType.Type;
 
                     var nestedLevel = settings.GetSettingsCopy(levelNumber + 1);
 
@@ -488,7 +489,7 @@ namespace AqlaSerializer.Meta
         {
             if (key < 0) return false;
             MetaType mt = model[key];
-            return CanTypeBeAsLateReference(mt.Type) && mt.GetSurrogateOrSelf() == mt && !mt.IsAutoTuple && !model.ProtoCompatibility.SuppressOwnRootFormat;
+            return CanTypeBeAsLateReference(mt.Type) && mt.GetSurrogateOrSelf() == mt && !mt.GetFinalSettingsCopy().IsAutoTuple && !model.ProtoCompatibility.SuppressOwnRootFormat;
         }
         
         internal static bool CanTypeBeAsLateReference(Type type)
@@ -681,8 +682,7 @@ namespace AqlaSerializer.Meta
             if (idx >= 0)
             {
                 effectiveMetaType = _model[idx];
-                effectiveMetaType.FinalizeSettingsValue();
-                var typeSettings = effectiveMetaType.SettingsValue;
+                var typeSettings = effectiveMetaType.GetFinalSettingsCopy();
                 level = MemberLevelSettingsValue.Merge(typeSettings.Member, level);
             }
 
@@ -707,7 +707,7 @@ namespace AqlaSerializer.Meta
             Type newCollectionConcreteType = null;
             Type newItemType = null;
 
-            if (!effectiveMetaType?.IgnoreListHandling ?? true)
+            if (!effectiveMetaType?.GetFinalSettingsCopy().IgnoreListHandling ?? true)
                 MetaType.ResolveListTypes(_model, level.EffectiveType, ref newItemType, ref newCollectionConcreteType);
 
             // tuples depend on collection
@@ -719,7 +719,7 @@ namespace AqlaSerializer.Meta
             #region Collections
 
             {
-                if (effectiveMetaType?.IgnoreListHandling ?? false)
+                if (effectiveMetaType?.GetFinalSettingsCopy().IgnoreListHandling ?? false)
                     ResetCollectionSettings(ref level);
                 else
                 {

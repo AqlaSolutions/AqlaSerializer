@@ -184,6 +184,7 @@ namespace AqlaSerializer.Meta
                 IEnumerable typesForNamespace = primaryType == null ? (IEnumerable)MetaTypes : requiredTypes;
                 foreach (MetaType meta in typesForNamespace)
                 {
+                    meta.FinalizeSettingsValue();
                     if (meta.IsList) continue;
                     string tmp = meta.Type.Namespace;
                     if (!Helpers.IsNullOrEmpty(tmp))
@@ -245,6 +246,7 @@ namespace AqlaSerializer.Meta
         private void CascadeDependents(BasicList list, MetaType metaType)
         {
             MetaType tmp;
+            metaType.FinalizeSettingsValue();
             if (metaType.IsList)
             {
                 Type itemType = TypeModel.GetListItemType(this, metaType.Type);
@@ -266,7 +268,7 @@ namespace AqlaSerializer.Meta
             }
             else
             {
-                if (metaType.IsAutoTuple)
+                if (metaType.GetFinalSettingsCopy().IsAutoTuple)
                 {
                     MemberInfo[] mapping;
                     if (MetaType.ResolveTupleConstructor(metaType.Type, out mapping) != null)
@@ -280,7 +282,7 @@ namespace AqlaSerializer.Meta
                     foreach (ValueMember member in metaType.Fields)
                     {
                         member.Serializer.GetHashCode();
-                        var s = member.GetSettingsCopy(0);
+                        var s = member.GetFinalSettingsCopy(0);
                         Type type = s.Collection.ItemType ?? member.MemberType;
                         var fieldMetaType = FindWithoutAdd(type);
                         if (fieldMetaType != null)

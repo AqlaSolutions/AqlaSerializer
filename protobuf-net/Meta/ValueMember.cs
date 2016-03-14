@@ -28,6 +28,7 @@ namespace AqlaSerializer.Meta
         readonly bool _canHaveDefaultValue;
 
         ValueSerializationSettings _vs;
+        ValueSerializationSettings _vsFinal;
 
         MethodInfo _getSpecified, _setSpecified;
         RuntimeTypeModel _model;
@@ -65,7 +66,7 @@ namespace AqlaSerializer.Meta
                 _vs.DefaultValue = value;
             }
         }
-
+        
         /// <summary>
         /// Gets the member (field/property) which this member relates to.
         /// </summary>
@@ -133,69 +134,71 @@ namespace AqlaSerializer.Meta
 
                 if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
-                var level0 = _vs.GetSettingsCopy(0);
+                _vsFinal = _vs.Clone();
+                
+                var level0 = _vsFinal.GetSettingsCopy(0);
                 if (level0.Basic.EffectiveType == null)
                     level0.Basic.EffectiveType = MemberType;
                 if (!level0.IsNotAssignable)
                     level0.IsNotAssignable = !Helpers.CanWrite(_model, Member);
-                _vs.SetSettings(level0, 0);
+                _vsFinal.SetSettings(level0, 0);
                 
-                if (_vs.DefaultValue != null && _getSpecified != null)
-                    throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
+                if (_vsFinal.DefaultValue != null && _getSpecified != null)
+                    throw new ProtoException("Can't use default value \"" + _vsFinal.DefaultValue + "\" on member with *Specified or ShouldSerialize check " + Member);
 
-                if (_vs.DefaultValue != null && IsRequired)
-                    throw new ProtoException("Can't use default value \"" + _vs.DefaultValue + "\" on Required member " + Member);
+                if (_vsFinal.DefaultValue != null && IsRequired)
+                    throw new ProtoException("Can't use default value \"" + _vsFinal.DefaultValue + "\" on Required member " + Member);
 
-                if (_getSpecified == null && !IsRequired && _vs.DefaultValue == null)
+                if (_getSpecified == null && !IsRequired && _vsFinal.DefaultValue == null)
                 {
                     if (_model.UseImplicitZeroDefaults)
                     {
                         switch (Helpers.GetTypeCode(MemberType))
                         {
                             case ProtoTypeCode.Boolean:
-                                _vs.DefaultValue = false;
+                                _vsFinal.DefaultValue = false;
                                 break;
                             case ProtoTypeCode.Decimal:
-                                _vs.DefaultValue = (decimal)0;
+                                _vsFinal.DefaultValue = (decimal)0;
                                 break;
                             case ProtoTypeCode.Single:
-                                _vs.DefaultValue = (float)0;
+                                _vsFinal.DefaultValue = (float)0;
                                 break;
                             case ProtoTypeCode.Double:
-                                _vs.DefaultValue = (double)0;
+                                _vsFinal.DefaultValue = (double)0;
                                 break;
                             case ProtoTypeCode.Byte:
-                                _vs.DefaultValue = (byte)0;
+                                _vsFinal.DefaultValue = (byte)0;
                                 break;
                             case ProtoTypeCode.Char:
-                                _vs.DefaultValue = (char)0;
+                                _vsFinal.DefaultValue = (char)0;
                                 break;
                             case ProtoTypeCode.Int16:
-                                _vs.DefaultValue = (short)0;
+                                _vsFinal.DefaultValue = (short)0;
                                 break;
                             case ProtoTypeCode.Int32:
-                                _vs.DefaultValue = (int)0;
+                                _vsFinal.DefaultValue = (int)0;
                                 break;
                             case ProtoTypeCode.Int64:
-                                _vs.DefaultValue = (long)0;
+                                _vsFinal.DefaultValue = (long)0;
                                 break;
                             case ProtoTypeCode.SByte:
-                                _vs.DefaultValue = (sbyte)0;
+                                _vsFinal.DefaultValue = (sbyte)0;
                                 break;
                             case ProtoTypeCode.UInt16:
-                                _vs.DefaultValue = (ushort)0;
+                                _vsFinal.DefaultValue = (ushort)0;
                                 break;
                             case ProtoTypeCode.UInt32:
-                                _vs.DefaultValue = (uint)0;
+                                _vsFinal.DefaultValue = (uint)0;
                                 break;
                             case ProtoTypeCode.UInt64:
-                                _vs.DefaultValue = (ulong)0;
+                                _vsFinal.DefaultValue = (ulong)0;
                                 break;
                             case ProtoTypeCode.TimeSpan:
-                                _vs.DefaultValue = TimeSpan.Zero;
+                                _vsFinal.DefaultValue = TimeSpan.Zero;
                                 break;
                             case ProtoTypeCode.Guid:
-                                _vs.DefaultValue = Guid.Empty;
+                                _vsFinal.DefaultValue = Guid.Empty;
                                 break;
                         }
                     }
@@ -207,7 +210,7 @@ namespace AqlaSerializer.Meta
                 {
                     WireType wt;
                     var ser = _model.ValueSerializerBuilder.BuildValueFinalSerializer(
-                        _vs,
+                        _vsFinal,
                         true,
                         out wt);
 
@@ -292,10 +295,28 @@ namespace AqlaSerializer.Meta
         }
 
         #region Setting accessors
-        
+
+        public object GetFinalDefaultValue()
+        {
+            BuildSerializer();
+            return _vsFinal.DefaultValue;
+        }
+
+        public MemberLevelSettingsValue[] GetFinalSettingsListCopy()
+        {
+            BuildSerializer();
+            return _vsFinal.ExistingLevels.Select(x => x.Basic).ToArray();
+        }
+
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
             return _vs.GetSettingsCopy(level).Basic;
+        }
+        
+        public MemberLevelSettingsValue GetFinalSettingsCopy(int level = 0)
+        {
+            BuildSerializer();
+            return _vsFinal.GetSettingsCopy(level).Basic;
         }
         
         public void SetSettings(MemberLevelSettingsChangeDelegate func, int level = 0)
@@ -307,12 +328,7 @@ namespace AqlaSerializer.Meta
 
         public void SetSettings(MemberLevelSettingsValue value, int level = 0)
         {
-            SetSettings(value, level, false);
-        }
-
-        void SetSettings(MemberLevelSettingsValue value, int level, bool bypassFrozenCheck)
-        {
-            if (!bypassFrozenCheck) ThrowIfFrozen();
+            ThrowIfFrozen();
             Helpers.MemoryBarrier();
             _vs.SetSettings(value, level);
         }
@@ -416,9 +432,9 @@ namespace AqlaSerializer.Meta
             }
         }
         
-        void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter, bool bypassFrozenCheck = false)
+        void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter)
         {
-            if (!bypassFrozenCheck) ThrowIfFrozen();
+            ThrowIfFrozen();
             _vs.SetForAllLevels(setter);
         }
 
@@ -498,12 +514,12 @@ namespace AqlaSerializer.Meta
         {
             var s = Serializer;
             s.GetHashCode();
-            Type effectiveType = GetSettingsCopy(0).Collection.ItemType ?? MemberType;
+            Type effectiveType = GetFinalSettingsCopy().Collection.ItemType ?? MemberType;
             return _model.GetSchemaTypeName(
                 effectiveType,
-                GetSettingsCopy(0).ContentBinaryFormatHint.GetValueOrDefault(),
-                applyNetObjectProxy && GetSettingsCopy().Format == ValueFormat.Reference,
-                applyNetObjectProxy && GetSettingsCopy().WriteAsDynamicType.GetValueOrDefault(),
+                GetFinalSettingsCopy().ContentBinaryFormatHint.GetValueOrDefault(),
+                applyNetObjectProxy && GetFinalSettingsCopy().Format == ValueFormat.Reference,
+                applyNetObjectProxy && GetFinalSettingsCopy().WriteAsDynamicType.GetValueOrDefault(),
                 ref requiresBclImport);
         }
 
@@ -513,6 +529,7 @@ namespace AqlaSerializer.Meta
             var vm = (ValueMember)MemberwiseClone();
             vm._model = model;
             vm._serializer = null;
+            vm._vsFinal = null;
             vm.FinalizingSettings = null;
             vm._vs = vm._vs.Clone();
             return vm;

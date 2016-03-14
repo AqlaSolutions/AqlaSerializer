@@ -35,7 +35,7 @@ namespace AqlaSerializer.Meta
             Serializer.GetHashCode();
             if (_surrogate != null) return _model[_surrogate].GetSchemaTypeName();
 
-            if (!Helpers.IsNullOrEmpty(_settingsValue.Name)) return _settingsValue.Name;
+            if (!Helpers.IsNullOrEmpty(_settingsValueFinal.Name)) return _settingsValueFinal.Name;
 
             string typeName = Type.Name;
 #if !NO_GENERICS
@@ -93,7 +93,7 @@ namespace AqlaSerializer.Meta
                 NewLine(builder, indent + 1).Append("repeated ").Append(itemTypeName).Append(" items = 1;");
                 NewLine(builder, indent).Append('}');
             }
-            else if (IsAutoTuple)
+            else if (_settingsValueFinal.IsAutoTuple)
             { // key-value-pair etc
                 MemberInfo[] mapping;
                 if (ResolveTupleConstructor(Type, out mapping) != null)
@@ -125,7 +125,7 @@ namespace AqlaSerializer.Meta
             else if (Helpers.IsEnum(Type))
             {
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
-                if (EnumPassthru.GetValueOrDefault())
+                if (_settingsValueFinal.EnumPassthru.GetValueOrDefault())
                 {
                     if (Type
 #if WINRT
@@ -175,7 +175,7 @@ namespace AqlaSerializer.Meta
                 foreach (ValueMember member in fieldsArr)
                 {
                     member.Serializer.GetHashCode();
-                    MemberLevelSettingsValue s = member.GetSettingsCopy(0);
+                    MemberLevelSettingsValue s = member.GetFinalSettingsCopy(0);
                     string ordinality = s.Collection.IsCollection ? "repeated" : member.IsRequired ? "required" : "optional";
                     NewLine(builder, indent + 1).Append(ordinality).Append(' ');
                     if (s.ContentBinaryFormatHint.GetValueOrDefault() == BinaryDataFormat.Group) builder.Append("group ");
@@ -183,19 +183,20 @@ namespace AqlaSerializer.Meta
                     builder.Append(schemaTypeName).Append(" ")
                         .Append(member.Name).Append(" = ").Append(member.FieldNumber);
 
-                    if (member.DefaultValue != null && member.IsRequired == false)
+                    object defaultValue = member.GetFinalDefaultValue();
+                    if (defaultValue != null && member.IsRequired == false)
                     {
-                        if (member.DefaultValue is string)
+                        if (defaultValue is string)
                         {
-                            builder.Append(" [default = \"").Append(member.DefaultValue).Append("\"]");
+                            builder.Append(" [default = \"").Append(defaultValue).Append("\"]");
                         }
-                        else if (member.DefaultValue is bool)
+                        else if (defaultValue is bool)
                         { // need to be lower case (issue 304)
-                            builder.Append((bool)member.DefaultValue ? " [default = true]" : " [default = false]");
+                            builder.Append((bool)defaultValue ? " [default = true]" : " [default = false]");
                         }
                         else
                         {
-                            builder.Append(" [default = ").Append(member.DefaultValue).Append(']');
+                            builder.Append(" [default = ").Append(defaultValue).Append(']');
                         }
                     }
                     if (s.Collection.IsCollection && s.Collection.Format == CollectionFormat.Protobuf &&

@@ -43,6 +43,8 @@ namespace AqlaSerializer.Meta
         public object DefaultValue { get; set; }
         public LevelValue? DefaultLevel { get; set; }
 
+        public LevelValue[] ExistingLevels => _levels.Select(x => x.GetValueOrDefault()).ToArray();
+
         public ValueSerializationSettings()
         {
             _levels = new List<LevelValue?>();

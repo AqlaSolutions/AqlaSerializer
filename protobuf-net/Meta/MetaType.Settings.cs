@@ -31,7 +31,7 @@ namespace AqlaSerializer.Meta
     partial class MetaType
     {
         ValueSerializationSettings _rootNestedVs = new ValueSerializationSettings();
-
+        
         /// <summary>
         /// These settings are only applicable for collection types when they are serialized not as a member (root or LateReference)
         /// </summary>
@@ -41,6 +41,12 @@ namespace AqlaSerializer.Meta
             return _rootNestedVs.GetSettingsCopy(level).Basic;
         }
         
+        public TypeSettingsValue GetFinalSettingsCopy()
+        {
+            FinalizeSettingsValue();
+            return _settingsValueFinal;
+        }
+
         /// <summary>
         /// These settings are only applicable for collection types when they are serialized not as a member (root or LateReference)
         /// </summary>
@@ -63,6 +69,7 @@ namespace AqlaSerializer.Meta
         }
 
         TypeSettingsValue _settingsValue;
+        TypeSettingsValue _settingsValueFinal;
         internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
 
         internal class FinalizingOwnSettingsArgs : EventArgs
@@ -91,33 +98,35 @@ namespace AqlaSerializer.Meta
 
                 if (_finalizedSettings) return;
 
-                ThrowIfInvalidSettings(_settingsValue);
+                _settingsValueFinal = _settingsValue;
+
+                ThrowIfInvalidSettings(_settingsValueFinal);
                 FinalizingOwnSettings?.Invoke(this, new FinalizingOwnSettingsArgs(this));
-                ThrowIfInvalidSettings(_settingsValue);
+                ThrowIfInvalidSettings(_settingsValueFinal);
 
-                MemberLevelSettingsValue m = _settingsValue.Member;
+                MemberLevelSettingsValue m = _settingsValueFinal.Member;
 
-                if (_settingsValue.EnumPassthru == null && Helpers.IsEnum(Type))
+                if (_settingsValueFinal.EnumPassthru == null && Helpers.IsEnum(Type))
                 {
 #if WINRT
                     _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
 #else
-                    _settingsValue.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
+                    _settingsValueFinal.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
 #endif
                 }
-                if (_settingsValue.IgnoreListHandling)
+                if (_settingsValueFinal.IgnoreListHandling)
                 {
                     m.Collection.ItemType = null;
                     m.Collection.Format = CollectionFormat.NotSpecified;
                     m.Collection.PackedWireTypeForRead = null;
                 }
 
-                m.Collection.ConcreteType = _settingsValue.ConstructType;
+                m.Collection.ConcreteType = _settingsValueFinal.ConstructType;
 
-                if (_settingsValue.PrefixLength == null && !IsSimpleValue)
-                    _settingsValue.PrefixLength = true;
+                if (_settingsValueFinal.PrefixLength == null && !IsSimpleValue)
+                    _settingsValueFinal.PrefixLength = true;
 
-                _settingsValue.Member = m;
+                _settingsValueFinal.Member = m;
 
                 _finalizedSettings = true;
                 IsFrozen = true;

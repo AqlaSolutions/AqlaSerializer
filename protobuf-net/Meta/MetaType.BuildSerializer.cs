@@ -124,10 +124,10 @@ namespace AqlaSerializer.Meta
                     ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
                 return ser;
             }
-
-            Type itemType = IgnoreListHandling
+            
+            Type itemType = GetFinalSettingsCopy().IgnoreListHandling
                                 ? null
-                                : (_settingsValue.Member.Collection.ItemType ?? (Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type)));
+                                : (_settingsValueFinal.Member.Collection.ItemType ?? (Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type)));
 
             if (itemType != null)
             {
@@ -144,10 +144,10 @@ namespace AqlaSerializer.Meta
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
                 // apply default member settings to type settings too
-                var s = _settingsValue.Member;
+                var s = _settingsValueFinal.Member;
                 // but change this:
                 s.EffectiveType = Type; // not merged with anything so assign
-                s.Collection.ConcreteType = _settingsValue.ConstructType ?? defaultType;
+                s.Collection.ConcreteType = _settingsValueFinal.ConstructType ?? defaultType;
                 s.Collection.Append = false; // allowed only on members
                 s.WriteAsDynamicType = false; // allowed only on members
                 // this should be handled as collection
@@ -180,10 +180,10 @@ namespace AqlaSerializer.Meta
                 while ((mtBase = mt.BaseType) != null) { mt = mtBase; }
                 return new SurrogateSerializer(_model, Type, _surrogate, mt.Serializer);
             }
-            if (IsAutoTuple)
+            if (_settingsValueFinal.IsAutoTuple)
             {
                 if (_tupleCtor == null) throw new InvalidOperationException("Can't find tuple constructor");
-                return new TupleSerializer(_model, _tupleCtor, _tupleFields.ToArray(), _settingsValue.PrefixLength.GetValueOrDefault(true));
+                return new TupleSerializer(_model, _tupleCtor, _tupleFields.ToArray(), _settingsValueFinal.PrefixLength.GetValueOrDefault(true));
             }
 
 
@@ -241,7 +241,7 @@ namespace AqlaSerializer.Meta
                 baseCtorCallbacks.CopyTo(arr, 0);
                 Array.Reverse(arr);
             }
-            return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValue.SkipConstructor, _callbacks, _settingsValue.ConstructType, _factory, _settingsValue.PrefixLength.Value);
+            return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValueFinal.SkipConstructor, _callbacks, _settingsValueFinal.ConstructType, _factory, _settingsValueFinal.PrefixLength.Value);
         }
 
 

@@ -152,7 +152,7 @@ namespace AqlaSerializer.Serializers
 
         void EmitWrite(SerializerCodeGen g, Label? endLabel, MetaType metaType, Local actualValue, Local actualType, int recursionLevel = 0)
         {
-            using (g.ctx.StartDebugBlockAuto(this, metaType.Name + ", level = " + recursionLevel))
+            using (g.ctx.StartDebugBlockAuto(this, metaType.GetFinalSettingsCopy().Name + ", level = " + recursionLevel))
             {
                 WriterGen dest = g.Writer;
                 var breakLabel = g.DefineLabel();
@@ -210,7 +210,7 @@ namespace AqlaSerializer.Serializers
         public void EmitTryRead(SerializerCodeGen g, Local oldValue, MetaType metaType, Action<MetaType> returnGen)
         {
             Debug.Assert(metaType != null);
-            using (g.ctx.StartDebugBlockAuto(this, metaType.Name))
+            using (g.ctx.StartDebugBlockAuto(this, metaType.GetFinalSettingsCopy().Name))
             using (var fieldNumber = new Local(g.ctx, typeof(int)))
             {
                 var jumpOut = g.DefineLabel();
@@ -253,7 +253,7 @@ namespace AqlaSerializer.Serializers
         void EmitTryRead(SerializerCodeGen g, Local fieldNumber, MetaType metaType, int recursionLevel, Action<MetaType> returnGen)
         {
             Debug.Assert(metaType != null);
-            using (g.ctx.StartDebugBlockAuto(this, metaType.Name + ", level = " + recursionLevel))
+            using (g.ctx.StartDebugBlockAuto(this, metaType.GetFinalSettingsCopy().Name + ", level = " + recursionLevel))
             {
                 SubType[] subTypes = metaType.GetSubtypes();
                 if (recursionLevel == 0)

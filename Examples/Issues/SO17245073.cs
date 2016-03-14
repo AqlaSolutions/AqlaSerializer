@@ -22,17 +22,22 @@ namespace Examples.Issues
             model.Add(typeof(G), true);
             model.Add(typeof(H), true);
             model.CompileInPlace();
-            Assert.IsFalse(model[typeof(A)].EnumPassthru.Value, "A");
-            Assert.IsTrue(model[typeof(B)].EnumPassthru.Value, "B");
+            Assert.IsFalse(GetEnumPassthrough(model[typeof(A)]), "A");
+            Assert.IsTrue(GetEnumPassthrough(model[typeof(B)]), "B");
 
-            Assert.IsFalse(model[typeof(C)].EnumPassthru.Value, "C");
-            Assert.IsTrue(model[typeof(D)].EnumPassthru.Value, "D");
+            Assert.IsFalse(GetEnumPassthrough(model[typeof(C)]), "C");
+            Assert.IsTrue(GetEnumPassthrough(model[typeof(D)]), "D");
 
-            Assert.IsTrue(model[typeof(E)].EnumPassthru.Value, "E");
-            Assert.IsTrue(model[typeof(F)].EnumPassthru.Value, "F");
+            Assert.IsTrue(GetEnumPassthrough(model[typeof(E)]), "E");
+            Assert.IsTrue(GetEnumPassthrough(model[typeof(F)]), "F");
 
-            Assert.IsFalse(model[typeof(G)].EnumPassthru.Value, "G");
-            Assert.IsFalse(model[typeof(H)].EnumPassthru.Value, "H");            
+            Assert.IsFalse(GetEnumPassthrough(model[typeof(G)]), "G");
+            Assert.IsFalse(GetEnumPassthrough(model[typeof(H)]), "H");            
+        }
+
+        static bool GetEnumPassthrough(MetaType metaType)
+        {
+            return metaType.GetFinalSettingsCopy().EnumPassthru.Value;
         }
 
         // no ProtoContract; with [Flags] is pass-thru, else not
