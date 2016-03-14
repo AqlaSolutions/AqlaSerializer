@@ -694,7 +694,7 @@ namespace AqlaSerializer.Meta
             {
                 if (vs.MaxSpecifiedNestedLevel > levelNr)
                     throw new ProtoException("LateReference member levels can't have nested levels");
-                var defaultSettings = effectiveMetaType?.SettingsValue.Member ?? new MemberLevelSettingsValue().GetInitializedToValueOrDefault();
+                var defaultSettings = effectiveMetaType?.GetFinalSettingsCopy().Member ?? new MemberLevelSettingsValue().GetInitializedToValueOrDefault();
                 if (level.ContentBinaryFormatHint.GetValueOrDefault() != defaultSettings.ContentBinaryFormatHint.GetValueOrDefault()
                     || level.WriteAsDynamicType.GetValueOrDefault() != defaultSettings.WriteAsDynamicType.GetValueOrDefault()
                     || level.Collection.Append.GetValueOrDefault() != defaultSettings.Collection.Append.GetValueOrDefault()
@@ -728,7 +728,7 @@ namespace AqlaSerializer.Meta
                     {
                         if (level.Format == ValueFormat.LateReference)
                         {
-                            Type defaultItemType = (effectiveMetaType?.SettingsValue.Member.Collection.ItemType ?? newItemType);
+                            Type defaultItemType = (effectiveMetaType?.GetFinalSettingsCopy().Member.Collection.ItemType ?? newItemType);
                             if (level.Collection.ItemType != defaultItemType)
                                 throw new ProtoException("LateReference member settings level should have default collection item type (" + defaultItemType + ")");
                         }
@@ -751,7 +751,7 @@ namespace AqlaSerializer.Meta
 
                             if (level.Format == ValueFormat.LateReference)
                             {
-                                Type defaultConcreteType = (effectiveMetaType?.SettingsValue.Member.Collection.ConcreteType ?? newCollectionConcreteType);
+                                Type defaultConcreteType = (effectiveMetaType?.GetFinalSettingsCopy().Member.Collection.ConcreteType ?? newCollectionConcreteType);
                                 if (level.Collection.ConcreteType != defaultConcreteType)
                                     throw new ProtoException("LateReference member settings level should have default collection concrete type (" + defaultConcreteType + ")");
                             }

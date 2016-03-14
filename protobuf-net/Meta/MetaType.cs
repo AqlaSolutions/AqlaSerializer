@@ -167,7 +167,7 @@ namespace AqlaSerializer.Meta
             mt._serializer = null;
             mt._rootSerializer = null;
             mt._model = model;
-            mt._finalizedSettings = false;
+            mt._settingsValueFinalSet = false;
             mt._subTypes = new BasicList();
             mt._subTypesSimple = new BasicList();
             mt.FinalizingOwnSettings = null;

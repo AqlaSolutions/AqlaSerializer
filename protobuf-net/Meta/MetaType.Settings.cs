@@ -70,7 +70,13 @@ namespace AqlaSerializer.Meta
 
         TypeSettingsValue _settingsValueByClient;
         TypeSettingsValue _settingsValueFinal;
-        internal TypeSettingsValue SettingsValue { get { return _settingsValueByClient; } set { _settingsValueByClient = value; } }
+
+        internal void ReplaceClientSettings(TypeSettingsValue value)
+        {
+            ThrowIfFrozen();
+            if (_settingsValueFinalSet) ThrowFrozen();
+            _settingsValueByClient = value;
+        }
 
         internal class FinalizingOwnSettingsArgs : EventArgs
         {
@@ -85,18 +91,18 @@ namespace AqlaSerializer.Meta
         internal event EventHandler<FinalizingOwnSettingsArgs> FinalizingOwnSettings;
         internal event EventHandler<ValueMember.FinalizingSettingsArgs> FinalizingMemberSettings;
 
-        bool _finalizedSettings;
+        bool _settingsValueFinalSet;
 
         internal void FinalizeSettingsValue()
         {
-            if (_finalizedSettings) return;
+            if (_settingsValueFinalSet) return;
 
             int opaqueToken = 0;
             try
             {
                 _model.TakeLock(ref opaqueToken);
 
-                if (_finalizedSettings) return;
+                if (_settingsValueFinalSet) return;
 
                 _settingsValueFinal = _settingsValueByClient;
 
@@ -109,7 +115,7 @@ namespace AqlaSerializer.Meta
                 if (_settingsValueFinal.EnumPassthru == null && Helpers.IsEnum(Type))
                 {
 #if WINRT
-                    _settingsValue.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
+                    _settingsValueFinal.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
 #else
                     _settingsValueFinal.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
 #endif
@@ -128,7 +134,7 @@ namespace AqlaSerializer.Meta
 
                 _settingsValueFinal.Member = m;
 
-                _finalizedSettings = true;
+                _settingsValueFinalSet = true;
                 IsFrozen = true;
             }
             finally
