@@ -396,6 +396,7 @@ namespace AqlaSerializer.Meta
         void ChangeSettings(Func<TypeSettingsValue, TypeSettingsValue> setter)
         {
             ThrowIfFrozen();
+            if (_settingsValueFinalSet) ThrowFrozen();
             var sv = setter(_settingsValueByClient);
             ThrowIfInvalidSettings(sv);
             Helpers.MemoryBarrier();

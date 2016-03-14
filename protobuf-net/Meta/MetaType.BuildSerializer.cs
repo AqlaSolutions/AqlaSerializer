@@ -169,7 +169,7 @@ namespace AqlaSerializer.Meta
                 return ser;
             }
 
-            if (BaseType != null && !BaseType.IgnoreListHandling && RuntimeTypeModel.CheckTypeIsCollection(_model, BaseType.Type))
+            if (BaseType != null && !BaseType.GetFinalSettingsCopy().IgnoreListHandling && RuntimeTypeModel.CheckTypeIsCollection(_model, BaseType.Type))
                 throw new ArgumentException("A subclass of a repeated data (an array, list, etc should be handled too as a collection");
 
             // #2
