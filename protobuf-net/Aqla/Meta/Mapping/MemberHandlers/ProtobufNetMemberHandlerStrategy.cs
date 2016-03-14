@@ -34,7 +34,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             try
             {
                 MemberLevelSettingsValue level = s.SerializationSettings.GetSettingsCopy(0).Basic;
-                level.UseLegacyDefaults = true;
+                level.DefaultsMode = MemberDefaultsMode.Legacy;
 
                 if (main.Tag <= 0) attribute.TryGetNotDefault("Tag", ref main.Tag);
                 if (string.IsNullOrEmpty(main.Name)) attribute.TryGetNotEmpty("Name", ref main.Name);

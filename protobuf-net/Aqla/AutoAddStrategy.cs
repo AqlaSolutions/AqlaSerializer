@@ -296,7 +296,7 @@ namespace AqlaSerializer
                 if (UseLegacyTupleFields)
                 {
                     foreach (ValueMember vm in metaType.GetTupleFields())
-                        vm.SetLegacy();
+                        vm.SetSettings(x => x.V.DefaultsMode = MemberDefaultsMode.LegacyTuple);
                 }
             }
             finally

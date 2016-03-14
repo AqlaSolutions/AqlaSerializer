@@ -23,7 +23,7 @@ namespace Examples
             startInfo.StandardOutputEncoding = Encoding.GetEncoding(866);
             using (Process proc = Process.Start(startInfo))
             {
-                bool ok = proc.WaitForExit(10000);
+                bool ok = proc.WaitForExit(20000);
                 string output = proc.StandardOutput.ReadToEnd();
                 if (ok)
                 {

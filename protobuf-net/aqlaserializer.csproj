@@ -312,6 +312,7 @@
     <Compile Include="Aqla\AutoAddStrategy.cs" />
     <Compile Include="Aqla\CallbackAttributes.cs" />
     <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetImplicitMemberHandler.cs" />
+    <Compile Include="Aqla\Settings\Inheritable\MemberDefaultsMode.cs" />
     <Compile Include="Aqla\ValueFormat.cs" />
     <Compile Include="Aqla\IAutoAddStrategy.cs" />
     <Compile Include="Aqla\CollectionFormat.cs" />

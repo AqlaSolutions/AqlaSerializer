@@ -686,15 +686,16 @@ namespace AqlaSerializer.Meta
                 level = MemberLevelSettingsValue.Merge(typeSettings.Member, level);
             }
 
-            if (level.Format == ValueFormat.NotSpecified && level.UseLegacyDefaults.GetValueOrDefault())
+            MemberDefaultsMode defaultsMode = level.DefaultsMode.GetValueOrDefault();
+            if (level.Format == ValueFormat.NotSpecified && defaultsMode == MemberDefaultsMode.Legacy)
                 level.Format = GetDefaultLegacyFormat(level.EffectiveType, _model);
-
+            
             if (level.Format == ValueFormat.LateReference)
             {
                 if (vs.MaxSpecifiedNestedLevel > levelNr)
                     throw new ProtoException("LateReference member levels can't have nested levels");
                 var defaultSettings = effectiveMetaType?.SettingsValue.Member ?? new MemberLevelSettingsValue().GetInitializedToValueOrDefault();
-                if (level.ContentBinaryFormatHint.GetValueOrDefault() != defaultSettings.ContentBinaryFormatHint.GetValueOrDefault() 
+                if (level.ContentBinaryFormatHint.GetValueOrDefault() != defaultSettings.ContentBinaryFormatHint.GetValueOrDefault()
                     || level.WriteAsDynamicType.GetValueOrDefault() != defaultSettings.WriteAsDynamicType.GetValueOrDefault()
                     || level.Collection.Append.GetValueOrDefault() != defaultSettings.Collection.Append.GetValueOrDefault()
                     || level.Collection.PackedWireTypeForRead != defaultSettings.Collection.PackedWireTypeForRead)
@@ -702,6 +703,16 @@ namespace AqlaSerializer.Meta
                     throw new ProtoException("LateReference member levels can't override default member settings specified on MetaType");
                 }
             }
+
+            Type newCollectionConcreteType = null;
+            Type newItemType = null;
+
+            if (!effectiveMetaType?.IgnoreListHandling ?? true)
+                MetaType.ResolveListTypes(_model, level.EffectiveType, ref newItemType, ref newCollectionConcreteType);
+
+            // tuples depend on collection
+            if (defaultsMode == MemberDefaultsMode.LegacyTuple && level.Format == ValueFormat.NotSpecified && newItemType != null)
+                level.Format = ValueFormat.Compact;
 
             EnsureCorrectFormatSpecified(_model, ref level.Format, level.EffectiveType, ref level.WriteAsDynamicType, true);
 
@@ -713,12 +724,6 @@ namespace AqlaSerializer.Meta
                 else
                 {
                     // defaults for ItemType and others were already merged from type settings
-
-                    Type newCollectionConcreteType = null;
-                    Type newItemType = null;
-
-                    MetaType.ResolveListTypes(_model, level.EffectiveType, ref newItemType, ref newCollectionConcreteType);
-
                     if (level.Collection.ItemType != null)
                     {
                         if (level.Format == ValueFormat.LateReference)
@@ -792,7 +797,7 @@ namespace AqlaSerializer.Meta
             }
 
             #endregion
-
+            
             lv.Basic = level.GetInitializedToValueOrDefault();
 
             vs.SetSettings(lv, levelNr);

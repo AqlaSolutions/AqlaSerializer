@@ -21,7 +21,7 @@ namespace AqlaSerializer.Settings
         /// </summary>
         public ValueFormat Format;
         
-        public bool? UseLegacyDefaults;
+        public MemberDefaultsMode? DefaultsMode;
         
         /// <summary>
         /// Embeds the type information into the stream, allowing usage with types not known in advance.
@@ -45,7 +45,7 @@ namespace AqlaSerializer.Settings
             // we don't change PackedWireTypeForRead because any non-null value would be not default
             x.ContentBinaryFormatHint = x.ContentBinaryFormatHint.GetValueOrDefault();
             x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
-            x.UseLegacyDefaults = x.UseLegacyDefaults.GetValueOrDefault();
+            x.DefaultsMode = x.DefaultsMode.GetValueOrDefault();
             return x;
         }
 
@@ -72,7 +72,7 @@ namespace AqlaSerializer.Settings
             if (r.Format == ValueFormat.NotSpecified) r.Format = baseValue.Format;
             if (r.ContentBinaryFormatHint == null) r.ContentBinaryFormatHint = baseValue.ContentBinaryFormatHint;
             if (r.WriteAsDynamicType == null) r.WriteAsDynamicType = baseValue.WriteAsDynamicType;
-            if (r.UseLegacyDefaults == null) r.UseLegacyDefaults = baseValue.UseLegacyDefaults;
+            if (r.DefaultsMode == null) r.DefaultsMode = baseValue.DefaultsMode;
             r.Collection = CollectionSettingsValue.Merge(baseValue.Collection, derivedValue.Collection);
             return r;
         }
