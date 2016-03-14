@@ -27,7 +27,7 @@ namespace AqlaSerializer.Meta
         readonly bool _isAccessHandledOutside;
         readonly bool _canHaveDefaultValue;
 
-        ValueSerializationSettings _vs;
+        ValueSerializationSettings _vsByClient;
         ValueSerializationSettings _vsFinal;
 
         MethodInfo _getSpecified, _setSpecified;
@@ -58,12 +58,12 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public object DefaultValue
         {
-            get { return _vs.DefaultValue; }
+            get { return _vsByClient.DefaultValue; }
             set
             {
                 ThrowIfFrozen();
                 if (!_canHaveDefaultValue) throw new ArgumentException("Member " + Name + " can't have a default value");
-                _vs.DefaultValue = value;
+                _vsByClient.DefaultValue = value;
             }
         }
         
@@ -98,8 +98,8 @@ namespace AqlaSerializer.Meta
             _canHaveDefaultValue = canHaveDefaultValue;
             _main = memberSettings;
             _isAccessHandledOutside = isAccessHandledOutside;
-            _vs = valueSerializationSettings.Clone();
-            if (!canHaveDefaultValue && _vs.DefaultValue != null)
+            _vsByClient = valueSerializationSettings.Clone();
+            if (!canHaveDefaultValue && _vsByClient.DefaultValue != null)
                 throw new ArgumentException("Default value was already set but the member " + Name + " can't have a default value", nameof(valueSerializationSettings));
         }
 
@@ -134,7 +134,7 @@ namespace AqlaSerializer.Meta
 
                 if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
-                _vsFinal = _vs.Clone();
+                _vsFinal = _vsByClient.Clone();
                 
                 var level0 = _vsFinal.GetSettingsCopy(0);
                 if (level0.Basic.EffectiveType == null)
@@ -310,7 +310,7 @@ namespace AqlaSerializer.Meta
 
         public MemberLevelSettingsValue GetSettingsCopy(int level = 0)
         {
-            return _vs.GetSettingsCopy(level).Basic;
+            return _vsByClient.GetSettingsCopy(level).Basic;
         }
         
         public MemberLevelSettingsValue GetFinalSettingsCopy(int level = 0)
@@ -330,7 +330,7 @@ namespace AqlaSerializer.Meta
         {
             ThrowIfFrozen();
             Helpers.MemoryBarrier();
-            _vs.SetSettings(value, level);
+            _vsByClient.SetSettings(value, level);
         }
 
         /// <summary>
@@ -435,7 +435,7 @@ namespace AqlaSerializer.Meta
         void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter)
         {
             ThrowIfFrozen();
-            _vs.SetForAllLevels(setter);
+            _vsByClient.SetForAllLevels(setter);
         }
 
 #endregion
@@ -531,7 +531,7 @@ namespace AqlaSerializer.Meta
             vm._serializer = null;
             vm._vsFinal = null;
             vm.FinalizingSettings = null;
-            vm._vs = vm._vs.Clone();
+            vm._vsByClient = vm._vsByClient.Clone();
             return vm;
         }
 

@@ -68,9 +68,9 @@ namespace AqlaSerializer.Meta
             SetNestedSettingsWhenRoot(v.V, level);
         }
 
-        TypeSettingsValue _settingsValue;
+        TypeSettingsValue _settingsValueByClient;
         TypeSettingsValue _settingsValueFinal;
-        internal TypeSettingsValue SettingsValue { get { return _settingsValue; } set { _settingsValue = value; } }
+        internal TypeSettingsValue SettingsValue { get { return _settingsValueByClient; } set { _settingsValueByClient = value; } }
 
         internal class FinalizingOwnSettingsArgs : EventArgs
         {
@@ -98,7 +98,7 @@ namespace AqlaSerializer.Meta
 
                 if (_finalizedSettings) return;
 
-                _settingsValueFinal = _settingsValue;
+                _settingsValueFinal = _settingsValueByClient;
 
                 ThrowIfInvalidSettings(_settingsValueFinal);
                 FinalizingOwnSettings?.Invoke(this, new FinalizingOwnSettingsArgs(this));
@@ -154,7 +154,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public string Name
         {
-            get { return !string.IsNullOrEmpty(_settingsValue.Name) ? _settingsValue.Name : Type.Name; }
+            get { return !string.IsNullOrEmpty(_settingsValueByClient.Name) ? _settingsValueByClient.Name : Type.Name; }
             set
             {
                 ChangeSettings(
@@ -172,7 +172,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool? EnumPassthru
         {
-            get { return _settingsValue.EnumPassthru; }
+            get { return _settingsValueByClient.EnumPassthru; }
             set
             {
                 ChangeSettings(
@@ -189,7 +189,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public int? ArrayLengthReadLimit
         {
-            get { return _settingsValue.Member.Collection.ArrayLengthReadLimit; }
+            get { return _settingsValueByClient.Member.Collection.ArrayLengthReadLimit; }
             set
             {
                 ChangeSettings(
@@ -209,7 +209,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool UseConstructor
         { // negated to have defaults as flat zero
-            get { return !_settingsValue.SkipConstructor; }
+            get { return !_settingsValueByClient.SkipConstructor; }
             set
             {
                 ChangeSettings(
@@ -225,7 +225,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                return _settingsValue.PrefixLength;
+                return _settingsValueByClient.PrefixLength;
             }
             set
             {
@@ -244,7 +244,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public Type ConstructType
         {
-            get { return _settingsValue.ConstructType; }
+            get { return _settingsValueByClient.ConstructType; }
             set
             {
                 ChangeSettings(
@@ -261,7 +261,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                return _settingsValue.Member.Format;
+                return _settingsValueByClient.Member.Format;
             }
             set
             {
@@ -276,7 +276,7 @@ namespace AqlaSerializer.Meta
         
         public BinaryDataFormat? ContentBinaryFormatHint
         {
-            get { return _settingsValue.Member.ContentBinaryFormatHint; }
+            get { return _settingsValueByClient.Member.ContentBinaryFormatHint; }
             set
             {
                 ChangeSettings(
@@ -292,7 +292,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                return _settingsValue.Member.Collection.Format;
+                return _settingsValueByClient.Member.Collection.Format;
             }
             set
             {
@@ -309,7 +309,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                return _settingsValue.Member.Collection.ItemType;
+                return _settingsValueByClient.Member.Collection.ItemType;
             }
             set
             {
@@ -328,7 +328,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool IgnoreListHandling
         {
-            get { return _settingsValue.IgnoreListHandling; }
+            get { return _settingsValueByClient.IgnoreListHandling; }
             set
             {
                 ChangeSettings(
@@ -348,7 +348,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                MemberLevelSettingsValue m = _settingsValue.Member;
+                MemberLevelSettingsValue m = _settingsValueByClient.Member;
                 return m.Format == ValueFormat.Reference || m.Format == ValueFormat.LateReference ||
                        (m.Format == ValueFormat.NotSpecified && ValueSerializerBuilder.CanTypeBeAsReference(Type));
             }
@@ -375,7 +375,7 @@ namespace AqlaSerializer.Meta
 
         internal bool IsAutoTuple
         {
-            get { return _settingsValue.IsAutoTuple; }
+            get { return _settingsValueByClient.IsAutoTuple; }
             set
             {
                 ChangeSettings(
@@ -390,10 +390,10 @@ namespace AqlaSerializer.Meta
         void ChangeSettings(Func<TypeSettingsValue, TypeSettingsValue> setter)
         {
             ThrowIfFrozen();
-            var sv = setter(_settingsValue);
+            var sv = setter(_settingsValueByClient);
             ThrowIfInvalidSettings(sv);
             Helpers.MemoryBarrier();
-            _settingsValue = sv;
+            _settingsValueByClient = sv;
         }
     }
 }
