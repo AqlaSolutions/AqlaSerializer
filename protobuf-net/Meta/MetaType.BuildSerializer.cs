@@ -87,13 +87,8 @@ namespace AqlaSerializer.Meta
                     FinalizeSettingsValue();
 
                     _serializer = BuildSerializer(false);
-                    var s = BuildSerializer(true);
-                    _rootSerializer = new RootDecorator(
-                        Type,
-                        GetRootNetObjectMode(),
-                        !GetRootLateReferenceMode(),
-                        s,
-                        _model);
+                    _rootSerializer = BuildSerializer(true);
+                    if (!(_rootSerializer is ForbiddenRootStub)) _rootSerializer = WrapRootSerializer(_rootSerializer);
 
                     IsFrozen = true;
                 }
@@ -209,7 +204,7 @@ namespace AqlaSerializer.Meta
                         throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a subclass");
                     }
                     fieldNumbers[i] = subType.FieldNumber;
-                    serializers[i++] = subType.Serializer;
+                    serializers[i++] = subType.GetSerializer(_model);
                 }
             }
             if (fieldCount != 0)
@@ -241,10 +236,22 @@ namespace AqlaSerializer.Meta
                 baseCtorCallbacks.CopyTo(arr, 0);
                 Array.Reverse(arr);
             }
+            // root serializer should be always from base type
+            if (isRoot && BaseType != null)
+                return new ForbiddenRootStub(Type);
             return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValueFinal.SkipConstructor, _callbacks, _settingsValueFinal.ConstructType, _factory, _settingsValueFinal.PrefixLength.Value);
         }
 
+        IProtoTypeSerializer WrapRootSerializer(IProtoTypeSerializer s)
+        {
+            return new RootDecorator(
+                        Type,
+                        GetRootNetObjectMode(),
+                        !GetRootLateReferenceMode(),
+                        s,
+                        _model);
 
+        }
 
 #if FEAT_IKVM || !FEAT_COMPILER
         internal bool IsCompiledInPlace => false;

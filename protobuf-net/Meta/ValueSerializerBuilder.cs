@@ -440,7 +440,7 @@ namespace AqlaSerializer.Meta
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
                         return new NetObjectValueDecorator(originalType, key, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else
-                        return new ModelTypeSerializer(type, key, _model[type]);
+                        return new ModelTypeSerializer(type, key, _model[type], _model);
                 }
             }
             defaultWireType = WireType.None;

@@ -1,5 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 
 namespace AqlaSerializer
@@ -30,13 +31,16 @@ namespace AqlaSerializer
         [Test]
         public void TestSubClass()
         {
+            var tm = TypeModel.Create();
+            //tm.SkipCompiledVsNotCheck = true;
+            //tm.AutoCompile = false;
             SubClassData orig = new SubClassData
             {
                 Name = "abcdefghijklmnopqrstuvwxyz",
                 Number = 1234,
                 When = new DateTime(2008, 1, 1),
                 HowMuchNotSerialized = 123.456M
-            }, clone = (SubClassData)Serializer.DeepClone<PartialData>(orig);
+            }, clone = (SubClassData)tm.DeepClone<PartialData>(orig);
 
             Assert.IsNotNull(orig, "original");
             Assert.IsNotNull(clone, "clone");

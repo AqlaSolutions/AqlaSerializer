@@ -56,12 +56,12 @@ namespace AqlaSerializer.Meta
         }
         
         private IProtoSerializerWithWireType _serializer;
-        internal IProtoSerializerWithWireType Serializer => _serializer ?? (_serializer = BuildSerializer());
+        internal IProtoSerializerWithWireType GetSerializer(RuntimeTypeModel model) => _serializer ?? (_serializer = BuildSerializer(model));
 
-        private IProtoSerializerWithWireType BuildSerializer()
+        private IProtoSerializerWithWireType BuildSerializer(RuntimeTypeModel model)
         {
             // note the caller here is MetaType.BuildSerializer, which already has the sync-lock
-            return new ModelTypeSerializer(DerivedType.Type, DerivedType.GetKey(false, false), DerivedType);
+            return new ModelTypeSerializer(DerivedType.Type, DerivedType.GetKey(false, false), DerivedType, model);
         }
     }
 }

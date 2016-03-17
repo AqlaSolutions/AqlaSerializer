@@ -2,6 +2,7 @@
 
 #if !NO_RUNTIME
 using System;
+using System.Diagnostics;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
 #if FEAT_IKVM
@@ -21,9 +22,10 @@ namespace AqlaSerializer.Serializers
         {
             using (builder.SingleTailDecorator(this))
             {
-                var b = builder.Contract(ExpectedType);
+                var ser = _model[_key].Serializer;
+                var b = builder.Contract(ser.ExpectedType);
                 if (b != null)
-                    _proxy.Serializer.WriteDebugSchema(b);
+                    ser.WriteDebugSchema(b);
             }
         }
         
@@ -31,13 +33,16 @@ namespace AqlaSerializer.Serializers
 
         private readonly int _key;
         private readonly ISerializerProxy _proxy;
-        
-        public ModelTypeSerializer(Type type, int key, ISerializerProxy proxy)
+        readonly RuntimeTypeModel _model;
+
+        public ModelTypeSerializer(Type type, int key, ISerializerProxy proxy, RuntimeTypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (proxy == null) throw new ArgumentNullException(nameof(proxy));
+            if (model == null) throw new ArgumentNullException(nameof(model));
             this.ExpectedType = type;
             this._proxy = proxy;
+            _model = model;
             this._key = key;
         }
 

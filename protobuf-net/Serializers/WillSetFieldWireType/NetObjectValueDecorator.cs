@@ -107,7 +107,7 @@ namespace AqlaSerializer.Serializers
         {
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
             _key = key;
-            _keySerializer = new ModelTypeSerializer(Helpers.GetNullableUnderlyingType(type) ?? type, key, serializerProxy);
+            _keySerializer = new ModelTypeSerializer(Helpers.GetNullableUnderlyingType(type) ?? type, key, serializerProxy, model);
         }
 
         public void WriteDebugSchema(IDebugSchemaBuilder builder)

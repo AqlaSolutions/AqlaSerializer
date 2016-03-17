@@ -25,9 +25,9 @@ namespace AqlaSerializer.Serializers
         {
             using (builder.SingleTailDecorator(this))
             {
-                var b = builder.Contract(ExpectedType);
+                var b = builder.Contract(_model[_baseTypeKey].Serializer.ExpectedType);
                 if (b != null)
-                    _model[_typeKey].Serializer.WriteDebugSchema(b);
+                    _model[_baseTypeKey].Serializer.WriteDebugSchema(b);
             }
         }
 

@@ -435,6 +435,7 @@
     <Compile Include="ProtoWriter.cs" />
     <Compile Include="SerializationContext.cs" />
     <Compile Include="Serializer.cs" />
+    <Compile Include="Serializers\ForbiddenRootStub.cs" />
     <Compile Include="Serializers\IndentedStringBuilder.cs" />
     <Compile Include="Serializers\IndentedWithBracketsStringBuilder.cs" />
     <Compile Include="Serializers\RootFieldNumberDecorator.cs" />
