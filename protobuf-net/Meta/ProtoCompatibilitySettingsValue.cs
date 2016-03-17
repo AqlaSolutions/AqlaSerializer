@@ -35,7 +35,8 @@ namespace AqlaSerializer.Meta
         {
             SuppressOwnRootFormat = true,
             SuppressCollectionEnhancedFormat = true,
-            SuppressValueEnhancedFormat = true
+            SuppressValueEnhancedFormat = true,
+            SuppressNullWireType = true
         };
 
         object ICloneable.Clone()
