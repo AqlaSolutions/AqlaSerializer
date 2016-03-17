@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using AqlaSerializer.Meta;
 using NUnit.Framework;
 
@@ -124,10 +125,52 @@ namespace AqlaSerializer.unittest.Aqla
 
             ContainerV1 clone = tm.ChangeType<ContainerV2, ContainerV1>(obj);
 
-            AssertValuesEqual2(clone, obj);
+            AssertValuesEqual(clone, obj);
 
             // was serialized as ref
             Assert.That(clone.Value6, Is.SameAs(clone.Value4));
+        }
+
+        [Test]
+        public void ExecuteNullGroupCanBeReadWhenSuppressTogglingOn()
+        {
+            var tm = TypeModel.Create();
+            var tmOld = TypeModel.Create(false, new ProtoCompatibilitySettingsValue() { SuppressNullWireType = true });
+            ContainerV1 obj = new ContainerV1()
+            {
+                Value6 = new Custom(1)
+            };
+
+            ContainerV1 clone;
+
+            using (var ms = new MemoryStream())
+            {
+                tmOld.Serialize(ms, obj);
+                ms.Position = 0;
+                clone = tm.Deserialize<ContainerV1>(ms);
+            }
+
+            AssertValuesEqual(clone, obj);
+        }
+
+        [Test]
+        public void ExecuteNullWireTypeCanBeReadEvenWhenSuppressTogglingOff()
+        {
+            var tm = TypeModel.Create();
+            var tmOld = TypeModel.Create(false, new ProtoCompatibilitySettingsValue() { SuppressNullWireType = true });
+            ContainerV1 obj = new ContainerV1()
+            {
+                Value6 = new Custom(1)
+            };
+
+            ContainerV1 clone;
+            using (var ms = new MemoryStream())
+            {
+                tmOld.Serialize(ms, obj);
+                ms.Position = 0;
+                clone = tm.Deserialize<ContainerV1>(ms);
+            }
+            AssertValuesEqual(clone, obj);
         }
 
         static void AssertValuesEqual(ContainerV2 clone, ContainerV1 obj)
@@ -140,7 +183,17 @@ namespace AqlaSerializer.unittest.Aqla
             Assert.That(clone.Value6, Is.EqualTo(obj.Value6));
         }
 
-        static void AssertValuesEqual2(ContainerV1 clone, ContainerV2 obj)
+        static void AssertValuesEqual(ContainerV1 clone, ContainerV1 obj)
+        {
+            Assert.That(clone.Value1, Is.EqualTo(obj.Value1));
+            Assert.That(clone.Value2, Is.EqualTo(obj.Value2));
+            Assert.That(clone.Value3, Is.EqualTo(obj.Value3));
+            Assert.That(clone.Value4, Is.EqualTo(obj.Value4));
+            Assert.That(clone.Value5, Is.EqualTo(obj.Value5));
+            Assert.That(clone.Value6, Is.EqualTo(obj.Value6));
+        }
+
+        static void AssertValuesEqual(ContainerV1 clone, ContainerV2 obj)
         {
             Assert.That(clone.Value1, Is.EqualTo(obj.Value1));
             Assert.That(clone.Value2, Is.EqualTo(obj.Value2));
