@@ -884,7 +884,7 @@ namespace AqlaSerializer.Meta
                     MetaType mt = (MetaType)_types[typeIndex];
                     if (getBaseKey)
                     {
-                        mt = MetaType.GetRootType(mt);
+                        mt = MetaType.GetTypeForRootSerialization(mt);
                         typeIndex = FindOrAddAuto(mt.Type, true, true, false);
                     }
                 }

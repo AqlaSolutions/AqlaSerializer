@@ -52,24 +52,17 @@ namespace AqlaSerializer.Meta
             return format != ValueFormat.Compact;
         }
 
-        internal static MetaType GetRootType(MetaType source)
+        internal static MetaType GetTypeForRootSerialization(MetaType source)
         {
-            while (source._serializer != null)
-            {
-                MetaType tmp = source.BaseType;
-                if (tmp == null) return source;
-                source = tmp; // else loop until we reach something that isn't generated, or is the root
-            }
-
-            // now we get into uncertain territory
             RuntimeTypeModel model = source._model;
             int opaqueToken = 0;
             try
             {
                 model.TakeLock(ref opaqueToken);
-
-                MetaType tmp;
-                while ((tmp = source.BaseType) != null) source = tmp;
+                
+                if (source.OmitTypeSearchForRootSerialization) return source;
+                while (source.BaseType != null)
+                    source = source.BaseType;
                 return source;
 
             }
@@ -78,7 +71,7 @@ namespace AqlaSerializer.Meta
                 model.ReleaseLock(opaqueToken);
             }
         }
-        
+
         public static ConstructorInfo ResolveTupleConstructor(Type type, out MemberInfo[] mappedMembers)
         {
             mappedMembers = null;

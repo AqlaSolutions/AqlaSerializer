@@ -350,13 +350,21 @@ namespace AqlaSerializer.unittest.Meta
                     new Y(), new L(), new F(), new C(), new A()
                 };
             var expected = new string[objs.Length];
-            for(int i = 0 ; i < expected.Length ; i++)
+            var model1 = RuntimeTypeModel.Create();
+            for (int i = 0 ; i < expected.Length ; i++)
             {
-                var model = RuntimeTypeModel.Create();
                 using (var ms = new MemoryStream())
                 {
-                    model.Serialize(ms, objs[i], null);
+                    model1.Serialize(ms, objs[i], null);
                     expected[i] = GetHex(ms.ToArray());
+                }
+            }
+            for (int i = 0 ; i < expected.Length ; i++)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    model1.Serialize(ms, objs[i], null);
+                    Assert.That(GetHex(ms.ToArray()), Is.EqualTo(expected[i]));
                 }
             }
 #if DEBUG

@@ -120,12 +120,15 @@ namespace AqlaSerializer.Meta
                     _settingsValueFinal.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
 #endif
                 }
+                
                 if (_settingsValueFinal.IgnoreListHandling)
                 {
                     m.Collection.ItemType = null;
                     m.Collection.Format = CollectionFormat.NotSpecified;
                     m.Collection.PackedWireTypeForRead = null;
                 }
+                else if (m.Collection.ItemType == null)
+                    m.Collection.ItemType = Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type);  
 
                 m.Collection.ConcreteType = _settingsValueFinal.ConstructType;
 

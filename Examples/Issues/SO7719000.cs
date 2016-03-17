@@ -70,6 +70,8 @@ namespace Examples.Issues
             var eventDescriptorModel = model.Add(typeof(Descriptor), true);
             eventDescriptorModel.UseConstructor = false;
 
+            var s = model.GetDebugSchema(typeof(Message));
+
             RunTest(model, "Runtime");
 
             model.CompileInPlace();
@@ -86,7 +88,6 @@ namespace Examples.Issues
             const int testValue = 5;
             using (var ms = new MemoryStream())
             {
-
                 typeModel.SerializeWithLengthPrefix(ms, new SomeMessage(new Descriptor(new SomeEvent { SomeField = testValue })), null, prefixStyle, 0);
 
                 ms.Seek(0, SeekOrigin.Begin);

@@ -87,9 +87,10 @@ namespace AqlaSerializer.Meta
                     FinalizeSettingsValue();
 
                     _serializer = BuildSerializer(false);
+
                     _rootSerializer = BuildSerializer(true);
                     if (!(_rootSerializer is ForbiddenRootStub)) _rootSerializer = WrapRootSerializer(_rootSerializer);
-
+                    
                     IsFrozen = true;
                 }
             }
@@ -120,9 +121,7 @@ namespace AqlaSerializer.Meta
                 return ser;
             }
             
-            Type itemType = GetFinalSettingsCopy().IgnoreListHandling
-                                ? null
-                                : (_settingsValueFinal.Member.Collection.ItemType ?? (Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type)));
+            Type itemType = _settingsValueFinal.Member.Collection.ItemType;
 
             if (itemType != null)
             {
@@ -237,6 +236,7 @@ namespace AqlaSerializer.Meta
                 Array.Reverse(arr);
             }
             // root serializer should be always from base type
+            Debug.Assert(!OmitTypeSearchForRootSerialization);
             if (isRoot && BaseType != null)
                 return new ForbiddenRootStub(Type);
             return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValueFinal.SkipConstructor, _callbacks, _settingsValueFinal.ConstructType, _factory, _settingsValueFinal.PrefixLength.Value);
@@ -251,6 +251,26 @@ namespace AqlaSerializer.Meta
                         s,
                         _model);
 
+        }
+
+        // special handling may support hierarchy but anyway it should be written with a concrete serializer (not base/root)
+        bool OmitTypeSearchForRootSerialization
+        {
+            get
+            {
+                if (Helpers.IsEnum(Type)) return true;
+
+                if (_settingsValueFinalSet)
+                {
+                    if (_settingsValueFinal.Member.Collection.ItemType != null) return true;
+                }
+                else
+                {
+                    // this may change but we can't finalize in GetKey!
+                    if (IsList || (!IgnoreListHandling && Type.IsArray)) return true;
+                }
+                return false;
+            }
         }
 
 #if FEAT_IKVM || !FEAT_COMPILER
