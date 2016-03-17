@@ -425,22 +425,22 @@ namespace AqlaSerializer.Meta
 
             if (allowComplexTypes)
             {
-                int key = _model.GetKey(type, false, true);
+                int baseKey = _model.GetKey(type, false, true);
 
                 defaultWireType = WireType.StartGroup;
 
-                if (key >= 0 || dynamicType)
+                if (baseKey >= 0 || dynamicType)
                 {
                     if (dynamicType)
                         return new NetObjectValueDecorator(originalType, format == ValueFormat.Reference || format == ValueFormat.LateReference, dataFormat, !_model.ProtoCompatibility.SuppressNullWireType, _model);
-                    else if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(key, _model))
+                    else if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(baseKey, _model))
                     {
-                        return new NetObjectValueDecorator(originalType, key, true, true, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
+                        return new NetObjectValueDecorator(originalType, baseKey, true, true, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
-                        return new NetObjectValueDecorator(originalType, key, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
+                        return new NetObjectValueDecorator(originalType, baseKey, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else
-                        return new ModelTypeSerializer(type, key, _model[type], _model);
+                        return new ModelTypeSerializer(type, baseKey, _model[type], _model);
                 }
             }
             defaultWireType = WireType.None;

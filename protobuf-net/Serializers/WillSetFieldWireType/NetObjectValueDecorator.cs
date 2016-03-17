@@ -27,12 +27,12 @@ namespace AqlaSerializer.Serializers
             return true; // always subitem
         }
 
-        readonly int _key = -1;
+        readonly int _baseKey = -1;
         readonly IProtoSerializerWithWireType _tail;
         readonly LateReferenceSerializer _lateReferenceTail;
-        readonly IProtoSerializerWithWireType _keySerializer;
+        readonly IProtoSerializerWithWireType _baseKeySerializer;
 
-        IProtoSerializerWithWireType DelegationHandler => (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? null : (_tail ?? _keySerializer);
+        IProtoSerializerWithWireType DelegationHandler => (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? null : (_tail ?? _baseKeySerializer);
 
         readonly BclHelpers.NetObjectOptions _options;
         readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
@@ -102,12 +102,12 @@ namespace AqlaSerializer.Serializers
             // may be support later...
         }
 
-        public NetObjectValueDecorator(Type type, int key, bool asReference, bool asLateReference, ISerializerProxy serializerProxy, bool allowNullWireType, RuntimeTypeModel model)
+        public NetObjectValueDecorator(Type type, int baseKey, bool asReference, bool asLateReference, ISerializerProxy concreteSerializerProxy, bool allowNullWireType, RuntimeTypeModel model)
             : this(type: type, asReference: asReference, asLateReference: asLateReference, allowNullWireType: allowNullWireType, model: model)
         {
-            if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
-            _key = key;
-            _keySerializer = new ModelTypeSerializer(Helpers.GetNullableUnderlyingType(type) ?? type, key, serializerProxy, model);
+            if (baseKey < 0) throw new ArgumentOutOfRangeException(nameof(baseKey));
+            _baseKey = baseKey;
+            _baseKeySerializer = new ModelTypeSerializer(Helpers.GetNullableUnderlyingType(type) ?? type, baseKey, concreteSerializerProxy, model);
         }
 
         public void WriteDebugSchema(IDebugSchemaBuilder builder)
@@ -118,7 +118,7 @@ namespace AqlaSerializer.Serializers
                 if (!string.IsNullOrEmpty(description)) description += ", ";
                 description += "WithNullWireType";
             }
-            var s = (_tail ?? _keySerializer);
+            var s = (_tail ?? _baseKeySerializer);
             if (s != null)
             {
                 using (builder.SingleTailDecorator(this, description))
@@ -141,7 +141,7 @@ namespace AqlaSerializer.Serializers
             bool shouldEnd;
             int newTypeRefKey;
             int newObjectKey;
-            int typeKey = _key;
+            int typeKey = _baseKey;
             bool isDynamic;
             bool isLateReference;
             BclHelpers.NetObjectOptions options = _options;
@@ -164,7 +164,7 @@ namespace AqlaSerializer.Serializers
                     // can be only for builtins
                     options &= ~BclHelpers.NetObjectOptions.LateSet;
 
-                    if (typeKey == _key && _keySerializer != null)
+                    if (typeKey == _baseKey && _baseKeySerializer != null)
                     {
                         if (isLateReference)
                         {
@@ -172,7 +172,7 @@ namespace AqlaSerializer.Serializers
                             value = _lateReferenceTail.Read(value, source);
                         }
                         else
-                            value = _keySerializer.Read(value, source);
+                            value = _baseKeySerializer.Read(value, source);
                     }
                     else
                     {
@@ -265,12 +265,12 @@ namespace AqlaSerializer.Serializers
                         _tail.Write(value, dest);
                     else
                     {
-                        Debug.Assert(_key >= 0);
+                        Debug.Assert(_baseKey >= 0);
 
-                        if (_keySerializer != null)
-                            _keySerializer.Write(value, dest);
+                        if (_baseKeySerializer != null)
+                            _baseKeySerializer.Write(value, dest);
                         else
-                            ProtoWriter.WriteRecursionSafeObject(value, _key, dest);
+                            ProtoWriter.WriteRecursionSafeObject(value, _baseKey, dest);
                     }
                 }
             }
@@ -321,7 +321,7 @@ namespace AqlaSerializer.Serializers
                     else
                         g.Assign(inputValueBoxed, nullableValue); // box
 
-                    g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_key));
+                    g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_baseKey));
                     g.Assign(type, ExpectedType);
                     g.Assign(
                         token,
@@ -369,9 +369,9 @@ namespace AqlaSerializer.Serializers
                                 var optionsWithoutLateSet = _options & ~BclHelpers.NetObjectOptions.LateSet;
                                 if (optionsWithoutLateSet != _options)
                                     g.Assign(options, optionsWithoutLateSet);
-                                if (_keySerializer != null)
+                                if (_baseKeySerializer != null)
                                 {
-                                    g.If(typeKey.AsOperand == ctx.MapMetaKeyToCompiledKey(_key));
+                                    g.If(typeKey.AsOperand == ctx.MapMetaKeyToCompiledKey(_baseKey));
                                     {
                                         g.If(isLateReference);
                                         {
@@ -382,7 +382,7 @@ namespace AqlaSerializer.Serializers
                                         }
                                         g.Else();
                                         {
-                                            EmitReadTail(g, ctx, _keySerializer, innerValue, inputValueBoxed);
+                                            EmitReadTail(g, ctx, _baseKeySerializer, innerValue, inputValueBoxed);
                                         }
                                         g.End();
                                     }
@@ -606,15 +606,15 @@ namespace AqlaSerializer.Serializers
                                     }
                                     if (_tail != null)
                                         _tail.EmitWrite(ctx, value);
-                                    else if (_keySerializer != null)
+                                    else if (_baseKeySerializer != null)
                                     {
-                                        Debug.Assert(_key >= 0);
-                                        _keySerializer.EmitWrite(ctx, value);
+                                        Debug.Assert(_baseKey >= 0);
+                                        _baseKeySerializer.EmitWrite(ctx, value);
                                     }
                                     else
                                     {
-                                        Debug.Assert(_key >= 0);
-                                        g.Writer.WriteRecursionSafeObject(value, ctx.MapMetaKeyToCompiledKey(_key));
+                                        Debug.Assert(_baseKey >= 0);
+                                        g.Writer.WriteRecursionSafeObject(value, ctx.MapMetaKeyToCompiledKey(_baseKey));
                                     }
                                     if (canBeLateRef)
                                     {
