@@ -276,7 +276,7 @@ namespace AqlaSerializer
                 {
                     foreach (var member in members)
                     {
-                        if (!member.MappingState.Input.IsEnumValueMember && member.Tag > 0)
+                        if (!member.MappingState.Input.IsEnumValueMember)
                         {
                             Type memberType = Helpers.GetMemberType(member.Member);
                             memberType = Helpers.GetNullableUnderlyingType(memberType) ?? memberType;
