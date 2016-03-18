@@ -262,6 +262,7 @@ namespace AqlaSerializer.Meta
 
                 if (_settingsValueFinalSet)
                 {
+                    Thread.MemoryBarrier();
                     if (_settingsValueFinal.Member.Collection.ItemType != null) return true;
                 }
                 else

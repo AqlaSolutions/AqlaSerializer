@@ -54,13 +54,21 @@ namespace AqlaSerializer.Meta
 
         internal static MetaType GetTypeForRootSerialization(MetaType source)
         {
+            if (source.OmitTypeSearchForRootSerialization) return source;
+            while (true)
+            {
+                bool set = source._settingsValueFinalSet;
+                Thread.MemoryBarrier();
+                if (!set) break;
+                if (source.BaseType == null) return source;
+                source = source.BaseType;
+            }
             RuntimeTypeModel model = source._model;
             int opaqueToken = 0;
             try
             {
                 model.TakeLock(ref opaqueToken);
                 
-                if (source.OmitTypeSearchForRootSerialization) return source;
                 while (source.BaseType != null)
                     source = source.BaseType;
                 return source;
