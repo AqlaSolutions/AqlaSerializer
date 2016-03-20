@@ -37,7 +37,7 @@ Some build configurations may be not available through nuget, you can download t
 - Collection subtypes (will read subtype number to create correct concrete type).
 - Array types may be registered as collections and use full set of features (null support, etc) even when passed as root objects.
 - Primitive types are allowed to be set to fields marked as dynamic type.
-- Reference serialization will avoid using too much recursion #1.
+- Reference serialization will avoid using too much recursion in LateReference mode.
 - Possibility to specify different attribute sets for different models (see ModelId property on attributes).
 - Attributes to specify behavior on collection and collection elements (and nested) separately.
 - Significant performance improvements.
