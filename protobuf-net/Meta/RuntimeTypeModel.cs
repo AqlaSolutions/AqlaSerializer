@@ -451,10 +451,18 @@ namespace AqlaSerializer.Meta
                     if ((metaType = RecogniseCommonTypes(type)) == null)
                     { // otherwise, check if it is a contract
                         MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
-                        if (family == MetaType.AttributeFamily.AutoTuple)
+
+                        if (family == MetaType.AttributeFamily.AutoTuple && type.IsGenericType)
                         {
-                            shouldAdd = addEvenIfAutoDisabled = true; // always add basic tuples, such as KeyValuePair
+                            // always add safe tuples
+                            Type def = type.GetGenericTypeDefinition();
+                            if (def == MapType(typeof(System.Collections.Generic.KeyValuePair<,>))
+                                || def.FullName.StartsWith("System.Tuple`"))
+                            {
+                                shouldAdd = true;
+                            }
                         }
+
                         if (!shouldAdd || (
                             !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this,type)))
                         {
