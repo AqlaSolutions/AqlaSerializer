@@ -39,7 +39,7 @@ Some build configurations may be not available through nuget, you can download t
 - Reference serialization will avoid using too much recursion #1.
 - Possibility to specify different attribute sets for different models (see ModelId property on attributes).
 - Attributes to specify behavior on collection and collection elements (and nested) separately.
-- Significant peformance improvements.
+- Significant performance improvements.
 
 * 1.0.0.938:
 - more effficient memory usage
