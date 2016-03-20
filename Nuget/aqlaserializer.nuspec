@@ -6,6 +6,7 @@
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2016, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>
+    <title>AqlaSerializer (based on protobuf-net)</title>
     <summary>Fork of well known protobuf-net, contains improved API, reference tracking, list handling and multiple fixes. It's a binary serializer designed for serializing **objects** on a wide range of .NET platforms.</summary>
     <description>AqlaSerializer is intended to serialize objects, not just data. 
 
@@ -22,7 +23,7 @@ The original protobuf-net project contains many "red" unit tests but I managed t
 Some build configurations may be not available through nuget, you can download their binaries manually from github (use Project Site link).</description>
     <projectUrl>https://github.com/AqlaSolutions/AqlaSerializer</projectUrl>
     <licenseUrl>https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt</licenseUrl>
-    <tags>binary serialization protocol buffers protobuf deserialization aqlaserializer aqla aqlasolutions</tags>
+    <tags>binary serialization protocol buffers protobuf protobuf-net deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
 
