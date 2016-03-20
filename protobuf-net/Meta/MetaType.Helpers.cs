@@ -58,7 +58,7 @@ namespace AqlaSerializer.Meta
             while (true)
             {
                 bool set = source._settingsValueFinalSet;
-                Thread.MemoryBarrier();
+                Helpers.MemoryBarrier();
                 if (!set) break;
                 if (source.BaseType == null) return source;
                 source = source.BaseType;

@@ -137,7 +137,7 @@ namespace AqlaSerializer.Meta
 
                 _settingsValueFinal.Member = m;
 
-                Thread.MemoryBarrier();
+                Helpers.MemoryBarrier();
                 _settingsValueFinalSet = true;
                 IsFrozen = true;
             }
