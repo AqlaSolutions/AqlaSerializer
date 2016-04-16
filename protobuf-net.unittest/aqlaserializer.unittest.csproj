@@ -141,6 +141,7 @@
     <Compile Include="Aqla\Issue90ReadOnly.cs" />
     <Compile Include="Aqla\Issue91Converter.cs" />
     <Compile Include="Aqla\LegacyTupleMode.cs" />
+    <Compile Include="Aqla\MemberRemoveVersioning.cs" />
     <Compile Include="Aqla\MultiDimensionalArrays.cs" />
     <Compile Include="Aqla\LateReferenceVersioning.cs" />
     <Compile Include="Aqla\LinkedListAsLateReference.cs" />
