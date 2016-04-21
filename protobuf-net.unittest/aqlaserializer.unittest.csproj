@@ -153,6 +153,7 @@
     <Compile Include="Aqla\NestedLevelsTest.cs" />
     <Compile Include="Aqla\NetObjectVersioning.cs" />
     <Compile Include="Aqla\NullForLists.cs" />
+    <Compile Include="Aqla\ReferenceVersioningWithSkip.cs" />
     <Compile Include="Aqla\SubTypeDebugSchema.cs" />
     <Compile Include="Aqla\TooManyLevels.cs" />
     <Compile Include="Attribs\Basic.cs" />
