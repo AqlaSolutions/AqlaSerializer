@@ -35,6 +35,7 @@ namespace AqlaSerializer
         byte[] _ioBuffer;
         TypeModel _model;
         int _fieldNumber, _depth, _dataRemaining, _ioIndex, _position, _available, _blockEnd;
+        long _underlyingPosition;
         WireType _wireType;
         bool _isFixedLength, _internStrings;
         private NetObjectCache _netCache;
@@ -88,6 +89,17 @@ namespace AqlaSerializer
         {
             Init(this, source, model, context, TO_EOF);
         }
+        
+        public ProtoReader MakeSubReader(int relativePositionFromRootStart)
+        {
+            // subreader will have true initial position when initializing
+            // we seek before any reading so don't have to care to set it back or about interference with subreader
+            // seeking is always required for subreaders so no need to check CanSeek
+            _source.Position = InitialUnderlyingStreamPosition;
+            var r = new ProtoReader(_source, _model, _context, _isFixedLength ? FixedLength : TO_EOF);
+            r.SkipBytes(relativePositionFromRootStart);
+            return r;
+        }
 
         internal const int TO_EOF = -1;
         
@@ -116,7 +128,7 @@ namespace AqlaSerializer
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (!source.CanRead) throw new ArgumentException("Cannot read from stream", nameof(source));
-            reader.InitialUnderlyingStreamPosition = source.Position;
+            reader._underlyingPosition = reader.InitialUnderlyingStreamPosition = source.Position;
             reader._source = source;
             reader._ioBuffer = BufferPool.GetBuffer();
             reader._model = model;
@@ -295,6 +307,10 @@ namespace AqlaSerializer
 
         internal void Ensure(int count, bool strict)
         {
+            // this is required because position may be changed in subreader:
+            if (_source.CanSeek && _source.Position != _underlyingPosition)
+                _source.Position = _underlyingPosition;
+
             Helpers.DebugAssert(_available <= count, "Asking for data without checking first");
             if (count > _ioBuffer.Length)
             {
@@ -316,6 +332,7 @@ namespace AqlaSerializer
             }
             while (count > 0 && canRead > 0 && (bytesRead = _source.Read(_ioBuffer, writePos, canRead)) > 0)
             {
+                _underlyingPosition += bytesRead;
                 _available += bytesRead;
                 count -= bytesRead;
                 canRead -= bytesRead;
@@ -891,17 +908,7 @@ namespace AqlaSerializer
                         _position += len;
                         return;
                     }
-                    // everything remaining in the buffer is garbage
-                    _position += len; // assumes success, but if it fails we're screwed anyway
-                    len -= _available; // discount anything we've got to-hand
-                    _ioIndex = _available = 0; // note that we have no data in the buffer
-                    if (_isFixedLength)
-                    {
-                        if (len > _dataRemaining) throw EoF(this);
-                        // else assume we're going to be OK
-                        _dataRemaining -= len;
-                    }
-                    ProtoReader.Seek(_source, len, _ioBuffer);
+                    SkipBytes(len);
                     return;
                 case WireType.Variant:
                 case WireType.SignedVariant:
@@ -923,6 +930,25 @@ namespace AqlaSerializer
                 default: // treat as implicit error
                     throw CreateWireTypeException();
             }
+        }
+
+        public void SkipBytes(int len)
+        {
+            _position += len; // assumes success, but if it fails we're screwed anyway
+            _underlyingPosition += len;
+            len -= _available; // discount anything we've got to-hand
+            
+            _ioIndex = _available = 0; // everything remaining in the buffer is garbage
+            if (_isFixedLength)
+            {
+                if (len > _dataRemaining) throw EoF(this);
+                // else assume we're going to be OK
+                _dataRemaining -= len;
+            }
+            if (_source.CanSeek) // this is required because position may be changed in subreader
+                _source.Position = _underlyingPosition;
+            else
+                ProtoReader.Seek(_source, len, _ioBuffer);
         }
 
         /// <summary>
