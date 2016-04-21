@@ -1177,12 +1177,7 @@ namespace AqlaSerializer.Meta
 
         static void RaiseValidateDll(string name)
         {
-#if CHECK_COMPILED_VS_NOT
-            if (ValidateDll == null) throw new InvalidOperationException("For CHECK_COMPILED_VS_NOT ValidateDll event should be subscribed to");
-#else
-            if (ValidateDll == null) return;
-#endif
-            ValidateDll(name);
+            ValidateDll?.Invoke(name);
         }
 
 #if !FEAT_IKVM

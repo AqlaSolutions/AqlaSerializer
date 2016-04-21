@@ -61,14 +61,17 @@ namespace AqlaSerializer
                 source.SkipField();
                 while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
                     source.SkipField();
-                if (source.FieldNumber == RootHelpers.FieldNetObjectPositions) // TODO limit?
-                    source.SetNetObjectPositionDeltas(source.ReadArrayContent(TypeModel.DefaultArrayLengthReadLimit, source.ReadInt32));
+                if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
+                    source.SetNetObjectPositionDeltas(
+                        source.ReadArrayContent(
+                            source.Model?.ReferenceVersioningSeekingObjectsListLimit ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListLimit,
+                            source.ReadInt32));
                 source.SeekAndExchangeBlockEnd(pos, blockEnd);
                 var f = source.ReadFieldHeader();
                 Helpers.DebugAssert(f == formatVersion);
             }
             return formatVersion;
-        }
+        } 
 
         public static void ReadOwnFooter(int formatVersion, ProtoReader source)
         {

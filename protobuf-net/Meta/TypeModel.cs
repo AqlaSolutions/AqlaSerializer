@@ -39,6 +39,13 @@ namespace AqlaSerializer.Meta
         
         internal const int DefaultArrayLengthReadLimit = 100000;
 
+        /// <summary>
+        /// Max count for list for <see cref="AllowReferenceVersioningSeeking"/>
+        /// </summary>
+        public int ReferenceVersioningSeekingObjectsListLimit { get; set; } = DefaultReferenceVersioningSeekingObjectsListLimit;
+
+        public const int DefaultReferenceVersioningSeekingObjectsListLimit = 1000000;
+
         internal const int DefaultRecursionDepthLimit = 500;
 
         public int RecursionDepthLimit { get; set; } = DefaultRecursionDepthLimit;

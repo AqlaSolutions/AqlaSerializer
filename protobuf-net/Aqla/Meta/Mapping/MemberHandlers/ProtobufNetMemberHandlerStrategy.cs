@@ -57,7 +57,8 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 
                 bool overwriteList = false;
                 attribute.TryGetNotDefault("OverwriteList", ref overwriteList);
-                level.Collection.Append = !overwriteList;
+                if (overwriteList)
+                    level.Collection.Append = false;
 
                 if (!level.WriteAsDynamicType.GetValueOrDefault())
                     attribute.TryGetNotDefault("DynamicType", ref level.WriteAsDynamicType);

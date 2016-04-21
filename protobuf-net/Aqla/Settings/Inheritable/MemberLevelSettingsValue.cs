@@ -41,11 +41,11 @@ namespace AqlaSerializer.Settings
         public MemberLevelSettingsValue GetInitializedToValueOrDefault()
         {
             var x = this;
-            x.Collection.Append = x.Collection.Append.GetValueOrDefault();
+            x.DefaultsMode = x.DefaultsMode.GetValueOrDefault();
+            x.Collection.Append = x.Collection.Append.GetValueOrDefault(x.DefaultsMode.Value == MemberDefaultsMode.Legacy);
             // we don't change PackedWireTypeForRead because any non-null value would be not default
             x.ContentBinaryFormatHint = x.ContentBinaryFormatHint.GetValueOrDefault();
             x.WriteAsDynamicType = x.WriteAsDynamicType.GetValueOrDefault();
-            x.DefaultsMode = x.DefaultsMode.GetValueOrDefault();
             return x;
         }
 
