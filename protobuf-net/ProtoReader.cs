@@ -918,13 +918,6 @@ namespace AqlaSerializer
                     return;
                 case WireType.String:
                     int len = (int)ReadUInt32Variant(false);
-                    if (len <= _available)
-                    { // just jump it!
-                        _available -= len;
-                        _ioIndex += len;
-                        _position += len;
-                        return;
-                    }
                     SkipBytes(len);
                     return;
                 case WireType.Variant:
@@ -936,7 +929,7 @@ namespace AqlaSerializer
                     _depth++; // need to satisfy the sanity-checks in ReadFieldHeader
                     while (ReadFieldHeader() > 0) { SkipField(); }
                     _depth--;
-                    if (_wireType == WireType.EndGroup && _fieldNumber == originalFieldNumber)
+                    if ((_wireType == WireType.EndGroup && _fieldNumber == originalFieldNumber) || (_wireType == WireType.None && _fieldNumber == 0))
                     { // we expect to exit in a similar state to how we entered
                         _wireType = AqlaSerializer.WireType.None;
                         return;
@@ -951,22 +944,31 @@ namespace AqlaSerializer
 
         public void SkipBytes(int len)
         {
+            if (len <= _available)
+            { // just jump it!
+                _available -= len;
+                _ioIndex += len;
+                _position += len;
+                return;
+            }
             _position += len; // assumes success, but if it fails we're screwed anyway
-            _underlyingPosition += len;
-            // for dataRemaining add (in fact no need to subtract available from dataRemaining) anything we've got to-hand
-            int lenForRemaining = len - _available;
-            
+
+            // we've already read those "available" so don't add it
+            int underlyingAdvanceLen = len - _available;
+            _underlyingPosition += underlyingAdvanceLen;
+
             _ioIndex = _available = 0; // everything remaining in the buffer is garbage
             if (_isFixedLength)
             {
-                if (lenForRemaining > _dataRemaining) throw EoF(this);
+                // data remaining is on underlying stream (_position+_available)
+                if (underlyingAdvanceLen > _dataRemaining) throw EoF(this);
                 // else assume we're going to be OK
-                _dataRemaining -= lenForRemaining;
+                _dataRemaining -= underlyingAdvanceLen;
             }
             if (_source.CanSeek) // this is required because position may be changed in subreader
                 _source.Position = _underlyingPosition;
             else
-                ProtoReader.Seek(_source, len, _ioBuffer);
+                ProtoReader.Seek(_source, underlyingAdvanceLen, _ioBuffer);
         }
 
         public int SeekAndExchangeBlockEnd(int anyPositionFromRootReaderStart, int newBlockEnd = int.MaxValue)
