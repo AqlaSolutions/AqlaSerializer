@@ -186,6 +186,8 @@ namespace AqlaSerializer
             get { return _netCache;}
         }
 
+        internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; } = new NetObjectKeyPositionsList();
+
         private int _fieldNumber, _flushLock;
         WireType _wireType;
         public WireType WireType => _wireType;

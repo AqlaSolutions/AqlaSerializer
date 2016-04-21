@@ -138,27 +138,20 @@ namespace AqlaSerializer.Serializers
             if (source.WireType == WireType.Null) return Helpers.IsValueType(type) ? Activator.CreateInstance(type) : null;
 
             if (!RequiresOldValue) value = null;
-            bool shouldEnd;
-            int newTypeRefKey;
-            int newObjectKey;
+
             int typeKey = _baseKey;
-            bool isDynamic;
-            bool isLateReference;
             BclHelpers.NetObjectOptions options = _options;
-            SubItemToken token = NetObjectHelpers.ReadNetObject_Start(
+            var r = NetObjectHelpers.ReadNetObject_Start(
                 ref value,
                 source,
                 ref type,
                 options,
-                out isDynamic,
-                out isLateReference,
                 ref typeKey,
-                out newObjectKey,
-                out newTypeRefKey,
-                out shouldEnd);
-            if (shouldEnd)
+                true);
+
+            object oldValue = value;
+            if (r.ShouldRead)
             {
-                object oldValue = value;
                 if (typeKey >= 0)
                 {
                     // can be only for builtins
@@ -166,7 +159,7 @@ namespace AqlaSerializer.Serializers
 
                     if (typeKey == _baseKey && _baseKeySerializer != null)
                     {
-                        if (isLateReference)
+                        if (r.IsLateReference)
                         {
                             if (_lateReferenceTail == null) throw new ProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
                             value = _lateReferenceTail.Read(value, source);
@@ -176,13 +169,13 @@ namespace AqlaSerializer.Serializers
                     }
                     else
                     {
-                        Debug.Assert(isDynamic);
+                        Debug.Assert(r.IsDynamic);
                         value = ProtoReader.ReadObject(value, typeKey, source);
                     }
                 }
                 else
                 {
-                    if (isDynamic)
+                    if (r.IsDynamic)
                     {
                         if (source.TryReadBuiltinType(ref value, Helpers.GetTypeCode(type), true))
                             options |= BclHelpers.NetObjectOptions.LateSet;
@@ -191,7 +184,7 @@ namespace AqlaSerializer.Serializers
                     }
                     else
                     {
-                        if (isLateReference)
+                        if (r.IsLateReference)
                         {
                             if (_lateReferenceTail == null) throw new ProtoException("Late reference can't be deserialized for type " + ExpectedType.Name);
                             value = _lateReferenceTail.Read(value, source);
@@ -208,13 +201,12 @@ namespace AqlaSerializer.Serializers
                         }
                     }
                 }
-                NetObjectHelpers.ReadNetObject_EndWithNoteNewObject(value, source, oldValue, type, newObjectKey, newTypeRefKey, options, token);
             }
-            else
+            NetObjectHelpers.ReadNetObject_End(value, r, source, oldValue, type, options);
+            if (!r.ShouldRead)
             {
                 if (Helpers.IsValueType(ExpectedType) && value == null)
                     value = Activator.CreateInstance(ExpectedType);
-                ProtoReader.EndSubItem(token, source);
             }
             return value;
         }
@@ -446,7 +438,7 @@ namespace AqlaSerializer.Serializers
 
                             g.Invoke(
                                 typeof(NetObjectHelpers),
-                                nameof(NetObjectHelpers.ReadNetObject_EndWithNoteNewObject),
+                                nameof(NetObjectHelpers.ReadNetObject_End),
                                 inputValueBoxed,
                                 g.ArgReaderWriter(),
                                 oldValueBoxed,

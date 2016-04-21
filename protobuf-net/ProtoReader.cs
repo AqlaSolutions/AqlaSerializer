@@ -32,6 +32,8 @@ namespace AqlaSerializer
 
         internal int FixedLength { get; private set; }
 
+        internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; } = new NetObjectKeyPositionsList();
+
         byte[] _ioBuffer;
         TypeModel _model;
         int _fieldNumber, _depth, _dataRemaining, _ioIndex, _position, _available, _blockEnd;
@@ -171,6 +173,7 @@ namespace AqlaSerializer
             if(_stringInterner != null) _stringInterner.Clear();
             if(_netCache != null) _netCache.Clear();
             _lateReferences.Reset();
+            NetCacheKeyPositionsList.Reset();
         }
         
 

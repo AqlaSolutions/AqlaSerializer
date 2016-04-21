@@ -7,7 +7,7 @@ using AqlaSerializer.Meta;
 
 namespace AqlaSerializer
 {
-    internal sealed class NetObjectCache:ICloneable
+    internal sealed class NetObjectCache : ICloneable
     {
         const int Root = 0;
 
@@ -23,7 +23,7 @@ namespace AqlaSerializer
         public int LastNewKey => List.Count > 0 ? List.Count + 1 : Root;
         public object LastNewValue => List.Count > 0 ? List[List.Count - 1] : _rootObject;
 
-        internal object GetKeyedObject(int key)
+        internal object GetKeyedObject(int key, bool allowMissing)
         {
             if (key-- == Root)
             {
@@ -35,12 +35,15 @@ namespace AqlaSerializer
             if (key < 0 || key >= list.Count)
             {
                 Helpers.DebugWriteLine("Missing key: " + key);
+                if (allowMissing) return null;
                 throw new ProtoException("Internal error; a missing key occurred");
             }
 
             object tmp = list[key];
             if (tmp == null)
             {
+                Helpers.DebugWriteLine("Missing key: " + key);
+                if (allowMissing) return null;
                 throw new ProtoException("A deferred key does not have a value yet (NoteObject call missed?)");
             }
             return tmp;
