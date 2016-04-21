@@ -90,17 +90,17 @@ namespace AqlaSerializer
             Init(this, source, model, context, TO_EOF);
         }
         
-        public ProtoReader MakeSubReader(int relativePositionFromRootStart)
+        public ProtoReader MakeSubReader(int anyPositionFromRootReaderStart)
         {
             // subreader will have true initial position when initializing
             // we seek before any reading so don't have to care to set it back or about interference with subreader
             // seeking is always required for subreaders so no need to check CanSeek
             _source.Position = InitialUnderlyingStreamPosition;
             var r = new ProtoReader(_source, _model, _context, _isFixedLength ? FixedLength : TO_EOF);
-            r.SkipBytes(relativePositionFromRootStart);
+            r.SkipBytes(anyPositionFromRootReaderStart);
             return r;
         }
-
+        
         internal const int TO_EOF = -1;
         
         
@@ -950,6 +950,28 @@ namespace AqlaSerializer
                 _source.Position = _underlyingPosition;
             else
                 ProtoReader.Seek(_source, len, _ioBuffer);
+        }
+
+        public int SeekAndExchangeBlockEnd(int anyPositionFromRootReaderStart, int newBlockEnd = int.MaxValue)
+        {
+            if (newBlockEnd < anyPositionFromRootReaderStart)
+            {
+                if (newBlockEnd == -1)
+                    newBlockEnd = int.MaxValue;
+                else
+                    throw new ArgumentOutOfRangeException(nameof(newBlockEnd));
+            }
+            _position = anyPositionFromRootReaderStart;
+            _source.Position = _underlyingPosition = InitialUnderlyingStreamPosition + anyPositionFromRootReaderStart;
+
+            if (_isFixedLength) // for dataRemaining add back anything we've got to-hand
+                _dataRemaining = FixedLength - anyPositionFromRootReaderStart;
+
+            _ioIndex = _available = 0; // everything remaining in the buffer is garbage
+
+            int end = _blockEnd;
+            _blockEnd = newBlockEnd;
+            return end;
         }
 
         /// <summary>
