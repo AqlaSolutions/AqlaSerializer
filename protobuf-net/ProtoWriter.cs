@@ -907,6 +907,8 @@ namespace AqlaSerializer
         int _bytesFlushed;
         bool _streamAsBufferAllowed;
 
+        public bool AllowStreamRewriting => _streamAsBufferAllowed;
+
         /// <summary>
         /// Writes any buffered data (if possible) to the underlying stream.
         /// </summary>

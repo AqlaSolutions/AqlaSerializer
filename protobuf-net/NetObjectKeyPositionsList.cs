@@ -36,7 +36,7 @@ namespace AqlaSerializer
 
         static void ThrowNotFound(int key)
         {
-            throw new KeyNotFoundException(nameof(NetObjectKeyPositionsList) + " can't find a key: " + key);
+            throw new KeyNotFoundException(nameof(NetObjectKeyPositionsList) + " can't find a key: " + key+ ", try to set TypeModel.EnableVersioningSeeking = true");
         }
     }
 }

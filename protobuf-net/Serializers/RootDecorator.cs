@@ -26,12 +26,14 @@ namespace AqlaSerializer.Serializers
         }
         
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility;
+        readonly bool _enableReferenceVersioningSeeking;
         readonly bool _protoCompatibility;
         private readonly IProtoTypeSerializer _serializer;
         readonly IProtoSerializerWithWireType _intArraySerializer;
 
-        public RootDecorator(Type type, bool wrap, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
+        public RootDecorator(Type type, bool wrap, bool enableReferenceVersioningSeeking, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
         {
+            _enableReferenceVersioningSeeking = enableReferenceVersioningSeeking;
             _protoCompatibility = protoCompatibility;
             _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
             _intArraySerializer = new ArrayDecorator(
@@ -79,7 +81,7 @@ namespace AqlaSerializer.Serializers
                 if (lateRefFieldToken == null)
                 {
                     ProtoWriter.WriteFieldHeaderBegin(FieldLateReferenceObjects, dest);
-                    lateRefFieldToken= ProtoWriter.StartSubItem(null, false, dest);
+                    lateRefFieldToken = ProtoWriter.StartSubItem(null, false, dest);
                 }
                 ProtoWriter.WriteFieldHeaderBegin(refKey + 1, dest);
                 ProtoWriter.WriteRecursionSafeObject(obj, typeKey, dest);
@@ -115,7 +117,7 @@ namespace AqlaSerializer.Serializers
                 default:
                     throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
             }   
-            if (formatVersion > Rc1FormatVersion)
+            if (formatVersion > Rc1FormatVersion && _enableReferenceVersioningSeeking && source.AllowReferenceVersioningSeeking)
             {
                 // skip to the end
                 source.SkipField();

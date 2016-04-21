@@ -32,6 +32,11 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AllowStreamRewriting { get; set; } = true;
 
+        /// <summary>
+        /// Disabling it will improve read performance but may cause exceptions when during deserialization a reference to removed reference-tracked property found. Requires own root format.
+        /// </summary>
+        public bool AllowReferenceVersioningSeeking { get; set; } = true;
+        
         internal const int DefaultArrayLengthReadLimit = 100000;
 
         internal const int DefaultRecursionDepthLimit = 500;

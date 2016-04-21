@@ -86,10 +86,11 @@ namespace AqlaSerializer.Meta
 
                     FinalizeSettingsValue();
 
-                    _serializer = BuildSerializer(false);
+                    bool mayContainReferencesInside;
+                    _serializer = BuildSerializer(false, out mayContainReferencesInside);
 
-                    _rootSerializer = BuildSerializer(true);
-                    if (!(_rootSerializer is ForbiddenRootStub)) _rootSerializer = WrapRootSerializer(_rootSerializer);
+                    _rootSerializer = BuildSerializer(true, out mayContainReferencesInside);
+                    if (!(_rootSerializer is ForbiddenRootStub)) _rootSerializer = WrapRootSerializer(_rootSerializer, mayContainReferencesInside);
                     
                     IsFrozen = true;
                 }
@@ -103,8 +104,9 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-        private IProtoTypeSerializer BuildSerializer(bool isRoot)
+        private IProtoTypeSerializer BuildSerializer(bool isRoot, out bool mayContainReferencesInside)
         {
+            mayContainReferencesInside = false;
             // reference tracking decorators (RootDecorator, NetObjectDecorator, NetObjectValueDecorator)
             // should always be applied only one time (otherwise will consider new objects as already written):
             // #1 For collection types references are handled either by RootDecorator or 
@@ -160,6 +162,8 @@ namespace AqlaSerializer.Meta
                 if (isRoot && !GetRootStartsGroup())
                     ser = new RootFieldNumberDecorator(ser, TypeModel.EnumRootTag);
 
+                mayContainReferencesInside = !Helpers.IsValueType(itemType);
+
                 return ser;
             }
 
@@ -177,6 +181,7 @@ namespace AqlaSerializer.Meta
             if (_settingsValueFinal.IsAutoTuple)
             {
                 if (_tupleCtor == null) throw new InvalidOperationException("Can't find tuple constructor");
+                mayContainReferencesInside = _tupleFields.Any(f => !Helpers.IsValueType(f.MemberType));
                 return new TupleSerializer(_model, _tupleCtor, _tupleFields.ToArray(), _settingsValueFinal.PrefixLength.GetValueOrDefault(true));
             }
 
@@ -191,6 +196,7 @@ namespace AqlaSerializer.Meta
             int i = 0;
             if (subTypeCount != 0)
             {
+                mayContainReferencesInside = true;
                 Debug.Assert(_subTypes != null, "_subTypes != null");
                 foreach (SubType subType in _subTypes)
                 {
@@ -212,6 +218,7 @@ namespace AqlaSerializer.Meta
                 {
                     fieldNumbers[i] = member.FieldNumber;
                     serializers[i++] = member.Serializer;
+                    if (!Helpers.IsValueType(member.MemberType)) mayContainReferencesInside = true;
                 }
             }
 
@@ -242,11 +249,12 @@ namespace AqlaSerializer.Meta
             return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValueFinal.SkipConstructor, _callbacks, _settingsValueFinal.ConstructType, _factory, _settingsValueFinal.PrefixLength.Value);
         }
 
-        IProtoTypeSerializer WrapRootSerializer(IProtoTypeSerializer s)
+        IProtoTypeSerializer WrapRootSerializer(IProtoTypeSerializer s, bool mayContainReferencesInside)
         {
             return new RootDecorator(
                         Type,
                         GetRootNetObjectMode(),
+                        mayContainReferencesInside && !_model.ProtoCompatibility.SuppressValueEnhancedFormat,
                         !GetRootLateReferenceMode(),
                         s,
                         _model);

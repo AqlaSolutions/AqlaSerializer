@@ -81,6 +81,9 @@ namespace AqlaSerializer
         /// </summary>
         public WireType WireType { get { return _wireType; } }
 
+        public bool CanSeek => _source.CanSeek;
+        public bool AllowReferenceVersioningSeeking => CanSeek && (_model?.AllowReferenceVersioningSeeking ?? true);
+        
         /// <summary>
         /// Creates a new reader against a stream
         /// </summary>
