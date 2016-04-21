@@ -10,9 +10,9 @@ namespace AqlaSerializer
 
         public void SetPosition(int key, int position)
         {
-            if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
+            if (position < 0 || (key > 0 && position == 0)) throw new ArgumentOutOfRangeException(nameof(position));
             while (_keyToPosition.Count - 1 < key)
-                _keyToPosition.Add(-1);
+                _keyToPosition.Add(0);
             _keyToPosition[key] = position;
         }
 
@@ -20,11 +20,11 @@ namespace AqlaSerializer
         {
             if (_keyToPosition.Count - 1 < key) ThrowNotFound(key);
             var r = _keyToPosition[key];
-            if (r == -1) ThrowNotFound(key);
+            if (r == 0 && key > 0) ThrowNotFound(key);
             return r;
         }
 
-        public int[] GetKeyToPositionArray()
+        public int[] ToKeyToPositionArray()
         {
             return _keyToPosition.ToArray();
         }

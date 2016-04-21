@@ -16,9 +16,13 @@ namespace AqlaSerializer
             if (dest == null) throw new ArgumentNullException(nameof(dest));
 
             dynamicTypeKey = -1;
-            int pos = ProtoWriter.GetPosition(dest);
+            
             // length not prefixed to not move data in buffer twice just because of NetObject (will be another nested inside)
+            // Read method expects group (no length prefix) for missing object keys
             SubItemToken token = ProtoWriter.StartSubItem(null, false, dest);
+
+            // we store position inside group because half-written field (before StartSubItem) has number "written" but position not changed
+            int pos = ProtoWriter.GetPosition(dest);
 
             if (value == null)
             {

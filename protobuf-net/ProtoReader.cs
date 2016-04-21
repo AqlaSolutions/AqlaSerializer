@@ -33,7 +33,7 @@ namespace AqlaSerializer
         internal int FixedLength { get; private set; }
 
         internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; } = new NetObjectKeyPositionsList();
-
+        
         byte[] _ioBuffer;
         TypeModel _model;
         int _fieldNumber, _depth, _dataRemaining, _ioIndex, _position, _available, _blockEnd;
@@ -175,7 +175,16 @@ namespace AqlaSerializer
             _lateReferences.Reset();
             NetCacheKeyPositionsList.Reset();
         }
-        
+
+        public void SetNetObjectPositionDeltas(int[] keyToPositionDeltaArray)
+        {
+            int acc = 0;
+            for (int i = 0; i < keyToPositionDeltaArray.Length; i++)
+            {
+                acc += keyToPositionDeltaArray[i];
+                NetCacheKeyPositionsList.SetPosition(i, acc);
+            }
+        }
 
         LateReferencesCache _lateReferences = new LateReferencesCache();
 
@@ -305,6 +314,8 @@ namespace AqlaSerializer
         /// in the underlying stream, if multiple readers are used on the same stream)
         /// </summary>
         public int Position { get { return _position; } }
+
+        public int BlockEndPosition => _blockEnd;
 
         internal long InitialUnderlyingStreamPosition { get; private set; }
 

@@ -28,17 +28,31 @@ namespace AqlaSerializer.Serializers
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility;
         readonly bool _protoCompatibility;
         private readonly IProtoTypeSerializer _serializer;
+        readonly IProtoSerializerWithWireType _intArraySerializer;
 
         public RootDecorator(Type type, bool wrap, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
         {
             _protoCompatibility = protoCompatibility;
             _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
+            _intArraySerializer = new ArrayDecorator(
+                model,
+                new WireTypeDecorator(WireType.Variant, new Int32Serializer(model)),
+                true,
+                WireType.Variant,
+                typeof(int[]),
+                true,
+                TypeModel.DefaultArrayLengthReadLimit,
+                model.ProtoCompatibility.SuppressCollectionEnhancedFormat);
         }
 
         public Type ExpectedType => _serializer.ExpectedType;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 
-        const int CurrentFormatVersion = 3;
+        const int CurrentFormatVersion = 4;
+
+        const int FieldLateReferenceObjects = 2;
+
+        const int FieldNetObjectPositions = 3;
 
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
@@ -56,11 +70,29 @@ namespace AqlaSerializer.Serializers
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
             ProtoWriter.WriteFieldHeaderBegin(CurrentFormatVersion, dest);
             _serializer.Write(value, dest);
+
+            SubItemToken? lateRefFieldToken = null;
+
             while (ProtoWriter.TryGetNextLateReference(out typeKey, out obj, out refKey, dest))
             {
+                if (lateRefFieldToken == null)
+                {
+                    ProtoWriter.WriteFieldHeaderBegin(FieldLateReferenceObjects, dest);
+                    lateRefFieldToken= ProtoWriter.StartSubItem(null, false, dest);
+                }
                 ProtoWriter.WriteFieldHeaderBegin(refKey + 1, dest);
                 ProtoWriter.WriteRecursionSafeObject(obj, typeKey, dest);
             }
+
+            if (lateRefFieldToken != null) ProtoWriter.EndSubItem(lateRefFieldToken.Value, dest);
+
+            int[] arr = ProtoWriter.GetNetObjectKeyToPositionDeltasArray(dest);
+            if (arr.Length != 0)
+            {
+                ProtoWriter.WriteFieldHeaderBegin(FieldNetObjectPositions, dest);
+                _intArraySerializer.Write(arr, dest);
+            }
+
             ProtoWriter.EndSubItem(rootToken, dest);
         }
 
@@ -74,25 +106,43 @@ namespace AqlaSerializer.Serializers
             object obj;
             int expectedRefKey;
             var rootToken = ProtoReader.StartSubItem(source);
+            int pos = source.Position;
+            int blockEnd = source.BlockEndPosition;
             int formatVersion = source.ReadFieldHeader();
             if (formatVersion != CurrentFormatVersion) throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
+
+            source.SkipField();
+            while (source.ReadFieldHeader() != 0 && source.FieldNumber != FieldNetObjectPositions)
+                source.SkipField();
+            if (source.FieldNumber == FieldNetObjectPositions)
+                source.SetNetObjectPositionDeltas((int[])_intArraySerializer.Read(null, source));
+            source.SeekAndExchangeBlockEnd(pos, blockEnd);
+            var f = source.ReadFieldHeader();
+            Helpers.DebugAssert(f == CurrentFormatVersion);
             var r = _serializer.Read(value, source);
-            while (ProtoReader.TryGetNextLateReference(out typeKey, out obj, out expectedRefKey, source))
+            while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
+                source.SkipField();
+            if (source.FieldNumber == FieldLateReferenceObjects)
             {
-                int actualRefKey;
-                do
+                var t = ProtoReader.StartSubItem(source);
+                while (ProtoReader.TryGetNextLateReference(out typeKey, out obj, out expectedRefKey, source))
                 {
-                    actualRefKey = source.ReadFieldHeader() - 1;
-                    if (actualRefKey != expectedRefKey)
+                    int actualRefKey;
+                    do
                     {
-                        if (actualRefKey <= -1) throw new ProtoException("Expected field for late reference");
-                        // should go only up
-                        if (actualRefKey > expectedRefKey) throw new ProtoException("Mismatched order of late reference objects");
-                        source.SkipField(); // refKey < num
-                    }
-                } while (actualRefKey < expectedRefKey);
-                object lateObj = ProtoReader.ReadObject(obj, typeKey, source);
-                if (!ReferenceEquals(lateObj, obj)) throw new ProtoException("Late reference changed during deserializing");
+                        actualRefKey = source.ReadFieldHeader() - 1;
+                        if (actualRefKey != expectedRefKey)
+                        {
+                            if (actualRefKey <= -1) throw new ProtoException("Expected field for late reference");
+                            // should go only up
+                            if (actualRefKey > expectedRefKey) throw new ProtoException("Mismatched order of late reference objects");
+                            source.SkipField(); // refKey < num
+                        }
+                    } while (actualRefKey < expectedRefKey);
+                    object lateObj = ProtoReader.ReadObject(obj, typeKey, source);
+                    if (!ReferenceEquals(lateObj, obj)) throw new ProtoException("Late reference changed during deserializing");
+                }
+                ProtoReader.EndSubItem(t, source);
             }
             ProtoReader.EndSubItem(rootToken, true, source);
             return r;

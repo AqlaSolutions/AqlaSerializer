@@ -106,6 +106,8 @@ namespace AqlaSerializer
                                 BlockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp))
                             };
 
+                            if (!ProtoReader.HasSubValue(WireType.StartGroup,source )) throw new ProtoException("New object could not be found on specified position, net key: " + tmp);
+
                             r = ReadNetObject_Start(
                                 ref value,
                                 source,
@@ -134,7 +136,7 @@ namespace AqlaSerializer
                             // have to seek
                             var pos = source.Position;
                             int blockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp));
-                            if (!ProtoReader.HasSubValue(WireType.String, source)) throw new InvalidOperationException("New type not found on specified position, net key: " + tmp);
+                            if (!ProtoReader.HasSubValue(WireType.String, source)) throw new ProtoException("New type could not be found on specified position, net key: " + tmp);
                             ReadNewType(source, out type, out typeKey);
                             source.SeekAndExchangeBlockEnd(pos, blockEnd);
                         }
