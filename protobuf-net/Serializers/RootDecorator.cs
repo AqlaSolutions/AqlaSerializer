@@ -140,6 +140,9 @@ namespace AqlaSerializer.Serializers
                     ReadLateReferences(source);
                     ProtoReader.EndSubItem(t, source);
                 }
+
+                while (source.ReadFieldHeader() > 0)
+                    source.SkipField(); // skip field on endsubitem doesn't work with root
             }
             else ReadLateReferences(source);
             ProtoReader.EndSubItem(rootToken, true, source);
