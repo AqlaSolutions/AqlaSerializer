@@ -16,7 +16,7 @@ namespace AqlaSerializer
             if (dest == null) throw new ArgumentNullException(nameof(dest));
 
             dynamicTypeKey = -1;
-
+            int pos = ProtoWriter.GetPosition(dest);
             // length not prefixed to not move data in buffer twice just because of NetObject (will be another nested inside)
             SubItemToken token = ProtoWriter.StartSubItem(null, false, dest);
 
@@ -40,6 +40,10 @@ namespace AqlaSerializer
                 {
                     writeObject = false;
                 }
+                else
+                {
+                    dest.NetCacheKeyPositionsList.SetPosition(objectKey, pos);
+                }
             }
 
             if (writeObject)
@@ -52,6 +56,7 @@ namespace AqlaSerializer
                     dynamicTypeKey = dest.GetTypeKey(ref type);
                     int typeRefKey = dest.NetCache.AddObjectKey(type, out existing);
                     ProtoWriter.WriteFieldHeader(existing ? FieldExistingTypeKey : FieldNewTypeKey, WireType.Variant, dest);
+                    if (!existing) dest.NetCacheKeyPositionsList.SetPosition(typeRefKey, pos);
                     ProtoWriter.WriteInt32(typeRefKey, dest);
                     if (!existing)
                     {
