@@ -50,7 +50,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS FAKE_COMPILE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -394,6 +394,7 @@
     <Compile Include="Meta\ReflectionObjectMap.cs" />
     <Compile Include="Meta\ValueSerializationSettings.cs" />
     <Compile Include="Meta\ValueSerializerBuilder.cs" />
+    <Compile Include="RootHelpers.cs" />
     <Compile Include="Serializers\DebugSchemaBuilder.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\AccessorsCache.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\DynamicMethodCompiler.cs" />

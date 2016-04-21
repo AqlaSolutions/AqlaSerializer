@@ -295,18 +295,18 @@ namespace AqlaSerializer.Serializers
                 g.Else();
 
                 using (Local innerValue = nullableUnderlying == null ? nullableValue.AsCopy() : ctx.Local(nullableUnderlying))
-                using (Local shouldEnd = ctx.Local(typeof(bool)))
-                using (Local isLateReference = ctx.Local(typeof(bool)))
-                using (Local newTypeRefKey = ctx.Local(typeof(int)))
+                using (Local readReturnValue = ctx.Local(typeof(NetObjectHelpers.ReadReturnValue)))
                 using (Local typeKey = ctx.Local(typeof(int)))
                 using (Local type = ctx.Local(typeof(System.Type)))
-                using (Local newObjectKey = ctx.Local(typeof(int)))
-                using (Local isDynamic = ctx.Local(typeof(bool)))
                 using (Local options = ctx.Local(typeof(BclHelpers.NetObjectOptions)))
-                using (Local token = ctx.Local(typeof(SubItemToken)))
                 using (Local oldValueBoxed = ctx.Local(typeof(object)))
                 using (Local inputValueBoxed = ctx.Local(typeof(object)))
                 {
+                    var shouldRead = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.ShouldRead)).SetNotLeaked();
+                    var isLateReference = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.IsLateReference)).SetNotLeaked();
+                    var isDynamic = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.IsDynamic)).SetNotLeaked();
+                    var token = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.Token)).SetNotLeaked();
+
                     g.Assign(options, _options);
                     if (!RequiresOldValue)
                         g.Assign(inputValueBoxed, null);
@@ -316,7 +316,7 @@ namespace AqlaSerializer.Serializers
                     g.Assign(typeKey, ctx.MapMetaKeyToCompiledKey(_baseKey));
                     g.Assign(type, ExpectedType);
                     g.Assign(
-                        token,
+                        readReturnValue,
                         s.Invoke(
                             typeof(NetObjectHelpers),
                             nameof(NetObjectHelpers.ReadNetObject_Start),
@@ -324,19 +324,15 @@ namespace AqlaSerializer.Serializers
                             g.ArgReaderWriter(),
                             type,
                             options,
-                            isDynamic,
-                            isLateReference,
                             typeKey,
-                            newObjectKey,
-                            newTypeRefKey,
-                            shouldEnd));
+                            true));
 
-                    g.If(shouldEnd);
+                    g.Assign(oldValueBoxed, inputValueBoxed);
+
+                    g.If(shouldRead);
                     {
                         using (ctx.StartDebugBlockAuto(this, "ShouldEnd=True"))
                         {
-                            g.Assign(oldValueBoxed, inputValueBoxed);
-
                             // now valueBoxed is not null otherwise it would go to else
 
                             // unwrap nullable
@@ -435,21 +431,21 @@ namespace AqlaSerializer.Serializers
 
                             if (!innerValue.IsSame(nullableValue))
                                 g.Assign(nullableValue, innerValue); // nullable~T it back
-
-                            g.Invoke(
-                                typeof(NetObjectHelpers),
-                                nameof(NetObjectHelpers.ReadNetObject_End),
-                                inputValueBoxed,
-                                g.ArgReaderWriter(),
-                                oldValueBoxed,
-                                type,
-                                newObjectKey,
-                                newTypeRefKey,
-                                options,
-                                token);
                         }
                     }
-                    g.Else();
+                    g.End();
+
+                    g.Invoke(
+                        typeof(NetObjectHelpers),
+                        nameof(NetObjectHelpers.ReadNetObject_End),
+                        inputValueBoxed,
+                        readReturnValue,
+                        g.ArgReaderWriter(),
+                        oldValueBoxed,
+                        type,
+                        options);
+
+                    g.If(!shouldRead);
                     {
                         if (Helpers.IsValueType(ExpectedType) && (EmitReadReturnsValue || RequiresOldValue))
                         {
@@ -467,8 +463,6 @@ namespace AqlaSerializer.Serializers
                         }
                         else
                             g.Assign(nullableValue, inputValueBoxed.AsOperand.Cast(ExpectedType));
-
-                        g.Reader.EndSubItem(token);
                     }
                     g.End();
                 }

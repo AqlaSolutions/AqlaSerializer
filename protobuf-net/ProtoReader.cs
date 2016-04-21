@@ -2,12 +2,14 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Linq; using AltLinq;
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
 using System.IO;
 using System.Text;
 using AqlaSerializer.Meta;
+using AqlaSerializer.Serializers;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -362,6 +364,32 @@ namespace AqlaSerializer
             }
 
         }
+
+        /// <summary>
+        /// Behavior same as <see cref="ListHelpers"/> with ProtoCompatibility = off
+        /// </summary>
+        internal T[] ReadArrayContent<T>(int max, Func<T> reader)
+        {
+            var t = StartSubItem(this);
+            if (ReadFieldHeader() != ListHelpers.FieldLength) throw new ProtoException("Array length expected");
+            int count = ReadInt32();
+            if (count > max) throw new ProtoException("Expected max " + max + " elements but found " + count);
+            T[] arr = new T[count];
+            
+            while (ReadFieldHeader() > 0 && FieldNumber != ListHelpers.FieldItem)
+                SkipField();
+
+            var wt = WireType;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (i != 0 && !HasSubValue(wt, this)) throw new ProtoException("Expected array item but not found");
+                arr[i] = reader();
+            }
+            EndSubItem(t, true, this);
+            return arr;
+        }
+
         /// <summary>
         /// Reads a signed 16-bit integer from the stream: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>

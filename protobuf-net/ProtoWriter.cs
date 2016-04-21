@@ -7,6 +7,8 @@ using System.Text;
 using System.Xml;
 using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
+using AqlaSerializer.Serializers;
+
 #if MF
 using OverflowException = System.ApplicationException;
 #endif
@@ -124,6 +126,11 @@ namespace AqlaSerializer
             }
             writer._model.Serialize(key, value, writer, false);
         }
+
+        //internal static void WriteAuxiliaryObject(int tag, object value, ProtoWriter writer)
+        //{
+        //    writer._model.TrySerializeAuxiliaryType(writer, value.GetType(), BinaryDataFormat.Default, tag, value, false, false);
+        //}
 
         // not used anymore because we don't want aux on members
 
@@ -1168,6 +1175,26 @@ namespace AqlaSerializer
                     return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Behavior same as <see cref="ListHelpers"/> with ProtoCompatibility = off
+        /// </summary>
+        internal static void WriteArrayContent<T>(T[] arr, WireType wt, Action<T, ProtoWriter> writer, ProtoWriter dest)
+        {
+            var t = StartSubItem(null, true, dest);
+            WriteFieldHeader(ListHelpers.FieldLength, WireType.Variant, dest);
+            WriteInt32(arr.Length, dest);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (i == 0)
+                    WriteFieldHeader(ListHelpers.FieldItem, wt, dest);
+                else
+                    WriteFieldHeaderIgnored(wt, dest);
+
+                writer(arr[i], dest);
+            }
+            EndSubItem(t, dest);
         }
 
         /// <summary>

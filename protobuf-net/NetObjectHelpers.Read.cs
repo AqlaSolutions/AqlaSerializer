@@ -195,6 +195,5 @@ namespace AqlaSerializer
             FieldTypeName = 8,
             FieldObject = 10,
             FieldLateReferenceObject = 11;
-
     }
 }

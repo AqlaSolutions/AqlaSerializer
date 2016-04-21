@@ -29,33 +29,16 @@ namespace AqlaSerializer.Serializers
         readonly bool _enableReferenceVersioningSeeking;
         readonly bool _protoCompatibility;
         private readonly IProtoTypeSerializer _serializer;
-        readonly IProtoSerializerWithWireType _intArraySerializer;
 
         public RootDecorator(Type type, bool wrap, bool enableReferenceVersioningSeeking, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
         {
             _enableReferenceVersioningSeeking = enableReferenceVersioningSeeking;
             _protoCompatibility = protoCompatibility;
             _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
-            _intArraySerializer = new ArrayDecorator(
-                model,
-                new WireTypeDecorator(WireType.Variant, new Int32Serializer(model)),
-                true,
-                WireType.Variant,
-                typeof(int[]),
-                true,
-                TypeModel.DefaultArrayLengthReadLimit,
-                model.ProtoCompatibility.SuppressCollectionEnhancedFormat);
         }
 
         public Type ExpectedType => _serializer.ExpectedType;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
-
-        const int CurrentFormatVersion = 4;
-        const int Rc1FormatVersion = 3;
-
-        const int FieldLateReferenceObjects = 2;
-
-        const int FieldNetObjectPositions = 3;
 
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
@@ -66,35 +49,11 @@ namespace AqlaSerializer.Serializers
                 _serializer.Write(value, dest);
                 return;
             }
-
-            int typeKey;
-            object obj;
-            int refKey;
+            
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
-            ProtoWriter.WriteFieldHeaderBegin(CurrentFormatVersion, dest);
+            RootHelpers.WriteOwnHeader(dest);
             _serializer.Write(value, dest);
-
-            SubItemToken? lateRefFieldToken = null;
-
-            while (ProtoWriter.TryGetNextLateReference(out typeKey, out obj, out refKey, dest))
-            {
-                if (lateRefFieldToken == null)
-                {
-                    ProtoWriter.WriteFieldHeaderBegin(FieldLateReferenceObjects, dest);
-                    lateRefFieldToken = ProtoWriter.StartSubItem(null, false, dest);
-                }
-                ProtoWriter.WriteFieldHeaderBegin(refKey + 1, dest);
-                ProtoWriter.WriteRecursionSafeObject(obj, typeKey, dest);
-            }
-
-            if (lateRefFieldToken != null) ProtoWriter.EndSubItem(lateRefFieldToken.Value, dest);
-
-            int[] arr = ProtoWriter.GetNetObjectKeyToPositionDeltasArray(dest);
-            if (arr.Length != 0)
-            {
-                ProtoWriter.WriteFieldHeaderBegin(FieldNetObjectPositions, dest);
-                _intArraySerializer.Write(arr, dest);
-            }
+            RootHelpers.WriteOwnFooter(dest);
 
             ProtoWriter.EndSubItem(rootToken, dest);
         }
@@ -106,72 +65,13 @@ namespace AqlaSerializer.Serializers
                 return _serializer.Read(value, source);
             
             var rootToken = ProtoReader.StartSubItem(source);
-            int pos = source.Position;
-            int blockEnd = source.BlockEndPosition;
-            int formatVersion = source.ReadFieldHeader();
-            switch (formatVersion)
-            {
-                case CurrentFormatVersion:
-                case Rc1FormatVersion:
-                    break;
-                default:
-                    throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
-            }   
-            if (formatVersion > Rc1FormatVersion && _enableReferenceVersioningSeeking && source.AllowReferenceVersioningSeeking)
-            {
-                // skip to the end
-                source.SkipField();
-                while (source.ReadFieldHeader() != 0 && source.FieldNumber != FieldNetObjectPositions)
-                    source.SkipField();
-                if (source.FieldNumber == FieldNetObjectPositions)
-                    source.SetNetObjectPositionDeltas((int[])_intArraySerializer.Read(null, source));
-                source.SeekAndExchangeBlockEnd(pos, blockEnd);
-                var f = source.ReadFieldHeader();
-                Helpers.DebugAssert(f == formatVersion);
-            }
+            int formatVersion = RootHelpers.ReadOwnHeader(_enableReferenceVersioningSeeking, source);
             var r = _serializer.Read(value, source);
-            if (formatVersion > Rc1FormatVersion)
-            {
-                while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
-                    source.SkipField();
-                if (source.FieldNumber == FieldLateReferenceObjects)
-                {
-                    SubItemToken t = ProtoReader.StartSubItem(source);
-                    ReadLateReferences(source);
-                    ProtoReader.EndSubItem(t, source);
-                }
-
-                while (source.ReadFieldHeader() > 0)
-                    source.SkipField(); // skip field on endsubitem doesn't work with root
-            }
-            else ReadLateReferences(source);
+            RootHelpers.ReadOwnFooter(formatVersion, source);
             ProtoReader.EndSubItem(rootToken, true, source);
             return r;
         }
 
-        void ReadLateReferences(ProtoReader source)
-        {
-            int typeKey;
-            object obj;
-            int expectedRefKey;
-            while (ProtoReader.TryGetNextLateReference(out typeKey, out obj, out expectedRefKey, source))
-            {
-                int actualRefKey;
-                do
-                {
-                    actualRefKey = source.ReadFieldHeader() - 1;
-                    if (actualRefKey != expectedRefKey)
-                    {
-                        if (actualRefKey <= -1) throw new ProtoException("Expected field for late reference");
-                        // should go only up
-                        if (actualRefKey > expectedRefKey) throw new ProtoException("Mismatched order of late reference objects");
-                        source.SkipField(); // refKey < num
-                    }
-                } while (actualRefKey < expectedRefKey);
-                object lateObj = ProtoReader.ReadObject(obj, typeKey, source);
-                if (!ReferenceEquals(lateObj, obj)) throw new ProtoException("Late reference changed during deserializing");
-            }
-        }
 #endif
 
 #if FEAT_COMPILER
@@ -190,19 +90,11 @@ namespace AqlaSerializer.Serializers
                 }
 
                 using (var rootToken = ctx.Local(typeof(SubItemToken)))
-                using (var typeKey = ctx.Local(typeof(int)))
-                using (var obj = ctx.Local(typeof(object)))
-                using (var refKey = ctx.Local(typeof(int)))
                 {
                     g.Assign(rootToken, g.WriterFunc.StartSubItem(null, false));
-                    g.Writer.WriteFieldHeaderBegin(CurrentFormatVersion);
+                    g.Invoke(typeof(RootHelpers), nameof(RootHelpers.WriteOwnHeader), g.ArgReaderWriter());
                     _serializer.EmitWrite(ctx, valueFrom);
-                    g.While(g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.TryGetNextLateReference), typeKey, obj, refKey, g.ArgReaderWriter()));
-                    {
-                        g.Writer.WriteFieldHeaderBegin(refKey.AsOperand + 1);
-                        g.Writer.WriteRecursionSafeObject(obj, typeKey);
-                    }
-                    g.End();
+                    g.Invoke(typeof(RootHelpers), nameof(RootHelpers.WriteOwnFooter), g.ArgReaderWriter());
                     g.Writer.EndSubItem(rootToken);
                 }
             }
@@ -222,54 +114,22 @@ namespace AqlaSerializer.Serializers
                 }
 
                 using (var rootToken = ctx.Local(typeof(SubItemToken)))
-                using (var typeKey = ctx.Local(typeof(int)))
-                using (var obj = ctx.Local(typeof(object)))
                 using (var formatVersion = ctx.Local(typeof(int)))
-                using (var expectedRefKey = ctx.Local(typeof(int)))
-                using (var actualRefKey = ctx.Local(typeof(int)))
                 using (var value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
                 {
                     g.Assign(rootToken, g.ReaderFunc.StartSubItem());
-                    g.Assign(formatVersion, g.ReaderFunc.ReadFieldHeader_int());
-                    g.If(formatVersion.AsOperand != CurrentFormatVersion);
-                    {
-                        g.ThrowProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion.AsOperand);
-                    }
-                    g.End();
+                    g.Assign(
+                        formatVersion,
+                        g.StaticFactory.Invoke(
+                            typeof(RootHelpers),
+                            nameof(RootHelpers.ReadOwnHeader),
+                            _enableReferenceVersioningSeeking,
+                            g.ArgReaderWriter()));
                     _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
                     if (_serializer.EmitReadReturnsValue)
                         g.Assign(value, g.GetStackValueOperand(ExpectedType));
-
-                    g.While(g.StaticFactory.Invoke(typeof(ProtoReader), nameof(ProtoReader.TryGetNextLateReference), typeKey, obj, expectedRefKey, g.ArgReaderWriter()));
-                    {
-                        g.DoWhile();
-                        {
-                            g.Assign(actualRefKey, g.ReaderFunc.ReadFieldHeader_int() - 1);
-                            g.If(actualRefKey.AsOperand != expectedRefKey.AsOperand);
-                            {
-                                g.If(actualRefKey.AsOperand <= -1);
-                                {
-                                    g.ThrowProtoException("Expected field for late reference");
-                                }
-                                g.End();
-                                g.If(actualRefKey.AsOperand > expectedRefKey.AsOperand);
-                                {
-                                    g.ThrowProtoException("Mismatched order of late reference objects");
-                                }
-                                g.End();
-                                g.Reader.SkipField();
-                            }
-                            g.End();
-                        }
-                        g.EndDoWhile(actualRefKey.AsOperand < expectedRefKey.AsOperand);
-                        g.If(!g.StaticFactory.InvokeReferenceEquals(g.ReaderFunc.ReadObject(obj, typeKey), obj));
-                        {
-                            g.ThrowProtoException("Late reference changed during deserializing");
-                        }
-                        g.End();
-                    }
-                    g.End();
-                    g.Reader.EndSubItem(rootToken);
+                    g.Invoke(typeof(RootHelpers), nameof(RootHelpers.ReadOwnFooter), formatVersion, g.ArgReaderWriter());
+                    g.Reader.EndSubItem(rootToken, true);
 
                     if (EmitReadReturnsValue)
                         ctx.LoadValue(value);

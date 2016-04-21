@@ -1,6 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 
-#if !NO_RUNTIME
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,17 +22,17 @@ namespace AqlaSerializer.Serializers
 {
     class ListHelpers
     {
+        public const int FieldItem = 1;
+        public const int FieldSubtype = 2;
+        public const int FieldLength = 3;
+
+#if !NO_RUNTIME
         readonly WireType _packedWireTypeForRead = WireType.None;
         readonly IProtoSerializerWithWireType _tail;
         readonly bool _protoCompatibility;
         readonly bool _writePacked;
         readonly Type _itemType;
         readonly bool _skipIList;
-
-        public const int FieldItem = 1;
-        public const int FieldSubtype = 2;
-        public const int FieldLength = 3;
-        
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
         {
             if (protoCompatibility)
@@ -547,7 +546,6 @@ namespace AqlaSerializer.Serializers
             }
             return desc;
         }
-
+#endif
     }
 }
-#endif
