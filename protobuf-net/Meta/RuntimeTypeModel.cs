@@ -1115,14 +1115,16 @@ namespace AqlaSerializer.Meta
                 if (stream.CanSeek)
                 {
                     long positionAfterRead = stream.Position;
-                    stream.Position = initialStreamPosition;
+                    stream.Position = source.InitialUnderlyingStreamPosition;
                     using (var pr = ProtoReader.Create(stream, this, source.Context, source.FixedLength >= 0 ? source.FixedLength : ProtoReader.TO_EOF))
                     {
+                        pr.BlockEndPosition = source.BlockEndPosition;
                         if (initialWireType != WireType.None)
                         {
                             if (!ProtoReader.HasSubValue(initialWireType, pr)) throw new Exception();
                         }
                         pr.LoadReferenceState(refState);
+                        pr.SkipBytes(initialSourcePosition);
                         var invType = rtm[key];
                         var invSer = invType.RootSerializer;
                         
@@ -1137,7 +1139,7 @@ namespace AqlaSerializer.Meta
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, types " + copy.GetType() + ", " + result.GetType());
                         else if (copy.GetType().IsPrimitive && !result.Equals(copy))
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, values " + copy + ", " + result);
-                        else if (source.Position - initialSourcePosition != pr.Position)
+                        else if (source.Position != pr.Position)
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, wrong position after read");
                     }
                     if (1.Equals(2)) // for debug

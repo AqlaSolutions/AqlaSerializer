@@ -34,7 +34,7 @@ namespace AqlaSerializer
 
         internal int FixedLength { get; private set; }
 
-        internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; } = new NetObjectKeyPositionsList();
+        internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; private set; } = new NetObjectKeyPositionsList();
         
         byte[] _ioBuffer;
         TypeModel _model;
@@ -54,17 +54,19 @@ namespace AqlaSerializer
         {
             public readonly LateReferencesCache LateReferencesCache;
             public readonly NetObjectCache NetObjectCache;
+            public readonly NetObjectKeyPositionsList NetObjectKeyPositionsList;
 
-            public ReferenceState(NetObjectCache netObjectCache, LateReferencesCache lateReferencesCache)
+            public ReferenceState(NetObjectCache netObjectCache, LateReferencesCache lateReferencesCache, NetObjectKeyPositionsList netObjectKeyPositionsList)
             {
                 LateReferencesCache = lateReferencesCache;
+                NetObjectKeyPositionsList = netObjectKeyPositionsList;
                 NetObjectCache = netObjectCache;
             }
         }
 
         internal object StoreReferenceState()
         {
-            return new ReferenceState(_netCache.Clone(), _lateReferences.Clone());
+            return new ReferenceState(_netCache.Clone(), _lateReferences.Clone(), NetCacheKeyPositionsList.Clone());
         }
 
         internal void LoadReferenceState(object state)
@@ -72,6 +74,7 @@ namespace AqlaSerializer
             var s = (ReferenceState)state;
             _lateReferences = s.LateReferencesCache.Clone();
             _netCache = s.NetObjectCache.Clone();
+            NetCacheKeyPositionsList = s.NetObjectKeyPositionsList.Clone();
         }
 
         /// <summary>
@@ -183,12 +186,9 @@ namespace AqlaSerializer
 
         public void SetNetObjectPositionDeltas(int[] keyToPositionDeltaArray)
         {
-            int acc = 0;
-            for (int i = 0; i < keyToPositionDeltaArray.Length; i++)
-            {
-                acc += keyToPositionDeltaArray[i];
-                NetCacheKeyPositionsList.SetPosition(i, acc);
-            }
+            for (int i = 1; i < keyToPositionDeltaArray.Length; i++)
+                keyToPositionDeltaArray[i] += keyToPositionDeltaArray[i - 1];
+            NetCacheKeyPositionsList.ImportAppending(keyToPositionDeltaArray);
         }
 
         LateReferencesCache _lateReferences = new LateReferencesCache();
@@ -320,7 +320,11 @@ namespace AqlaSerializer
         /// </summary>
         public int Position { get { return _position; } }
 
-        public int BlockEndPosition => _blockEnd;
+        public int BlockEndPosition
+        {
+            get { return _blockEnd; }
+            internal set { _blockEnd = value; }
+        }
 
         internal long InitialUnderlyingStreamPosition { get; private set; }
 

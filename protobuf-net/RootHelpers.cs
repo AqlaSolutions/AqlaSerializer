@@ -14,34 +14,6 @@ namespace AqlaSerializer
             ProtoWriter.WriteFieldHeaderBegin(RootHelpers.CurrentFormatVersion, dest);
         }
 
-        public static int ReadOwnHeader(bool seeking, ProtoReader source)
-        {
-            int pos = source.Position;
-            int blockEnd = source.BlockEndPosition;
-            int formatVersion = source.ReadFieldHeader();
-            switch (formatVersion)
-            {
-                case RootHelpers.CurrentFormatVersion:
-                case RootHelpers.Rc1FormatVersion:
-                    break;
-                default:
-                    throw new ProtoException("Wrong format version, required " + RootHelpers.CurrentFormatVersion + " but actual " + formatVersion);
-            }
-            if (formatVersion > RootHelpers.Rc1FormatVersion && seeking && source.AllowReferenceVersioningSeeking)
-            {
-                // skip to the end
-                source.SkipField();
-                while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
-                    source.SkipField();
-                if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
-                    source.SetNetObjectPositionDeltas((int[])source.ReadArrayContent(TypeModel.DefaultArrayLengthReadLimit, source.ReadInt32));
-                source.SeekAndExchangeBlockEnd(pos, blockEnd);
-                var f = source.ReadFieldHeader();
-                Helpers.DebugAssert(f == formatVersion);
-            }
-            return formatVersion;
-        }
-
         public static void WriteOwnFooter(ProtoWriter dest)
         {
             int typeKey;
@@ -70,6 +42,34 @@ namespace AqlaSerializer
             }
         }
 
+        public static int ReadOwnHeader(bool seeking, ProtoReader source)
+        {
+            int pos = source.Position;
+            int blockEnd = source.BlockEndPosition;
+            int formatVersion = source.ReadFieldHeader();
+            switch (formatVersion)
+            {
+                case RootHelpers.CurrentFormatVersion:
+                case RootHelpers.Rc1FormatVersion:
+                    break;
+                default:
+                    throw new ProtoException("Wrong format version, required " + RootHelpers.CurrentFormatVersion + " but actual " + formatVersion);
+            }
+            if (formatVersion > RootHelpers.Rc1FormatVersion && seeking && source.AllowReferenceVersioningSeeking)
+            {
+                // skip to the end
+                source.SkipField();
+                while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
+                    source.SkipField();
+                if (source.FieldNumber == RootHelpers.FieldNetObjectPositions) // TODO limit?
+                    source.SetNetObjectPositionDeltas(source.ReadArrayContent(TypeModel.DefaultArrayLengthReadLimit, source.ReadInt32));
+                source.SeekAndExchangeBlockEnd(pos, blockEnd);
+                var f = source.ReadFieldHeader();
+                Helpers.DebugAssert(f == formatVersion);
+            }
+            return formatVersion;
+        }
+
         public static void ReadOwnFooter(int formatVersion, ProtoReader source)
         {
             if (formatVersion > Rc1FormatVersion)
@@ -83,7 +83,8 @@ namespace AqlaSerializer
                     ProtoReader.EndSubItem(t, source);
                 }
 
-                while (source.ReadFieldHeader() > 0)
+
+                while (source.ReadFieldHeader() > 0 && source.FieldNumber == FieldNetObjectPositions)
                     source.SkipField(); // skip field on endsubitem doesn't work with root
             }
             else ReadLateReferences(source);

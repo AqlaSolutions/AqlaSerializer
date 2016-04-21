@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using AltLinq;
 
 namespace AqlaSerializer
 {
     internal class NetObjectKeyPositionsList
     {
-        readonly List<int> _keyToPosition = new List<int>();
+        List<int> _keyToPosition = new List<int>();
 
         public void SetPosition(int key, int position)
         {
@@ -24,19 +26,43 @@ namespace AqlaSerializer
             return r;
         }
 
-        public int[] ToKeyToPositionArray()
+        int _exportKnownCount;
+        int _importKnownCount;
+
+        public int[] ExportNew()
         {
-            return _keyToPosition.ToArray();
+            var r = _keyToPosition.Skip(_exportKnownCount).ToArray();
+            _exportKnownCount += r.Length;
+            return r;
+        }
+
+        public void ImportAppending(int[] arr)
+        {
+            for (int i = 0; i < arr.Length; i++)
+                SetPosition(_importKnownCount++, arr[i]);
+        }
+
+        public NetObjectKeyPositionsList()
+        {
+            Reset();
         }
 
         public void Reset()
         {
             _keyToPosition.Clear();
+            _importKnownCount = _exportKnownCount = 1;
         }
 
         static void ThrowNotFound(int key)
         {
-            throw new KeyNotFoundException(nameof(NetObjectKeyPositionsList) + " can't find a key: " + key+ ", try to set TypeModel.EnableVersioningSeeking = true");
+            throw new KeyNotFoundException(nameof(NetObjectKeyPositionsList) + " can't find a key: " + key + ", try to set TypeModel.EnableVersioningSeeking = true");
+        }
+
+        public NetObjectKeyPositionsList Clone()
+        {
+            var r = (NetObjectKeyPositionsList)MemberwiseClone();
+            r._keyToPosition = new List<int>(_keyToPosition);
+            return r;
         }
     }
 }

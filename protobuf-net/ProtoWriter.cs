@@ -197,7 +197,7 @@ namespace AqlaSerializer
 
         public static int[] GetNetObjectKeyToPositionDeltasArray(ProtoWriter writer)
         {
-            var arr = writer.NetCacheKeyPositionsList.ToKeyToPositionArray();
+            var arr = writer.NetCacheKeyPositionsList.ExportNew();
             for (int i = arr.Length - 1; i > 0; i--)
                 arr[i] -= arr[i - 1];
             return arr;
