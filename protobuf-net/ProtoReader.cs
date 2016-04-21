@@ -936,14 +936,15 @@ namespace AqlaSerializer
         {
             _position += len; // assumes success, but if it fails we're screwed anyway
             _underlyingPosition += len;
-            len -= _available; // discount anything we've got to-hand
+            // for dataRemaining add (in fact no need to subtract available from dataRemaining) anything we've got to-hand
+            int lenForRemaining = len - _available;
             
             _ioIndex = _available = 0; // everything remaining in the buffer is garbage
             if (_isFixedLength)
             {
-                if (len > _dataRemaining) throw EoF(this);
+                if (lenForRemaining > _dataRemaining) throw EoF(this);
                 // else assume we're going to be OK
-                _dataRemaining -= len;
+                _dataRemaining -= lenForRemaining;
             }
             if (_source.CanSeek) // this is required because position may be changed in subreader
                 _source.Position = _underlyingPosition;
