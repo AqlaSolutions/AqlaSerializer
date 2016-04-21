@@ -49,6 +49,7 @@ namespace AqlaSerializer.Serializers
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 
         const int CurrentFormatVersion = 4;
+        const int Rc1FormatVersion = 3;
 
         const int FieldLateReferenceObjects = 2;
 
@@ -101,51 +102,70 @@ namespace AqlaSerializer.Serializers
             ProtoReader.ExpectRoot(source);
             if (_protoCompatibility)
                 return _serializer.Read(value, source);
-
-            int typeKey;
-            object obj;
-            int expectedRefKey;
+            
             var rootToken = ProtoReader.StartSubItem(source);
             int pos = source.Position;
             int blockEnd = source.BlockEndPosition;
             int formatVersion = source.ReadFieldHeader();
-            if (formatVersion != CurrentFormatVersion) throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
-
-            source.SkipField();
-            while (source.ReadFieldHeader() != 0 && source.FieldNumber != FieldNetObjectPositions)
-                source.SkipField();
-            if (source.FieldNumber == FieldNetObjectPositions)
-                source.SetNetObjectPositionDeltas((int[])_intArraySerializer.Read(null, source));
-            source.SeekAndExchangeBlockEnd(pos, blockEnd);
-            var f = source.ReadFieldHeader();
-            Helpers.DebugAssert(f == CurrentFormatVersion);
-            var r = _serializer.Read(value, source);
-            while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
-                source.SkipField();
-            if (source.FieldNumber == FieldLateReferenceObjects)
+            switch (formatVersion)
             {
-                var t = ProtoReader.StartSubItem(source);
-                while (ProtoReader.TryGetNextLateReference(out typeKey, out obj, out expectedRefKey, source))
-                {
-                    int actualRefKey;
-                    do
-                    {
-                        actualRefKey = source.ReadFieldHeader() - 1;
-                        if (actualRefKey != expectedRefKey)
-                        {
-                            if (actualRefKey <= -1) throw new ProtoException("Expected field for late reference");
-                            // should go only up
-                            if (actualRefKey > expectedRefKey) throw new ProtoException("Mismatched order of late reference objects");
-                            source.SkipField(); // refKey < num
-                        }
-                    } while (actualRefKey < expectedRefKey);
-                    object lateObj = ProtoReader.ReadObject(obj, typeKey, source);
-                    if (!ReferenceEquals(lateObj, obj)) throw new ProtoException("Late reference changed during deserializing");
-                }
-                ProtoReader.EndSubItem(t, source);
+                case CurrentFormatVersion:
+                case Rc1FormatVersion:
+                    break;
+                default:
+                    throw new ProtoException("Wrong format version, required " + CurrentFormatVersion + " but actual " + formatVersion);
+            }   
+            if (formatVersion > Rc1FormatVersion)
+            {
+                // skip to the end
+                source.SkipField();
+                while (source.ReadFieldHeader() != 0 && source.FieldNumber != FieldNetObjectPositions)
+                    source.SkipField();
+                if (source.FieldNumber == FieldNetObjectPositions)
+                    source.SetNetObjectPositionDeltas((int[])_intArraySerializer.Read(null, source));
+                source.SeekAndExchangeBlockEnd(pos, blockEnd);
+                var f = source.ReadFieldHeader();
+                Helpers.DebugAssert(f == formatVersion);
             }
+            var r = _serializer.Read(value, source);
+            if (formatVersion > Rc1FormatVersion)
+            {
+                while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
+                    source.SkipField();
+                if (source.FieldNumber == FieldLateReferenceObjects)
+                {
+                    SubItemToken t = ProtoReader.StartSubItem(source);
+                    ReadLateReferences(source);
+                    ProtoReader.EndSubItem(t, source);
+                }
+            }
+            else ReadLateReferences(source);
             ProtoReader.EndSubItem(rootToken, true, source);
             return r;
+        }
+
+        void ReadLateReferences(ProtoReader source)
+        {
+            int typeKey;
+            object obj;
+            int expectedRefKey;
+            while (ProtoReader.TryGetNextLateReference(out typeKey, out obj, out expectedRefKey, source))
+            {
+                int actualRefKey;
+                do
+                {
+                    actualRefKey = source.ReadFieldHeader() - 1;
+                    if (actualRefKey != expectedRefKey)
+                    {
+                        if (actualRefKey <= -1) throw new ProtoException("Expected field for late reference");
+                        // should go only up
+                        if (actualRefKey > expectedRefKey) throw new ProtoException("Mismatched order of late reference objects");
+                        source.SkipField(); // refKey < num
+                    }
+                } while (actualRefKey < expectedRefKey);
+                object lateObj = ProtoReader.ReadObject(obj, typeKey, source);
+                if (!ReferenceEquals(lateObj, obj)) throw new ProtoException("Late reference changed during deserializing");
+            }
         }
 #endif
 
