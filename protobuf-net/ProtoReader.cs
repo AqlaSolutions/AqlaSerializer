@@ -363,25 +363,42 @@ namespace AqlaSerializer
         }
 
         /// <summary>
-        /// Behavior same as <see cref="ListHelpers"/> with ProtoCompatibility = off
+        /// Behavior same as <see cref="ListHelpers"/> with ProtoCompatibility = off (except max array size)
         /// </summary>
-        internal T[] ReadArrayContent<T>(int max, Func<T> reader)
+        internal T[] ReadArrayContent<T>(int maxPredictedSize, Func<T> reader)
         {
             var t = StartSubItem(this);
             if (ReadFieldHeader() != ListHelpers.FieldLength) throw new ProtoException("Array length expected");
             int count = ReadInt32();
-            if (count > max) throw new ProtoException("Expected max " + max + " elements but found " + count);
-            T[] arr = new T[count];
             
             while (ReadFieldHeader() > 0 && FieldNumber != ListHelpers.FieldItem)
                 SkipField();
 
             var wt = WireType;
-
-            for (int i = 0; i < count; i++)
+            T[] arr;
+            if (count > maxPredictedSize)
             {
-                if (i != 0 && !HasSubValue(wt, this)) throw new ProtoException("Expected array item but not found");
-                arr[i] = reader();
+                // wow, too many? we don't believe it promptly
+                var lst = new List<T>(maxPredictedSize);
+                // copy-paste-start (performance critical region)
+                for (int i = 0; i < count; i++)
+                {
+                    if (i != 0 && !HasSubValue(wt, this)) throw new ProtoException("Expected array item but not found");
+                    lst.Add(reader());
+                }
+                // copy-paste-end
+                arr = lst.ToArray();
+            }
+            else
+            {
+                arr = new T[count];
+                // copy-paste-start
+                for (int i = 0; i < count; i++)
+                {
+                    if (i != 0 && !HasSubValue(wt, this)) throw new ProtoException("Expected array item but not found");
+                    arr[i] = reader();
+                }
+                // copy-paste-end
             }
             EndSubItem(t, true, this);
             return arr;

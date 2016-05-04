@@ -488,7 +488,7 @@ namespace AqlaSerializer.Meta
             r.AllowStreamRewriting = AllowStreamRewriting;
             r.ForceSerializationDuringClone = ForceSerializationDuringClone;
             r.RecursionDepthLimit = RecursionDepthLimit;
-            r.ReferenceVersioningSeekingObjectsListLimit = ReferenceVersioningSeekingObjectsListLimit;
+            r.ReferenceVersioningSeekingObjectsPredictedSize = ReferenceVersioningSeekingObjectsPredictedSize;
             return r;
 #endif
         }

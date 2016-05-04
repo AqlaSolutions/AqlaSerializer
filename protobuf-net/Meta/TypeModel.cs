@@ -42,9 +42,9 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Max count for list for <see cref="AllowReferenceVersioningSeeking"/>
         /// </summary>
-        public int ReferenceVersioningSeekingObjectsListLimit { get; set; } = DefaultReferenceVersioningSeekingObjectsListLimit;
+        public int ReferenceVersioningSeekingObjectsPredictedSize { get; set; } = DefaultReferenceVersioningSeekingObjectsListPredictedSize;
 
-        public const int DefaultReferenceVersioningSeekingObjectsListLimit = 1000000;
+        public const int DefaultReferenceVersioningSeekingObjectsListPredictedSize = 100000;
 
         internal const int DefaultRecursionDepthLimit = 500;
 

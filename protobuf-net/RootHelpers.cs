@@ -85,7 +85,7 @@ namespace AqlaSerializer
         {
             source.NetCacheKeyPositionsList.ImportNext(
                 source.ReadArrayContent(
-                    source.Model?.ReferenceVersioningSeekingObjectsListLimit ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListLimit,
+                    source.Model?.ReferenceVersioningSeekingObjectsPredictedSize ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListPredictedSize,
                     source.ReadInt32));
         }
 
