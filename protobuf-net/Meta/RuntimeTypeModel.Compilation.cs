@@ -483,7 +483,13 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             return null;
 #else
-            return (TypeModel)Activator.CreateInstance(finalType);
+            var r = (TypeModel)Activator.CreateInstance(finalType);
+            r.AllowReferenceVersioningSeeking = AllowReferenceVersioningSeeking;
+            r.AllowStreamRewriting = AllowStreamRewriting;
+            r.ForceSerializationDuringClone = ForceSerializationDuringClone;
+            r.RecursionDepthLimit = RecursionDepthLimit;
+            r.ReferenceVersioningSeekingObjectsListLimit = ReferenceVersioningSeekingObjectsListLimit;
+            return r;
 #endif
         }
 
