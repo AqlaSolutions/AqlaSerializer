@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>2.0.0.186</version>
+    <version>2.0.0.187</version>
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2016, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>
@@ -27,20 +27,23 @@ Some build configurations may be not available through nuget, you can download t
     <language>en-US</language>
     <releaseNotes>
 
+* 2.0.0.186: V2 RC2
+ - Removing field won't break reference tracking.
+
 * 2.0.0.96: V2 RC
-- Google Protocol Buffers format support is back (I've reconsidered this) - (de)serialization.
-- Nested collections.
-- Multi-dimensional arrays.
-- Improved reference tracking (e.g. surrogate fix and referencing arrays from inside themselves).
-- Improved versioning (e.g. between reference-nonreference-null-nonnull-dynamic).
-- Optimizations for better output size.
-- Collection subtypes (will read subtype number to create correct concrete type).
-- Array types may be registered as collections and use full set of features (null support, etc) even when passed as root objects.
-- Primitive types are allowed to be set to fields marked as dynamic type.
-- Reference serialization will avoid using too much recursion in LateReference mode.
-- Possibility to specify different attribute sets for different models (see ModelId property on attributes).
-- Attributes to specify behavior on collection and collection elements (and nested) separately.
-- Significant performance improvements.
+ - Google Protocol Buffers format support is back (I've reconsidered this) - (de)serialization.
+ - Nested collections.
+ - Multi-dimensional arrays.
+ - Improved reference tracking (e.g. surrogate fix and referencing arrays from inside themselves).
+ - Improved versioning (e.g. between reference-nonreference-null-nonnull-dynamic).
+ - Optimizations for better output size.
+ - Collection subtypes (will read subtype number to create correct concrete type).
+ - Array types may be registered as collections and use full set of features (null support, etc) even when passed as root objects.
+ - Primitive types are allowed to be set to fields marked as dynamic type.
+ - Reference serialization will avoid using too much recursion in LateReference mode.
+ - Possibility to specify different attribute sets for different models (see ModelId property on attributes).
+ - Attributes to specify behavior on collection and collection elements (and nested) separately.
+ - Significant performance improvements.
 
 * 1.0.0.938:
 - more effficient memory usage
@@ -56,5 +59,12 @@ Some build configurations may be not available through nuget, you can download t
 
 * 1.0.0.58 - initial AqlaSerializer release
     </releaseNotes>
+
+   <dependencies> 
+      <group>
+         <dependency id="aqla.runsharp" version="1.0.0.16" />
+      </group>
+   
+   </dependencies>
   </metadata>
 </package>

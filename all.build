@@ -86,84 +86,101 @@
 <ItemGroup>
     <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
     <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
-    <UnityFiles Include="protobuf-net\bin\Unity\RunSharp.*"/>
+    <UnityFilesDep Include="protobuf-net\bin\Unity\RunSharp.*"/>
     <Net20SafeFiles Include="protobuf-net\bin\Net20Safe\aqlaserializer.*"/>
-    <Net20SafeFiles Include="protobuf-net\bin\Net20Safe\RunSharp.*"/>
+    <Net20SafeFilesDep Include="protobuf-net\bin\Net20Safe\RunSharp.*"/>
     <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\aqlaserializer.*"/>
-    <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\RunSharp.*"/>
+    <Net30SafeFilesDep Include="protobuf-net\bin\Net30Safe\RunSharp.*"/>
     <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\aqlaserializer.*"/>
-    <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\RunSharp.*"/>
+    <Net35SafeFilesDep Include="protobuf-net\bin\Net35Safe\RunSharp.*"/>
     <Net40SafeFiles Include="protobuf-net\bin\Net40Safe\aqlaserializer.*"/>
-    <Net40SafeFiles Include="protobuf-net\bin\Net40Safe\RunSharp.*"/>
+    <Net40SafeFilesDep Include="protobuf-net\bin\Net40Safe\RunSharp.*"/>
     <Net45SafeFiles Include="protobuf-net\bin\Net45Safe\aqlaserializer.*"/>
-    <Net45SafeFiles Include="protobuf-net\bin\Net45Safe\RunSharp.*"/>
+    <Net45SafeFilesDep Include="protobuf-net\bin\Net45Safe\RunSharp.*"/>
     <Net35Files Include="protobuf-net\bin\Net35\aqlaserializer.*"/>
-    <Net35Files Include="protobuf-net\bin\Net35\RunSharp.*"/>
+    <Net35FilesDep Include="protobuf-net\bin\Net35\RunSharp.*"/>
     <Net40Files Include="protobuf-net\bin\Net40\aqlaserializer.*"/>
-    <Net40Files Include="protobuf-net\bin\Net40\RunSharp.*"/>
+    <Net40FilesDep Include="protobuf-net\bin\Net40\RunSharp.*"/>
     <Net45Files Include="protobuf-net\bin\Net45\aqlaserializer.*"/>
-    <Net45Files Include="protobuf-net\bin\Net45\RunSharp.*"/>
+    <Net45FilesDep Include="protobuf-net\bin\Net45\RunSharp.*"/>
     <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
-    <Net20Files Include="protobuf-net\bin\Net20\RunSharp.*"/>
+    <Net20FilesDep Include="protobuf-net\bin\Net20\RunSharp.*"/>
     <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
-    <Net30Files Include="protobuf-net\bin\Release\RunSharp.*"/>
+    <Net30FilesDep Include="protobuf-net\bin\Release\RunSharp.*"/>
     <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\aqlaserializer.*"/>
     <SLFiles Include="protobuf-net_Silverlight\bin\Release\aqlaserializer.*"/>
-    <SLFiles Include="protobuf-net_Silverlight\bin\Release\RunSharp.*"/>
+    <SLFilesDep Include="protobuf-net_Silverlight\bin\Release\RunSharp.*"/>
     <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\aqlaserializer.*"/>
     <WP8Files Include="protobuf-net_Phone8\bin\Release\aqlaserializer.*"/>
-    <WP8Files Include="protobuf-net_Phone8\bin\Release\RunSharp.*"/>
+    <WP8FilesDep Include="protobuf-net_Phone8\bin\Release\RunSharp.*"/>
     <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\aqlaserializer.*"/>
     <PortableFiles Include="protobuf-net_Portable\bin\Release\aqlaserializer.*"/>
-    <PortableFiles Include="protobuf-net_Portable\bin\Release\RunSharp.*"/>
+    <PortableFilesDep Include="protobuf-net_Portable\bin\Release\RunSharp.*"/>
     <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\aqlaserializer.*"/>
-    <PrecompileFiles Include="precompile\bin\Release\*.*"/>
-
     <WinRTFiles Include="protobuf-net_WinRT\bin\Release\aqlaserializer.*"/>
-    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\RunSharp.*"/>
+    <WinRTFilesDep Include="protobuf-net_WinRT\bin\Release\RunSharp.*"/>
     <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
+
+    <PrecompileFiles Include="precompile\bin\Release\*.*"/>
 
     <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
 </ItemGroup>
 
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
+    <Copy SourceFiles="@(Net20FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
     <Copy SourceFiles="@(Net20SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>
-    
+    <Copy SourceFiles="@(Net20SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>    
+
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net30"/>
     <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(ZipDirectory)\Full\net30"/>
+    <Copy SourceFiles="@(Net30FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net30"/>
     <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
+    <Copy SourceFiles="@(Net30SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
 
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net35"/>
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
+    <Copy SourceFiles="@(Net35FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
     <Copy SourceFiles="@(Net35SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net35safe"/>
+    <Copy SourceFiles="@(Net35SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net35safe"/>
 
     <Copy SourceFiles="@(Net40Files)" DestinationFolder="$(NugetDirectory)\net40"/>
     <Copy SourceFiles="@(Net40Files)" DestinationFolder="$(ZipDirectory)\Full\net40"/>    
+    <Copy SourceFiles="@(Net40FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net40"/>    
     <Copy SourceFiles="@(Net40SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net40safe"/>
+    <Copy SourceFiles="@(Net40SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net40safe"/>
 
     <Copy SourceFiles="@(Net45Files)" DestinationFolder="$(NugetDirectory)\net45"/>
     <Copy SourceFiles="@(Net45Files)" DestinationFolder="$(ZipDirectory)\Full\net45"/>
+    <Copy SourceFiles="@(Net45FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net45"/>
     <Copy SourceFiles="@(Net45SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net45safe"/>
+    <Copy SourceFiles="@(Net45SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net45safe"/>
     
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
+    <Copy SourceFiles="@(UnityFilesDep)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl5"/>
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
+    <Copy SourceFiles="@(SLFilesDep)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
     
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
+    <Copy SourceFiles="@(WP8FilesDep)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
 
 
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
+    <Copy SourceFiles="@(PortableFilesDep)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
 
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(NugetDirectory)\netcore45"/>
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(ZipDirectory)\Full\winrt"/>
+    <Copy SourceFiles="@(WinRTFilesDep)" DestinationFolder="$(ZipDirectory)\Full\winrt"/>
     <Copy SourceFiles="@(WinRTFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\winrt"/>
 
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
+    <Copy SourceFiles="@(iOSFilesDep)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
+
     <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl5"/>
     <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
