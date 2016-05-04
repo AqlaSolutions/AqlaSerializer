@@ -62,11 +62,11 @@ namespace AqlaSerializer
                     dynamicTypeKey = dest.GetTypeKey(ref type);
                     int typeRefKey = dest.NetCache.AddObjectKey(type, out existing);
                     ProtoWriter.WriteFieldHeader(existing ? FieldExistingTypeKey : FieldNewTypeKey, WireType.Variant, dest);
-                    if (!existing) dest.NetCacheKeyPositionsList.SetPosition(typeRefKey, pos);
                     ProtoWriter.WriteInt32(typeRefKey, dest);
                     if (!existing)
                     {
                         ProtoWriter.WriteFieldHeader(FieldTypeName, WireType.String, dest);
+                        dest.NetCacheKeyPositionsList.SetPosition(typeRefKey, ProtoWriter.GetPosition(dest));
                         ProtoWriter.WriteString(dest.SerializeType(type), dest);
                     }
                 }

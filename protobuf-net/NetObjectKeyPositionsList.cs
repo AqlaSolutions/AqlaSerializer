@@ -40,7 +40,7 @@ namespace AqlaSerializer
             for (int i = arr.Length - 1; i > 0; i--)
             {
                 arr[i] -= arr[i - 1];
-                Helpers.DebugAssert(arr[i] >= 0, "arr[i]>0");
+                Helpers.DebugAssert(arr[i] > 0, "arr[i] > 0");
             }
             _previousExportedPosition = arr[arr.Length - 1];
             return arr;
