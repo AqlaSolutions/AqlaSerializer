@@ -183,14 +183,7 @@ namespace AqlaSerializer
             _lateReferences.Reset();
             NetCacheKeyPositionsList.Reset();
         }
-
-        public void SetNetObjectPositionDeltas(int[] keyToPositionDeltaArray)
-        {
-            for (int i = 1; i < keyToPositionDeltaArray.Length; i++)
-                keyToPositionDeltaArray[i] += keyToPositionDeltaArray[i - 1];
-            NetCacheKeyPositionsList.ImportAppending(keyToPositionDeltaArray);
-        }
-
+        
         LateReferencesCache _lateReferences = new LateReferencesCache();
 
         public static void NoteLateReference(int typeKey, object value, ProtoReader reader)
@@ -791,6 +784,8 @@ namespace AqlaSerializer
                     throw reader.BorkedIt(); */
             }
         }
+
+        public bool IsExpectingRoot => _expectRoot;
 
         bool _expectRoot;
 

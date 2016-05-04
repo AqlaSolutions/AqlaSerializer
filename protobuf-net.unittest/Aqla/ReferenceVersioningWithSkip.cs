@@ -1,4 +1,5 @@
-﻿using AqlaSerializer.Meta;
+﻿using System.Collections.Generic;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 
 namespace AqlaSerializer.unittest.Aqla
@@ -36,6 +37,16 @@ namespace AqlaSerializer.unittest.Aqla
             obj.Foo = obj.SameFoo = new SimpleFoo();
             var changed = tm.ChangeType<SourceSimple, DestinationSimple>(obj);
             Assert.That(changed.SameFoo, Is.Not.Null);
+        }
+        
+        [Test]
+        public void ChangeSimpleWithoutSeekingShouldThrowKeyNotFound()
+        {
+            var tm = TypeModel.Create();
+            tm.AllowReferenceVersioningSeeking = false;
+            var obj = new SourceSimple();
+            obj.Foo = obj.SameFoo = new SimpleFoo();
+            Assert.That(() => tm.ChangeType<SourceSimple, DestinationSimple>(obj), Throws.TypeOf<KeyNotFoundException>());
         }
         
         [Test]

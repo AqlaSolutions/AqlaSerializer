@@ -305,30 +305,24 @@ namespace Examples.ServiceModel
             MyData trivial = new MyData(), nonTrivial = new MyData { SubData = { new MySubData { Number = 12345 } } };
             List<MyData> empty = new List<MyData>(0);
             List<MyData> fourItems = new List<MyData> {trivial, nonTrivial, trivial, nonTrivial};
- 
+
             using (var proxy = GetProxy())
             {
                 int i = 0;
-                try
-                {
-                    Assert.AreEqual(0, proxy.Service.ComplexMethod(null, null, null, null));
-                    i++;
-                    Assert.AreEqual(10, proxy.Service.ComplexMethod(fourItems, nonTrivial, nonTrivial, fourItems));
-                    i++;
-                    Assert.AreEqual(2, proxy.Service.ComplexMethod(null, trivial, nonTrivial, null));
-                    i++;
-                    Assert.AreEqual(1, proxy.Service.ComplexMethod(null, trivial, null, empty));
-                    i++;
-                    Assert.AreEqual(5, proxy.Service.ComplexMethod(fourItems, trivial, null, empty));
-                    i++;
-                    Assert.AreEqual(9, proxy.Service.ComplexMethod(fourItems, trivial, null, fourItems));
-                    i++;
-                    Assert.AreEqual(8, proxy.Service.ComplexMethod(fourItems, null, null, fourItems));
-                } catch
-                {
-                    Debug.WriteLine(i);
-                    throw;
-                }
+
+                //Assert.AreEqual(0, proxy.Service.ComplexMethod(null, null, null, null));
+                i++;
+                Assert.AreEqual(10, proxy.Service.ComplexMethod(fourItems, nonTrivial, nonTrivial, fourItems));
+                i++;
+                Assert.AreEqual(2, proxy.Service.ComplexMethod(null, trivial, nonTrivial, null));
+                i++;
+                Assert.AreEqual(1, proxy.Service.ComplexMethod(null, trivial, null, empty));
+                i++;
+                Assert.AreEqual(5, proxy.Service.ComplexMethod(fourItems, trivial, null, empty));
+                i++;
+                Assert.AreEqual(9, proxy.Service.ComplexMethod(fourItems, trivial, null, fourItems));
+                i++;
+                Assert.AreEqual(8, proxy.Service.ComplexMethod(fourItems, null, null, fourItems));
             }
         }
 

@@ -9,6 +9,8 @@ namespace AqlaSerializer
         public const int FieldLateReferenceObjects = 2;
         public const int FieldNetObjectPositions = 3;
 
+        static readonly int[] Int0 = new int[0];
+
         public static void WriteOwnHeader(ProtoWriter dest)
         {
             ProtoWriter.WriteFieldHeaderBegin(RootHelpers.CurrentFormatVersion, dest);
@@ -34,8 +36,12 @@ namespace AqlaSerializer
 
             if (lateRefFieldToken != null) ProtoWriter.EndSubItem(lateRefFieldToken.Value, dest);
 
-            int[] arr = ProtoWriter.GetNetObjectKeyToPositionDeltasArray(dest);
-            if (arr.Length != 0)
+            int[] arr = dest.NetCacheKeyPositionsList.ExportNewWithoutRoot();
+            
+            // always write it
+            // and no need to believe in detection
+            // we can check array length right now
+            if (arr.Length > 0)
             {
                 ProtoWriter.WriteFieldHeaderBegin(RootHelpers.FieldNetObjectPositions, dest);
                 ProtoWriter.WriteArrayContent(arr, WireType.Variant, ProtoWriter.WriteInt32, dest);
@@ -44,6 +50,9 @@ namespace AqlaSerializer
 
         public static int ReadOwnHeader(bool seeking, ProtoReader source)
         {
+            // it's not expected that any root decorator may import new objects inside this
+            source.NetCacheKeyPositionsList.EnterImportingLock();
+
             int pos = source.Position;
             int blockEnd = source.BlockEndPosition;
             int formatVersion = source.ReadFieldHeader();
@@ -55,6 +64,7 @@ namespace AqlaSerializer
                 default:
                     throw new ProtoException("Wrong format version, required " + RootHelpers.CurrentFormatVersion + " but actual " + formatVersion);
             }
+
             if (formatVersion > RootHelpers.Rc1FormatVersion && seeking && source.AllowReferenceVersioningSeeking)
             {
                 // skip to the end
@@ -62,35 +72,65 @@ namespace AqlaSerializer
                 while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
                     source.SkipField();
                 if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
-                    source.SetNetObjectPositionDeltas(
-                        source.ReadArrayContent(
-                            source.Model?.ReferenceVersioningSeekingObjectsListLimit ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListLimit,
-                            source.ReadInt32));
+                {
+                    source.NetCacheKeyPositionsList.ImportRoot();
+                    ImportReferencePositions(source);
+                }
+                else
+                    source.NetCacheKeyPositionsList.ImportRoot();
                 source.SeekAndExchangeBlockEnd(pos, blockEnd);
                 var f = source.ReadFieldHeader();
-                Helpers.DebugAssert(f == formatVersion);
+                if (f != formatVersion) throw new ProtoException("Couldn't correctly rewind to stream start after reading net object positions list");
+            }
+            else
+            {
+                // we will call import when reading footer if there is a data
+                source.NetCacheKeyPositionsList.ImportRoot();
             }
             return formatVersion;
-        } 
+        }
 
-        public static void ReadOwnFooter(int formatVersion, ProtoReader source)
+        static void ImportReferencePositions(ProtoReader source)
         {
-            if (formatVersion > Rc1FormatVersion)
+            source.NetCacheKeyPositionsList.ImportNextWithoutRoot(
+                source.ReadArrayContent(
+                    source.Model?.ReferenceVersioningSeekingObjectsListLimit ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListLimit,
+                    source.ReadInt32));
+        }
+
+        public static void ReadOwnFooter(bool seeking, int formatVersion, ProtoReader source)
+        {
+            try
             {
-                while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
-                    source.SkipField();
-                if (source.FieldNumber == FieldLateReferenceObjects)
+                if (formatVersion > Rc1FormatVersion)
                 {
-                    SubItemToken t = ProtoReader.StartSubItem(source);
-                    ReadLateReferences(source);
-                    ProtoReader.EndSubItem(t, source);
+                    while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
+                        source.SkipField();
+                    if (source.FieldNumber == FieldLateReferenceObjects)
+                    {
+                        SubItemToken t = ProtoReader.StartSubItem(source);
+                        ReadLateReferences(source);
+                        ProtoReader.EndSubItem(t, source);
+                    }
+
+                    if (source.ReadFieldHeader() > 0 && source.FieldNumber == FieldNetObjectPositions)
+                    {
+                        if (seeking) // it's important to not read it twice!
+                            source.SkipField();
+                        else
+                        {
+                            // for versioning we should read it now if didn't read before, may affect aux lists where multiple roots reuse same net object list
+                            // do not call ImportRoot - already imported in header
+                            ImportReferencePositions(source);
+                        }
+                    }
                 }
-
-
-                while (source.ReadFieldHeader() > 0 && source.FieldNumber == FieldNetObjectPositions)
-                    source.SkipField(); // skip field on endsubitem doesn't work with root
+                else ReadLateReferences(source);
             }
-            else ReadLateReferences(source);
+            finally
+            {
+                source.NetCacheKeyPositionsList.ReleaseImportingLock();
+            }
         }
 
         static void ReadLateReferences(ProtoReader source)

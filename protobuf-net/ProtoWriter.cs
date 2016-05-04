@@ -194,19 +194,13 @@ namespace AqlaSerializer
         }
 
         internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; } = new NetObjectKeyPositionsList();
-
-        public static int[] GetNetObjectKeyToPositionDeltasArray(ProtoWriter writer)
-        {
-            var arr = writer.NetCacheKeyPositionsList.ExportNew();
-            for (int i = arr.Length - 1; i > 0; i--)
-                arr[i] -= arr[i - 1];
-            return arr;
-        }
-
+        
         private int _fieldNumber, _flushLock;
         WireType _wireType;
         public WireType WireType => _wireType;
         public int FieldNumber => _fieldNumber;
+
+        public bool IsExpectingRoot => _expectRoot;
 
         bool _expectRoot;
 

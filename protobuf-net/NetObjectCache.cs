@@ -88,7 +88,7 @@ namespace AqlaSerializer
         }
 
         private object _rootObject;
-        internal int AddObjectKey(object value, out bool existing)
+        internal int AddObjectKey(object value, bool forceNotExisting, out bool existing)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
@@ -99,10 +99,14 @@ namespace AqlaSerializer
                 return Root;
             }
 
+            bool existingForReal = false;
+
             if ((object)value == (object)_rootObject) // (object) here is no-op, but should be
-            {                                        // preserved even if this was typed - needs ref-check
+            {                                         // preserved even if this was typed - needs ref-check
                 existing = true;
-                return Root;
+                if (!forceNotExisting)
+                    return Root;
+                existingForReal = true;
             }
 
             string s = value as string;
@@ -169,19 +173,24 @@ namespace AqlaSerializer
             }
 #endif
 
-            if (!(existing = index >= 0))
+            existingForReal = existingForReal || (index >= 0);
+            existing = !forceNotExisting && existingForReal;
+            if (!existing)
             {
                 index = list.Add(value);
 
-                if (s == null)
+                if (!existingForReal)
                 {
+                    if (s == null)
+                    {
 #if !CF && !PORTABLE // CF can't handle the object keys very well
-                    _objectKeys.Add(value, index);
+                        _objectKeys.Add(value, index);
 #endif
-                }
-                else
-                {
-                    _stringKeys.Add(s, index);
+                    }
+                    else
+                    {
+                        _stringKeys.Add(s, index);
+                    }
                 }
             }
             return index + 1;

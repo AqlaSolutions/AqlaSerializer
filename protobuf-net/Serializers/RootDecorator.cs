@@ -34,7 +34,10 @@ namespace AqlaSerializer.Serializers
         {
             _enableReferenceVersioningSeeking = enableReferenceVersioningSeeking;
             _protoCompatibility = protoCompatibility;
-            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
+            // always enable reference tracking for root object even if it's struct
+            // because we need a root object (even inconsistent copy) to be always stored as a first object in netcache
+            // NetObjectKeyPositionsList relies on it
+            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, true, false, false, model, true) : serializer;
         }
 
         public Type ExpectedType => _serializer.ExpectedType;
@@ -67,7 +70,7 @@ namespace AqlaSerializer.Serializers
             var rootToken = ProtoReader.StartSubItem(source);
             int formatVersion = RootHelpers.ReadOwnHeader(_enableReferenceVersioningSeeking, source);
             var r = _serializer.Read(value, source);
-            RootHelpers.ReadOwnFooter(formatVersion, source);
+            RootHelpers.ReadOwnFooter(_enableReferenceVersioningSeeking, formatVersion, source);
             ProtoReader.EndSubItem(rootToken, true, source);
             return r;
         }
@@ -128,7 +131,7 @@ namespace AqlaSerializer.Serializers
                     _serializer.EmitRead(ctx, _serializer.RequiresOldValue ? value : null);
                     if (_serializer.EmitReadReturnsValue)
                         g.Assign(value, g.GetStackValueOperand(ExpectedType));
-                    g.Invoke(typeof(RootHelpers), nameof(RootHelpers.ReadOwnFooter), formatVersion, g.ArgReaderWriter());
+                    g.Invoke(typeof(RootHelpers), nameof(RootHelpers.ReadOwnFooter), _enableReferenceVersioningSeeking, formatVersion, g.ArgReaderWriter());
                     g.Reader.EndSubItem(rootToken, true);
 
                     if (EmitReadReturnsValue)
