@@ -32,6 +32,7 @@ namespace AqlaSerializer.unittest.Aqla
         public void Legacy()
         {
             var tm = TypeModel.Create();
+            tm.SkipForcedAdvancedVersioning = true;
             ((AutoAddStrategy)tm.AutoAddStrategy).UseLegacyTupleFields = true;
             var s = tm.GetDebugSchema(typeof(Container));
             Assert.That(s, Is.EqualTo(@"Root : Container
@@ -42,7 +43,6 @@ namespace AqlaSerializer.unittest.Aqla
      -> Container.Foo
      -> NetObject : Dictionary`2 = UseConstructor, WithNullWireType
      -> List : Dictionary`2 = NewPacked, Append
-     -> NetObject : KeyValuePair`2 = UseConstructor
      -> ModelType : KeyValuePair`2
      -> LinkTo [System.Collections.Generic.KeyValuePair`2[System.String,System.Collections.Generic.List`1[AqlaSerializer.unittest.Aqla.LegacyTupleMode+Element]]]
     ,
@@ -50,7 +50,6 @@ namespace AqlaSerializer.unittest.Aqla
      -> Container.Bar
      -> NetObject : Dictionary`2 = UseConstructor, WithNullWireType
      -> List : Dictionary`2 = NewPacked, Append
-     -> NetObject : KeyValuePair`2 = UseConstructor
      -> ModelType : KeyValuePair`2
      -> LinkTo [System.Collections.Generic.KeyValuePair`2[AqlaSerializer.unittest.Aqla.LegacyTupleMode+Element,AqlaSerializer.unittest.Aqla.LegacyTupleMode+ElementDef]]
 }

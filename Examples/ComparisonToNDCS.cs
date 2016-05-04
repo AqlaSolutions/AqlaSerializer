@@ -50,7 +50,8 @@ namespace Examples
                 //Debug.WriteLine(ndcs);
             }
             Assert.That(0, Is.LessThan(1)); // double check! (at least one test API has this reversed)
-            Assert.That(pb, Is.LessThan(ndcs / 4));
+            // sorry, we are going up in size, some core features were broken and now their fixed version requires more size
+            Assert.That(pb, Is.LessThan(ndcs / 3));
         }
         [DataContract]
         public class BasicDto
