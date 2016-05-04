@@ -1,5 +1,16 @@
 ﻿using System;
+#if FEAT_COMPILER
+using AqlaSerializer.Compiler;
+#endif
+using System.Diagnostics;
 using AqlaSerializer.Meta;
+#if FEAT_IKVM
+using Type = IKVM.Reflection.Type;
+using IKVM.Reflection;
+#else
+using System.Reflection;
+
+#endif
 
 namespace AqlaSerializer
 {

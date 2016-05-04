@@ -22,7 +22,7 @@ namespace AqlaSerializer.unittest.Aqla
         public class Container
         {
             [ProtoMember(1)]
-            public Dictionary<string, List<Element>> Foo { get; set; }
+            public Dictionary<string, List<LegacyTupleMode.Element>> Foo { get; set; }
 
             [ProtoMember(2)]
             public Dictionary<Element, ElementDef> Bar { get; set; }

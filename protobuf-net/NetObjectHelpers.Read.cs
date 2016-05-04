@@ -1,5 +1,16 @@
 ﻿using System;
+#if FEAT_COMPILER
+using AqlaSerializer.Compiler;
+#endif
 using System.Diagnostics;
+using AqlaSerializer.Meta;
+#if FEAT_IKVM
+using Type = IKVM.Reflection.Type;
+using IKVM.Reflection;
+#else
+using System.Reflection;
+
+#endif
 
 namespace AqlaSerializer
 {
@@ -177,17 +188,16 @@ namespace AqlaSerializer
             return r;
 #endif
         }
-
+#if !FEAT_IKVM
         static void ReadNewType(ProtoReader source, out Type type, out int typeKey)
         {
-
             string typeName = source.ReadString();
             type = source.DeserializeType(typeName);
             if (type == null)
                 throw new ProtoException("Unable to resolve type: " + typeName + " (you can use the TypeModel.DynamicTypeFormatting event to provide a custom mapping)");
             typeKey = source.GetTypeKey(ref type);
         }
-
+#endif
         private const int
             FieldExistingObjectKey = 1,
             FieldNewObjectKey = 2,

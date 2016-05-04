@@ -305,8 +305,7 @@ namespace AqlaSerializer.Serializers
                     var shouldRead = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.ShouldRead)).SetNotLeaked();
                     var isLateReference = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.IsLateReference)).SetNotLeaked();
                     var isDynamic = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.IsDynamic)).SetNotLeaked();
-                    var token = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.Token)).SetNotLeaked();
-
+                    
                     g.Assign(options, _options);
                     if (!RequiresOldValue)
                         g.Assign(inputValueBoxed, null);

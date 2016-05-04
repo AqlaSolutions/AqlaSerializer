@@ -453,7 +453,7 @@ namespace AqlaSerializer.Meta
                     { // otherwise, check if it is a contract
                         MetaType.AttributeFamily family = _autoAddStrategy.GetContractFamily(type);
 
-                        if (family == MetaType.AttributeFamily.AutoTuple && type.IsGenericType)
+                        if (family == MetaType.AttributeFamily.AutoTuple && Helpers.IsGenericType(type))
                         {
                             // always add safe tuples
                             Type def = type.GetGenericTypeDefinition();

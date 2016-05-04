@@ -37,7 +37,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AllowReferenceVersioningSeeking { get; set; } = true;
         
-        internal const int DefaultArrayLengthReadLimit = 100000;
+        internal const int DefaultArrayLengthReadLimit = 500000;
 
         /// <summary>
         /// Max count for list for <see cref="AllowReferenceVersioningSeeking"/>

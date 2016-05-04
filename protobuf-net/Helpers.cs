@@ -109,6 +109,15 @@ namespace AqlaSerializer
 #endif
         }
 
+        public static bool IsGenericType(Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsGenericType;
+#else
+            return type.IsGenericType;
+#endif
+        }
+
         public static Type[] GetTypes(Assembly assembly)
         {
 #if WINRT
