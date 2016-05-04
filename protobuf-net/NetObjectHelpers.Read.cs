@@ -66,7 +66,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
-        public static ReadReturnValue ReadNetObject_Start(ref object value, bool isRoot, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, ref int typeKey, bool handleMissingKeys)
+        public static ReadReturnValue ReadNetObject_Start(ref object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, ref int typeKey, bool handleMissingKeys)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -111,7 +111,6 @@ namespace AqlaSerializer
 
                             r = ReadNetObject_Start(
                                 ref value,
-                                isRoot,
                                 source,
                                 ref type,
                                 options,
@@ -122,11 +121,6 @@ namespace AqlaSerializer
 
                             r.SeekToReturn = seekToken;
                             return r;
-                        }
-                        if (isRoot) // auxiliary list
-                        {
-                            bool dummy;
-                            source.NetCache.AddObjectKey(value, true, out dummy);
                         }
                         break;
                     case FieldNewObjectKey:

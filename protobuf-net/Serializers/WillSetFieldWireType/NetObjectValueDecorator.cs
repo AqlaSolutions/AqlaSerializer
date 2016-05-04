@@ -31,7 +31,6 @@ namespace AqlaSerializer.Serializers
         readonly IProtoSerializerWithWireType _tail;
         readonly LateReferenceSerializer _lateReferenceTail;
         readonly IProtoSerializerWithWireType _baseKeySerializer;
-        readonly bool _isRoot;
 
         IProtoSerializerWithWireType DelegationHandler => (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? null : (_tail ?? _baseKeySerializer);
 
@@ -76,12 +75,11 @@ namespace AqlaSerializer.Serializers
             this.ExpectedType = type;
         }
 
-        public NetObjectValueDecorator(IProtoSerializerWithWireType tail, bool returnNullable, bool asReference, bool asLateReference, bool allowNullWireType, RuntimeTypeModel model, bool isRoot = false)
+        public NetObjectValueDecorator(IProtoSerializerWithWireType tail, bool returnNullable, bool asReference, bool asLateReference, bool allowNullWireType, RuntimeTypeModel model)
             : this(type: MakeReturnNullable(tail.ExpectedType, returnNullable, model), asReference: asReference, asLateReference: asLateReference, allowNullWireType: allowNullWireType, model: model)
         {
             _tail = tail;
             RequiresOldValue = _tail.RequiresOldValue || (_lateReferenceTail?.RequiresOldValue ?? false);
-            _isRoot = isRoot;
         }
 
         static Type MakeReturnNullable(Type type, bool make, TypeModel model)

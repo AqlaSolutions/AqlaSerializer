@@ -310,7 +310,7 @@ namespace Examples.ServiceModel
             {
                 int i = 0;
 
-                //Assert.AreEqual(0, proxy.Service.ComplexMethod(null, null, null, null));
+                Assert.AreEqual(0, proxy.Service.ComplexMethod(null, null, null, null));
                 i++;
                 Assert.AreEqual(10, proxy.Service.ComplexMethod(fourItems, nonTrivial, nonTrivial, fourItems));
                 i++;

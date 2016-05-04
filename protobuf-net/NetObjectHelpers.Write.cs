@@ -8,7 +8,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
-        public static SubItemToken WriteNetObject_Start(object value, bool isRoot, ProtoWriter dest, BclHelpers.NetObjectOptions options, out int dynamicTypeKey, out bool writeObject)
+        public static SubItemToken WriteNetObject_Start(object value, ProtoWriter dest, BclHelpers.NetObjectOptions options, out int dynamicTypeKey, out bool writeObject)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -28,8 +28,6 @@ namespace AqlaSerializer
 
             if (value == null)
             {
-                if (isRoot)
-                    dest.NetCache.AddObjectKey(new object(), true, out dummy);
                 // null handling
                 writeObject = false;
                 return token;
@@ -41,21 +39,18 @@ namespace AqlaSerializer
             if ((options & BclHelpers.NetObjectOptions.AsReference) != 0)
             {
                 bool existing;
-                int objectKey = dest.NetCache.AddObjectKey(value, false, out existing);
+                int objectKey = dest.NetCache.AddObjectKey(value, out existing);
                 ProtoWriter.WriteFieldHeader(existing ? FieldExistingObjectKey : FieldNewObjectKey, WireType.Variant, dest);
                 ProtoWriter.WriteInt32(objectKey, dest);
                 if (existing)
                 {
                     writeObject = false;
-                    if (isRoot) // in auxiliary list, need to mark root object with new key for NetObjectKeyPositionsList
-                        dest.NetCache.AddObjectKey(value, true, out dummy);
                 }
                 else
                 {
                     dest.NetCacheKeyPositionsList.SetPosition(objectKey, pos);
                 }
             }
-            else if (isRoot) throw new InvalidOperationException("Root should be always written as reference!");
 
             if (writeObject)
             {
@@ -65,7 +60,7 @@ namespace AqlaSerializer
                     Type type = value.GetType();
 
                     dynamicTypeKey = dest.GetTypeKey(ref type);
-                    int typeRefKey = dest.NetCache.AddObjectKey(type, false, out existing);
+                    int typeRefKey = dest.NetCache.AddObjectKey(type, out existing);
                     ProtoWriter.WriteFieldHeader(existing ? FieldExistingTypeKey : FieldNewTypeKey, WireType.Variant, dest);
                     if (!existing) dest.NetCacheKeyPositionsList.SetPosition(typeRefKey, pos);
                     ProtoWriter.WriteInt32(typeRefKey, dest);

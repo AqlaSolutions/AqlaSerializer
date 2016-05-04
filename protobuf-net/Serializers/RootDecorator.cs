@@ -34,10 +34,7 @@ namespace AqlaSerializer.Serializers
         {
             _enableReferenceVersioningSeeking = enableReferenceVersioningSeeking;
             _protoCompatibility = protoCompatibility;
-            // always enable reference tracking for root object even if it's struct
-            // because we need a root object (even inconsistent copy) to be always stored as a first object in netcache
-            // NetObjectKeyPositionsList relies on it
-            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, true, false, false, model, true) : serializer;
+            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
         }
 
         public Type ExpectedType => _serializer.ExpectedType;

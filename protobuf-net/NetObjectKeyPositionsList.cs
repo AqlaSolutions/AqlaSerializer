@@ -9,8 +9,7 @@ namespace AqlaSerializer
     internal class NetObjectKeyPositionsList
     {
         List<int> _keyToPosition = new List<int>();
-        Dictionary<int, bool> _importedRoots = new Dictionary<int, bool>();
-
+        
         public void SetPosition(int key, int position)
         {
             if (position < 0 || (key > 0 && position == 0)) throw new ArgumentOutOfRangeException(nameof(position));
@@ -21,10 +20,6 @@ namespace AqlaSerializer
 
         public int GetPosition(int key)
         {
-            if (_importedRoots.Count > 0 && _importedRoots.ContainsKey(key))
-                throw new ProtoException(
-                    "An attempt to get position of root object - impossible because position was not really imported " +
-                    "(it's not expected that root object may be \"lost\" so no one should try to \"find\" it)");
             if (_keyToPosition.Count - 1 < key) ThrowNotFound(key);
             var r = _keyToPosition[key];
             if (r == 0 && key > 0) ThrowNotFound(key);
@@ -36,13 +31,8 @@ namespace AqlaSerializer
         int _importKnownCount;
         int _previousImportedPosition;
 
-        public int[] ExportNewWithoutRoot()
+        public int[] ExportNew()
         {
-            if (_exportKnownCount >= _keyToPosition.Count)
-                throw new ProtoException(
-                    "Root object position was not stored in NetCacheKeyPositionsList which is not expected by reader (each export should be a t least 1 object)");
-
-            _exportKnownCount++; // skip root without storing previous exported position, delta will be calculated for previous exported object
             var arr = _keyToPosition.Skip(_exportKnownCount).ToArray();
             if (arr.Length == 0) return arr;
             _exportKnownCount = _keyToPosition.Count;
@@ -69,16 +59,8 @@ namespace AqlaSerializer
             if (!_importingLock) throw new ProtoException("An attempt to release NetObjectKeyPositionsList importing lock when not acquired");
             _importingLock = false;
         }
-
-        public void ImportRoot()
-        {
-            // we don't change _previousImportedPosition so delta will be correctly calculated between previous and next objects
-            // can't set 0 here
-            _importedRoots[_importKnownCount] = true;
-            SetPosition(_importKnownCount++, _previousImportedPosition + 1);
-        }
-
-        public void ImportNextWithoutRoot(int[] arr)
+        
+        public void ImportNext(int[] arr)
         {
             int acc = _previousImportedPosition;
             for (int i = 0; i < arr.Length; i++)
@@ -92,7 +74,6 @@ namespace AqlaSerializer
         public void Reset()
         {
             _keyToPosition.Clear();
-            _importedRoots.Clear();
             _previousImportedPosition = _previousExportedPosition = _importKnownCount = _exportKnownCount = 0;
             _importingLock = false;
         }
@@ -106,7 +87,6 @@ namespace AqlaSerializer
         {
             var r = (NetObjectKeyPositionsList)MemberwiseClone();
             r._keyToPosition = new List<int>(_keyToPosition);
-            r._importedRoots = new Dictionary<int, bool>(_importedRoots);
             return r;
         }
     }

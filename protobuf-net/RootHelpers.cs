@@ -8,9 +8,7 @@ namespace AqlaSerializer
         public const int Rc1FormatVersion = 3;
         public const int FieldLateReferenceObjects = 2;
         public const int FieldNetObjectPositions = 3;
-
-        static readonly int[] Int0 = new int[0];
-
+        
         public static void WriteOwnHeader(ProtoWriter dest)
         {
             ProtoWriter.WriteFieldHeaderBegin(RootHelpers.CurrentFormatVersion, dest);
@@ -36,7 +34,7 @@ namespace AqlaSerializer
 
             if (lateRefFieldToken != null) ProtoWriter.EndSubItem(lateRefFieldToken.Value, dest);
 
-            int[] arr = dest.NetCacheKeyPositionsList.ExportNewWithoutRoot();
+            int[] arr = dest.NetCacheKeyPositionsList.ExportNew();
             
             // always write it
             // and no need to believe in detection
@@ -73,26 +71,19 @@ namespace AqlaSerializer
                     source.SkipField();
                 if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
                 {
-                    source.NetCacheKeyPositionsList.ImportRoot();
                     ImportReferencePositions(source);
                 }
-                else
-                    source.NetCacheKeyPositionsList.ImportRoot();
+                
                 source.SeekAndExchangeBlockEnd(pos, blockEnd);
                 var f = source.ReadFieldHeader();
                 if (f != formatVersion) throw new ProtoException("Couldn't correctly rewind to stream start after reading net object positions list");
-            }
-            else
-            {
-                // we will call import when reading footer if there is a data
-                source.NetCacheKeyPositionsList.ImportRoot();
             }
             return formatVersion;
         }
 
         static void ImportReferencePositions(ProtoReader source)
         {
-            source.NetCacheKeyPositionsList.ImportNextWithoutRoot(
+            source.NetCacheKeyPositionsList.ImportNext(
                 source.ReadArrayContent(
                     source.Model?.ReferenceVersioningSeekingObjectsListLimit ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListLimit,
                     source.ReadInt32));
@@ -120,7 +111,6 @@ namespace AqlaSerializer
                         else
                         {
                             // for versioning we should read it now if didn't read before, may affect aux lists where multiple roots reuse same net object list
-                            // do not call ImportRoot - already imported in header
                             ImportReferencePositions(source);
                         }
                     }
