@@ -379,6 +379,7 @@
     <Compile Include="Compiler\StackValueOperand.cs" />
     <Compile Include="DisposableAction.cs" />
     <Compile Include="ICloneable.cs" />
+    <Compile Include="Meta\EnumFlagModelId.cs" />
     <Compile Include="Meta\IKVMAttributeFactory.cs" />
     <Compile Include="Meta\IValueSerializerBuilder.cs" />
     <Compile Include="Meta\MetaType.BuildSerializer.cs" />

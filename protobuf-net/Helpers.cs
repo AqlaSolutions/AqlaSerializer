@@ -593,6 +593,17 @@ namespace AqlaSerializer
 #endif
         }
 
+#if FEAT_IKVM
+        internal static bool IsEnum(System.Type type)
+        {
+#if WINRT
+            return type.GetTypeInfo().IsEnum;
+#else
+            return type.IsEnum;
+#endif
+        }
+#endif
+
         internal static MethodInfo GetGetMethod(PropertyInfo property, bool nonPublic, bool allowInternal)
         {
             if (property == null) return null;

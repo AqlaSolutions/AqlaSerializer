@@ -189,7 +189,12 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// See <see cref="SerializableMemberAttributeBase.ModelId"/>
         /// </summary>
-        public object ModelId { get; set; } // TODO equality provider
+        public object ModelId { get; set; }
+
+        public void SetEnumFlagModelId<T>(T value) where T : struct
+        {
+            ModelId = new EnumFlagModelId<T>(value);
+        }
 
         IAutoAddStrategy _autoAddStrategy;
         public IAutoAddStrategy AutoAddStrategy

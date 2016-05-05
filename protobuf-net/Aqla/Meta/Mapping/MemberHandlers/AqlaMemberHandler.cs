@@ -40,7 +40,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
             SerializableMemberNestedAttribute[] nested = AttributeMap
                 .CreateRuntime<SerializableMemberNestedAttribute>(model, member, true)
-                .Where(a => a.ModelId == model.ModelId)
+                .Where(a => Equals(model.ModelId, a.ModelId))
                 .ToArray();
 
             main = memberRtAttr.MemberSettings;

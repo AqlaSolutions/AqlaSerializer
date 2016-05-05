@@ -127,6 +127,7 @@
       <Link>LinkedPeVerify\PEVerify.cs</Link>
     </Compile>
     <Compile Include="Aqla\AccessorsEmitTest.cs" />
+    <Compile Include="Aqla\ModelIdEnumFlagTests.cs" />
     <Compile Include="Aqla\ClassWithMembersForIKVM.cs" />
     <Compile Include="Aqla\DerivedDerivedOnField.cs" />
     <Compile Include="Aqla\ExportImportTypes.cs" />
