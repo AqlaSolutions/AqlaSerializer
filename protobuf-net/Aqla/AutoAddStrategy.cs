@@ -154,9 +154,12 @@ namespace AqlaSerializer
                         FieldInfo field;
                         if ((property = member as PropertyInfo) != null)
                         {
+                            bool isIndexer = property.GetIndexParameters().Length > 0;
                             bool isPublic = Helpers.GetGetMethod(property, false, false) != null;
 
-                            bool canBeMapped = isPublic || Helpers.GetGetMethod(property, true, true) != null;
+                            bool hasGetterSetter = isPublic || Helpers.GetGetMethod(property, true, true) != null;
+
+                            bool canBeMapped = !isIndexer && hasGetterSetter;
 
                             if (canBeMapped &&
                                 (!mapped.ImplicitOnlyWriteable ||
@@ -188,7 +191,8 @@ namespace AqlaSerializer
                             var r = ApplyDefaultBehaviour_AddMembers(args);
                             if (r != null)
                             {
-                                if (!canBeMapped) throw new MemberAccessException("Property " + property + " should be readable to be mapped.");
+                                if (!hasGetterSetter) throw new MemberAccessException("Property " + property + " should be readable to be mapped.");
+                                if (isIndexer) throw new MemberAccessException("Property " + property + " can't be mapped because it's an indexer.");
                                 members.Add(r);
                             }
                         }
