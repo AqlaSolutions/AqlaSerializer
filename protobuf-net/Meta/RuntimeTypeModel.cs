@@ -54,7 +54,7 @@ namespace AqlaSerializer.Meta
         public ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
         
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
-        internal IValueSerializerBuilder ValueSerializerBuilder { get; }
+        internal IValueSerializerBuilder ValueSerializerBuilder { get; private set; }
         
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
@@ -1423,11 +1423,12 @@ namespace AqlaSerializer.Meta
             m.SetOption(OPTIONS_Frozen, false);
             m.SetOption(OPTIONS_IsDefaultModel, false);
             m._types = new BasicList();
-            m.AutoAddStrategy = AutoAddStrategy.Clone(this);
+            m.AutoAddStrategy = AutoAddStrategy.Clone(m);
             m._basicTypes = new BasicList();
             m._overridingManager = m._overridingManager.CloneAsUnsubscribed();
             var cache = new MetaTypeCloneCache(m);
             m._types = new BasicList();
+            m.ValueSerializerBuilder = new ValueSerializerBuilder(m);
             foreach (MetaType metaType in _types.Cast<MetaType>().Select(cache.CloneMetaTypeWithoutDerived).Select(mt => (object)mt))
                 m.Add(metaType);
             for (int i = 0; i < m._types.Count; i++)
