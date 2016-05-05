@@ -361,6 +361,8 @@ namespace AqlaSerializer.Serializers
                                         ctx.Cast(_add.DeclaringType);
                                     ctx.LoadValue(v);
                                     ctx.EmitCall(this._add);
+                                    if (this._add.ReturnType != null && this._add.ReturnType != ctx.MapType(typeof(void)))
+                                        ctx.DiscardValue();
                                 }
                             }
                         }
