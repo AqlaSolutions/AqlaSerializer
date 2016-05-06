@@ -62,7 +62,7 @@ Some build configurations may be not available through nuget, you can download t
 
    <dependencies> 
       <group>
-         <dependency id="aqla.runsharp" version="1.0.0.16" />
+         <dependency id="aqla.runsharp" version="1.0.0.17" />
       </group>
    
    </dependencies>
