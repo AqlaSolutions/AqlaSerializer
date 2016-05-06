@@ -83,6 +83,9 @@
 
     <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
+
+    <Exec Command="Tools\AOTCompatlyzer.exe &quot;protobuf-net\bin\Unity\aqlaserializer.dll&quot; &quot;protobuf-net_Portable\bin\Release\aqlaserializer.dll&quot; &quot;protobuf-net_Portable\bin\CoreOnly\aqlaserializer.dll&quot; &quot;protobuf-net\bin\iOS\aqlaserializer.dll&quot;"/>
+
 <ItemGroup>
     <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
     <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
