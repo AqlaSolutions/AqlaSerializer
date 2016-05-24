@@ -39,6 +39,7 @@ using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
 using AltLinq; using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace AqlaSerializer.Meta
@@ -410,6 +411,14 @@ namespace AqlaSerializer.Meta
             string typeName = options.TypeName;
             string path = options.OutputPath;
             string assemblyName, moduleName;
+
+            bool save = !Helpers.IsNullOrEmpty(path);
+            if (Helpers.IsNullOrEmpty(typeName))
+            {
+                if (save) throw new ArgumentNullException("typeName");
+                typeName = Guid.NewGuid().ToString();
+            }
+
             if (path == null)
             {
                 assemblyName = typeName;
@@ -427,7 +436,8 @@ namespace AqlaSerializer.Meta
 
             if (options.IterativeMode != CompilerIterativeMode.Disabled)
             {
-                if (string.IsNullOrEmpty(options.OutputPath))
+                string outputPath = options.OutputPath;
+                if (string.IsNullOrEmpty(outputPath))
                     throw new ArgumentException("Can't use IterativeMode parameter without OutputPath specified");
                 if (string.IsNullOrEmpty(options.TypeName))
                     throw new ArgumentException("Can't use IterativeMode parameter without TypeName specified");
@@ -447,77 +457,18 @@ namespace AqlaSerializer.Meta
                 var ver = executingAssembly.GetName().Version;
                 eqAttr = new CompiledAssemblyEqualityAttribute(ver.Major, ver.Minor, ver.Revision, ver.Build, hash, schema.Length, options.Accessibility == Accessibility.Public);
 
-                if (File.Exists(options.OutputPath) && options.IterativeMode == CompilerIterativeMode.ReadAndAppendData)
+                if (File.Exists(outputPath) && options.IterativeMode == CompilerIterativeMode.ReadAndAppendData)
                 {
                     try
                     {
-                        // lock file
-                        //using (var f = File.Open(options.OutputPath, FileMode.Open, FileAccess.Read, FileShare.None))
-                        byte[] data;
+                        if (CheckIterativeCompilation(outputPath, executingAssembly, eqAttr))
                         {
-                            bool same = false;
-                            var domain = AppDomain.CreateDomain(
-                                "CompiledAssemblyCheck",
-                                null,
-                                new AppDomainSetup()
-                                {
-                                    LoaderOptimization = LoaderOptimization.MultiDomainHost,
-                                    PrivateBinPath = Path.GetDirectoryName(Path.GetFullPath(options.OutputPath)),
-                                    ShadowCopyFiles = "true"
-                                });
-                            try
-                            {
-                                //var data = new byte[f.Length];
-                                //f.Read(data, 0, data.Length);
-
-                                data = File.ReadAllBytes(options.OutputPath);
-                                CompiledAssemblyEqualityAttribute otherAttr = null;
-                                
-                                string myPath = executingAssembly.GetName().CodeBase;
-                                var proxy = (AssemblyAnyLoadProxy)domain.CreateInstanceFromAndUnwrap(myPath, typeof(AssemblyAnyLoadProxy).FullName);
-
-                                try
-                                {
-                                    proxy.ReflectionLoadFrom(myPath);
-                                }
-                                catch
-                                {
-                                    try
-                                    {
-                                        proxy.ReflectionLoad(executingAssembly.FullName);
-                                    }
-                                    catch
-                                    {
-                                        try
-                                        {
-                                            proxy.ReflectionLoad(executingAssembly.GetName().Name);
-                                        }
-                                        catch
-                                        {
-                                            proxy.ReflectionLoad(File.ReadAllBytes(new Uri(myPath).LocalPath));
-                                        }
-                                    }
-                                }
-                                
-                                int outputAssemblyId = proxy.ReflectionLoad(data);
-                                
-                                same = proxy.CompareAttribute(outputAssemblyId, typeof(CompiledAssemblyEqualityAttribute).FullName, eqAttr.GetConstructorArgs());
-
-                            }
-                            finally
-                            {
-                                AppDomain.Unload(domain);
-                            }
-                            if (same)
-                            {
 #if FEAT_IKVM
-                                return null;
+                            return null;
 #else
-                                return CreateCompiledTypeModel(System.Reflection.Assembly.LoadFrom(options.OutputPath).GetType(options.TypeName, true));
+                            return CreateCompiledTypeModel(System.Reflection.Assembly.LoadFrom(outputPath).GetType(options.TypeName, true));
 #endif
-                            }
                         }
-                        File.Delete(options.OutputPath);
                     }
                     catch (Exception e)
                     {
@@ -532,14 +483,7 @@ namespace AqlaSerializer.Meta
 
             CompileInPlace();
             Freeze();
-            bool save = !Helpers.IsNullOrEmpty(path);
-            if (Helpers.IsNullOrEmpty(typeName))
-            {
-                if (save) throw new ArgumentNullException("typeName");
-                typeName = Guid.NewGuid().ToString();
-            }
-
-
+            
 #if FEAT_IKVM
             IKVM.Reflection.AssemblyName an = new IKVM.Reflection.AssemblyName();
             an.Name = assemblyName;
@@ -618,7 +562,73 @@ namespace AqlaSerializer.Meta
             return CreateCompiledTypeModel(finalType);
 #endif
         }
-        
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        bool CheckIterativeCompilation(string outputPath, System.Reflection.Assembly executingAssembly, CompiledAssemblyEqualityAttribute eqAttr)
+        {
+            // lock file
+            //using (var f = File.Open(options.OutputPath, FileMode.Open, FileAccess.Read, FileShare.None))
+            byte[] data;
+            {
+                bool same = false;
+                var domain = AppDomain.CreateDomain(
+                    "CompiledAssemblyCheck",
+                    null,
+                    new AppDomainSetup()
+                    {
+                        LoaderOptimization = LoaderOptimization.MultiDomainHost,
+                        PrivateBinPath = Path.GetDirectoryName(Path.GetFullPath(outputPath)),
+                        ShadowCopyFiles = "true"
+                    });
+                try
+                {
+                    //var data = new byte[f.Length];
+                    //f.Read(data, 0, data.Length);
+
+                    data = File.ReadAllBytes(outputPath);
+                    CompiledAssemblyEqualityAttribute otherAttr = null;
+
+                    string myPath = executingAssembly.GetName().CodeBase;
+                    var proxy = (AssemblyAnyLoadProxy)domain.CreateInstanceFromAndUnwrap(myPath, typeof(AssemblyAnyLoadProxy).FullName);
+
+                    try
+                    {
+                        proxy.ReflectionLoadFrom(myPath);
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            proxy.ReflectionLoad(executingAssembly.FullName);
+                        }
+                        catch
+                        {
+                            try
+                            {
+                                proxy.ReflectionLoad(executingAssembly.GetName().Name);
+                            }
+                            catch
+                            {
+                                proxy.ReflectionLoad(File.ReadAllBytes(new Uri(myPath).LocalPath));
+                            }
+                        }
+                    }
+
+                    int outputAssemblyId = proxy.ReflectionLoad(data);
+
+                    same = proxy.CompareAttribute(outputAssemblyId, typeof(CompiledAssemblyEqualityAttribute).FullName, eqAttr.GetConstructorArgs());
+
+                }
+                finally
+                {
+                    AppDomain.Unload(domain);
+                }
+                if (same) return true;
+            }
+            File.Delete(outputPath);
+            return false;
+        }
+
         [Serializable]
         class AssemblyAnyLoadProxy : MarshalByRefObject
         {
