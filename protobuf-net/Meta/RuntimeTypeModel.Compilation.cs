@@ -5,6 +5,7 @@
 #endif
 using System;
 using System.Collections;
+using System.Diagnostics;
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
@@ -38,6 +39,7 @@ using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
 using AltLinq; using System.Linq;
+using System.Security.Cryptography;
 
 namespace AqlaSerializer.Meta
 {
@@ -261,12 +263,34 @@ namespace AqlaSerializer.Meta
             return result;
         }
 #endif
+
+        public enum CompilerIterativeMode
+        {
+            /// <summary>
+            /// Always recompile
+            /// </summary>
+            Disabled=0,
+            /// <summary>
+            /// Appends iterative data which can be read in <see cref="ReadAndAppendData"/> mode
+            /// </summary>
+            AppendData,
+            /// <summary>
+            /// Same as <see cref="AppendData"/> but also checks previously written iterative data to avoid recompilation
+            /// </summary>
+            ReadAndAppendData
+        }
+
         /// <summary>
         /// Represents configuration options for compiling a model to 
         /// a standalone assembly.
         /// </summary>
         public sealed class CompilerOptions
         {
+            /// <summary>
+            /// Allows to avoid unnecessary recompilation
+            /// </summary>
+            public CompilerIterativeMode IterativeMode { get; set; }
+
             /// <summary>
             /// Import framework options from an existing type
             /// </summary>
@@ -385,17 +409,6 @@ namespace AqlaSerializer.Meta
             if (options == null) throw new ArgumentNullException(nameof(options));
             string typeName = options.TypeName;
             string path = options.OutputPath;
-            BuildAllSerializers();
-            CompileInPlace();
-            Freeze();
-            bool save = !Helpers.IsNullOrEmpty(path);
-            if (Helpers.IsNullOrEmpty(typeName))
-            {
-                if (save) throw new ArgumentNullException("typeName");
-                typeName = Guid.NewGuid().ToString();
-            }
-
-
             string assemblyName, moduleName;
             if (path == null)
             {
@@ -407,6 +420,125 @@ namespace AqlaSerializer.Meta
                 assemblyName = new System.IO.FileInfo(System.IO.Path.GetFileNameWithoutExtension(path)).Name;
                 moduleName = assemblyName + System.IO.Path.GetExtension(path);
             }
+
+            BuildAllSerializers();
+
+            CompiledAssemblyEqualityAttribute eqAttr = null;
+
+            if (options.IterativeMode != CompilerIterativeMode.Disabled)
+            {
+                if (string.IsNullOrEmpty(options.OutputPath))
+                    throw new ArgumentException("Can't use IterativeMode parameter without OutputPath specified");
+                if (string.IsNullOrEmpty(options.TypeName))
+                    throw new ArgumentException("Can't use IterativeMode parameter without TypeName specified");
+
+                var b = new DebugSchemaBuilder();
+                foreach (var s in MetaTypes)
+                {
+                    if (s.RootSerializer is ForbiddenRootStub)
+                        s.Serializer.WriteDebugSchema(b);
+                    else
+                        s.RootSerializer.WriteDebugSchema(b);
+                }
+                var hashFunction = SHA1.Create();
+                string schema = b.ToString();
+                string hash = Convert.ToBase64String(hashFunction.ComputeHash(Encoding.UTF8.GetBytes(schema)));
+                System.Reflection.Assembly executingAssembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var ver = executingAssembly.GetName().Version;
+                eqAttr = new CompiledAssemblyEqualityAttribute(ver.Major, ver.Minor, ver.Revision, ver.Build, hash, schema.Length, options.Accessibility == Accessibility.Public);
+
+                if (File.Exists(options.OutputPath) && options.IterativeMode == CompilerIterativeMode.ReadAndAppendData)
+                {
+                    try
+                    {
+                        // lock file
+                        //using (var f = File.Open(options.OutputPath, FileMode.Open, FileAccess.Read, FileShare.None))
+                        byte[] data;
+                        {
+                            bool same = false;
+                            var domain = AppDomain.CreateDomain(
+                                "CompiledAssemblyCheck",
+                                null,
+                                new AppDomainSetup()
+                                {
+                                    LoaderOptimization = LoaderOptimization.MultiDomainHost,
+                                    PrivateBinPath = Path.GetDirectoryName(Path.GetFullPath(options.OutputPath)),
+                                    ShadowCopyFiles = "true"
+                                });
+                            try
+                            {
+                                //var data = new byte[f.Length];
+                                //f.Read(data, 0, data.Length);
+
+                                data = File.ReadAllBytes(options.OutputPath);
+                                CompiledAssemblyEqualityAttribute otherAttr = null;
+                                
+                                string myPath = executingAssembly.GetName().CodeBase;
+                                var proxy = (AssemblyAnyLoadProxy)domain.CreateInstanceFromAndUnwrap(myPath, typeof(AssemblyAnyLoadProxy).FullName);
+
+                                try
+                                {
+                                    proxy.ReflectionLoadFrom(myPath);
+                                }
+                                catch
+                                {
+                                    try
+                                    {
+                                        proxy.ReflectionLoad(executingAssembly.FullName);
+                                    }
+                                    catch
+                                    {
+                                        try
+                                        {
+                                            proxy.ReflectionLoad(executingAssembly.GetName().Name);
+                                        }
+                                        catch
+                                        {
+                                            proxy.ReflectionLoad(File.ReadAllBytes(new Uri(myPath).LocalPath));
+                                        }
+                                    }
+                                }
+                                
+                                int outputAssemblyId = proxy.ReflectionLoad(data);
+                                
+                                same = proxy.CompareAttribute(outputAssemblyId, typeof(CompiledAssemblyEqualityAttribute).FullName, eqAttr.GetConstructorArgs());
+
+                            }
+                            finally
+                            {
+                                AppDomain.Unload(domain);
+                            }
+                            if (same)
+                            {
+#if FEAT_IKVM
+                                return null;
+#else
+                                return CreateCompiledTypeModel(System.Reflection.Assembly.LoadFrom(options.OutputPath).GetType(options.TypeName, true));
+#endif
+                            }
+                        }
+                        File.Delete(options.OutputPath);
+                    }
+                    catch (Exception e)
+                    {
+                        Debugger.Log(0, "AqlaSerializer", e.ToString());
+#if DEBUG
+                        if (Debugger.IsAttached)
+                            Debugger.Break();
+#endif
+                    }
+                }
+            }
+
+            CompileInPlace();
+            Freeze();
+            bool save = !Helpers.IsNullOrEmpty(path);
+            if (Helpers.IsNullOrEmpty(typeName))
+            {
+                if (save) throw new ArgumentNullException("typeName");
+                typeName = Guid.NewGuid().ToString();
+            }
+
 
 #if FEAT_IKVM
             IKVM.Reflection.AssemblyName an = new IKVM.Reflection.AssemblyName();
@@ -439,7 +571,7 @@ namespace AqlaSerializer.Meta
                                         : asm.DefineDynamicModule(moduleName);
 #endif
 
-            WriteAssemblyAttributes(options, assemblyName, asm);
+            WriteAssemblyAttributes(options, assemblyName, asm, eqAttr);
 
             TypeBuilder type = WriteBasicTypeModel(options, typeName, module);
 
@@ -483,6 +615,67 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
             return null;
 #else
+            return CreateCompiledTypeModel(finalType);
+#endif
+        }
+        
+        [Serializable]
+        class AssemblyAnyLoadProxy : MarshalByRefObject
+        {
+            List<System.Reflection.Assembly> _assemblies=new List<System.Reflection.Assembly>();
+
+            public int Load(byte[] raw)
+            {
+                var asm = System.Reflection.Assembly.Load(raw);
+                return Add(asm);
+            }
+
+            public int Load(string assemblyName)
+            {
+                var asm = System.Reflection.Assembly.Load(assemblyName);
+                return Add(asm);
+            }
+
+            public int LoadFrom(string assemblyFile)
+            {
+                var asm = System.Reflection.Assembly.LoadFrom(assemblyFile);
+                return Add(asm);
+            }
+
+            public int ReflectionLoad(byte[] raw)
+            {
+                var asm = System.Reflection.Assembly.ReflectionOnlyLoad(raw);
+                return Add(asm);
+            }
+
+            public int ReflectionLoad(string assemblyName)
+            {
+                var asm = System.Reflection.Assembly.ReflectionOnlyLoad(assemblyName);
+                return Add(asm);
+            }
+
+            public int ReflectionLoadFrom(string assemblyFile)
+            {
+                var asm = System.Reflection.Assembly.ReflectionOnlyLoadFrom(assemblyFile);
+                return Add(asm);
+            }
+
+            int Add(System.Reflection.Assembly asm)
+            {
+                _assemblies.Add(asm);
+                return _assemblies.Count - 1;
+            }
+            
+            public bool CompareAttribute(int assembly, string fullName, object[] args)
+            {
+                var attrs = System.Reflection.CustomAttributeData.GetCustomAttributes(_assemblies[assembly]);
+                System.Reflection.CustomAttributeData attr = attrs.FirstOrDefault(x => x.Constructor.DeclaringType.FullName == fullName);
+                return attr?.ConstructorArguments.Select(x => x.Value).SequenceEqual(args) ?? false;
+            }
+        }
+#if !FEAT_IKVM
+        TypeModel CreateCompiledTypeModel(Type finalType)
+        {
             var r = (TypeModel)Activator.CreateInstance(finalType);
             r.AllowReferenceVersioningSeeking = AllowReferenceVersioningSeeking;
             r.AllowStreamRewriting = AllowStreamRewriting;
@@ -490,9 +683,8 @@ namespace AqlaSerializer.Meta
             r.RecursionDepthLimit = RecursionDepthLimit;
             r.ReferenceVersioningSeekingObjectsPredictedSize = ReferenceVersioningSeekingObjectsPredictedSize;
             return r;
-#endif
         }
-
+#endif
         string _compiledToPath;
 
 #if FEAT_IKVM
@@ -973,7 +1165,7 @@ namespace AqlaSerializer.Meta
             return type;
         }
 
-        private void WriteAssemblyAttributes(CompilerOptions options, string assemblyName, AssemblyBuilder asm)
+        private void WriteAssemblyAttributes(CompilerOptions options, string assemblyName, AssemblyBuilder asm, CompiledAssemblyEqualityAttribute equalityAttr)
         {
             if (!Helpers.IsNullOrEmpty(options.TargetFrameworkName))
             {
@@ -1046,6 +1238,12 @@ namespace AqlaSerializer.Meta
                     }
                 }
             }
+
+            if (equalityAttr != null)
+            {
+                asm.SetCustomAttribute(
+                    new CustomAttributeBuilder(MapType(equalityAttr.GetType()).GetConstructors().First(c => c.GetParameters().Length != 0), equalityAttr.GetConstructorArgs()));
+            }
         }
 
         private static MethodContext EmitBoxedSerializer(TypeBuilder type, int i, Type valueType, SerializerPair[] methodPairs, RuntimeTypeModel model, Compiler.CompilerContext.ILVersion ilVersion, string assemblyName)
@@ -1097,6 +1295,6 @@ namespace AqlaSerializer.Meta
         }
 
 #endif
-        }
+                            }
 }
 #endif
