@@ -281,12 +281,27 @@ namespace AqlaSerializer.Meta
             ReadAndAppendData
         }
 
+        public enum CompilerParallelizationMode
+        {
+            Disabled = 0,
+            PerType,
+            Maximum,
+        }
+
         /// <summary>
         /// Represents configuration options for compiling a model to 
         /// a standalone assembly.
         /// </summary>
         public sealed class CompilerOptions
         {
+#if !FEAT_IKVM
+            public CompilerParallelizationMode ParallelizationMode { get; set; }
+#endif
+            /// <summary>
+            /// Also compile in place this model; default: true.
+            /// </summary>
+            public bool CompileInPlace { get; set; } = true;
+
             /// <summary>
             /// Allows to avoid unnecessary recompilation
             /// </summary>
@@ -481,7 +496,8 @@ namespace AqlaSerializer.Meta
                 }
             }
 
-            CompileInPlace();
+            if (options.CompileInPlace)
+                CompileInPlace();
             Freeze();
             
 #if FEAT_IKVM
@@ -523,6 +539,7 @@ namespace AqlaSerializer.Meta
             bool hasInheritance;
             SerializerPair[] methodPairs;
             Compiler.CompilerContext.ILVersion ilVersion;
+
             WriteSerializers(options, assemblyName, type, false, null, out index, out hasInheritance, out methodPairs, out ilVersion);
 
             int basicIndex = index;
@@ -1075,8 +1092,6 @@ namespace AqlaSerializer.Meta
 
         private void WriteSerializers(CompilerOptions options, string assemblyName, TypeBuilder type, bool root, SerializerPair[] basicMethodPairs, out int index, out bool hasInheritance, out SerializerPair[] methodPairs, out Compiler.CompilerContext.ILVersion ilVersion)
         {
-            Compiler.CompilerContext ctx;
-
             index = 0;
             hasInheritance = false;
             methodPairs = new SerializerPair[_types.Count];
@@ -1141,27 +1156,137 @@ namespace AqlaSerializer.Meta
             {
                 ilVersion = Compiler.CompilerContext.ILVersion.Net1; // old-school!
             }
-            for (index = 0; index < methodPairs.Length; index++)
+
+            var exceptions = new List<Exception>();
+            var tasks = new List<ManualResetEvent>();
+
+            var ilVersionLocal = ilVersion;
+            var methodPairsLocal = basicMethodPairs ?? methodPairs;
+#if FEAT_IKVM
+            CompilerParallelizationMode parallelization = CompilerParallelizationMode.Disabled;
+#else
+            CompilerParallelizationMode parallelization = options.ParallelizationMode;
+#endif
+            try
             {
-                SerializerPair pair = methodPairs[index];
-
-                var ser = root ? pair.Type.RootSerializer : pair.Type.Serializer;
-
-                ctx = new Compiler.CompilerContext(pair.SerializeBody, true, true, basicMethodPairs ?? methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
-                ctx.CheckAccessibility(pair.Deserialize.ReturnType);
-                ser.EmitWrite(ctx, ctx.InputValue);
-                ctx.Return();
-
-                ctx = new Compiler.CompilerContext(pair.DeserializeBody, true, false, basicMethodPairs ?? methodPairs, this, ilVersion, assemblyName, pair.Type.Type);
-                ser.EmitRead(ctx, ctx.InputValue);
-                if (!ser.EmitReadReturnsValue)
+                int cores = Environment.ProcessorCount;
+                int completed = 0;
+                for (index = 0; index < methodPairs.Length; index++)
                 {
-                    ctx.LoadValue(ctx.InputValue);
+                    SerializerPair pair = methodPairs[index];
+
+                    var ser = root ? pair.Type.RootSerializer : pair.Type.Serializer;
+                    Action emitWrite = () =>
+                        {
+                            Compiler.CompilerContext ctx = new Compiler.CompilerContext(
+                                pair.SerializeBody,
+                                true,
+                                true,
+                                methodPairsLocal,
+                                this,
+                                ilVersionLocal,
+                                assemblyName,
+                                pair.Type.Type);
+
+                            ctx.CheckAccessibility(pair.Deserialize.ReturnType);
+                            ser.EmitWrite(ctx, ctx.InputValue);
+                            ctx.Return();
+                        };
+
+                    Action emitRead = () =>
+                        {
+                            Compiler.CompilerContext ctx = new Compiler.CompilerContext(
+                                pair.DeserializeBody,
+                                true,
+                                false,
+                                methodPairsLocal,
+                                this,
+                                ilVersionLocal,
+                                assemblyName,
+                                pair.Type.Type);
+
+                            ser.EmitRead(ctx, ctx.InputValue);
+                            if (!ser.EmitReadReturnsValue)
+                            {
+                                ctx.LoadValue(ctx.InputValue);
+                            }
+                            ctx.Return();
+                        };
+                    
+                    switch (parallelization)
+                    {
+                        case CompilerParallelizationMode.Maximum:
+                            StartTask(tasks, emitWrite, exceptions);
+                            StartTask(tasks, emitRead, exceptions);
+                            //StartTask(tasks, emitWrite + emitRead, exceptions);
+                            break;
+
+                        case CompilerParallelizationMode.PerType:
+                            StartTask(tasks, emitWrite + emitRead, exceptions);
+                            break;
+
+                        default:
+                            try
+                            {
+                                emitWrite();
+                                emitRead();
+                            }
+                            catch (Exception e)
+                            {
+                                exceptions.Add(e);
+                                if (Debugger.IsAttached)
+                                    Debugger.Break();
+                            }
+                            break;
+                    }
+
+                    if (parallelization != CompilerParallelizationMode.Disabled)
+                    {
+                        // do not launch too many?
+                        for (int i = completed; i < tasks.Count - cores; i++, completed++)
+                            tasks[i].WaitOne();
+                    }
                 }
-                ctx.Return();
             }
+            finally
+            {
+                foreach (ManualResetEvent ev in tasks)
+                {
+                    ev.WaitOne();
+                    ev.Close();
+                }
+            }
+
+            Thread.MemoryBarrier();
+            if (exceptions.Count > 0) throw new ProtoAggregateException(exceptions);
         }
-        
+
+        static void StartTask(List<ManualResetEvent> tasks, Action action, IList<Exception> exceptions)
+        {
+            if (action == null) throw new ArgumentNullException(nameof(action));
+            var ev = new ManualResetEvent(false);
+            tasks.Add(ev);
+
+            ThreadPool.QueueUserWorkItem(
+                s =>
+                    {
+                        try
+                        {
+                            action();
+                        }
+                        catch (Exception e)
+                        {
+                            lock (exceptions)
+                                exceptions.Add(e);
+                        }
+                        finally
+                        {
+                            (s as ManualResetEvent)?.Set();
+                        }
+                    },
+                ev);
+        }
+
         private TypeBuilder WriteBasicTypeModel(CompilerOptions options, string typeName, ModuleBuilder module)
         {
             Type baseType = MapType(typeof(TypeModel));
@@ -1305,6 +1430,6 @@ namespace AqlaSerializer.Meta
         }
 
 #endif
-                            }
+        }
 }
 #endif

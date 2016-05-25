@@ -396,6 +396,7 @@
     <Compile Include="Meta\ReflectionObjectMap.cs" />
     <Compile Include="Meta\ValueSerializationSettings.cs" />
     <Compile Include="Meta\ValueSerializerBuilder.cs" />
+    <Compile Include="ProtoAggregateException.cs" />
     <Compile Include="RootHelpers.cs" />
     <Compile Include="Serializers\DebugSchemaBuilder.cs" />
     <Compile Include="Serializers\DynamicMethodAccessors\AccessorsCache.cs" />
