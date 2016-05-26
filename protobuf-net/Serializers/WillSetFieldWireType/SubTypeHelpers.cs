@@ -103,14 +103,14 @@ namespace AqlaSerializer.Serializers
             
             try
             {
-                if (!ProtoReader.HasSubValue(WireType.Variant, source))
+                if ((recursionLevel == 0 && subTypes.Length == 0) || !ProtoReader.HasSubValue(WireType.Variant, source))
                     return metaType;
 
                 fieldNumber = source.ReadInt32() - 1;
                 subType = subTypes.FirstOrDefault(st => st.FieldNumber == fieldNumber);
                 return subType != null // versioning
-                            ? TryRead(subType.DerivedType, source, recursionLevel + 1)
-                            : metaType;
+                           ? TryRead(subType.DerivedType, source, recursionLevel + 1)
+                           : metaType;
             }
             finally
             {
@@ -256,6 +256,7 @@ namespace AqlaSerializer.Serializers
             using (g.ctx.StartDebugBlockAuto(this, metaType.GetFinalSettingsCopy().Name + ", level = " + recursionLevel))
             {
                 SubType[] subTypes = metaType.GetSubtypes();
+                Local token = null;
                 if (recursionLevel == 0)
                 {
                     g.If(g.ReaderFunc.WireType() != WireType.String);
@@ -264,13 +265,15 @@ namespace AqlaSerializer.Serializers
                         EmitTryRead_GenSwitch(g, fieldNumber, metaType, subTypes, returnGen);
                     }
                     g.End();
-                }
-                Local token = null;
-                if (recursionLevel == 0)
-                {
+
                     token = new Local(g.ctx, typeof(SubItemToken));
                     g.Assign(token, g.ReaderFunc.StartSubItem());
-                    returnGen = (r => g.Reader.EndSubItem(token)) + returnGen;
+                    returnGen = (r => g.Reader.EndSubItem(token, true)) + returnGen;
+                    if (subTypes.Length == 0)
+                    {
+                        returnGen(metaType);
+                        return;
+                    }
                 }
 
                 g.If(!g.ReaderFunc.HasSubValue_bool(WireType.Variant));
@@ -278,7 +281,7 @@ namespace AqlaSerializer.Serializers
                     returnGen(metaType);
                 }
                 g.End();
-
+                
                 g.Assign(fieldNumber, g.ReaderFunc.ReadInt32() - 1);
                 EmitTryRead_GenSwitch(
                     g,
