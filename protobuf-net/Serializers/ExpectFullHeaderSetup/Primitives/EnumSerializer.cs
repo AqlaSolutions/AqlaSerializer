@@ -32,11 +32,14 @@ namespace AqlaSerializer.Serializers
         }
 
         private readonly EnumPair[] _map;
-        public EnumSerializer(Type enumType, EnumPair[] map)
+        readonly bool _allowOverwriteOnRead;
+
+        public EnumSerializer(Type enumType, EnumPair[] map, bool allowOverwriteOnRead)
         {
             if (enumType == null) throw new ArgumentNullException(nameof(enumType));
             this.ExpectedType = enumType;
             this._map = map;
+            _allowOverwriteOnRead = allowOverwriteOnRead;
             if (map != null)
             {
                 for (int i = 1; i < map.Length; i++)
@@ -103,7 +106,7 @@ namespace AqlaSerializer.Serializers
 
         public object Read(object value, ProtoReader source)
         {
-            Helpers.DebugAssert(value == null); // since replaces
+            Helpers.DebugAssert(_allowOverwriteOnRead || value == null); // since replaces
             int wireValue = source.ReadInt32();
             if(_map == null) {
                 return WireToEnum(wireValue);

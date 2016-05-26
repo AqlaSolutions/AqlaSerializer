@@ -37,7 +37,11 @@ namespace AqlaSerializer.unittest.Aqla
             var s = tm.GetDebugSchema(typeof(Container));
             Assert.That(s, Is.EqualTo(@"Root : Container
  -> NetObject : Container = AsReference, UseConstructor
- -> Type : Container
+ -> ModelType : Container
+ -> LinkTo [AqlaSerializer.unittest.Aqla.LegacyTupleMode+Container]
+
+AqlaSerializer.unittest.Aqla.LegacyTupleMode+Container:
+Type : Container
 {
     #1
      -> Container.Foo
@@ -53,6 +57,7 @@ namespace AqlaSerializer.unittest.Aqla
      -> ModelType : KeyValuePair`2
      -> LinkTo [System.Collections.Generic.KeyValuePair`2[AqlaSerializer.unittest.Aqla.LegacyTupleMode+Element,AqlaSerializer.unittest.Aqla.LegacyTupleMode+ElementDef]]
 }
+
 
 System.Collections.Generic.KeyValuePair`2[System.String,System.Collections.Generic.List`1[AqlaSerializer.unittest.Aqla.LegacyTupleMode+Element]]:
 Tuple : KeyValuePair`2
@@ -109,7 +114,11 @@ Type : ElementDef
             var s = tm.GetDebugSchema(typeof(Container));
             Assert.That(s, Is.EqualTo(@"Root : Container
  -> NetObject : Container = AsReference, UseConstructor
- -> Type : Container
+ -> ModelType : Container
+ -> LinkTo [AqlaSerializer.unittest.Aqla.LegacyTupleMode+Container]
+
+AqlaSerializer.unittest.Aqla.LegacyTupleMode+Container:
+Type : Container
 {
     #1
      -> Container.Foo
@@ -125,6 +134,7 @@ Type : ElementDef
      -> ModelType : KeyValuePair`2
      -> LinkTo [System.Collections.Generic.KeyValuePair`2[AqlaSerializer.unittest.Aqla.LegacyTupleMode+Element,AqlaSerializer.unittest.Aqla.LegacyTupleMode+ElementDef]]
 }
+
 
 System.Collections.Generic.KeyValuePair`2[System.String,System.Collections.Generic.List`1[AqlaSerializer.unittest.Aqla.LegacyTupleMode+Element]]:
 Tuple : KeyValuePair`2

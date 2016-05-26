@@ -29,7 +29,7 @@ namespace AqlaSerializer.Serializers
 
         readonly int _baseKey = -1;
         readonly IProtoSerializerWithWireType _tail;
-        readonly LateReferenceSerializer _lateReferenceTail;
+        readonly IProtoSerializerWithWireType _lateReferenceTail;
         readonly IProtoSerializerWithWireType _baseKeySerializer;
 
         IProtoSerializerWithWireType DelegationHandler => (_options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? null : (_tail ?? _baseKeySerializer);
@@ -59,7 +59,14 @@ namespace AqlaSerializer.Serializers
             int baseKey = model.GetKey(type, false, true);
             int key = model.GetKey(type, false, false);
             if (!Helpers.IsValueType(type) && key >= 0 && baseKey >= 0 && ValueSerializerBuilder.CanTypeBeAsLateReferenceOnBuildStage(key, model, true))
-                _lateReferenceTail = new LateReferenceSerializer(type, key, baseKey, model);
+            {
+                var mt = model[key];
+#if SILVERLIGHT
+                _lateReferenceTail = new LateReferenceSerializer(mt.Type, key, baseKey, model);
+#else
+                _lateReferenceTail = new LateReferenceSerializerProxyCaller(mt, mt.Type, key);
+#endif
+            }
             else if (asLateReference) throw new ArgumentException("Can't use late reference with non-model or value type " + type.Name);
 
             ProtoTypeCode typeCode = Helpers.GetTypeCode(type);

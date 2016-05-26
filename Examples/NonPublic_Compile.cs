@@ -66,7 +66,7 @@ namespace Examples
             private int Foo;
 #pragma warning restore 0169
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateField.Foo), InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateField.Foo)")]
+        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateField.Foo)")]
         public void PrivateFieldShouldFail()
         {
             Compile<PrivateField>();
@@ -77,7 +77,7 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             private int Foo { get; set; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateProperty.get_Foo), InvalidOperationException (Cannot serialize property without a get accessor)")]
+        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateProperty.get_Foo)")]
         public void PrivatePropertyShouldFail()
         {
             Compile<PrivateProperty>();
@@ -88,7 +88,7 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             public int Foo { private get; set; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage= " One or multiple exceptions occurred: InvalidOperationException (Cannot serialize property without a get accessor), InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivatePropertyGet.get_Foo)")]
+        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage= "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivatePropertyGet.get_Foo)")]
         public void PrivatePropertyGetShouldFail()
         {
             Compile<PrivatePropertyGet>();

@@ -78,7 +78,7 @@ namespace AqlaSerializer.unittest.Attribs
 #if FAKE_COMPILE
         [Ignore]
 #endif
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x")]
+        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x)")]
         public void FullyCompileWithPrivateField_KnownToFail()
         {
             var model = BuildModel();
@@ -115,7 +115,7 @@ namespace AqlaSerializer.unittest.Attribs
 #if FAKE_COMPILE
         [Ignore]
 #endif
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x")]
+        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x)")]
         public void VerifyPointDirect()
         {
             var model = BuildModel();

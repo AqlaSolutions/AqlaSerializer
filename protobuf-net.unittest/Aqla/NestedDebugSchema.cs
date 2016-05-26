@@ -30,7 +30,11 @@ namespace AqlaSerializer.unittest.Aqla
             var s = tm.GetDebugSchema(typeof(Container));
             Assert.That(s, Is.EqualTo(@"Root : Container
  -> NetObject : Container = AsReference, UseConstructor
- -> Type : Container
+ -> ModelType : Container
+ -> LinkTo [AqlaSerializer.unittest.Aqla.NestedDebugSchema+Container]
+
+AqlaSerializer.unittest.Aqla.NestedDebugSchema+Container:
+Type : Container
 {
     #1
      -> Container.Value
@@ -38,6 +42,7 @@ namespace AqlaSerializer.unittest.Aqla
      -> ModelType : Contained
      -> LinkTo [AqlaSerializer.unittest.Aqla.NestedDebugSchema+Contained]
 }
+
 
 AqlaSerializer.unittest.Aqla.NestedDebugSchema+Contained:
 Type : Contained

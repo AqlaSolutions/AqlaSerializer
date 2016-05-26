@@ -60,7 +60,9 @@ namespace AqlaSerializer.Compiler
         public static ProtoSerializer BuildSerializer(IProtoSerializer head, RuntimeTypeModel model)
         {
             Type type = head.ExpectedType;
+#if !DEBUG
             try
+#endif
             {
                 CompilerContext ctx = new CompilerContext(type, true, true, model, typeof(object));
                 ctx.LoadValue(ctx.InputValue);
@@ -70,12 +72,14 @@ namespace AqlaSerializer.Compiler
                 return (ProtoSerializer)ctx._method.CreateDelegate(
                     typeof(ProtoSerializer));
             }
+#if !DEBUG
             catch (Exception ex)
             {
                 string name = type.FullName;
                 if(string.IsNullOrEmpty(name)) name = type.Name;
                 throw new InvalidOperationException("It was not possible to prepare a serializer for: " + name, ex);
             }
+#endif
         }
         /*public static ProtoCallback BuildCallback(IProtoTypeSerializer head)
         {
@@ -230,18 +234,37 @@ namespace AqlaSerializer.Compiler
             }
         }
         private readonly bool _isStatic;
-#if !SILVERLIGHT
-        private readonly RuntimeTypeModel.SerializerPair[] _methodPairs;
 
-        internal MethodBuilder GetDedicatedMethod(int metaKey, bool read)
+#if !SILVERLIGHT
+        private readonly RuntimeTypeModel.SerializerMethods[] _methodPairs;
+        public bool SupportsMultipleMethods => _methodPairs != null;
+        internal RuntimeTypeModel.SerializerMethods GetDedicatedMethod(int metaKey)
         {
             if (_methodPairs == null) return null;
             // but if we *do* have pairs, we demand that we find a match...
-            for (int i = 0; i < _methodPairs.Length; i++ )
+            for (int i = 0; i < _methodPairs.Length; i++)
             {
-                if (_methodPairs[i].MetaKey == metaKey) { return read ? _methodPairs[i].Deserialize : _methodPairs[i].Serialize; }
+                if (_methodPairs[i].MetaKey == metaKey)
+                {
+                    return _methodPairs[i];
+                }
             }
             throw new ArgumentException("Meta-key not found", nameof(metaKey));
+        }
+        
+        internal void EmitReadCall(CompilerContext ctx, Type expectedReturnType, MethodBuilder method)
+        {
+            ctx.LoadReaderWriter();
+            ctx.EmitCall(method);
+            // handle inheritance (we will be calling the *base* version of things,
+            // but we expect Read to return the "type" type)
+            if (expectedReturnType != method.ReturnType) ctx.Cast(expectedReturnType);
+        }
+
+        internal void EmitWriteCall(CompilerContext ctx, MethodBuilder method)
+        {
+            ctx.LoadReaderWriter();
+            ctx.EmitCall(method);
         }
 
         internal int MapMetaKeyToCompiledKey(int metaKey)
@@ -255,6 +278,7 @@ namespace AqlaSerializer.Compiler
             throw new ArgumentException("Key could not be mapped: " + metaKey.ToString(), nameof(metaKey));
         }
 #else
+        public bool SupportsMultipleMethods => false;
         internal int MapMetaKeyToCompiledKey(int metaKey)
         {
             return metaKey;
@@ -272,7 +296,7 @@ namespace AqlaSerializer.Compiler
         public Local InputValue { get; }
 #if !(SILVERLIGHT || PHONE8)
         private readonly string _assemblyName;
-        internal CompilerContext(MethodContext context, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerPair[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
+        internal CompilerContext(MethodContext context, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerMethods[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (methodPairs == null) throw new ArgumentNullException(nameof(methodPairs));

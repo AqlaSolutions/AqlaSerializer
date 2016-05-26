@@ -77,7 +77,9 @@ namespace AqlaSerializer.Serializers
 #endif
 
         string CantCreateInstanceMessage
-            => "Can't create an instance for late reference of type " + ExpectedType.Name + "; late references are not supported on surrogate serializers and tuples.";
+            => "Can't create an instance for late reference of type " + ExpectedType.Name + ". " + NotSupportedMessage;
+
+        public const string NotSupportedMessage = "Late references are not supported on surrogate serializers and tuples.";
 
         public bool RequiresOldValue => true;
 #if FEAT_COMPILER

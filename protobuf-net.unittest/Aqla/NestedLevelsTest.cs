@@ -51,7 +51,11 @@ namespace AqlaSerializer.unittest.Aqla
 
             Assert.That(schema, Is.EqualTo(@"Root : Foo
  -> NetObject : Foo = AsReference, UseConstructor
- -> Type : Foo
+ -> ModelType : Foo
+ -> LinkTo [AqlaSerializer.unittest.Aqla.NestedLevelsTest+Foo]
+
+AqlaSerializer.unittest.Aqla.NestedLevelsTest+Foo:
+Type : Foo
 {
     #1
      -> Foo.SimpleCollectionInherited
@@ -95,6 +99,7 @@ namespace AqlaSerializer.unittest.Aqla
      -> WireType : Int32 = Variant
      -> Int32
 }
+
 
 "));
 

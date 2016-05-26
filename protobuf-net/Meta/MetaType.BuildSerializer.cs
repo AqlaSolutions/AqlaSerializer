@@ -28,7 +28,7 @@ using System.Reflection.Emit;
 
 namespace AqlaSerializer.Meta
 {
-    partial class MetaType
+    partial class MetaType : ILateReferenceSerializerProxy
     {
         // to be compatible with auxiliary type serializer and don't add overhead we don't decorate enums with netobject
         bool GetRootStartsGroup()
@@ -87,11 +87,22 @@ namespace AqlaSerializer.Meta
                     FinalizeSettingsValue();
 
                     bool mayContainReferencesInside;
-                    _serializer = BuildSerializer(false, out mayContainReferencesInside);
-
-                    _rootSerializer = BuildSerializer(true, out mayContainReferencesInside);
+                    _serializer = BuildSerializer(out mayContainReferencesInside);
+                    _rootSerializer = BuildRootSerializer();
                     if (!(_rootSerializer is ForbiddenRootStub)) _rootSerializer = WrapRootSerializer(_rootSerializer, mayContainReferencesInside);
-                    
+                    if (!IsValueType && !IsAutoTuple && _surrogate == null)
+                    {
+                        try
+                        {
+                            _lateReferenceSerializer = new LateReferenceSerializer(Type, GetKey(true, false), GetKey(true, true), _model);
+                        }
+                        catch(Exception e) 
+                        {
+                            // subtypes can be late references which is hard to predict on this stage
+                            // but normally tests don't throw
+                            _lateReferenceSerializerBuildException = e;
+                        }
+                    }
                     IsFrozen = true;
                 }
             }
@@ -104,7 +115,43 @@ namespace AqlaSerializer.Meta
 #endif
         }
 
-        private IProtoTypeSerializer BuildSerializer(bool isRoot, out bool mayContainReferencesInside)
+        IProtoTypeSerializer BuildRootSerializer()
+        {
+            IProtoTypeSerializer ser = MakeModelTypeRerouteForRoot();
+            if (Helpers.IsEnum(Type))
+            {
+                if (!GetRootStartsGroup())
+                    ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
+                return ser;
+            }
+
+            Type itemType = _settingsValueFinal.Member.Collection.ItemType;
+
+            if (itemType != null)
+            {
+                // standard root decorator won't start any field
+                // in compatibility mode collections won't start subitems like normally
+                // so wrap with field
+                if (!GetRootStartsGroup())
+                    ser = new RootFieldNumberDecorator(ser, TypeModel.EnumRootTag);
+                return ser;
+            }
+
+
+            if (_surrogate != null
+                || _settingsValueFinal.IsAutoTuple)
+            {
+                return ser;
+            }
+
+            // root serializer should be always from base type
+            Debug.Assert(!OmitTypeSearchForRootSerialization);
+            if (BaseType != null)
+                return new ForbiddenRootStub(Type);
+            return ser;
+        }
+
+        IProtoTypeSerializer BuildSerializer(out bool mayContainReferencesInside)
         {
             mayContainReferencesInside = false;
             // reference tracking decorators (RootDecorator, NetObjectDecorator, NetObjectValueDecorator)
@@ -117,25 +164,20 @@ namespace AqlaSerializer.Meta
             if (Helpers.IsEnum(Type))
             {
                 Debug.Assert(IsSimpleValue);
-                IProtoTypeSerializer ser = new WireTypeDecorator(WireType.Variant, new EnumSerializer(Type, GetEnumMap()));
-                if (isRoot && !GetRootStartsGroup())
-                    ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
-                return ser;
+                return new WireTypeDecorator(WireType.Variant, new EnumSerializer(Type, GetEnumMap(), true));
             }
             
             Type itemType = _settingsValueFinal.Member.Collection.ItemType;
 
             if (itemType != null)
             {
-
                 if (_surrogate != null)
-                {
                     throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate");
-                }
 
+                IProtoTypeSerializer ser;
                 Type defaultType = null;
                 ResolveListTypes(_model, Type, ref itemType, ref defaultType);
-                
+
                 if (_fields.Count != 0)
                     throw new ArgumentException("Repeated data (an array, list, etc) has inbuilt behavior and can't have fields");
 
@@ -154,13 +196,7 @@ namespace AqlaSerializer.Meta
                 vs.DefaultLevel = new ValueSerializationSettings.LevelValue(s.MakeDefaultNestedLevel());
 
                 WireType wt;
-                var ser = (IProtoTypeSerializer)_model.ValueSerializerBuilder.BuildValueFinalSerializer(vs, false, out wt);
-
-                // standard root decorator won't start any field
-                // in compatibility mode collections won't start subitems like normally
-                // so wrap with field
-                if (isRoot && !GetRootStartsGroup())
-                    ser = new RootFieldNumberDecorator(ser, TypeModel.EnumRootTag);
+                ser = (IProtoTypeSerializer)_model.ValueSerializerBuilder.BuildValueFinalSerializer(vs, false, out wt);
 
                 mayContainReferencesInside = !Helpers.IsValueType(itemType);
 
@@ -184,7 +220,6 @@ namespace AqlaSerializer.Meta
                 mayContainReferencesInside = _tupleFields.Any(f => !Helpers.IsValueType(f.MemberType));
                 return new TupleSerializer(_model, _tupleCtor, _tupleFields.ToArray(), _settingsValueFinal.PrefixLength.GetValueOrDefault(true));
             }
-
 
             var fields = new BasicList(_fields.Cast<object>());
             fields.Trim();
@@ -242,11 +277,13 @@ namespace AqlaSerializer.Meta
                 baseCtorCallbacks.CopyTo(arr, 0);
                 Array.Reverse(arr);
             }
-            // root serializer should be always from base type
-            Debug.Assert(!OmitTypeSearchForRootSerialization);
-            if (isRoot && BaseType != null)
-                return new ForbiddenRootStub(Type);
             return new TypeSerializer(_model, Type, fieldNumbers, serializers, arr, BaseType == null, !_settingsValueFinal.SkipConstructor, _callbacks, _settingsValueFinal.ConstructType, _factory, _settingsValueFinal.PrefixLength.Value);
+        }
+
+        ModelTypeSerializer MakeModelTypeRerouteForRoot()
+        {
+
+            return new ModelTypeSerializer(Type, GetKey(true, false), this, _model);
         }
 
         IProtoTypeSerializer WrapRootSerializer(IProtoTypeSerializer s, bool mayContainReferencesInside)
@@ -301,6 +338,10 @@ namespace AqlaSerializer.Meta
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IProtoSerializerWithWireType ISerializerProxy.Serializer => Serializer;
 
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        IProtoSerializerWithWireType ILateReferenceSerializerProxy.LateReferenceSerializer => LateReferenceSerializer;
+
 #if FEAT_COMPILER && !FX11
 
         /// <summary>
@@ -348,6 +389,24 @@ namespace AqlaSerializer.Meta
                 return _serializer;
             }
         }
+
+        volatile IProtoSerializerWithWireType _lateReferenceSerializer;
+        [DebuggerHidden]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal IProtoSerializerWithWireType LateReferenceSerializer
+        {
+            get
+            {
+                InitSerializers();
+                return _lateReferenceSerializer;
+            }
+        }
+
+
+        volatile Exception _lateReferenceSerializerBuildException;
+
+        Exception ILateReferenceSerializerProxy.LateReferenceSerializerBuildException => _lateReferenceSerializerBuildException;
+
 
         volatile IProtoTypeSerializer _rootSerializer;
 

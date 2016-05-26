@@ -15,7 +15,7 @@ namespace AqlaSerializer
 #if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
     [Serializable]
 #endif
-    public class ProtoAggregateException : Exception
+    public class ProtoAggregateException : ProtoException
     {
         public IEnumerable<Exception> InnerExceptions { get; set; }
 

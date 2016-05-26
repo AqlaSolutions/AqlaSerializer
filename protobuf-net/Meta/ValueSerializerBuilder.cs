@@ -389,7 +389,7 @@ namespace AqlaSerializer.Meta
                 {
                     // need to do this before checking the typecode; an int enum will report Int32 etc
                     defaultWireType = WireType.Variant;
-                    ser = new WireTypeDecorator(defaultWireType, new EnumSerializer(type, _model.GetEnumMap(type)));
+                    ser = new WireTypeDecorator(defaultWireType, new EnumSerializer(type, _model.GetEnumMap(type), false));
                 }
                 else
                 { // enum is fine for adding as a meta-type

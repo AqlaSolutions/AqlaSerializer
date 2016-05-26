@@ -3,6 +3,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Diagnostics;
+using AqlaSerializer.Compiler;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
 #if FEAT_IKVM
@@ -69,15 +70,15 @@ namespace AqlaSerializer.Serializers
 #if SILVERLIGHT
             return false;
 #else
-            MethodBuilder method = ctx.GetDedicatedMethod(_baseKey, read);
+            var pair = ctx.GetDedicatedMethod(_baseKey)?.BasicPair;
+            MethodBuilder method = read ? pair?.Deserialize : pair?.Serialize;
             if (method == null) return false;
 
             ctx.LoadValue(valueFrom);
-            ctx.LoadReaderWriter();
-            ctx.EmitCall(method);
-            // handle inheritance (we will be calling the *base* version of things,
-            // but we expect Read to return the "type" type)
-            if (read && ExpectedType != method.ReturnType) ctx.Cast(this.ExpectedType);
+            if (read)
+                ctx.EmitReadCall(ctx, ExpectedType, method);
+            else
+                ctx.EmitWriteCall(ctx, method);
 #endif
             return true;
         }
