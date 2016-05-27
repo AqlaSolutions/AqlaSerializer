@@ -6,14 +6,18 @@ using AqlaSerializer.Compiler;
 using System.Diagnostics;
 using AltLinq;
 using System.Linq;
-using System.Reflection.Emit;
 using AqlaSerializer.Meta;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
+#if FEAT_COMPILER
+using IKVM.Reflection.Emit;
+#endif
 #else
 using System.Reflection;
-
+#if FEAT_COMPILER
+using System.Reflection.Emit;
+#endif
 #endif
 
 namespace AqlaSerializer.Serializers

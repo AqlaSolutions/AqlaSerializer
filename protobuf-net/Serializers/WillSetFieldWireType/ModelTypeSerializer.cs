@@ -3,9 +3,9 @@
 #if !NO_RUNTIME
 using System;
 using System.Diagnostics;
-using AqlaSerializer.Compiler;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
+using AqlaSerializer.Compiler;
 #if FEAT_IKVM
 using IKVM.Reflection.Emit;
 using Type = IKVM.Reflection.Type;

@@ -12,7 +12,7 @@ namespace Examples.Issues
         [Test]
         public void TestLateLoad()
         {
-            Assembly assembly = Assembly.LoadFrom("LateLoaded.dll");
+            Assembly assembly = Assembly.Load(@"..\..\..\LateLoaded\bin\Release\LateLoaded.dll");
             Type type = assembly.GetType("LateLoaded.Foo");
             Assert.IsNotNull(type, "Resolve type");
 
