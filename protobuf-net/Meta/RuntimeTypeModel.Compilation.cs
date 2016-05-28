@@ -316,7 +316,7 @@ namespace AqlaSerializer.Meta
             /// <summary>
             /// Also compile in place this model; default: true.
             /// </summary>
-            public bool CompileInPlace { get; set; } = true;
+            public bool AlsoCompileInPlace { get; set; } = true;
 
             /// <summary>
             /// Allows to avoid unnecessary recompilation
@@ -512,7 +512,7 @@ namespace AqlaSerializer.Meta
                 }
             }
 
-            if (options.CompileInPlace)
+            if (options.AlsoCompileInPlace)
                 CompileInPlace();
             Freeze();
             

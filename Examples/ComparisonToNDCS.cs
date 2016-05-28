@@ -15,11 +15,11 @@ namespace Examples
         {
             // just make up some gibberish
             var rand = new Random(12345);
-            List<BasicDto> list = new List<BasicDto>(300000);
+            List<BasicDto> list = new List<BasicDto>(30000);
 #if DEBUG
             const int max = 100;
 #else
-            const int max = 300000;
+            const int max = 30000;
 #endif
             for (int i = 0 ; i < max ; i++)
             {

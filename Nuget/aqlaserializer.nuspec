@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>2.0.0.227</version>
+    <version>2.0.0.234</version>
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2016, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>
@@ -16,7 +16,7 @@ AqlaSerializer primary goal is to support important .NET features like nested co
 
 Like protobuf-net AqlaSerializer makes possible to store objects as a small in size binary data (far smaller than xml). And it's more CPU effective than BinaryFormatter and other core .NET serializers (which could be unavailable on your target platform). Its format is designed to be: small in size - efficient data storage (far smaller than xml) cheap to process - both at the client and server platform independent - portable between different programming architectures extensible - to add new data to old messages.
 
-The implementation is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, Windows Phone 8, Silverlight, etc. The code is heavily based on Marc Gravell's protobuf-net but there are a lot of improvements and fixes.
+The implementation is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, Windows Phone 8, Silverlight, Xamarin.Android, etc. The code is heavily based on Marc Gravell's protobuf-net but there are a lot of improvements and fixes.
 
 The original protobuf-net project contains many "red" unit tests but I managed to fix a lot of them.
 
@@ -26,6 +26,12 @@ Some build configurations may be not available through nuget, you can download t
     <tags>binary serialization protocol buffers protobuf protobuf-net deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
+
+* 2.0.0.234:
+ - Improved compiled dll output size, compilation and cold run speed
+ - Added an option CompilerOptions.AlsoCompileInPlace (default: true) 
+ - Xamarin.Android dlls
+ - RunSharp dependency updated
 
 * 2.0.0.227: V2 release
  - Added CompileOptions.IterativeMode
@@ -70,7 +76,7 @@ Some build configurations may be not available through nuget, you can download t
 
    <dependencies> 
       <group>
-         <dependency id="aqla.runsharp" version="1.0.0.17" />
+         <dependency id="aqla.runsharp" version="1.0.0.18" />
       </group>
    
    </dependencies>

@@ -1,17 +1,25 @@
-buildpack.cmd does the thing.
+buildpack.cmd makes a package.
+
+Before building replace Aqla.RunSharp project references with nuget dependencies 
+or download RunSharp sources https://github.com/AqlaSolutions/runsharp and put them to ..\RunSharp\src.
+Also you will need to put your own snk for project signing. 
 
 The current used build machine has everything installed on Windows 10.
 
-I have Visual Studio 2015 with Xamarin installed there.
+I have "Visual Studio 2015 Community with Xamarin" installed there.
 
-When you open solution Visual Studio will ask you to install some sdks. 
+When you open solution Visual Studio will ask you to install some extra sdks. 
 
-Install MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases 
+For Xamarin.Android run %ProgramFiles(x86)%\Android\android-sdk\SDK Manager.exe and install API 10 sdk (Android 2.3.3)
 
-Some extra projects may require ASP .NET MVC (1.0, 2,) 3:
+To use buildpack.cmd install MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases and MSBuild Extension Pack http://msbuildextensionpack.com
+
+Some test projects may require ASP .NET MVC (1.0, 2,) 3:
 http://www.microsoft.com/en-us/download/details.aspx?id=5388
 http://www.microsoft.com/en-us/download/details.aspx?id=22079
 http://www.microsoft.com/en-us/download/details.aspx?id=1491
+
+Some dto projects may find their dependencies only after running all tests in Debug and Release configurations. 
 
 How to install WP8 sdk for Windows 7:
 https://github.com/Xlab/wp8sdk-installer/tree/master/bin

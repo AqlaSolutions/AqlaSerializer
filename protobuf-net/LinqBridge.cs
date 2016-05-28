@@ -1,4 +1,4 @@
-#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !WINRT && !PHONE8
+#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !WINRT && !PHONE8 && !MONODROID
 #region License, Terms and Author(s)
 //
 // LINQBridge
@@ -35,14 +35,14 @@ using AqlaSerializer;
 
 namespace AltLinq
 {
-    #region Imports
+#region Imports
 
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
     
-    #endregion
+#endregion
 
     /// <summary>
     /// Provides a set of static (Shared in Visual Basic) methods for 
@@ -1784,12 +1784,12 @@ namespace AltLinq
 
 namespace AltLinq
 {
-    #region Imports
+#region Imports
 
     using System;
     using System.Collections.Generic;
 
-    #endregion
+#endregion
     
     // This partial implementation was template-generated:
     // Mon, 16 Apr 2012 20:05:53 GMT
@@ -2770,11 +2770,11 @@ namespace AltLinq
 
 namespace AltLinq
 {
-    #region Imports
+#region Imports
 
     using System.Collections.Generic;
 
-    #endregion
+#endregion
 
     /// <summary>
     /// Represents a collection of objects that have a common key.
@@ -2814,12 +2814,12 @@ namespace AltLinq
 
 namespace AltLinq
 {
-    #region Imports
+#region Imports
 
     using System;
     using System.Collections.Generic;
 
-    #endregion
+#endregion
 
     /// <remarks>
     /// This type is not intended to be used directly from user code.
@@ -2902,14 +2902,14 @@ namespace AltLinq
 
 namespace AltLinq
 {
-    #region Imports
+#region Imports
 
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using IEnumerable=System.Collections.IEnumerable;
     
-    #endregion
+#endregion
 
     /// <summary>
     /// Represents a collection of keys each mapped to one or more values.
@@ -3003,7 +3003,7 @@ namespace AltLinq
 
 namespace AltLinq
 {
-    #region Imports
+#region Imports
 
     using System;
     using System.Collections;
@@ -3011,7 +3011,7 @@ namespace AltLinq
     using System.Diagnostics;
     using AltLinq;
 
-    #endregion
+#endregion
 
     internal sealed class OrderedEnumerable<T, K> : IOrderedEnumerable<T>
     {
