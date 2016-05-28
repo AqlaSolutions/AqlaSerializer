@@ -30,7 +30,7 @@ Some build configurations may be not available through nuget, you can download t
 * 2.0.0.234:
  - Improved compiled dll output size, compilation and cold run speed
  - Added an option CompilerOptions.AlsoCompileInPlace (default: true) 
- - Xamarin.Android dlls
+ - dlls for Xamarin.Android for emit support
  - RunSharp dependency updated
 
 * 2.0.0.227: V2 release
