@@ -1,45 +1,20 @@
+buildpack.cmd does the thing.
+
 The current used build machine has everything installed on Windows 10.
 
-Also I have Visual Studio 2015 installed there.
+I have Visual Studio 2015 with Xamarin installed there.
 
-1. possible required .net 3.5 sdk 
-http://www.microsoft.com/en-us/download/details.aspx?id=3138
+When you open solution Visual Studio will ask you to install some sdks. 
 
-2. adt (android bundle) + all platfroms sdks
+Install MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases 
 
-3. xamarin
-(possible required http://download.xamarin.com/GTKforWindows/Windows/gtk-sharp-2.12.22.msi)
-
-4. Windows Phone 8 sdk http://www.microsoft.com/ru-ru/download/details.aspx?id=35471
-
-For Windows 7:
-https://github.com/Xlab/wp8sdk-installer/tree/master/bin
-http://habrahabr.ru/post/157427/
-
-5. may be 
-Download Application Builder for Windows Embedded Compact 2013 
-http://www.microsoft.com/en-us/download/details.aspx?id=38819
-
-6. MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases 
-
-edit .targets in installed, replace:
-
-<MSBuildCommunityTasksLib>$([MSBUILD]::Unescape($(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.dll))
-
-with
-
-<MSBuildCommunityTasksLib>$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.dll
-
-7. Silverlight 5 SDK
-http://www.microsoft.com/en-us/download/details.aspx?id=28359
-
-8. ASP .NET MVC (1.0, 2,) 3
-
+Some extra projects may require ASP .NET MVC (1.0, 2,) 3:
 http://www.microsoft.com/en-us/download/details.aspx?id=5388
 http://www.microsoft.com/en-us/download/details.aspx?id=22079
 http://www.microsoft.com/en-us/download/details.aspx?id=1491
 
-
-
+How to install WP8 sdk for Windows 7:
+https://github.com/Xlab/wp8sdk-installer/tree/master/bin
+http://habrahabr.ru/post/157427/
 
 WinRT project will not open on Windows 7 but will be built with msbuild
