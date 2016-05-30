@@ -163,7 +163,9 @@
     <Copy SourceFiles="@(Net45FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net45"/>
     <Copy SourceFiles="@(Net45SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net45safe"/>
     <Copy SourceFiles="@(Net45SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net45safe"/>
-    
+
+    <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(NugetDirectory)\Full\unity3d"/>    
+
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     <Copy SourceFiles="@(UnityFilesDep)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     
