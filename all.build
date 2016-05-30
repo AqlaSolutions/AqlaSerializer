@@ -84,7 +84,7 @@
     <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
 
-    <Exec Command="Tools\AOTCompatlyzer.exe &quot;protobuf-net\bin\Unity\aqlaserializer.dll&quot; &quot;protobuf-net_Portable\bin\Release\aqlaserializer.dll&quot; &quot;protobuf-net_Portable\bin\CoreOnly\aqlaserializer.dll&quot; &quot;protobuf-net\bin\iOS\aqlaserializer.dll&quot;"/>
+    <Exec Command="Tools\AOTCompatlyzer.exe &quot;protobuf-net\bin\Unity\RunSharp.dll&quot; &quot;..\..\RunSharp\src\RunSharp\runsharp_key.snk&quot; &quot;protobuf-net\bin\Unity\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net_Portable\bin\Release\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;  &quot;protobuf-net_Portable\bin\CoreOnly\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net\bin\iOS\RunSharp.dll&quot; &quot;..\..\RunSharp\src\RunSharp\runsharp_key.snk&quot; &quot;protobuf-net\bin\iOS\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
 
 <ItemGroup>
     <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
