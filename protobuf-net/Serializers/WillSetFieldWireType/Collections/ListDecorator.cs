@@ -25,6 +25,9 @@ namespace AqlaSerializer.Serializers
     {
         // will be always group or string and won't change between group and string in same session
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || WritePacked;
+
+        public WireType? ConstantWireType => ListHelpers.ConstantWireType;
+
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
@@ -219,7 +222,7 @@ namespace AqlaSerializer.Serializers
                 if (_add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            ListHelpers = new ListHelpers(WritePacked, PackedWireTypeForRead, _protoCompatibility, tail, false);
+            ListHelpers = new ListHelpers(WritePacked, model.ProtoCompatibility.UseVersioning, PackedWireTypeForRead, _protoCompatibility, tail, false);
 
             if (!protoCompatibility)
             {

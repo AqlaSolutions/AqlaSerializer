@@ -23,6 +23,9 @@ namespace AqlaSerializer.Serializers
         }
 
         public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
+
+        public WireType? ConstantWireType => _tail.ConstantWireType;
+
         public override Type ExpectedType => _forType;
         private readonly FieldInfo _field;
         readonly IProtoSerializerWithWireType _tail;

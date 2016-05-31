@@ -29,6 +29,8 @@ namespace AqlaSerializer.Serializers
 
         public bool DemandWireTypeStabilityStatus() => false;
 
+        public WireType? ConstantWireType => null;
+
         public ForbiddenRootStub(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));

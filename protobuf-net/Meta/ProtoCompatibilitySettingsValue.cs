@@ -27,16 +27,22 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool SuppressNullWireType;
 
-        public static readonly ProtoCompatibilitySettingsValue Default = new ProtoCompatibilitySettingsValue();
+        /// <summary>
+        /// Disabling may decrease output size
+        /// </summary>
+        public bool UseVersioning;
 
-        public static readonly ProtoCompatibilitySettingsValue Incompatible = new ProtoCompatibilitySettingsValue();
+        public static readonly ProtoCompatibilitySettingsValue Default = new ProtoCompatibilitySettingsValue() { UseVersioning = false };
+
+        public static readonly ProtoCompatibilitySettingsValue Incompatible = new ProtoCompatibilitySettingsValue() { UseVersioning = false };
 
         public static readonly ProtoCompatibilitySettingsValue FullCompatibility = new ProtoCompatibilitySettingsValue()
         {
             SuppressOwnRootFormat = true,
             SuppressCollectionEnhancedFormat = true,
             SuppressValueEnhancedFormat = true,
-            SuppressNullWireType = true
+            SuppressNullWireType = true,
+            UseVersioning = false
         };
 
         object ICloneable.Clone()

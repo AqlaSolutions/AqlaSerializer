@@ -27,6 +27,8 @@ namespace AqlaSerializer.Serializers
         /// should not be called unless any profit from stable wire type is possible (may affect state)
         /// </summary>
         bool DemandWireTypeStabilityStatus();
+
+        WireType? ConstantWireType { get; }
     }
 
     /// <summary>

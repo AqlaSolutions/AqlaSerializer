@@ -33,7 +33,7 @@ namespace AqlaSerializer
         internal Stream UnderlyingStream => _source;
 
         internal int FixedLength { get; private set; }
-
+        
         internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; private set; } = new NetObjectKeyPositionsList();
         
         byte[] _ioBuffer;
@@ -193,6 +193,21 @@ namespace AqlaSerializer
             Debug.Assert(ReferenceEquals(value, reader._netCache.LastNewValue));
 #endif
             reader._lateReferences.AddLateReference(new LateReferencesCache.LateReference(typeKey, value, reader._netCache.LastNewKey));
+        }
+
+        public static bool TryReadOptionalFieldStartWithoutVersioning(WireType? constantWireType, ProtoReader source)
+        {
+            if (source.WireType == WireType.Null) return false;
+            if (source.WireType != WireType.Variant)
+                throw new ProtoException("WireType.Variant expected but actual is " + source.WireType + " (for optional field)");
+            source.SkipField(); // not really reading any data
+            if (constantWireType == null)
+            {
+                if (source.ReadFieldHeader() != 2) throw new ProtoException("Expected field number 2 but actual is " + source.FieldNumber);
+            }
+            else if (!HasSubValue(constantWireType.Value, source))
+                throw new ProtoException("Sub value expected for optional field");
+            return true;
         }
 
         public static bool TryGetNextLateReference(out int typeKey, out object value, out int referenceKey, ProtoReader reader)

@@ -163,7 +163,7 @@ namespace AqlaSerializer.Meta
                 if (!(ser is NoNullDecorator))
                 {
                     // if not wrapped with net obj - wrap with write-null check
-                    ser = new NoNullDecorator(_model, ser, l.Collection.ItemType != null); // throw only for collection elements, otherwise don't write
+                    ser = new NoNullDecorator(_model, ser, l.Collection.ItemType != null/* || !_model.ProtoCompatibility.UseVersioning*/); // throw only for collection elements, otherwise don't write
                 }
             }
 
@@ -244,7 +244,7 @@ namespace AqlaSerializer.Meta
                     }
                     else if (!Helpers.IsValueType(l.EffectiveType) || Helpers.GetNullableUnderlyingType(l.EffectiveType) != null)
                     {
-                        ser = new NoNullDecorator(_model, ser, false);
+                        ser = new NoNullDecorator(_model, ser, false /* || !_model.ProtoCompatibility.UseVersioning*/);
                     }
                 }
 
@@ -253,7 +253,7 @@ namespace AqlaSerializer.Meta
                     throw new ProtoException(string.Format("Wrong type in the tail; expected {0}, received {1}", ser.ExpectedType, itemType));
             }
 
-            if (levelNumber == 0 && defaultValue != null)
+            if (levelNumber == 0 && defaultValue != null/* && _model.ProtoCompatibility.UseVersioning*/)
                 ser = new DefaultValueDecorator(_model, defaultValue, ser);
 
             return ser;
@@ -403,7 +403,7 @@ namespace AqlaSerializer.Meta
                 if (ser != null && Helpers.GetTypeCode(type) == ProtoTypeCode.Uri)
                 {
                     // should be after uri but uri should always be before collection
-                    if (defaultValue != null)
+                    if (defaultValue != null/* && _model.ProtoCompatibility.UseVersioning*/)
                     {
                         ser = new DefaultValueDecorator(_model, defaultValue, ser);
                         defaultValue = null;

@@ -21,6 +21,8 @@ namespace AqlaSerializer.Serializers
             return _isStableWireType;
         }
 
+        public WireType? ConstantWireType => _head.ConstantWireType;
+
         bool IProtoTypeSerializer.HasCallbacks(TypeModel.CallbackType callbackType)
         {
             return _head.HasCallbacks(callbackType); // these routes only used when bits of the model not compiled

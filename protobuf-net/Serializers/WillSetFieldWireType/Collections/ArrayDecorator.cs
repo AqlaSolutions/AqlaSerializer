@@ -23,6 +23,9 @@ namespace AqlaSerializer.Serializers
 
         // will be always group or string and won't change between group and string in same session
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || _writePacked;
+
+        public WireType? ConstantWireType => _listHelpers.ConstantWireType;
+
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
@@ -124,7 +127,7 @@ namespace AqlaSerializer.Serializers
 
         bool AppendToCollection => !_overwriteList;
         
-        public ArrayDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireTypeForRead, Type arrayType, bool overwriteList, int readLengthLimit, bool protoCompatibility)
+        public ArrayDecorator(RuntimeTypeModel model, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireTypeForRead, Type arrayType, bool overwriteList, int readLengthLimit, bool protoCompatibility)
             : base(tail)
         {
             Helpers.DebugAssert(arrayType != null, "arrayType should be non-null");
@@ -137,7 +140,7 @@ namespace AqlaSerializer.Serializers
             _overwriteList = overwriteList;
             _protoCompatibility = protoCompatibility;
             _readLengthLimit = readLengthLimit;
-            _listHelpers = new ListHelpers(_writePacked, packedWireTypeForRead, _protoCompatibility, tail, false);
+            _listHelpers = new ListHelpers(_writePacked, model.ProtoCompatibility.UseVersioning, packedWireTypeForRead, _protoCompatibility, tail, false);
         }
 
         public override Type ExpectedType => _arrayType;

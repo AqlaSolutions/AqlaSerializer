@@ -27,6 +27,8 @@ namespace AqlaSerializer.Serializers
             return true; // always subitem
         }
 
+        public WireType? ConstantWireType => _allowNullWireType ? (WireType?)null : WireType.StartGroup;
+
         readonly int _baseKey = -1;
         readonly IProtoSerializerWithWireType _tail;
         readonly IProtoSerializerWithWireType _lateReferenceTail;

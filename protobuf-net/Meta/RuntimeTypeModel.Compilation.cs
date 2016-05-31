@@ -314,11 +314,6 @@ namespace AqlaSerializer.Meta
             public CompilerParallelizationMode ParallelizationMode { get; set; }
 #endif
             /// <summary>
-            /// Also compile in place this model; default: true.
-            /// </summary>
-            public bool AlsoCompileInPlace { get; set; } = true;
-
-            /// <summary>
             /// Allows to avoid unnecessary recompilation
             /// </summary>
             public CompilerIterativeMode IterativeMode { get; set; }
@@ -462,7 +457,7 @@ namespace AqlaSerializer.Meta
             }
 
             BuildAllSerializers();
-
+            
             CompiledAssemblyEqualityAttribute eqAttr = null;
 
             if (options.IterativeMode != CompilerIterativeMode.Disabled)
@@ -479,7 +474,16 @@ namespace AqlaSerializer.Meta
                     if (s.RootSerializer is ForbiddenRootStub)
                         s.Serializer.WriteDebugSchema(b);
                     else
-                        s.RootSerializer.WriteDebugSchema(b);
+                    {
+                        try
+                        {
+                            s.RootSerializer.WriteDebugSchema(b);
+                        }
+                        catch (NotSupportedException)
+                        {
+                            s.Serializer.WriteDebugSchema(b);
+                        }
+                    }
                 }
                 var hashFunction = SHA1.Create();
                 string schema = b.ToString();
@@ -512,7 +516,7 @@ namespace AqlaSerializer.Meta
                 }
             }
 
-            if (options.AlsoCompileInPlace)
+            if (AutoCompile)
                 CompileInPlace();
             Freeze();
             

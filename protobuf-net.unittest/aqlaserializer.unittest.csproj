@@ -25,7 +25,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FAKE_COMPILE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
@@ -153,6 +153,7 @@
     <Compile Include="Aqla\NestedDebugSchema.cs" />
     <Compile Include="Aqla\NestedLevelsTest.cs" />
     <Compile Include="Aqla\NetObjectVersioning.cs" />
+    <Compile Include="Aqla\NoVersioningTest.cs" />
     <Compile Include="Aqla\NullForLists.cs" />
     <Compile Include="Aqla\ReferenceVersioningWithSkip.cs" />
     <Compile Include="Aqla\SameDllCompilationTest.cs" />

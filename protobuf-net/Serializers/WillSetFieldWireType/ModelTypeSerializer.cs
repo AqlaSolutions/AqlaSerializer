@@ -32,6 +32,8 @@ namespace AqlaSerializer.Serializers
         
         public bool DemandWireTypeStabilityStatus() => _concreteSerializerProxy.Serializer.DemandWireTypeStabilityStatus();
 
+        public WireType? ConstantWireType => _concreteSerializerProxy.Serializer.ConstantWireType;
+
         private readonly int _baseKey;
         private readonly ISerializerProxy _concreteSerializerProxy;
         readonly RuntimeTypeModel _model;

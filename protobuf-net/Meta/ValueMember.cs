@@ -230,7 +230,7 @@ namespace AqlaSerializer.Meta
                         }
 
                         if (_getSpecified != null || _setSpecified != null)
-                            ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
+                            ser = new MemberSpecifiedDecorator(_model.ProtoCompatibility.UseVersioning, _getSpecified, _setSpecified, ser);
                     }
                     _serializer = ser;
 

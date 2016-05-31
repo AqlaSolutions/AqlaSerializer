@@ -17,16 +17,22 @@ namespace AqlaSerializer.Serializers
     /// <summary>
     /// Writes value if it's not null, should be only used when tail doesn't support null (e.g. no NetObjectValueDecorator)
     /// </summary>
+    /// <remarks>Read can't return null in no-versioning mode so we can't write as optional here, instead just always use throwIfNull for members (not collection items)</remarks>
     sealed class NoNullDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
-        public bool DemandWireTypeStabilityStatus() => !_throwIfNull;
+        public bool DemandWireTypeStabilityStatus() => _throwIfNull;
+
+        public WireType? ConstantWireType => _throwIfNull ? _tail.ConstantWireType : (WireType?)null;
+
+        readonly IProtoSerializerWithWireType _tail;
         readonly bool _throwIfNull;
         readonly Type _expectedType;
-
-        public NoNullDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool throwIfNull)
+        
+        public NoNullDecorator(RuntimeTypeModel model, IProtoSerializerWithWireType tail, bool throwIfNull)
             : base(tail)
         {
-            _throwIfNull = throwIfNull;
+            _tail = tail;
+            _throwIfNull = throwIfNull/* || !model.ProtoCompatibility.UseVersioning*/;
             Type tailType = tail.ExpectedType;
             if (Helpers.IsValueType(tailType))
             {

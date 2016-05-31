@@ -26,6 +26,8 @@ namespace AqlaSerializer.Serializers
         
         public bool DemandWireTypeStabilityStatus() => true;
 
+        public WireType? ConstantWireType => _wireType;
+
         public WireTypeDecorator(WireType wireType, IProtoSerializerWithAutoType tail, bool strict = false)
             : base(tail)
         {

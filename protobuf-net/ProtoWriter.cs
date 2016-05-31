@@ -254,6 +254,37 @@ namespace AqlaSerializer
             WriteFieldHeaderCompleteAnyType(wireType, writer);
         }
 
+        public static void ResetFieldHeaderState(ProtoWriter writer)
+        {
+            writer._fieldNumber = 0;
+            writer._wireType = WireType.None;
+            writer._fieldStarted = false;
+            writer._ignoredFieldStarted = false;
+        }
+
+        public static int WriteOptionalFieldStart(WireType? constantWireType, ProtoWriter dest)
+        {
+            ProtoWriter.WriteFieldHeaderComplete(WireType.Variant, dest);
+            ProtoWriter.ResetFieldHeaderState(dest); // not really writing any variant data
+            if (constantWireType == null)
+                WriteFieldHeaderBegin(2, dest);
+            else
+                WriteFieldHeaderBeginIgnored(dest);
+            return GetPosition(dest);
+        }
+
+        //public static void WriteOptionalFieldEnd(int pos, ProtoWriter dest)
+        //{
+        //    if (GetPosition(dest) != pos) return;
+        //    ProtoWriter.WriteFieldHeaderBegin( dest);
+        //    WriteOptionalFieldCancel(dest);
+        //}
+
+        public static void WriteOptionalFieldCancel(ProtoWriter dest)
+        {
+            ProtoWriter.WriteFieldHeaderComplete(WireType.Null, dest);
+        }
+
         /// <summary>
         /// Cancels writing a field-header, initiated with WriteFieldHeaderBegin
         /// </summary>

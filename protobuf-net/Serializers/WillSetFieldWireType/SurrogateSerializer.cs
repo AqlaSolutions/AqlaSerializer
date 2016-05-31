@@ -23,6 +23,8 @@ namespace AqlaSerializer.Serializers
         
         public bool DemandWireTypeStabilityStatus() => _rootTail.DemandWireTypeStabilityStatus();
 
+        public WireType? ConstantWireType => _rootTail.ConstantWireType;
+
         bool IProtoTypeSerializer.HasCallbacks(AqlaSerializer.Meta.TypeModel.CallbackType callbackType)
         {
             return false;

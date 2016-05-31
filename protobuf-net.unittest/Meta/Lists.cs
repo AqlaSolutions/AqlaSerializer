@@ -493,7 +493,7 @@ namespace AqlaSerializer.unittest.Meta
         }
         static PackedData RoundTrip(TypeModel model, PackedData orig, string scenario, out int length)
         {
-            try
+            //try
             {
                 // check default first
                 var tm = TypeModel.Create();
@@ -507,10 +507,10 @@ namespace AqlaSerializer.unittest.Meta
                     return (PackedData)model.Deserialize(ms, null, typeof(PackedData));
                 }
             }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException(scenario + ": " + ex.Message, ex);
-            }
+            //catch (Exception ex)
+            //{
+            //    throw new InvalidOperationException(scenario + ": " + ex.Message, ex);
+            //}
         }
         static RuntimeTypeModel CreateModel()
         {

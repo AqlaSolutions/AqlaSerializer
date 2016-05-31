@@ -833,7 +833,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_COMPILER && !FX11
         /// <summary>
         /// Should serializers be compiled on demand? It may be useful
-        /// to disable this for debugging purposes.
+        /// to disable this for debugging purposes. Also affects behavior of <see cref="Compile"/>.
         /// </summary>
         public bool AutoCompile { get { return GetOption(OPTIONS_AutoCompile); } set { SetOption(OPTIONS_AutoCompile, value); } }
 #endif

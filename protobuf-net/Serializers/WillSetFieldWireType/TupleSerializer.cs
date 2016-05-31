@@ -32,6 +32,9 @@ namespace AqlaSerializer.Serializers
         }
         
         public bool DemandWireTypeStabilityStatus() => true;
+
+        public WireType? ConstantWireType => _prefixLength ? WireType.String : WireType.StartGroup;
+
         readonly ValueMember[] _members;
         readonly bool _prefixLength;
         readonly ConstructorInfo _ctor;

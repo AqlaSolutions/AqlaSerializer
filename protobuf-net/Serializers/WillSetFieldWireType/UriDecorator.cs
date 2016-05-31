@@ -15,6 +15,9 @@ namespace AqlaSerializer.Serializers
     {
         readonly IProtoSerializerWithWireType _tail;
         public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
+
+        public WireType? ConstantWireType => _tail.ConstantWireType;
+
 #if FEAT_IKVM
         readonly Type expectedType;
 #else

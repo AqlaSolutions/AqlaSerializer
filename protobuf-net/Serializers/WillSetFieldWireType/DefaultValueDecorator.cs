@@ -21,12 +21,15 @@ namespace AqlaSerializer.Serializers
         }
 
         public bool DemandWireTypeStabilityStatus() => false;
+        public WireType? ConstantWireType => null;
+
         public override Type ExpectedType => Tail.ExpectedType;
         public override bool RequiresOldValue => Tail.RequiresOldValue;
         private readonly object _defaultValue;
-        public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
+        public DefaultValueDecorator(RuntimeTypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {
             if (defaultValue == null) throw new ArgumentNullException(nameof(defaultValue));
+            //if (!model.ProtoCompatibility.UseVersioning) throw new InvalidOperationException("Can't use " + nameof(DefaultValueDecorator) + " without versioning");
             Type type = model.MapType(defaultValue.GetType());
             // if the value is nullable we should check equality with nullable before writing
             var underlying = Helpers.GetNullableUnderlyingType(tail.ExpectedType);

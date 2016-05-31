@@ -32,6 +32,9 @@ namespace AqlaSerializer.Serializers
         }
 
         public bool DemandWireTypeStabilityStatus() => false;
+
+        public WireType? ConstantWireType => null;
+
         readonly RuntimeTypeModel _model;
         readonly int _typeKey;
         readonly int _baseTypeKey;

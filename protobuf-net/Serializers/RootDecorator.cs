@@ -26,14 +26,19 @@ namespace AqlaSerializer.Serializers
         }
         
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility;
+
+        public WireType? ConstantWireType => null;
+
         readonly bool _enableReferenceVersioningSeeking;
         readonly bool _protoCompatibility;
         private readonly IProtoTypeSerializer _serializer;
+        readonly bool _versioning;
 
         public RootDecorator(Type type, bool wrap, bool enableReferenceVersioningSeeking, bool protoCompatibility, IProtoTypeSerializer serializer, RuntimeTypeModel model)
         {
             _enableReferenceVersioningSeeking = enableReferenceVersioningSeeking;
             _protoCompatibility = protoCompatibility;
+            _versioning = model.ProtoCompatibility.UseVersioning;
             _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
         }
 
@@ -53,7 +58,7 @@ namespace AqlaSerializer.Serializers
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
             RootHelpers.WriteOwnHeader(dest);
             _serializer.Write(value, dest);
-            RootHelpers.WriteOwnFooter(dest);
+            RootHelpers.WriteOwnFooter(_versioning, dest);
 
             ProtoWriter.EndSubItem(rootToken, dest);
         }
@@ -65,7 +70,7 @@ namespace AqlaSerializer.Serializers
                 return _serializer.Read(value, source);
             
             var rootToken = ProtoReader.StartSubItem(source);
-            int formatVersion = RootHelpers.ReadOwnHeader(_enableReferenceVersioningSeeking, source);
+            int formatVersion = RootHelpers.ReadOwnHeader(_versioning, _enableReferenceVersioningSeeking, source);
             var r = _serializer.Read(value, source);
             RootHelpers.ReadOwnFooter(_enableReferenceVersioningSeeking, formatVersion, source);
             ProtoReader.EndSubItem(rootToken, true, source);

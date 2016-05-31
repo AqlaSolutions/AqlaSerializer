@@ -26,6 +26,9 @@ namespace AqlaSerializer.Serializers
         }
         
         public bool DemandWireTypeStabilityStatus() => _serializer.DemandWireTypeStabilityStatus();
+
+        public WireType? ConstantWireType => _serializer.ConstantWireType;
+
         private readonly IProtoTypeSerializer _serializer;
         readonly int _number;
 

@@ -14,7 +14,7 @@ namespace AqlaSerializer
             ProtoWriter.WriteFieldHeaderBegin(RootHelpers.CurrentFormatVersion, dest);
         }
 
-        public static void WriteOwnFooter(ProtoWriter dest)
+        public static void WriteOwnFooter(bool versioning, ProtoWriter dest)
         {
             int typeKey;
             object obj;
@@ -34,19 +34,23 @@ namespace AqlaSerializer
 
             if (lateRefFieldToken != null) ProtoWriter.EndSubItem(lateRefFieldToken.Value, dest);
 
-            int[] arr = dest.NetCacheKeyPositionsList.ExportNew();
-            
-            // always write it
-            // and no need to believe in detection
-            // we can check array length right now
-            if (arr.Length > 0)
+            if (versioning)
             {
-                ProtoWriter.WriteFieldHeaderBegin(RootHelpers.FieldNetObjectPositions, dest);
-                ProtoWriter.WriteArrayContent(arr, WireType.Variant, ProtoWriter.WriteInt32, dest);
+
+                int[] arr = dest.NetCacheKeyPositionsList.ExportNew();
+
+                // always write it
+                // and no need to believe in detection
+                // we can check array length right now
+                if (arr.Length > 0)
+                {
+                    ProtoWriter.WriteFieldHeaderBegin(RootHelpers.FieldNetObjectPositions, dest);
+                    ProtoWriter.WriteArrayContent(arr, WireType.Variant, ProtoWriter.WriteInt32, dest);
+                }
             }
         }
 
-        public static int ReadOwnHeader(bool seeking, ProtoReader source)
+        public static int ReadOwnHeader(bool versioning, bool seeking, ProtoReader source)
         {
             // it's not expected that any root decorator may import new objects inside this
             source.NetCacheKeyPositionsList.EnterImportingLock();
@@ -65,18 +69,21 @@ namespace AqlaSerializer
 
             if (formatVersion > RootHelpers.Rc1FormatVersion && seeking && source.AllowReferenceVersioningSeeking)
             {
-                // skip to the end
-                source.SkipField();
-                while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
-                    source.SkipField();
-                if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
+                if (versioning)
                 {
-                    ImportReferencePositions(source);
+                    // skip to the end
+                    source.SkipField();
+                    while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
+                        source.SkipField();
+                    if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
+                    {
+                        ImportReferencePositions(source);
+                    }
+
+                    source.SeekAndExchangeBlockEnd(pos, blockEnd);
+                    var f = source.ReadFieldHeader();
+                    if (f != formatVersion) throw new ProtoException("Couldn't correctly rewind to stream start after reading net object positions list");
                 }
-                
-                source.SeekAndExchangeBlockEnd(pos, blockEnd);
-                var f = source.ReadFieldHeader();
-                if (f != formatVersion) throw new ProtoException("Couldn't correctly rewind to stream start after reading net object positions list");
             }
             return formatVersion;
         }

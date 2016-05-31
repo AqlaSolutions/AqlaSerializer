@@ -28,12 +28,13 @@ namespace AqlaSerializer.Serializers
 
 #if !NO_RUNTIME
         readonly WireType _packedWireTypeForRead = WireType.None;
+        readonly bool _versioning;
         readonly IProtoSerializerWithWireType _tail;
         readonly bool _protoCompatibility;
         readonly bool _writePacked;
         readonly Type _itemType;
         readonly bool _skipIList;
-        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
+        public ListHelpers(bool writePacked, bool versioning, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
         {
             if (protoCompatibility)
             {
@@ -41,9 +42,11 @@ namespace AqlaSerializer.Serializers
                     _packedWireTypeForRead = packedWireTypeForRead;
                 else if (writePacked)
                     throw new ArgumentException("For writePacked wire type for read should be specified");
-
+                
                 _writePacked = writePacked;
+                //if (!versioning) throw new ArgumentException("ProtoCompatible list mode is not supported with disabled versioning");
             }
+            _versioning = versioning;
             _tail = tail;
             _skipIList = skipIList;
             _itemType = tail.ExpectedType;
@@ -334,6 +337,11 @@ namespace AqlaSerializer.Serializers
             }
         }
 #endif
+
+        public WireType? ConstantWireType => !_protoCompatibility
+                                                 ? (_tail.DemandWireTypeStabilityStatus() ? WireType.String : WireType.StartGroup)
+                                                 : (_writePacked ? WireType.String : (WireType?)null);
+
 #if !FEAT_IKVM
         public void Write(object value, Action metaWriter, Action prepareInstance, ProtoWriter dest)
         {
