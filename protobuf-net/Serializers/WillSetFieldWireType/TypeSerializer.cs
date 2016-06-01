@@ -87,7 +87,8 @@ namespace AqlaSerializer.Serializers
         public bool AllowInheritance { get; set; } = true;
         readonly bool _prefixLength;
         readonly bool _versioning;
-
+        readonly bool _hasSubTypes;
+        readonly int _fieldsCount;
 
         public TypeSerializer(RuntimeTypeModel model, Type forType, int[] fieldNumbers, IProtoSerializerWithWireType[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory, bool prefixLength)
         {
@@ -98,15 +99,19 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(fieldNumbers.Length == serializers.Length);
 
             Helpers.Sort(fieldNumbers, serializers);
-            bool hasSubTypes = false;
             for (int i = 1; i < fieldNumbers.Length; i++)
             {
-                if (fieldNumbers[i] == fieldNumbers[i - 1]) throw new InvalidOperationException("Duplicate field-number detected; " +
-                           fieldNumbers[i].ToString() + " on: " + forType.FullName+", forgot to specify SerializableType.ImplicitFirstTag?");
-                if (!hasSubTypes && serializers[i].ExpectedType != forType)
-                {
-                    hasSubTypes = true;
-                }
+                if (fieldNumbers[i] == fieldNumbers[i - 1])
+                    throw new InvalidOperationException(
+                        "Duplicate field-number detected; " +
+                        fieldNumbers[i].ToString() + " on: " + forType.FullName + ", forgot to specify SerializableType.ImplicitFirstTag?");
+            }
+            for (int i = 0; i < fieldNumbers.Length; i++)
+            {
+                if (serializers[i].ExpectedType != forType)
+                    _hasSubTypes = true;
+                else
+                    _fieldsCount++;
             }
             this.ExpectedType = forType;
             this._factory = factory;
@@ -152,7 +157,7 @@ namespace AqlaSerializer.Serializers
 #else
             if (model.MapType(iextensible).IsAssignableFrom(forType))
             {
-                if (forType.IsValueType || !isRootType || hasSubTypes)
+                if (forType.IsValueType || !isRootType || _hasSubTypes)
 #endif
                 {
                     throw new NotSupportedException("IExtensible is not supported in structs or classes with inheritance");
@@ -244,7 +249,7 @@ namespace AqlaSerializer.Serializers
                 ProtoWriter.WriteFieldHeaderBegin(fn, dest);
                 next.Write(value, dest);
             }
-            else if (!_versioning)
+            else if (!_versioning && _hasSubTypes)
                 ProtoWriter.WriteFieldHeader(NoVersioningNoSubTypeField, WireType.Null, dest);
             // write all actual fields
             //Helpers.DebugWriteLine(">> Writing fields for " + forType.FullName);
@@ -263,8 +268,12 @@ namespace AqlaSerializer.Serializers
                         var pos = ProtoWriter.GetPosition(dest);
                         ProtoWriter.WriteFieldHeaderBegin(NoVersioningVariableField, dest);
                         ser.Write(value, dest);
-                        if (pos == ProtoWriter.GetPosition(dest) && dest.FieldNumber == 0)
+                        if (pos == ProtoWriter.GetPosition(dest) && dest.FieldNumber == 0
+                            // special optimization for 1 field - no need to write Null
+                            && !CanUseNoVersioningOneFieldOptimization)
+                        {
                             ProtoWriter.WriteFieldHeader(NoVersioningSkippedField, WireType.Null, dest);
+                        }
                     }
                     else
                     {
@@ -279,6 +288,9 @@ namespace AqlaSerializer.Serializers
             if (_isRootType) Callback(value, TypeModel.CallbackType.AfterSerialize, dest.Context);
             ProtoWriter.EndSubItem(token, dest);
         }
+
+        bool CanUseNoVersioningOneFieldOptimization => _fieldsCount == 1 && !_isExtensible;
+
         public object Read(object value, ProtoReader source)
         {
             var token = ProtoReader.StartSubItem(source);
@@ -344,11 +356,12 @@ namespace AqlaSerializer.Serializers
                 return source.ReadFieldHeader();
             if (readIterator == 1)
             {
+                if (!_hasSubTypes) return ReadNextFieldHeader(ref readIterator, source);
                 var r = source.ReadFieldHeader();
                 if (source.WireType == WireType.Null)
                 {
-                    if (source.FieldNumber != NoVersioningNoSubTypeField)
-                        throw new ProtoException("Expected field number of no-subtype-field (" + NoVersioningNoSubTypeField + ") but actual is " + source.FieldNumber);
+                    if (r != NoVersioningNoSubTypeField)
+                        throw new ProtoException("Expected field number of no-subtype-field (" + NoVersioningNoSubTypeField + ") but actual is " + r);
                     return ReadNextFieldHeader(ref readIterator, source);
                 }
                 return r;
@@ -360,15 +373,17 @@ namespace AqlaSerializer.Serializers
                 {
                     if (ser.ConstantWireType == null)
                     {
-                        if (source.ReadFieldHeader() != NoVersioningVariableField)
+                        int fn = source.ReadFieldHeader();
+                        if (fn != NoVersioningVariableField)
                         {
-                            if (source.FieldNumber == NoVersioningSkippedField)
+                            if (fn == NoVersioningSkippedField)
                             {
                                 if (source.WireType != WireType.Null)
                                     throw new ProtoException("Expected WireType.Null for skipped field (" + _fieldNumbers[i] + ") but actual is " + source.WireType);
                                 continue;
                             }
-                            throw new ProtoException("Expected field number " + NoVersioningVariableField + " for variable field " + _fieldNumbers[i] + " but actual is " + source.FieldNumber);
+                            if (CanUseNoVersioningOneFieldOptimization && fn == 0) return 0;
+                            throw new ProtoException("Expected field number " + NoVersioningVariableField + " for variable field " + _fieldNumbers[i] + " but actual is " + fn);
                         }
                     }
                     else if (!ProtoReader.HasSubValue(ser.ConstantWireType.Value, source))
