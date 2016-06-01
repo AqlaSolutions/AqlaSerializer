@@ -89,6 +89,7 @@ namespace AqlaSerializer.Serializers
         readonly bool _versioning;
         readonly bool _hasSubTypes;
         readonly int _fieldsCount;
+        readonly int _lastFieldNumber = -1;
 
         public TypeSerializer(RuntimeTypeModel model, Type forType, int[] fieldNumbers, IProtoSerializerWithWireType[] serializers, MethodInfo[] baseCtorCallbacks, bool isRootType, bool useConstructor, CallbackSet callbacks, Type constructType, MethodInfo factory, bool prefixLength)
         {
@@ -111,7 +112,10 @@ namespace AqlaSerializer.Serializers
                 if (serializers[i].ExpectedType != forType)
                     _hasSubTypes = true;
                 else
+                {
                     _fieldsCount++;
+                    _lastFieldNumber = fieldNumbers[i];
+                }
             }
             this.ExpectedType = forType;
             this._factory = factory;
@@ -269,8 +273,7 @@ namespace AqlaSerializer.Serializers
                         ProtoWriter.WriteFieldHeaderBegin(NoVersioningVariableField, dest);
                         ser.Write(value, dest);
                         if (pos == ProtoWriter.GetPosition(dest) && dest.FieldNumber == 0
-                            // special optimization for 1 field - no need to write Null
-                            && !CanUseNoVersioningOneFieldOptimization)
+                            && !CanUseNoVersioningLastFieldOptimization(_fieldNumbers[i]))
                         {
                             ProtoWriter.WriteFieldHeader(NoVersioningSkippedField, WireType.Null, dest);
                         }
@@ -289,7 +292,12 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.EndSubItem(token, dest);
         }
 
-        bool CanUseNoVersioningOneFieldOptimization => _fieldsCount == 1 && !_isExtensible;
+        // special optimization for last (before end group) field - no need to write Null
+        // because no fields later can be mismatched with this field
+        bool CanUseNoVersioningLastFieldOptimization(int currentFieldNumber)
+        {
+            return _lastFieldNumber == currentFieldNumber && !_isExtensible;
+        }
 
         public object Read(object value, ProtoReader source)
         {
@@ -382,7 +390,7 @@ namespace AqlaSerializer.Serializers
                                     throw new ProtoException("Expected WireType.Null for skipped field (" + _fieldNumbers[i] + ") but actual is " + source.WireType);
                                 continue;
                             }
-                            if (CanUseNoVersioningOneFieldOptimization && fn == 0) return 0;
+                            if (CanUseNoVersioningLastFieldOptimization(_fieldNumbers[i]) && fn == 0) return 0;
                             throw new ProtoException("Expected field number " + NoVersioningVariableField + " for variable field " + _fieldNumbers[i] + " but actual is " + fn);
                         }
                     }
