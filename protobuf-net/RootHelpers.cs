@@ -73,12 +73,11 @@ namespace AqlaSerializer
                 {
                     // skip to the end
                     source.SkipField();
-                    while (source.ReadFieldHeader() != 0 && source.FieldNumber != RootHelpers.FieldNetObjectPositions)
+                    int fn;
+                    while ((fn = source.ReadFieldHeader()) != 0 && fn != RootHelpers.FieldNetObjectPositions)
                         source.SkipField();
-                    if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
-                    {
+                    if (fn == RootHelpers.FieldNetObjectPositions)
                         ImportReferencePositions(source);
-                    }
 
                     source.SeekAndExchangeBlockEnd(pos, blockEnd);
                     var f = source.ReadFieldHeader();
@@ -102,16 +101,17 @@ namespace AqlaSerializer
             {
                 if (formatVersion > Rc1FormatVersion)
                 {
-                    while (source.ReadFieldHeader() > 0 && source.FieldNumber != FieldLateReferenceObjects)
+                    int fn;
+                    while ((fn = source.ReadFieldHeader()) > 0 && fn != FieldLateReferenceObjects)
                         source.SkipField();
-                    if (source.FieldNumber == FieldLateReferenceObjects)
+                    if (fn == FieldLateReferenceObjects)
                     {
                         SubItemToken t = ProtoReader.StartSubItem(source);
                         ReadLateReferences(source);
                         ProtoReader.EndSubItem(t, source);
                     }
 
-                    if (source.ReadFieldHeader() > 0 && source.FieldNumber == FieldNetObjectPositions)
+                    if (source.ReadFieldHeader() == FieldNetObjectPositions)
                     {
                         if (seeking) // it's important to not read it twice!
                             source.SkipField();

@@ -80,11 +80,14 @@ namespace AqlaSerializer
         /// <summary>
         /// Gets the number of the field being processed.
         /// </summary>
-        public int FieldNumber { get { return _fieldNumber; } }
+        public int FieldNumber => _lastReturnedFieldNumber;
+
+        int _lastReturnedFieldNumber;
+
         /// <summary>
         /// Indicates the underlying proto serialization format on the wire.
         /// </summary>
-        public WireType WireType { get { return _wireType; } }
+        public WireType WireType => _wireType;
 
         public bool CanSeek => _source.CanSeek;
         public bool AllowReferenceVersioningSeeking => CanSeek && (_model?.AllowReferenceVersioningSeeking ?? true);
@@ -150,7 +153,7 @@ namespace AqlaSerializer
             if (context == null) { context = SerializationContext.Default; }
             else { context.Freeze(); }
             reader._context = context;
-            reader._position = reader._available = reader._depth = reader._fieldNumber = reader._ioIndex = 0;
+            reader._position = reader._available = reader._depth = reader._lastReturnedFieldNumber = reader._fieldNumber = reader._ioIndex = 0;
             reader._blockEnd = int.MaxValue;
             reader._internStrings = true;
             reader._wireType = WireType.None;
@@ -203,7 +206,8 @@ namespace AqlaSerializer
             source.SkipField(); // not really reading any data
             if (constantWireType == null)
             {
-                if (source.ReadFieldHeader() != 2) throw new ProtoException("Expected field number 2 but actual is " + source.FieldNumber);
+                int fn = source.ReadFieldHeader();
+                if (fn != 2) throw new ProtoException("Expected field number 2 but actual is " + fn);
             }
             else if (!HasSubValue(constantWireType.Value, source))
                 throw new ProtoException("Sub value expected for optional field");
@@ -873,7 +877,11 @@ namespace AqlaSerializer
             // at the end of a group the caller must call EndSubItem to release the
             // reader (which moves the status to Error, since ReadFieldHeader must
             // then be called)
-            if (_blockEnd <= _position || _wireType == WireType.EndGroup) { return 0; }
+            if (_blockEnd <= _position || _wireType == WireType.EndGroup)
+            {
+                _lastReturnedFieldNumber = 0;
+                return 0;
+            }
             uint tag;
             if (TryReadUInt32Variant(out tag) && tag != 0)
             {
@@ -888,9 +896,15 @@ namespace AqlaSerializer
             }
             if (_wireType == AqlaSerializer.WireType.EndGroup)
             {
-                if (_depth > 0) return 0; // spoof an end, but note we still set the field-number
+                if (_depth > 0)
+                {
+                    _lastReturnedFieldNumber = 0;
+                    return 0; // spoof an end, but note we still set the field-number
+                }
                 throw new ProtoException("Unexpected end-group in source data; this usually means the source data is corrupt");
             }
+            
+            _lastReturnedFieldNumber = _fieldNumber;
             return _fieldNumber;
         }
         /// <summary>
@@ -909,7 +923,7 @@ namespace AqlaSerializer
                 && (tmpWireType = (WireType)(tag & 7)) != WireType.EndGroup)
             {
                 _wireType = tmpWireType;
-                _fieldNumber = field;
+                _lastReturnedFieldNumber = _fieldNumber = field;
                 _position += read;
                 _ioIndex += read;
                 _available -= read;
@@ -1513,7 +1527,7 @@ namespace AqlaSerializer
             // check for virtual end of stream
             if (source._blockEnd <= source._position || wireType == WireType.EndGroup) { return false; }
             source._wireType = wireType;
-            source._fieldNumber = GroupNumberForIgnoredFields;
+            source._lastReturnedFieldNumber = source._fieldNumber = GroupNumberForIgnoredFields;
             return true;
         }
 
