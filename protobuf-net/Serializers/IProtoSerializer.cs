@@ -28,6 +28,10 @@ namespace AqlaSerializer.Serializers
         /// </summary>
         bool DemandWireTypeStabilityStatus();
 
+        /// <summary>
+        /// Returns a constant WireType which can't be changed during multiple serialization sessions. Should be true only if <see cref="DemandWireTypeStabilityStatus"/> will returns true also.
+        /// </summary>
+        /// <remarks>If wire type is not constant but it's correctness on reading won't affect anything you can still declare it as constant</remarks>
         WireType? ConstantWireType { get; }
     }
 

@@ -306,6 +306,8 @@ namespace AqlaSerializer
             writer._fieldStarted = false;
             if (writer._ignoredFieldStarted)
             {
+                if (writer._wireType == WireType.Null)
+                    writer._wireType = WireType.None;
                 writer._ignoredFieldStarted = false;
                 return;
             }
@@ -566,11 +568,7 @@ namespace AqlaSerializer
         private static SubItemToken StartSubItem(object instance, ProtoWriter writer, bool allowFixed)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
-            if (++writer._depth > RecursionCheckDepth)
-            {
-                writer.CheckRecursionStackAndPush(instance);
-                if (writer._depth > (writer._model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit)) TypeModel.ThrowRecursionDepthLimitExceeded(writer._recursionStack);
-            }
+            StartRecursionChecked(instance, writer);
             writer._expectRoot = false;
             switch (writer._wireType)
             {
@@ -603,6 +601,22 @@ namespace AqlaSerializer
             }
         }
 
+        public static void StartRecursionChecked(object instance, ProtoWriter writer)
+        {
+            if (++writer._depth > RecursionCheckDepth)
+            {
+                writer.CheckRecursionStackAndPush(instance);
+                if (writer._depth > (writer._model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit)) TypeModel.ThrowRecursionDepthLimitExceeded(writer._recursionStack);
+            }
+        }
+
+        public static void EndRecursionChecked(ProtoWriter writer)
+        {
+            if (writer._depth <= 0) throw CreateException(writer);
+            if (writer._depth-- > RecursionCheckDepth)
+                writer.PopRecursionStack();
+        }
+
         void DebugFlushFile()
         {
             bool prev = _streamAsBufferAllowed;
@@ -632,11 +646,7 @@ namespace AqlaSerializer
             }
             if (writer._wireType != WireType.None) { throw CreateException(writer); }
             int value = token.Value;
-            if (writer._depth <= 0) throw CreateException(writer);
-            if (writer._depth-- > RecursionCheckDepth)
-            {
-                writer.PopRecursionStack();
-            }
+            EndRecursionChecked(writer);
             if (value < 0)
             {   // group - very simple append
                 WriteHeaderCore(-value, WireType.EndGroup, writer);

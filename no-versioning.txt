@@ -1,0 +1,10 @@
+instead of handling optional types where they are ignored... handle them on upper level by writing another fieldNumber! but doesn't work for ignored fields? ignored fields should only be used with stable wiretype 
+
+
+overhead on each default/specified/nonull field - always written at least 1 byte
+
+extensible works only after all normal fields
+
+no-versioning for tuples and net object helpers
+
+make test on same format
