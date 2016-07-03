@@ -17,7 +17,7 @@ namespace AqlaSerializer
     /// Indicates that a type is defined for protocol-buffer serialization. Settings specified here are inherited by members of this type if not explicitely specified for them.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Interface,
-        AllowMultiple = false, Inherited = false)]
+        AllowMultiple = true, Inherited = false)]
     public sealed class SerializableTypeAttribute : Attribute
     {
         public SerializableTypeAttribute()
