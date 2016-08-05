@@ -28,7 +28,7 @@ namespace Examples.Issues
             model.Add(typeof(decimal), false);
             model.CompileInPlace();
         }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate")]
+        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate (System.Collections.Generic.IList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]])")]
         public void CantSurrogateLists()
         {
             var model = TypeModel.Create();

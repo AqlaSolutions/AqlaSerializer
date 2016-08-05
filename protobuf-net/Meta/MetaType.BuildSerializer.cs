@@ -96,7 +96,7 @@ namespace AqlaSerializer.Meta
                         {
                             _lateReferenceSerializer = new LateReferenceSerializer(Type, GetKey(true, false), GetKey(true, true), _model);
                         }
-                        catch(Exception e) 
+                        catch (Exception e)
                         {
                             // subtypes can be late references which is hard to predict on this stage
                             // but normally tests don't throw
@@ -105,6 +105,12 @@ namespace AqlaSerializer.Meta
                     }
                     IsFrozen = true;
                 }
+            }
+            catch (Exception ex)
+            {
+                var msg = Helpers.TryGetWrappedExceptionMessage(ex, Type);
+                if (msg == null) throw;
+                Helpers.RethrowSpecific(ex, msg);
             }
             finally
             {

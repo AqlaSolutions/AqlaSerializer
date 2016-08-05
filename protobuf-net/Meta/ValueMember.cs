@@ -203,95 +203,43 @@ namespace AqlaSerializer.Meta
                         }
                     }
                 }
-                
-#if !DEBUG
-                try
-#endif
-                {
-                    WireType wt;
-                    var ser = _model.ValueSerializerBuilder.BuildValueFinalSerializer(
-                        _vsFinal,
-                        true,
-                        out wt);
 
-                    if (!_isAccessHandledOutside)
-                    {
-
-                        PropertyInfo prop = Member as PropertyInfo;
-                        if (prop != null)
-                            ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
-                        else
+                return Helpers.WrapExceptions(
+                    () =>
                         {
-                            FieldInfo fld = Member as FieldInfo;
-                            if (fld != null)
-                                ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
-                            else
-                                throw new InvalidOperationException();
-                        }
+                            WireType wt;
+                            var ser = _model.ValueSerializerBuilder.BuildValueFinalSerializer(
+                                _vsFinal,
+                                true,
+                                out wt);
 
-                        if (_getSpecified != null || _setSpecified != null)
-                            ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
-                    }
-                    _serializer = ser;
+                            if (!_isAccessHandledOutside)
+                            {
 
-                    return ser;
-                }
-#if !DEBUG
-                catch (ProtoException ex)
-                {
-                    throw new ProtoException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    throw new InvalidOperationException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (NotSupportedException ex)
-                {
-                    throw new InvalidOperationException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (NotImplementedException ex)
-                {
-                    throw new NotImplementedException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (ArgumentNullException ex)
-                {
-                    throw new ArgumentNullException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    throw new ArgumentOutOfRangeException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (ArgumentException ex)
-                {
-#if SILVERLIGHT || PORTABLE
-                    throw new ArgumentException(GetRethrowExceptionText(ex), ex);
-#else
-                    throw new ArgumentException(GetRethrowExceptionText(ex), ex.ParamName, ex);
-#endif
-                }
-                catch (System.MissingMemberException ex)
-                {
-                    throw new System.MissingMemberException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (MemberAccessException ex)
-                {
-                    throw new MemberAccessException(GetRethrowExceptionText(ex), ex);
-                }
-                catch (Exception ex)
-                {
-                    throw new ProtoException(GetRethrowExceptionText(ex), ex);
-                }
-#endif
+                                PropertyInfo prop = Member as PropertyInfo;
+                                if (prop != null)
+                                    ser = new PropertyDecorator(_model, ParentType, (PropertyInfo)Member, ser);
+                                else
+                                {
+                                    FieldInfo fld = Member as FieldInfo;
+                                    if (fld != null)
+                                        ser = new FieldDecorator(ParentType, (FieldInfo)Member, ser);
+                                    else
+                                        throw new InvalidOperationException();
+                                }
+
+                                if (_getSpecified != null || _setSpecified != null)
+                                    ser = new MemberSpecifiedDecorator(_getSpecified, _setSpecified, ser);
+                            }
+                            _serializer = ser;
+
+                            return ser;
+                        }, e => Member + ": " + (string.IsNullOrEmpty(e.Message) ? "serializer build problem" : e.Message));
             }
             finally
             {
                 _model.ReleaseLock(opaqueToken);
             }
-        }
-
-        string GetRethrowExceptionText(Exception e)
-        {
-            return Member + ": " + (string.IsNullOrEmpty(e.Message) ? "serializer build problem" : e.Message);
         }
 
         #region Setting accessors

@@ -15,7 +15,7 @@ using System.Linq;
 #endif
 
 using AqlaSerializer.Meta;
-
+using AltLinq; using System.Linq;
 
 namespace AqlaSerializer
 {
@@ -898,6 +898,74 @@ namespace AqlaSerializer
 
             return member is FieldInfo; // fields are always writeable; anything else: JUST SAY NO!
         }
+
+
+        internal static T WrapExceptions<T>(Func<T> action, Func<Exception, string> messageGenerator)
+        {
+            T r = default(T);
+            WrapExceptions(new Action(() => r = action()), messageGenerator);
+            return r;
+        }
+
+        internal static void WrapExceptions(Action action, Func<Exception, string> messageGenerator)
+        {
+#if !DEBUG
+            try
+#endif
+            {
+                action();
+            }
+#if DEBUG
+            try { }
+#endif
+            catch (Exception ex)
+            {
+                string rethrowMsg = messageGenerator(ex);
+                if (rethrowMsg == null) throw;
+
+                RethrowSpecific(ex, rethrowMsg);
+
+            }
+        }
+
+        internal static void RethrowSpecific(Exception ex, string rethrowMsg)
+        {
+            if (ex is ProtoException)
+                throw new ProtoException(rethrowMsg, ex);
+            if (ex is InvalidOperationException)
+                throw new InvalidOperationException(rethrowMsg, ex);
+            if (ex is NotSupportedException)
+                throw new NotSupportedException(rethrowMsg, ex);
+            if (ex is NotImplementedException)
+                throw new NotImplementedException(rethrowMsg, ex);
+            if (ex is ArgumentNullException)
+                throw new ArgumentNullException(rethrowMsg, ex);
+            if (ex is ArgumentOutOfRangeException)
+                throw new ArgumentOutOfRangeException(rethrowMsg, ex);
+            if (ex is ArgumentException)
+            {
+#if SILVERLIGHT || PORTABLE
+                throw new ArgumentException(rethrowMsg, ex);
+#else
+                throw new ArgumentException(rethrowMsg, ((ArgumentException)ex).ParamName, ex);
+#endif
+            }
+            if (ex is System.MissingMemberException)
+                throw new System.MissingMemberException(rethrowMsg, ex);
+            if (ex is MemberAccessException)
+                throw new MemberAccessException(rethrowMsg, ex);
+
+
+            throw new ProtoException(rethrowMsg, ex);
+        }
+
+        internal static string TryGetWrappedExceptionMessage(Exception ex, Type t)
+        {
+            return ex.Message.IndexOf(t.FullName, System.StringComparison.Ordinal) < 0
+                       ? (ex.Message + " (" + t.FullName + ")")
+                       : null;
+        }
+
     }
 
     namespace Internal
