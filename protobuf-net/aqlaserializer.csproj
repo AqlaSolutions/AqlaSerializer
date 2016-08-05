@@ -395,6 +395,7 @@
     <Compile Include="Meta\MetaType.Surrogate.cs" />
     <Compile Include="Meta\OverridingManager.cs" />
     <Compile Include="Meta\ReflectionObjectMap.cs" />
+    <Compile Include="Meta\RuntimeTypeModel.TypesFastFinder.cs" />
     <Compile Include="Meta\ValueSerializationSettings.cs" />
     <Compile Include="Meta\ValueSerializerBuilder.cs" />
     <Compile Include="ProtoAggregateException.cs" />

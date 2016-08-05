@@ -36,6 +36,7 @@ using System.Threading;
 using System.IO;
 using AltLinq; using System.Linq;
 
+
 namespace AqlaSerializer.Meta
 {
 #if !NO_GENERiCS
@@ -408,12 +409,14 @@ namespace AqlaSerializer.Meta
         internal int FindOrAddAuto(Type type, bool demand, bool addWithContractOnly, bool addEvenIfAutoDisabled, out MetaType metaType)
         {
             metaType = null;
-            int key = _types.IndexOf(MetaTypeFinder, type);
-
+            var info = GetTypeInfoFromDictionary(type);
+            int key = -1;
+            
             // the fast happy path: meta-types we've already seen
-            if (key >= 0)
+            if (info != null)
             {
-                metaType = (MetaType)_types[key];
+                key = info.Value.Key;
+                metaType = info.Value.MetaType;
                 if (metaType.IsPending)
                 {
                     WaitOnLock(metaType);
@@ -522,12 +525,6 @@ namespace AqlaSerializer.Meta
         }
 
         OverridingManager _overridingManager = new OverridingManager();
-
-        int Add(MetaType metaType)
-        {
-            _overridingManager.SubscribeTo(metaType);
-            return _types.Add(metaType);
-        }
 
         /// <summary>
         /// Type overrides are run before preparing type serializer
@@ -885,8 +882,6 @@ namespace AqlaSerializer.Meta
             if (GetOption(OPTIONS_IsDefaultModel)) throw new InvalidOperationException("The default model cannot be frozen");
             SetOption(OPTIONS_Frozen, true);
         }
-
-        private BasicList _types = new BasicList();
 
         /// <summary>
         /// Provides the key that represents a given type in the current model.
@@ -1373,6 +1368,7 @@ namespace AqlaSerializer.Meta
             m.AutoAddStrategy = AutoAddStrategy.Clone(m);
             m._basicTypes = new BasicList();
             m._overridingManager = m._overridingManager.CloneAsUnsubscribed();
+            m.ResetTypesDictionary();
             var cache = new MetaTypeCloneCache(m);
             m._types = new BasicList();
             m.ValueSerializerBuilder = new ValueSerializerBuilder(m);
