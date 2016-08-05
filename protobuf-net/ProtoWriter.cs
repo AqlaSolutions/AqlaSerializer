@@ -119,11 +119,7 @@ namespace AqlaSerializer
         /// <param name="writer">The destination.</param>
         public static void WriteRecursionSafeObject(object value, int key, ProtoWriter writer)
         {
-            if (writer == null) throw new ArgumentNullException(nameof(writer));
-            if (writer._model == null)
-            {
-                throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
-            }
+            // no argument checks here for performance
             writer._model.Serialize(key, value, writer, false);
         }
 
