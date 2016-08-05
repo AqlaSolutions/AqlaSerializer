@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>2.0.0.245</version>
+    <version>2.0.0.372</version>
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2016, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>
@@ -26,6 +26,11 @@ Some build configurations may be not available through nuget, you can download t
     <tags>binary serialization protocol buffers protobuf protobuf-net deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
+
+* 2.0.0.372:
+ - Types lookup optimization for RuntimeTypeModel
+ - RuntimeTypeModel.Add allows to specify different type family filters or custom filter
+ - fixed concurrency bug when not final version of RootSerializer was published to clients
 
 * 2.0.0.234:
  - Improved compiled dll output size, compilation and cold run speed
