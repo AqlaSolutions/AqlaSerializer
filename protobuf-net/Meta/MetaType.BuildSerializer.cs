@@ -88,8 +88,8 @@ namespace AqlaSerializer.Meta
 
                     bool mayContainReferencesInside;
                     _serializer = BuildSerializer(out mayContainReferencesInside);
-                    _rootSerializer = BuildRootSerializer();
-                    if (!(_rootSerializer is ForbiddenRootStub)) _rootSerializer = WrapRootSerializer(_rootSerializer, mayContainReferencesInside);
+                    var newRootSer = BuildRootSerializer();
+                    if (!(newRootSer is ForbiddenRootStub)) newRootSer = WrapRootSerializer(newRootSer, mayContainReferencesInside);
                     if (!IsValueType && !IsAutoTuple && _surrogate == null)
                     {
                         try
@@ -103,6 +103,7 @@ namespace AqlaSerializer.Meta
                             _lateReferenceSerializerBuildException = e;
                         }
                     }
+                    _rootSerializer = newRootSer;
                     IsFrozen = true;
                 }
             }
