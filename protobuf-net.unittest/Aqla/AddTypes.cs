@@ -49,7 +49,7 @@ namespace AqlaSerializer.unittest.Aqla
         [Test]
         public void ShouldAutoAddAllBaseTypesCorrectly()
         {
-            _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
+            _model.Add(Assembly.GetExecutingAssembly(), true, true);
             CheckInherited();
         }
 

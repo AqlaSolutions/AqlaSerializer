@@ -601,12 +601,22 @@ namespace AqlaSerializer.Meta
         /// If enabled all Arrays and Lists will be handled in extended mode to always support reference tracking and null (which will break without runtime/pre-compiled dll) but may have a size overhead (going to fix that in later releases)
         /// </summary>
         public bool AlwaysUseTypeRegistrationForCollections { get; set; }
-
+        
         /// <summary>
         /// Adds all types inside the specified assembly. Surrogates are not detected automatically, set surrogates before calling this!
         /// </summary>
-        public void Add(Assembly assembly, bool recognizableOnly, bool nonPublic, bool applyDefaultBehavior)
+        public void Add(Assembly assembly, bool nonPublic, bool applyDefaultBehavior, MetaType.AttributeFamily? rootFilter = MetaType.AttributeFamily.Aqla | MetaType.AttributeFamily.ProtoBuf | MetaType.AttributeFamily.DataContractSerialier | MetaType.AttributeFamily.XmlSerializer)
         {
+            Add(assembly, nonPublic, applyDefaultBehavior, t => rootFilter == null || (_autoAddStrategy.GetContractFamily(t) & rootFilter.Value) != 0);
+        }
+        
+        /// <summary>
+        /// Adds all types inside the specified assembly. Surrogates are not detected automatically, set surrogates before calling this!
+        /// </summary>
+        public void Add(Assembly assembly, bool nonPublic, bool applyDefaultBehavior, AqlaPredicate<Type> rootFilter)
+        {
+            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+            if (rootFilter == null) throw new ArgumentNullException(nameof(rootFilter));
             Type[] list = nonPublic ? Helpers.GetTypes(assembly) : Helpers.GetExportedTypes(assembly);
             
             // types order actually does not matter
@@ -616,9 +626,10 @@ namespace AqlaSerializer.Meta
 
             foreach (Type t in list)
             {
-                if (!Helpers.IsGenericTypeDefinition(t)
-                    && (!recognizableOnly || _autoAddStrategy.GetContractFamily(t) != MetaType.AttributeFamily.None))
+                if (!Helpers.IsGenericTypeDefinition(t) && rootFilter(t))
+                {
                     Add(t, applyDefaultBehavior);
+                }
             }
         }
 
@@ -1489,6 +1500,6 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public delegate void LockContentedEventHandler(object sender, LockContentedEventArgs args);
 
-
+    public delegate bool AqlaPredicate<in T>(T x);
 }
 #endif

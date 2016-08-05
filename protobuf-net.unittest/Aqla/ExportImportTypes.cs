@@ -76,7 +76,7 @@ namespace AqlaSerializer.unittest.Aqla
         {
             _model.Add(typeof(TestSurrogate), true);
             _model.Add(typeof(Aqla.Test), false).SetSurrogate(typeof(TestSurrogate));
-            _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
+            _model.Add(Assembly.GetExecutingAssembly(), true, true);
             Check(false);
             Check(true);
         }
@@ -128,7 +128,7 @@ namespace AqlaSerializer.unittest.Aqla
         [Test]
         public void ShouldSerializeTypesList()
         {
-            _model.Add(Assembly.GetExecutingAssembly(), true, true, true);
+            _model.Add(Assembly.GetExecutingAssembly(), true, true);
             Type[] types = _model.Types;
             Type[] cloned = (Type[])_model.DeepClone(types);
 

@@ -60,7 +60,7 @@ namespace AqlaSerializer
         /// </summary>
         public static void AddContracts(Assembly assembly, bool nonPublic)
         {
-            RuntimeTypeModel.Default.Add(assembly, true, nonPublic, true);
+            RuntimeTypeModel.Default.Add(assembly, nonPublic, true);
         }
 
         /// <summary>
