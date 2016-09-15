@@ -7,21 +7,28 @@ namespace AqlaSerializer.Meta
     public class EnumFlagModelId<T>
         where T : struct
     {
-        public EnumFlagModelId(T value)
+        readonly T? _defaultValueWhenNotSpecified;
+
+        readonly long _modelIdMask;
+
+        public EnumFlagModelId(T value, T? defaultValueWhenNotSpecified = null)
         {
+            _defaultValueWhenNotSpecified = defaultValueWhenNotSpecified;
             var t = value.GetType();
             if (!Helpers.IsEnum(t)) throw new ArgumentException("Expected Enum as a generic argument");
             Value = value;
             _modelIdMask = ExtractEnumLongValue(Value);
         }
 
-        readonly long _modelIdMask;
-
         public T Value { get; }
 
         public override bool Equals(object compareTo)
         {
-            if (compareTo == null) return false;
+            if (compareTo == null)
+            {
+                if (_defaultValueWhenNotSpecified == null) return false;
+                compareTo = _defaultValueWhenNotSpecified.Value;
+            }
             var other = compareTo as EnumFlagModelId<T>;
             if (other != null)
                 return other.Value.Equals(Value);
