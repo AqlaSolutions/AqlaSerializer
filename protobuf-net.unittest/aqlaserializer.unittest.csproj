@@ -143,13 +143,13 @@
     <Compile Include="Aqla\Issue91Converter.cs" />
     <Compile Include="Aqla\LegacyTupleMode.cs" />
     <Compile Include="Aqla\MemberRemoveVersioning.cs" />
-    <Compile Include="Aqla\MultiDimensionalArrays.cs" />
     <Compile Include="Aqla\LateReferenceVersioning.cs" />
     <Compile Include="Aqla\LinkedListAsLateReference.cs" />
     <Compile Include="Aqla\ListSubtypes.cs" />
     <Compile Include="Aqla\MembersAddTypes.cs" />
     <Compile Include="Aqla\AddTypes.cs" />
     <Compile Include="Aqla\CoreReferenceSerialization.cs" />
+    <Compile Include="Aqla\MultiDimensionalArrays.cs" />
     <Compile Include="Aqla\NestedDebugSchema.cs" />
     <Compile Include="Aqla\NestedLevelsTest.cs" />
     <Compile Include="Aqla\NetObjectVersioning.cs" />

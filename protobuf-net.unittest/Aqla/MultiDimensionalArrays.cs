@@ -5,61 +5,111 @@ using NUnit.Framework;
 
 namespace AqlaSerializer.unittest.Aqla
 {
-    [TestFixture]
-    public class MultiDimensionalArrays
+    [SerializableType]
+    public class MultiDimensionalArraysElement : IEquatable<MultiDimensionalArraysElement>
     {
-        [SerializableType]
-        public class Element : IEquatable<Element>
+        public int Value { get; set; }
+
+        public bool Equals(MultiDimensionalArraysElement other)
         {
-            public int Value { get; set; }
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Value == other.Value;
+        }
 
-            public bool Equals(Element other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return Value == other.Value;
-            }
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((MultiDimensionalArraysElement)obj);
+        }
 
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != this.GetType()) return false;
-                return Equals((Element)obj);
-            }
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
+    }
 
-            public override string ToString()
-            {
-                return Value.ToString();
-            }
+    [TestFixture]
+    public class MultiDimensionalArraysNormal : MultiDimensionalArrays<MultiDimensionalArraysElement>
+    {
+        public MultiDimensionalArraysNormal()
+            : base(x => x.Value,
+                   (ref MultiDimensionalArraysElement x, int v) =>
+                   {
+                       if (x == null)
+                           x = new MultiDimensionalArraysElement() { Value = v };
+                       else
+                           x.Value = v;
+                   })
+        {
+        }
+    }
+
+    [TestFixture]
+    public class MultiDimensionalArraysInt : MultiDimensionalArrays<int>
+    {
+        public MultiDimensionalArraysInt()
+            : base(x => x, (ref int x, int v) => x = v)
+        {
+        }
+    }
+
+    [TestFixture]
+    public class MultiDimensionalArraysDouble : MultiDimensionalArrays<double>
+    {
+        public MultiDimensionalArraysDouble()
+            : base(x => (int)x, (ref double x, int v) => x = v)
+        {
+        }
+    }
+
+    public class MultiDimensionalArrays<T>
+    {
+        public delegate void WriterDelegate(ref T x, int value);
+
+        readonly Func<T, int> _reader;
+        readonly WriterDelegate _writer;
+
+        public MultiDimensionalArrays(Func<T, int> reader, WriterDelegate writer)
+        {
+            _reader = reader;
+            _writer = writer;
         }
 
         [SerializableType]
         public class Container
         {
-            public Element[,,,] Values { get; set; }
+            public T[,,,] Values { get; set; }
+        }
+
+        [SerializableType]
+        public class Container2
+        {
+            public T[,] Values { get; set; }
         }
 
 
-        Element[,,,] MakeArray()
+        T[,,,] MakeArray()
         {
-            Element[,,,] arr = new Element[3, 2, 1, 10];
+            T[,,,] arr = new T[3, 2, 1, 10];
             FillArray(arr, 0, 0, 0, 0);
             return arr;
         }
 
-        Element[,,,] MakeArrayTwice()
+        T[,,,] MakeArrayTwice()
         {
-            Element[,,,] arr = new Element[6, 2, 1, 10];
+            T[,,,] arr = new T[6, 2, 1, 10];
             FillArray(arr, 0, 0, 0, 0);
             FillArray(arr, 3, 0, 0, 0);
             return arr;
         }
 
-        static void FillArray(Element[,,,] arr, int aPos, int bPos, int cPos, int dPos)
+        void FillArray(T[,,,] arr, int aPos, int bPos, int cPos, int dPos)
         {
             int m = 0;
-            
+
             for (int a = aPos; a < arr.GetLength(0); a++)
             {
                 for (int b = bPos; b < arr.GetLength(1); b++)
@@ -69,7 +119,7 @@ namespace AqlaSerializer.unittest.Aqla
                         for (int d = dPos; d < arr.GetLength(3); d++)
                         {
                             m++;
-                            arr[a, b, c, d] = new Element() { Value = m };
+                            _writer(ref arr[a, b, c, d], m);
                         }
                     }
                 }
@@ -82,7 +132,7 @@ namespace AqlaSerializer.unittest.Aqla
             var arr = MakeArray();
             var originalArr = MakeArray();
             Assert.That(arr, Is.EqualTo(originalArr));
-            arr[0, 0, 0, 0].Value++;
+            _writer(ref arr[0, 0, 0, 0], _reader(arr[0, 0, 0, 0]) + 1);
             Assert.That(arr, Is.Not.EqualTo(originalArr));
         }
 
@@ -92,6 +142,15 @@ namespace AqlaSerializer.unittest.Aqla
         {
             var tm = TypeModel.Create();
             var obj = new Container { Values = MakeArray() };
+            var copy = tm.DeepClone(obj);
+            Assert.That(copy.Values, Is.EqualTo(obj.Values));
+        }
+
+        [Test]
+        public void Contained2()
+        {
+            var tm = TypeModel.Create();
+            var obj = new Container2 { Values = MakeArray2() };
             var copy = tm.DeepClone(obj);
             Assert.That(copy.Values, Is.EqualTo(obj.Values));
         }
@@ -122,6 +181,22 @@ namespace AqlaSerializer.unittest.Aqla
             var original = MakeArray();
             var copy = tm.DeepClone(original);
             Assert.That(copy, Is.EqualTo(original));
+        }
+
+        [Test]
+        public void Root2()
+        {
+            var tm = TypeModel.Create();
+            var original = MakeArray2();
+            var copy = tm.DeepClone(original);
+            Assert.That(copy, Is.EqualTo(original));
+        }
+
+        T[,] MakeArray2()
+        {
+            var original = new T[2, 2];
+            _writer(ref original[1, 0], 123);
+            return original;
         }
     }
 }

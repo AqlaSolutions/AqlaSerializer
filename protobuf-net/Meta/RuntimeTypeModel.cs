@@ -75,7 +75,8 @@ namespace AqlaSerializer.Meta
             return type != model.MapType(typeof(Enum))
                    && type != model.MapType(typeof(object))
                    && type != model.MapType(typeof(ValueType))
-                   && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown);
+                   && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown)
+                   && !model.IsInbuiltType(type);
             //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
         
@@ -427,7 +428,7 @@ namespace AqlaSerializer.Meta
             // the fast fail path: types that will never have a meta-type
             bool shouldAdd = AutoAddMissingTypes || addEvenIfAutoDisabled;
 
-            if (!Helpers.IsEnum(type) && TryGetBasicTypeSerializer(type) != null)
+            if (IsInbuiltType(type))
             {
                 if (shouldAdd && !addWithContractOnly) throw MetaType.InbuiltType(type);
                 return -1; // this will never be a meta-type
@@ -512,6 +513,11 @@ namespace AqlaSerializer.Meta
                 AddDependencies(metaType);
             }
             return key;
+        }
+
+        bool IsInbuiltType(Type type)
+        {
+            return !Helpers.IsEnum(type) && TryGetBasicTypeSerializer(type) != null;
         }
 
         void AddDependencies(MetaType type)

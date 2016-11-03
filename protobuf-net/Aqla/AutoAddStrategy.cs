@@ -276,7 +276,7 @@ namespace AqlaSerializer
                         Coalesce(callbacks, 2, 6, 10), Coalesce(callbacks, 3, 7, 11));
                 }
 
-                if (!DisableAutoAddingMemberTypes)
+                if (!DisableAutoAddingMemberTypes && !metaType.Type.IsArray)
                 {
                     foreach (var member in members)
                     {
