@@ -48,11 +48,11 @@ namespace Examples.Issues
             var getTypeSerializer = typeof(Serializer);
 
             var reflectionMethods = reflectionSerializer.GetMethods(BindingFlags.Static | BindingFlags.Public);
-            var reflectionGenericMethodInfo = reflectionMethods.First<MethodInfo>(method => method.Name == "SerializeWithLengthPrefix");
+            var reflectionGenericMethodInfo = reflectionMethods.First<MethodInfo>(method => method.Name == "SerializeWithLengthPrefix" && method.GetParameters().Length == 3);
             var reflectionSpecificMethodInfo = reflectionGenericMethodInfo.MakeGenericMethod(new Type[] { derived.GetType() });
 
             var getTypeMethods = getTypeSerializer.GetMethods(BindingFlags.Static | BindingFlags.Public);
-            var getTypeGenericMethodInfo = getTypeMethods.First<MethodInfo>(method => method.Name == "SerializeWithLengthPrefix");
+            var getTypeGenericMethodInfo = getTypeMethods.First<MethodInfo>(method => method.Name == "SerializeWithLengthPrefix" && method.GetParameters().Length == 3);
             var getTypeSpecificMethodInfo = getTypeGenericMethodInfo.MakeGenericMethod(new Type[] { derived.GetType() });
 
             var reflectionStream = new MemoryStream();
