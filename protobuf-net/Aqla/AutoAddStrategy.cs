@@ -58,13 +58,18 @@ namespace AqlaSerializer
                 _typeMapper = value;
             }
         }
-        
+
         public virtual bool CanAutoAddType(Type type)
+        {
+            return GetContractFamily(type) != AttributeFamily.None;
+        }
+
+        public bool CanAutoAddType_Full(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (!RuntimeTypeModel.CheckTypeCanBeAdded(Model, type)) return false;
-            return GetContractFamily(type) != AttributeFamily.None
-                   || RuntimeTypeModel.CheckTypeDoesntRequireContract(Model, type);
+            if (RuntimeTypeModel.CheckTypeDoesntRequireContract(Model, type)) return true;
+            return CanAutoAddType(type);
         }
 
         public virtual void ApplyDefaultBehaviour(MetaType metaType)
@@ -72,7 +77,7 @@ namespace AqlaSerializer
             var type = metaType.Type;
             Type baseType = metaType.GetBaseType();
             if (baseType != null
-                && CanAutoAddType(baseType)
+                && CanAutoAddType_Full(baseType)
                 && MetaType.CanHaveSubType(baseType))
             {
                 Model.FindOrAddAuto(baseType, true, false, false);
@@ -85,7 +90,7 @@ namespace AqlaSerializer
 
                 {
                     AttributeMap[] typeAttribs = AttributeMap.Create(Model, type, false);
-                    family = GetContractFamily(type, typeAttribs);
+                    family = GetContractFamily_Full(type, typeAttribs);
 
                     mapped = TypeMapper.Map(
                         new TypeArgsValue(type, typeAttribs, AcceptableAttributes, Model)
@@ -188,7 +193,7 @@ namespace AqlaSerializer
                                 }
                             }
 
-                            var r = ApplyDefaultBehaviour_AddMembers(args);
+                            var r = ApplyDefaultBehaviour_AddMembers_Full(args);
                             if (r != null)
                             {
                                 if (!hasGetterSetter) throw new MemberAccessException("Property " + property + " should be readable to be mapped.");
@@ -219,7 +224,7 @@ namespace AqlaSerializer
                                 }
                             }
 
-                            var r = ApplyDefaultBehaviour_AddMembers(args);
+                            var r = ApplyDefaultBehaviour_AddMembers_Full(args);
                             if (r != null) members.Add(r);
                         }
                     }
@@ -266,7 +271,7 @@ namespace AqlaSerializer
 
                 foreach (var member in members.OrderBy(m => m.MappingState.TagIsPinned ? 0 : 1))
                 {
-                    ApplyDefaultBehaviour(metaType, member,
+                    ApplyDefaultBehaviour_Full(metaType, member,
                         (inferTagByName || implicitMode != ImplicitFieldsMode.None) ? (int?)implicitFirstTag : null);
                 }
 
@@ -289,7 +294,7 @@ namespace AqlaSerializer
                             memberType = TypeModel.GetListItemType(Model, memberType) ?? memberType;
                             if (memberType == null) continue;
 
-                            if (CanAutoAddType(memberType))
+                            if (CanAutoAddType_Full(memberType))
                             {
                                 Model.FindOrAddAuto(memberType, true, false, false);
                             }
@@ -313,20 +318,24 @@ namespace AqlaSerializer
                         // we can't add to frozen base type
                         // but this is not always an error
                         // e.g. dynamic member of base type doesn't need registered subtype
-                        if (!baseMeta.IsFrozen && !DisableAutoRegisteringSubtypes && !baseMeta.IsList && baseMeta.IsValidSubType(type) && CanAutoAddType(baseType))
+                        if (!baseMeta.IsFrozen && !DisableAutoRegisteringSubtypes && !baseMeta.IsList && baseMeta.IsValidSubType(type) && CanAutoAddType_Full(baseType))
                             baseMeta.AddSubType(baseMeta.GetNextFreeFieldNumber(AutoRegisteringSubtypesFirstTag), type);
                     }
                 }
             }
         }
 
-        protected virtual MappedMember ApplyDefaultBehaviour_AddMembers(MemberArgsValue argsValue)
+        protected MappedMember ApplyDefaultBehaviour_AddMembers_Full(MemberArgsValue argsValue)
         {
             var memberType = Helpers.GetMemberType(argsValue.Member);
             // we just don't like delegate types ;p
             if (memberType == null || Helpers.IsSubclassOf(memberType, Model.MapType(typeof(Delegate)))) return null;
+            return ApplyDefaultBehaviour_AddMembers(argsValue);
+        }
 
-            var normalized= MemberMapper.Map(argsValue);
+        protected virtual MappedMember ApplyDefaultBehaviour_AddMembers(MemberArgsValue argsValue)
+        {
+            var normalized = MemberMapper.Map(argsValue);
             if (normalized != null)
             {
                 var m = normalized.MappingState.MainValue;
@@ -351,6 +360,13 @@ namespace AqlaSerializer
         public AttributeFamily GetContractFamily(Type type)
         {
             var attributes = AttributeMap.Create(Model, type, false);
+            return GetContractFamily_Full(type, attributes);
+        }
+
+        protected AttributeFamily GetContractFamily_Full(Type type, AttributeMap[] attributes)
+        {
+            if (Helpers.GetNullableUnderlyingType(type) != null) return AttributeFamily.None;
+            if (!Helpers.IsEnum(type) && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
             return GetContractFamily(type, attributes);
         }
 
@@ -478,13 +494,17 @@ namespace AqlaSerializer
         {
             return (value & required) == required;
         }
-        
+
+        protected void ApplyDefaultBehaviour_Full(MetaType metaType, MappedMember mappedMember, int? implicitFirstTag)
+        {
+            if (mappedMember == null || mappedMember.Member == null) return; // nix
+            ApplyDefaultBehaviour(metaType, mappedMember, implicitFirstTag);
+        }
+
         protected virtual void ApplyDefaultBehaviour(MetaType metaType, MappedMember mappedMember, int? implicitFirstTag)
         {
-            MemberInfo member;
-            if (mappedMember == null || (member = mappedMember.Member) == null) return; // nix
+            var member = mappedMember.Member;
             var s = mappedMember.MappingState;
-
             AttributeMap[] attribs = AttributeMap.Create(Model, member, true);
             AttributeMap attrib;
             
