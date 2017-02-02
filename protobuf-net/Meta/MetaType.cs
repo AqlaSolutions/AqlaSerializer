@@ -64,8 +64,9 @@ namespace AqlaSerializer.Meta
         public Type Type { get; }
 
         bool _isFrozen;
+#if !WINRT && !PORTABLE && !SILVERLIGHT
         StackTrace _freezeStackTrace;
-
+#endif
         internal bool IsFrozen
         {
             get
@@ -74,7 +75,7 @@ namespace AqlaSerializer.Meta
             }
             private set
             {
-#if DEBUG
+#if DEBUG && !WINRT && !PORTABLE && !SILVERLIGHT
                 if (value && !_isFrozen)
                     _freezeStackTrace = new StackTrace(false);
 #endif
@@ -214,7 +215,7 @@ namespace AqlaSerializer.Meta
 
         void ThrowFrozen()
         {
-#if DEBUG
+#if DEBUG && !WINRT && !PORTABLE && !SILVERLIGHT
             Debug.WriteLine("Frozen at " + _freezeStackTrace);
 #endif
             throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + Type.FullName + " or once its settings were used for generating member serializer");
