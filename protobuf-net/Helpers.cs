@@ -38,6 +38,35 @@ namespace AqlaSerializer
     {
         private Helpers() { }
 
+#if WINRT
+        public static TypeInfo GetTypeInfo(Type type)
+        {
+            return type.GetTypeInfo();
+        }
+
+        public static TypeInfo GetTypeInfo(TypeInfo type)
+        {
+            return type;
+        }
+
+        
+        public static Delegate CreateDelegate(Type type, MethodInfo method)
+        {
+            return method.CreateDelegate(type);
+        }
+#else
+        public static Type GetTypeInfo(Type type)
+        {
+            return type;
+        }
+
+        public static Delegate CreateDelegate(Type type, MethodInfo method)
+        {
+            return Delegate.CreateDelegate(type, method);
+        }
+
+#endif
+
         public static void MemoryBarrier()
         {
 #if !WINRT
