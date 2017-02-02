@@ -31,6 +31,7 @@ namespace AqlaSerializer.Meta.Mapping
         public bool IsForced { get; set; }
         public MemberInfo Member { get; set; }
         public MetaType.AttributeFamily Family { get; set; }
+        public FieldInfo BackingField { get; set; }
         /// <summary>
         /// Static field on enum type
         /// </summary>

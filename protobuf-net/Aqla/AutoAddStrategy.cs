@@ -159,16 +159,31 @@ namespace AqlaSerializer
                         FieldInfo field;
                         if ((property = member as PropertyInfo) != null)
                         {
+                            if (!property.CanWrite)
+                            {
+                                // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
+                                var backingFieldName = $"<{property.Name}>k__BackingField";
+                                foreach (var m in foundList)
+                                {
+                                    var fm = m as FieldInfo;
+                                    if ((fm != null) && m.Name == backingFieldName)
+                                    {
+                                        args.BackingField = fm;
+                                        break;
+                                    }
+                                }
+                            }
                             bool isIndexer = property.GetIndexParameters().Length > 0;
                             bool isPublic = Helpers.GetGetMethod(property, false, false) != null;
 
-                            bool hasGetterSetter = isPublic || Helpers.GetGetMethod(property, true, true) != null;
+                            bool hasGetter = isPublic || Helpers.GetGetMethod(property, true, true) != null;
 
-                            bool canBeMapped = !isIndexer && hasGetterSetter;
+                            bool canBeMapped = !isIndexer && hasGetter;
 
                             if (canBeMapped &&
-                                (!mapped.ImplicitOnlyWriteable ||
-                                 Helpers.CheckIfPropertyWritable
+                                (!mapped.ImplicitOnlyWriteable 
+                                 || args.BackingField != null 
+                                 || Helpers.CheckIfPropertyWritable
                                      (
                                          Model,
                                          property,
@@ -196,7 +211,7 @@ namespace AqlaSerializer
                             var r = ApplyDefaultBehaviour_AddMembers_Full(args);
                             if (r != null)
                             {
-                                if (!hasGetterSetter) throw new MemberAccessException("Property " + property + " should be readable to be mapped.");
+                                if (!hasGetter) throw new MemberAccessException("Property " + property + " should be readable to be mapped.");
                                 if (isIndexer) throw new MemberAccessException("Property " + property + " can't be mapped because it's an indexer.");
                                 members.Add(r);
                             }

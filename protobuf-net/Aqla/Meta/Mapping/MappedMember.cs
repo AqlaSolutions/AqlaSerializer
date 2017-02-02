@@ -52,6 +52,8 @@ namespace AqlaSerializer
 
         public MemberInfo Member => MappingState.Input.Member;
 
+        public FieldInfo BackingField => MappingState.Input.BackingField;
+
         public string Name => MappingState.MainValue.Name;
         
         /// <summary>
