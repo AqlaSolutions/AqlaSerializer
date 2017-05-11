@@ -111,7 +111,7 @@ namespace AqlaSerializer.Meta
                     FieldInfo field = fieldsPropsUnfiltered[i] as FieldInfo;
                     if (field != null)
                     {
-                        if (!field.IsInitOnly) return null; // all public fields must be readonly to be counted a tuple
+                        if (!field.IsInitOnly && !Helpers.IsValueType(type)) return null; // all public fields must be readonly to be counted a tuple but there is an exclusion for structs
                         memberList.Add(field);
                     }
                 }
