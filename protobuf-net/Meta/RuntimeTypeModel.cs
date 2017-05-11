@@ -467,7 +467,8 @@ namespace AqlaSerializer.Meta
                             // always add safe tuples
                             Type def = type.GetGenericTypeDefinition();
                             if (def == MapType(typeof(System.Collections.Generic.KeyValuePair<,>))
-                                || def.FullName.StartsWith("System.Tuple`"))
+                                || def.FullName.StartsWith("System.Tuple`")
+                                || def.FullName.StartsWith("System.ValueTuple`"))
                             {
                                 shouldAdd = true;
                             }
