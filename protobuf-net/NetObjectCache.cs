@@ -18,7 +18,7 @@ namespace AqlaSerializer
 
         private MutableList _underlyingList;
 
-        private MutableList List => _underlyingList ?? (_underlyingList = new MutableList());
+        private MutableList List => _underlyingList ?? (_underlyingList = new MutableList(2048));
 
         public int LastNewKey => List.Count > 0 ? List.Count + 1 : Root;
         public object LastNewValue => List.Count > 0 ? List[List.Count - 1] : _rootObject;

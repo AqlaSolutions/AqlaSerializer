@@ -38,10 +38,9 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
             var memberRtAttr = AttributeMap.CreateRuntime<SerializableMemberAttribute>(model, member, true).FirstOrDefault(attr => CheckAqlaModelId(attr, model));
             if (memberRtAttr == null) return MemberHandlerResult.NotFound;
 
-            SerializableMemberNestedAttribute[] nested = AttributeMap
+            var nested = AttributeMap
                 .CreateRuntime<SerializableMemberNestedAttribute>(model, member, true)
-                .Where(a => Equals(model.ModelId, a.ModelId))
-                .ToArray();
+                .Where(a => Equals(model.ModelId, a.ModelId));
 
             main = memberRtAttr.MemberSettings;
 

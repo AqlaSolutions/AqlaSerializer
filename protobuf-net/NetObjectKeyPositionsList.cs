@@ -8,7 +8,7 @@ namespace AqlaSerializer
 {
     internal class NetObjectKeyPositionsList
     {
-        List<int> _keyToPosition = new List<int>();
+        List<int> _keyToPosition = new List<int>(2048);
         
         public void SetPosition(int key, int position)
         {
@@ -60,12 +60,12 @@ namespace AqlaSerializer
             _importingLock = false;
         }
         
-        public void ImportNext(int[] arr)
+        public void ImportNext(IEnumerable<int> enumerable)
         {
             int acc = _previousImportedPosition;
-            for (int i = 0; i < arr.Length; i++)
+            foreach (var cur in enumerable)
             {
-                acc += arr[i];
+                acc += cur;
                 SetPosition(_importKnownCount++, acc);
             }
             _previousImportedPosition = acc;

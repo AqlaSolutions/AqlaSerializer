@@ -405,6 +405,34 @@ namespace AqlaSerializer
         }
 
         /// <summary>
+        /// Behavior same as <see cref="ListHelpers"/> with ProtoCompatibility = off (except max array size). Don't read anything in-between elements!
+        /// </summary>
+        internal IEnumerable<T> ReadArrayContentIterating<T>(Func<T> reader)
+        {
+            var t = StartSubItem(this);
+            if (ReadFieldHeader() != ListHelpers.FieldLength) throw new ProtoException("Array length expected");
+            int count = ReadInt32();
+
+            while (ReadFieldHeader() > 0 && FieldNumber != ListHelpers.FieldItem)
+                SkipField();
+
+            var wt = WireType;
+
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (i != 0 && !HasSubValue(wt, this)) throw new ProtoException("Expected array item but not found");
+                    yield return reader();
+                }
+            }
+            finally
+            {
+                EndSubItem(t, true, this);
+            }
+        }
+
+        /// <summary>
         /// Reads a signed 16-bit integer from the stream: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>
         public short ReadInt16()

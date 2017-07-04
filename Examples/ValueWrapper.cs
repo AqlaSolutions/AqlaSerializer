@@ -7,6 +7,7 @@ using System.Text;
 using NUnit.Framework;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
+// ReSharper disable CompareOfFloatsByEqualityOperator
 
 namespace Examples
 {

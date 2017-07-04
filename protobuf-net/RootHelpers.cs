@@ -83,10 +83,7 @@ namespace AqlaSerializer
 
         static void ImportReferencePositions(ProtoReader source)
         {
-            source.NetCacheKeyPositionsList.ImportNext(
-                source.ReadArrayContent(
-                    source.Model?.ReferenceVersioningSeekingObjectsPredictedSize ?? TypeModel.DefaultReferenceVersioningSeekingObjectsListPredictedSize,
-                    source.ReadInt32));
+            source.NetCacheKeyPositionsList.ImportNext(source.ReadArrayContentIterating(source.ReadInt32));
         }
 
         public static void ReadOwnFooter(bool seeking, int formatVersion, ProtoReader source)

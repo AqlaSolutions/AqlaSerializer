@@ -13,6 +13,11 @@ namespace AqlaSerializer.Meta
         {
         }
 
+        public MutableList(int capacity)
+            : base(capacity)
+        {
+        }
+
         public MutableList(IEnumerable<object> enumerable)
             : base(enumerable)
         {
@@ -56,6 +61,11 @@ namespace AqlaSerializer.Meta
 
         public BasicList()
         {
+        }
+
+        public BasicList(int capacity)
+        {
+            Head = new Node(new object[capacity], 0);
         }
 
         public BasicList(IEnumerable<object> enumerable)
@@ -188,7 +198,7 @@ namespace AqlaSerializer.Meta
             internal Node(object[] data, int length)
             {
                 Helpers.DebugAssert((data == null && length == 0) ||
-                    (data != null && length > 0 && length <= data.Length));
+                    (data != null && length >= 0 && length <= data.Length));
                 this._data = data;
 
                 this.Length = length;
