@@ -60,7 +60,7 @@ namespace AqlaSerializer
             return type;
         }
 
-        public static Delegate CreateDelegate(Type type, MethodInfo method)
+        public static Delegate CreateDelegate(System.Type type, System.Reflection.MethodInfo method)
         {
             return Delegate.CreateDelegate(type, method);
         }

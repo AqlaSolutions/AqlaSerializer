@@ -673,7 +673,7 @@ namespace AqlaSerializer.Meta
 
 #if !FEAT_IKVM
         /// <summary>
-        /// Use this when you need to recreate RuntimeTypeModel with the same subtype keys on another side (if you don't use precompilation then your models should be initialized in this way), see also <see cref="ExportTypeRelations"/>. Fields are not imported!
+        /// Use this when you need to recreate RuntimeTypeModel with the same subtype keys on another side (if you use runtime (non-precompiled) models they should be initialized in this way), see also <see cref="ExportTypeRelations"/>. It doesn't synchronize member field numbers. Use <paramref name="forceDefaultBehavior"></paramref> to auto-register fields or add them with proper numbers manually.
         /// </summary>
         /// <remarks>
         /// On 1st side (possible network server):
@@ -681,8 +681,11 @@ namespace AqlaSerializer.Meta
         /// On 2nd side (possible network client):
         /// model.ImportTypeRelations((ModelTypeRelationsData)Deserialize(...))
         /// </remarks>
-        /// <param name="data"></param>
-        /// <param name="forceDefaultBehavior"></param>
+        /// <param name="data">The data exported with <see cref="ExportTypeRelations"/></param>
+        /// <param name="forceDefaultBehavior">
+        /// Allows to add members with their field numbers the same way as <see cref="MetaType.ApplyDefaultBehaviour"/> does.
+        /// If you don't need to register any members or want to add them manually pass false to this parameter.
+        /// </param>
         public void ImportTypeRelations(ModelTypeRelationsData data, bool forceDefaultBehavior)
         {
             int lockToken = 0;
@@ -698,7 +701,7 @@ namespace AqlaSerializer.Meta
                     
                     foreach (var t in data.Types)
                     {
-                        ImportTypeRelations(t);
+                        ImportTypeRelationsElement(t);
                     }
                 }
 
@@ -716,7 +719,7 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        public MetaType ImportTypeRelations(TypeData data)
+        public MetaType ImportTypeRelationsElement(TypeData data)
         {
             int lockToken = 0;
             try
@@ -738,7 +741,7 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// Exports all types list with registered subtypes, can be used to recreate the same model but without fields mapping
+        /// Exports all types list with registered subtypes, can be used to recreate the same model (normal field numbers are not stored, only subtype numbers).
         /// </summary>
         public ModelTypeRelationsData ExportTypeRelations()
         {
