@@ -8,6 +8,9 @@ AqlaSerializer is an *object* serializer, it's primary goal is to support import
 
 It is a free open source project in which you can participiate.
 
+Status: 
+though it's not actively developed now I consider it <b>stable</b> for all supported platforms. There are no major issues that require fixing. But I'm not sure about Core CLR support, it might require some testing.
+
 Nuget: <a href="https://www.nuget.org/packages/aqlaserializer/">aqlaserializer</a>.
 
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/wiki">wiki</a>.
