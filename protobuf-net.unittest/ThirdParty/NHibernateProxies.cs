@@ -122,47 +122,47 @@ namespace AqlaSerializer.unittest.ThirdParty
         }
 
         public class Bar : Foo { }
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void AttemptToSerializeUnknownSubtypeShouldFail_Runtime()
         {
             var model = BuildModel();
-            model.Serialize(Stream.Null, new Bar());
+            Assert.Throws<InvalidOperationException>(() => model.Serialize(Stream.Null, new Bar()));
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void AttemptToSerializeUnknownSubtypeShouldFail_CompileInPlace()
         {
             var model = BuildModel();
             model.CompileInPlace();
             model.Serialize(Stream.Null, new Bar());
         }
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void AttemptToSerializeUnknownSubtypeShouldFail_Compile()
         {
             var model = BuildModel().Compile();
-            model.Serialize(Stream.Null, new Bar());
+            Assert.Throws<InvalidOperationException>(() => model.Serialize(Stream.Null, new Bar()));
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void AttemptToSerializeWrapperUnknownSubtypeShouldFail_Runtime()
         {
             var model = BuildModel();
-            model.Serialize(Stream.Null, new FooWrapper { Foo = new Bar() });
+            Assert.Throws<InvalidOperationException>(() => model.Serialize(Stream.Null, new FooWrapper { Foo = new Bar() }));
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void AttemptToSerializeWrapperUnknownSubtypeShouldFail_CompileInPlace()
         {
             var model = BuildModel();
             model.CompileInPlace();
-            model.Serialize(Stream.Null, new FooWrapper { Foo = new Bar() });
+            Assert.Throws<InvalidOperationException>(() => model.Serialize(Stream.Null, new FooWrapper { Foo = new Bar() }));
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void AttemptToSerializeWrapperUnknownSubtypeShouldFail_Compile()
         {
             var model = BuildModel().Compile();
-            model.Serialize(Stream.Null, new FooWrapper { Foo = new Bar() });
+            Assert.Throws<InvalidOperationException>(() => model.Serialize(Stream.Null, new FooWrapper { Foo = new Bar() }));
         }
 
         [Test]

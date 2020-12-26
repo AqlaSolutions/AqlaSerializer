@@ -44,23 +44,23 @@ namespace AqlaSerializer.unittest.Meta
         public void TestCanDeserialierAllFromEmptyStream()
         {
             var model = CreateModel(true);
-            Assert.IsInstanceOfType(typeof(OuterRef), model.Deserialize(Stream.Null, null, typeof(OuterRef)));
-            Assert.IsInstanceOfType(typeof(OuterVal), model.Deserialize(Stream.Null, null, typeof(OuterVal)));
-            Assert.IsInstanceOfType(typeof(InnerRef), model.Deserialize(Stream.Null, null, typeof(InnerRef)));
-            Assert.IsInstanceOfType(typeof(InnerVal), model.Deserialize(Stream.Null, null, typeof(InnerVal)));
+            Assert.IsInstanceOf(typeof(OuterRef), model.Deserialize(Stream.Null, null, typeof(OuterRef)));
+            Assert.IsInstanceOf(typeof(OuterVal), model.Deserialize(Stream.Null, null, typeof(OuterVal)));
+            Assert.IsInstanceOf(typeof(InnerRef), model.Deserialize(Stream.Null, null, typeof(InnerRef)));
+            Assert.IsInstanceOf(typeof(InnerVal), model.Deserialize(Stream.Null, null, typeof(InnerVal)));
 
             model.CompileInPlace();
-            Assert.IsInstanceOfType(typeof(OuterRef), model.Deserialize(Stream.Null, null, typeof(OuterRef)));
-            Assert.IsInstanceOfType(typeof(OuterVal), model.Deserialize(Stream.Null, null, typeof(OuterVal)));
-            Assert.IsInstanceOfType(typeof(InnerRef), model.Deserialize(Stream.Null, null, typeof(InnerRef)));
-            Assert.IsInstanceOfType(typeof(InnerVal), model.Deserialize(Stream.Null, null, typeof(InnerVal)));
+            Assert.IsInstanceOf(typeof(OuterRef), model.Deserialize(Stream.Null, null, typeof(OuterRef)));
+            Assert.IsInstanceOf(typeof(OuterVal), model.Deserialize(Stream.Null, null, typeof(OuterVal)));
+            Assert.IsInstanceOf(typeof(InnerRef), model.Deserialize(Stream.Null, null, typeof(InnerRef)));
+            Assert.IsInstanceOf(typeof(InnerVal), model.Deserialize(Stream.Null, null, typeof(InnerVal)));
 
             var compiled = model.Compile("SubItems","SubItems.dll");
             PEVerify.Verify("SubItems.dll");
-            Assert.IsInstanceOfType(typeof(OuterRef), compiled.Deserialize(Stream.Null, null, typeof(OuterRef)));
-            Assert.IsInstanceOfType(typeof(OuterVal), compiled.Deserialize(Stream.Null, null, typeof(OuterVal)));
-            Assert.IsInstanceOfType(typeof(InnerRef), compiled.Deserialize(Stream.Null, null, typeof(InnerRef)));
-            Assert.IsInstanceOfType(typeof(InnerVal), compiled.Deserialize(Stream.Null, null, typeof(InnerVal)));
+            Assert.IsInstanceOf(typeof(OuterRef), compiled.Deserialize(Stream.Null, null, typeof(OuterRef)));
+            Assert.IsInstanceOf(typeof(OuterVal), compiled.Deserialize(Stream.Null, null, typeof(OuterVal)));
+            Assert.IsInstanceOf(typeof(InnerRef), compiled.Deserialize(Stream.Null, null, typeof(InnerRef)));
+            Assert.IsInstanceOf(typeof(InnerVal), compiled.Deserialize(Stream.Null, null, typeof(InnerVal)));
 
         }
 

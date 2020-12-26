@@ -1,6 +1,7 @@
 ﻿using AqlaSerializer;
 using NUnit.Framework;
 using AqlaSerializer.Meta;
+using System;
 
 namespace AqlaSerializer.unittest.AqlaAttributes
 {
@@ -61,12 +62,11 @@ namespace AqlaSerializer.unittest.AqlaAttributes
             _model.AutoAddMissingTypes = true;
             Check();
         }
-
-        [ExpectedException]
+        
         [Test]
         public void ShouldNotWorkWithoutFallback()
         {
-            Check();
+            Assert.Throws<InvalidOperationException>(() => Check());
         }
 
         private void Check()

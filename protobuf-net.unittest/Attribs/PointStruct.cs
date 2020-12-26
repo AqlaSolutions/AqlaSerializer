@@ -78,12 +78,14 @@ namespace AqlaSerializer.unittest.Attribs
 #if FAKE_COMPILE
         [Ignore]
 #endif
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x)")]
+        [Test]
         public void FullyCompileWithPrivateField_KnownToFail()
         {
             var model = BuildModel();
             Point point = new Point(26, 13);
-            ClonePoint(model.Compile(), point, "Compile");
+            var ex = Assert.Throws<ProtoAggregateException>(() => ClonePoint(model.Compile(), point, "Compile"));
+            Assert.AreEqual(ex.Message,
+                @"One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x)");
         }
         static void ClonePoint(TypeModel model, Point original, string message)
         {
@@ -115,11 +117,13 @@ namespace AqlaSerializer.unittest.Attribs
 #if FAKE_COMPILE
         [Ignore]
 #endif
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x)")]
+        [Test]
         public void VerifyPointDirect()
         {
             var model = BuildModel();
-            model.Compile("PointDirect", "PointDirect.dll");
+            var ex = Assert.Throws<ProtoAggregateException>(() => model.Compile("PointDirect", "PointDirect.dll"));
+            Assert.AreEqual(ex.Message, @"One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: AqlaSerializer.unittest.Attribs.PointStructTests+Point.x)");
+            
             //PEVerify.Verify("PointDirect.dll", 1); // expect failure due to field access
         }
 

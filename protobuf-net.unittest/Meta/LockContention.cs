@@ -120,7 +120,7 @@ namespace AqlaSerializer.unittest.Meta
                                 }
                                 ThreadRace.A a =
                                     (ThreadRace.A)model.Deserialize(ms, null, typeof(ThreadRace.A));
-                                Assert.That(a, Is.InstanceOfType(typeof(ThreadRace.Y9)));
+                                Assert.That(a, Is.InstanceOf(typeof(ThreadRace.Y9)));
                             }
 
                         }

@@ -16,7 +16,7 @@ public class MainSetUpFixture
 
     static bool _validateInitialized;
 
-    [SetUp]
+    [OneTimeSetUp]
     public void UnhandledExceptionRegistering()
     {
         _exceptions.Clear();
@@ -48,7 +48,7 @@ public class MainSetUpFixture
         Assert.IsTrue(e.Count == 0, string.Join("\r\n\r\n", e.Select(ex => ex.ToString()).ToArray()));
     }
 
-    [TearDown]
+    [OneTimeTearDown]
     public void VerifyUnhandledExceptionOnFinalizers()
     {
         GC.GetTotalMemory(true);

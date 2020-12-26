@@ -61,51 +61,51 @@ namespace AqlaSerializer.unittest.Meta
         public void GetBackTheRightType_SomeBase()
         {
             var model = CreateModel();
-            Assert.IsInstanceOfType(typeof(SomeBase), model.DeepClone(new SomeBase()), "Runtime");
+            Assert.IsInstanceOf(typeof(SomeBase), model.DeepClone(new SomeBase()), "Runtime");
 
             model.CompileInPlace();
-            Assert.IsInstanceOfType(typeof(SomeBase), model.DeepClone(new SomeBase()), "In-Place");
+            Assert.IsInstanceOf(typeof(SomeBase), model.DeepClone(new SomeBase()), "In-Place");
 
             var compiled = model.Compile();
-            Assert.IsInstanceOfType(typeof(SomeBase), compiled.DeepClone(new SomeBase()), "Compiled");
+            Assert.IsInstanceOf(typeof(SomeBase), compiled.DeepClone(new SomeBase()), "Compiled");
         }
         [Test]
         public void GetBackTheRightType_SomeDerived()
         {
             var model = CreateModel();
-            Assert.IsInstanceOfType(typeof(SomeDerived), model.DeepClone(new SomeDerived()), "Runtime");
+            Assert.IsInstanceOf(typeof(SomeDerived), model.DeepClone(new SomeDerived()), "Runtime");
 
             model.CompileInPlace();
-            Assert.IsInstanceOfType(typeof(SomeDerived), model.DeepClone(new SomeDerived()), "In-Place");
+            Assert.IsInstanceOf(typeof(SomeDerived), model.DeepClone(new SomeDerived()), "In-Place");
 
             var compiled = model.Compile();
-            Assert.IsInstanceOfType(typeof(SomeDerived), compiled.DeepClone(new SomeDerived()), "Compiled");
+            Assert.IsInstanceOf(typeof(SomeDerived), compiled.DeepClone(new SomeDerived()), "Compiled");
         }
 
         [Test]
         public void GetBackTheRightType_AnotherDerived()
         {
             var model = CreateModel();
-            Assert.IsInstanceOfType(typeof(AnotherDerived), model.DeepClone(new AnotherDerived()), "Runtime");
+            Assert.IsInstanceOf(typeof(AnotherDerived), model.DeepClone(new AnotherDerived()), "Runtime");
 
             model.CompileInPlace();
-            Assert.IsInstanceOfType(typeof(AnotherDerived), model.DeepClone(new AnotherDerived()), "In-Place");
+            Assert.IsInstanceOf(typeof(AnotherDerived), model.DeepClone(new AnotherDerived()), "In-Place");
 
             var compiled = model.Compile();
-            Assert.IsInstanceOfType(typeof(AnotherDerived), compiled.DeepClone(new AnotherDerived()), "Compiled");
+            Assert.IsInstanceOf(typeof(AnotherDerived), compiled.DeepClone(new AnotherDerived()), "Compiled");
         }
 
         [Test]
         public void GetBackTheRightType_NotInvolved()
         {
             var model = CreateModel();
-            Assert.IsInstanceOfType(typeof(NotInvolved), model.DeepClone(new NotInvolved()), "Runtime");
+            Assert.IsInstanceOf(typeof(NotInvolved), model.DeepClone(new NotInvolved()), "Runtime");
 
             model.CompileInPlace();
-            Assert.IsInstanceOfType(typeof(NotInvolved), model.DeepClone(new NotInvolved()), "In-Place");
+            Assert.IsInstanceOf(typeof(NotInvolved), model.DeepClone(new NotInvolved()), "In-Place");
 
             var compiled = model.Compile();
-            Assert.IsInstanceOfType(typeof(NotInvolved), compiled.DeepClone(new NotInvolved()), "Compiled");
+            Assert.IsInstanceOf(typeof(NotInvolved), compiled.DeepClone(new NotInvolved()), "Compiled");
         }
 
     }
