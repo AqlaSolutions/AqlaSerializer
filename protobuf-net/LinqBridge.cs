@@ -1,4 +1,4 @@
-#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !WINRT && !PHONE8 && !MONODROID
+#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !WINRT && !PHONE8 && !MONODROID && !NETSTANDARD
 #region License, Terms and Author(s)
 //
 // LINQBridge
@@ -2729,7 +2729,7 @@ namespace AltLinq
 }
 
 // $Id: ExtensionAttribute.cs 898b3d493ed6 2012/04/17 20:09:57 azizatif $
-#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !SILVERLIGHT && !PHONE8 && !WINRT && !MONODROID
+#if !NET_3_5 && !NET_4_0 && !NET_4_5 && !PORTABLE && !PHONE8 && !WINRT && !MONODROID
 namespace System.Runtime.CompilerServices
 {
     /// <remarks>

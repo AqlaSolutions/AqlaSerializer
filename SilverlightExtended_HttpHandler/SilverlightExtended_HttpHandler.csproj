@@ -71,10 +71,6 @@
       <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
       <Name>aqlaserializer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SilverlightExtended\SilverlightExtended.csproj">
-      <Project>{05a18144-d234-46d7-a36c-cd45ba884746}</Project>
-      <Name>SilverlightExtended</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

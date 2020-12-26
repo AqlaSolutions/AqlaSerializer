@@ -1,305 +1,88 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AqlaSerializer</RootNamespace>
     <AssemblyName>aqlaserializer</AssemblyName>
-    <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition="'$(Configuration)' == 'Net45' OR '$(Configuration)' == 'Net45Safe'">v4.5</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition="'$(Configuration)' == 'Net40' OR '$(Configuration)' == 'Net40Safe'">v4.0</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition="'$(Configuration)' == 'Net35' OR '$(Configuration)' == 'Net35Safe' OR '$(Configuration)' == 'Unity'">v3.5</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition="'$(Configuration)' == 'Net20' OR '$(Configuration)' == 'Net20Safe'">v2.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <StartupObject>
-    </StartupObject>
-    <SignAssembly>true</SignAssembly>
-    <ApplicationIcon>
-    </ApplicationIcon>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <UpgradeBackupLocation />
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' != 'Profile'">
+    <RootNamespace>aqlaserializer</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyOriginatorKeyFile>..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
+    <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly</Configurations>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+  <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='Silverlight2' AND '$(Configuration)'!='iOS' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
+    <TargetFrameworks>net20;net30;net35;net40;net45</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(Configuration)' != 'Profile'">true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
+    <TargetFramework>net30</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Debug\aqlaserializer.XML</DocumentationFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Release\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net35|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net35\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NET_3_5</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net35\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DefineConstants>TRACE;</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net35Safe|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net35Safe\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NET_3_5 FEAT_SAFE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net35Safe\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net40|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net40\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NET_3_5 NET_4_0</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net40\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net40Safe|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net40Safe\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NET_3_5 NET_4_0 FEAT_SAFE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net40Safe\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net45|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net45\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NET_3_5 NET_4_0 NET_4_5</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net45\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net45Safe|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net45Safe\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NET_3_5 NET_4_0 NET_4_5 FEAT_SAFE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net45Safe\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net30Safe|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Net30Safe\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FEAT_SAFE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <DocumentationFile>bin\Net30Safe\aqlaserializer.XML</DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net20|AnyCPU' ">
-    <OutputPath>bin\Net20\</OutputPath>
+  <PropertyGroup Condition="'$(Configuration)'=='Release' OR '$(Configuration)'=='Safe'">
     <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
-    <DocumentationFile>bin\Net20\aqlaserializer.XML</DocumentationFile>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants Condition="'$(TargetFramework)'!='net20'">$(DefineConstants); FEAT_SERVICEMODEL</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Net20Safe|AnyCPU' ">
-    <OutputPath>bin\Net20Safe\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FEAT_SAFE</DefineConstants>
-    <DocumentationFile>bin\Net20Safe\aqlaserializer.XML</DocumentationFile>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Silverlight2|AnyCPU' ">
-    <OutputPath>bin\Silverlight2\</OutputPath>
-    <DefineConstants>TRACE;SILVERLIGHT NET_3_0 FEAT_SAFE</DefineConstants>
-    <DocumentationFile>bin\Silverlight2\aqlaserializer.XML</DocumentationFile>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Profile|AnyCPU' ">
-    <OutputPath>bin\Profile\</OutputPath>
-    <DefineConstants>TRACE;NET_3_0 REMOTING</DefineConstants>
-    <DocumentationFile>bin\Release\aqlaserializer.XML</DocumentationFile>
-    <Optimize>true</Optimize>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'iOS|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\iOS\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NO_RUNTIME FEAT_SAFE IOS PLAT_NO_INTERLOCKED</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)'=='Safe'">
+    <DefineConstants>TRACE; FEAT_SAFE</DefineConstants>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Debug\aqlaserializer.XML</DocumentationFile>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Debug\aqlaserializer.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Unity|AnyCPU'">
-    <OutputPath>bin\Unity\</OutputPath>
-    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER PLAT_NO_INTERLOCKED FEAT_SAFE NET_3_0 NET_3_5</DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Profile' ">
+    <DefineConstants>TRACE; REMOTING</DefineConstants>
+    <TargetFramework>net30</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Unity\aqlaserializer.XML</DocumentationFile>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Net20\aqlaserializer.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'CoreOnly|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\CoreOnly\</OutputPath>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Silverlight2' ">
+    <DefineConstants>TRACE;SILVERLIGHT FEAT_SAFE</DefineConstants>
+    <TargetFramework>net30</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'iOS' ">
+    <DefineConstants>TRACE; NO_RUNTIME FEAT_SAFE IOS PLAT_NO_INTERLOCKED</DefineConstants>
+    <TargetFramework>net30</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Unity' ">
+    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER PLAT_NO_INTERLOCKED FEAT_SAFE</DefineConstants>
+    <TargetFramework>net35</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CoreOnly' ">
     <DefineConstants>TRACE;FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NO_RUNTIME</DefineConstants>
+    <TargetFramework>net30</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\CoreOnly\aqlaserializer.XML</DocumentationFile>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Release\aqlaserializer.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
+    <DefineConstants Condition="'$(TargetFramework)'=='net45'">$(DefineConstants); NET_3_0 NET_3_5 NET_4_0 NET_4_5</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='net40'">$(DefineConstants); NET_3_0 NET_3_5 NET_4_0</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='net35'">$(DefineConstants); NET_3_0 NET_3_5</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='net30'">$(DefineConstants); NET_3_0</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
+  
+  <PropertyGroup>
+    <DocumentationFile>o:\Dropbox\CodeProjects\AqlaSerializer\src\protobuf-net\aqlaserializer.xml</DocumentationFile>
+  </PropertyGroup> 
+  <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1'">
     <Reference Include="System">
       <Aliases>global</Aliases>
     </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(TargetFramework)'!='net20'">
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)' != 'Net20' AND '$(Configuration)' != 'Net20Safe' AND '$(Configuration)' != 'Unity'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net20' AND '$(TargetFramework)' != 'netstandard2.1' AND '$(Configuration)' != 'Unity'">
     <Reference Include="System.Runtime.Serialization">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -307,267 +90,31 @@
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Aqla\AttributeType.cs" />
-    <Compile Include="Aqla\AutoAddStrategy.cs" />
-    <Compile Include="Aqla\CallbackAttributes.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetImplicitMemberHandler.cs" />
-    <Compile Include="Aqla\Settings\Inheritable\MemberDefaultsMode.cs" />
-    <Compile Include="Aqla\ValueFormat.cs" />
-    <Compile Include="Aqla\IAutoAddStrategy.cs" />
-    <Compile Include="Aqla\CollectionFormat.cs" />
-    <Compile Include="Aqla\Meta\Mapping\DerivedTypeCandidate.cs" />
-    <Compile Include="Aqla\Meta\Mapping\IMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\IMemberMapper.cs" />
-    <Compile Include="Aqla\Meta\Mapping\ITypeMapper.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MappingHandlerBase.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberMapper.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberArgsValue.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaEnumMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\AqlaPartialMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\DataContractMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\EnumMemberHandlerBase.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\IMemberAttributeHandlerStrategy.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\MemberMappingHandlerBase.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlerResult.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetEnumMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetMemberHandlerStrategy.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\SystemNonSerializableHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\XmlContractMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberState.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MemberHandlers\ProtobufNetPartialMemberHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\MappedMember.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeArgsValue.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlerResult.cs" />
-    <Compile Include="Aqla\Meta\Mapping\ITypeAttributeHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\AqlaPartialHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\DataContractHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\DerivedTypeHandlerStrategy.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\ProtoContractHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\ProtoPartialHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\AqlaContractHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\SerializeDerivedTypeHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\ProtoIncludeHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\SystemSerializableHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\TypeAttributeMappingHandlerBase.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeAttributeHandlers\XmlContractHandler.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeMapper.cs" />
-    <Compile Include="Aqla\Meta\Mapping\TypeState.cs" />
-    <Compile Include="Aqla\SerializableMemberAttributeBase.cs" />
-    <Compile Include="Aqla\SerializableMemberNestedAttribute.cs" />
-    <Compile Include="Aqla\Settings\Inheritable\CollectionSettingsValue.cs" />
-    <Compile Include="Aqla\Settings\Inheritable\MemberLevelSettingsValue.cs" />
-    <Compile Include="Aqla\SerializeDerivedTypeAttribute.cs" />
-    <Compile Include="Aqla\Settings\MemberMainSettingsValue.cs" />
-    <Compile Include="Aqla\Settings\TypeSettingsValue.cs" />
-    <Compile Include="Aqla\SurrogateConverterAttribute.cs" />
-    <Compile Include="Aqla\EnumSerializableValueAttribute.cs" />
-    <Compile Include="Aqla\NonSerializableMemberAttribute.cs" />
-    <Compile Include="Aqla\SerializableMemberAttribute.cs" />
-    <Compile Include="Aqla\SerializableTypeAttribute.cs" />
-    <Compile Include="BclHelpers.cs" />
-    <Compile Include="BufferExtension.cs" />
-    <Compile Include="BufferPool.cs" />
-    <Compile Include="CallerMemberNameAttributes.cs" />
-    <Compile Include="Compiler\CompilerDelegates.cs" />
-    <Compile Include="Compiler\CompilerContext.cs" />
-    <Compile Include="Compiler\Local.cs" />
-    <Compile Include="Compiler\MethodContext.cs" />
-    <Compile Include="Compiler\SerializerCodeGen.cs" />
-    <Compile Include="Compiler\StackValueOperand.cs" />
-    <Compile Include="DisposableAction.cs" />
-    <Compile Include="ICloneable.cs" />
-    <Compile Include="Meta\CompiledAssemblyEqualityAttribute.cs" />
-    <Compile Include="Meta\EnumFlagModelId.cs" />
-    <Compile Include="Meta\IKVMAttributeFactory.cs" />
-    <Compile Include="Meta\ILateReferenceSerializerProxy.cs" />
-    <Compile Include="Meta\IValueSerializerBuilder.cs" />
-    <Compile Include="Meta\MetaType.BuildSerializer.cs" />
-    <Compile Include="Meta\MetaType.Callbacks.cs" />
-    <Compile Include="Meta\MetaType.Comparsion.cs" />
-    <Compile Include="Meta\MetaType.Fields.cs" />
-    <Compile Include="Meta\MetaType.Helpers.cs" />
-    <Compile Include="Meta\MetaType.Hierarchy.cs" />
-    <Compile Include="Meta\MetaType.Schema.cs" />
-    <Compile Include="Meta\MetaType.Settings.cs" />
-    <Compile Include="Meta\MetaType.Surrogate.cs" />
-    <Compile Include="Meta\OverridingManager.cs" />
-    <Compile Include="Meta\ReflectionObjectMap.cs" />
-    <Compile Include="Meta\RuntimeTypeModel.TypesFastFinder.cs" />
-    <Compile Include="Meta\ValueSerializationSettings.cs" />
-    <Compile Include="Meta\ValueSerializerBuilder.cs" />
-    <Compile Include="ProtoAggregateException.cs" />
-    <Compile Include="RootHelpers.cs" />
-    <Compile Include="Serializers\DebugSchemaBuilder.cs" />
-    <Compile Include="Serializers\DynamicMethodAccessors\AccessorsCache.cs" />
-    <Compile Include="Serializers\DynamicMethodAccessors\DynamicMethodCompiler.cs" />
-    <Compile Include="LateReferencesCache.cs" />
-    <Compile Include="LinqBridge.cs" />
-    <Compile Include="Meta\Data\ModelTypeRelationsData.cs" />
-    <Compile Include="Meta\Data\SubtypeData.cs" />
-    <Compile Include="Meta\Data\TypeData.cs" />
-    <Compile Include="BinaryDataFormat.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Extensible.cs" />
-    <Compile Include="ExtensibleUtil.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Helpers.cs" />
-    <Compile Include="IExtensible.cs" />
-    <Compile Include="IExtension.cs" />
-    <Compile Include="ImplicitFieldsMode.cs" />
-    <Compile Include="KeyValuePairProxy.cs" />
-    <Compile Include="Meta\AttributeMap.cs" />
-    <Compile Include="Meta\BasicList.cs" />
-    <Compile Include="Meta\CallbackSet.cs" />
-    <Compile Include="Meta\MetaType.cs" />
-    <Compile Include="Meta\ProtoCompatibilitySettingsValue.cs" />
-    <Compile Include="Meta\RuntimeTypeModel.cs" />
-    <Compile Include="Meta\RuntimeTypeModel.Schema.cs" />
-    <Compile Include="Meta\SubType.cs" />
-    <Compile Include="Meta\TypeFormatEventArgs.cs" />
-    <Compile Include="Meta\TypeModel.cs" />
-    <Compile Include="Meta\TypeModel.List.cs" />
-    <Compile Include="Meta\ValueMember.cs" />
-    <Compile Include="NetObjectCache.cs" />
-    <Compile Include="NetObjectHelpers.Read.cs" />
-    <Compile Include="NetObjectHelpers.Write.cs" />
-    <Compile Include="PrefixStyle.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ProtoException.cs" />
-    <Compile Include="ProtoReader.cs" />
-    <Compile Include="ProtoWriter.cs" />
-    <Compile Include="SerializationContext.cs" />
-    <Compile Include="Serializer.cs" />
-    <Compile Include="Serializers\ForbiddenRootStub.cs" />
-    <Compile Include="Serializers\IndentedStringBuilder.cs" />
-    <Compile Include="Serializers\IndentedWithBracketsStringBuilder.cs" />
-    <Compile Include="Serializers\RootFieldNumberDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BlobSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\CharSerializer.cs" />
-    <Compile Include="Serializers\CompiledSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\BooleanSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Collections\ArrayDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\ByteSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Collections\MultiDimensionalArrayDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\LateReferenceSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\LateReferenceSerializerProxyCaller.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\NoNullDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\SubTypeHelpers.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\WireTypeDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Collections\ImmutableCollectionDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Collections\ListHelpers.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\NetObjectValueDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\ParseableSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Collections\ListDecorator.cs" />
-    <Compile Include="Serializers\RootDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\SByteSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Fields\MemberSpecifiedDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\SystemTypeSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\TupleSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\ReflectedUriDecorator.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\UriDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\EnumSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\DefaultValueDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\GuidSerializer.cs" />
-    <Compile Include="Serializers\IProtoTypeSerializer.cs" />
-    <Compile Include="Serializers\ISerializerProxy.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\SurrogateSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\UInt16Serializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\Int16Serializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\DecimalSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\TimeSpanSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\DateTimeSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\UInt32Serializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\UInt64Serializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\Int64Serializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\DoubleSerializer.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\SingleSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Fields\FieldDecorator.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\Int32Serializer.cs" />
-    <Compile Include="Serializers\IProtoSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\Fields\PropertyDecorator.cs" />
-    <Compile Include="Serializers\ProtoDecoratorBase.cs" />
-    <Compile Include="Serializers\ExpectFullHeaderSetup\Primitives\StringSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\ModelTypeSerializer.cs" />
-    <Compile Include="Serializers\WillSetFieldWireType\TypeSerializer.cs" />
-    <Compile Include="ServiceModel\BinarySerializationBehaviorAttribute.cs" />
-    <Compile Include="ServiceModel\ProtoBehaviorExtensionElement.cs" />
-    <Compile Include="ServiceModel\ProtoEndpointBehavior.cs" />
-    <Compile Include="ServiceModel\ProtoOperationBehavior.cs" />
-    <Compile Include="ServiceModel\XmlProtoSerializer.cs" />
-    <Compile Include="SubItemToken.cs" />
-    <Compile Include="WireType.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="NetObjectKeyPositionsList.cs" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Xml" Version="4.3.0" />
+    <PackageReference Include="System.ServiceModel.Duplex" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.Http" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.Security" Version="4.8.0" />
+    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
-    <Service Include="{3259AA49-8AA1-44D3-9025-A0B520596A8C}" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\Licence.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\AqlaSerializer2Key.snk" />
-    <None Include="aqlaserializer.licenseheader" />
-    <Compile Include="Meta\RuntimeTypeModel.Compilation.cs" />
-    <None Include="Aqla\Settings\readme.md" />
-    <None Include="packages.config" />
-    <None Include="Web\TODO.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.0">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.0 %28x86%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
-      <Visible>False</Visible>
-      <ProductName>Windows Installer 3.1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)' != 'CoreOnly' AND '$(Configuration)' != 'Silverlight2' AND '$(Configuration)' != 'iOS'">
     <ProjectReference Include="..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
-      <Project>{08f134ae-48e8-4a35-9dc7-2f31eaf4a66f}</Project>
-      <Name>RunSharp</Name>
+      <SetTargetFramework Condition="'$(TargetFramework)'=='netstandard2.1'">TargetFramework=netstandard2.1</SetTargetFramework>
+      <SetTargetFramework Condition="'$(TargetFramework)'=='net20' OR '$(TargetFramework)'=='net30'">TargetFramework=net20</SetTargetFramework>
+      <SetTargetFramework Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45'">TargetFramework=net35</SetTargetFramework>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
-  <!--  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <PostBuildEvent>@%25SystemRoot%25\Microsoft.NET\Framework\v2.0.50727\MSBuild "$(ProjectPath)" /t:Rebuild /p:Configuration=Net20 /v:n</PostBuildEvent>
-  </PropertyGroup>-->
+  <ItemGroup>
+    <None Include="..\Licence.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

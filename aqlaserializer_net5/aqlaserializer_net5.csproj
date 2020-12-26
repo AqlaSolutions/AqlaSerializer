@@ -1,0 +1,94 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net2.0;net3.0;net3.5;net4.0;net4.5</TargetFrameworks>
+    <AssemblyName>aqlaserializer</AssemblyName>
+    <RootNamespace>aqlaserializer</RootNamespace>
+    <SignAssembly Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(Configuration)' != 'Profile'">true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DefineConstants>TRACE;</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Safe' ">
+    <DefineConstants>TRACE; FEAT_SAFE</DefineConstants>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release' OR '$(Configuration)'=='Safe'">
+    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'!='net2.0'">$(Constants); FEAT_SERVICEMODEL</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Profile' ">
+    <DefineConstants>TRACE; REMOTING</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Silverlight2' ">
+    <DefineConstants>TRACE;SILVERLIGHT FEAT_SAFE</DefineConstants>
+    <TargetFramework>net3.0</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'iOS' ">
+    <DefineConstants>TRACE; NO_RUNTIME FEAT_SAFE IOS PLAT_NO_INTERLOCKED</DefineConstants>
+    <TargetFramework>net3.0</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Unity' ">
+    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER PLAT_NO_INTERLOCKED FEAT_SAFE</DefineConstants>
+    <TargetFramework>net3.5</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'CoreOnly' ">
+    <DefineConstants>TRACE;FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NO_RUNTIME</DefineConstants>
+    <TargetFramework>net3.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DefineConstants Condition="'$(TargetFramework)'=='net4.5'">$(Constants); NET_3_0 NET_3_5 NET_4_0 NET_4_5</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='net4'">$(Constants); NET_3_0 NET_3_5 NET_4_0</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='net3.5'">$(Constants); NET_3_0 NET_3_5</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'=='net3.0'">$(Constants); NET_3_0</DefineConstants>
+    
+    <DefineConstants>TRACE;FEAT_COMPILER FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FEAT_SAFE</DefineConstants>
+    
+    <DefineConstants Condition="'$(TargetFramework)'=='net3.0'">$(Constants); FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <DocumentationFile>o:\Dropbox\CodeProjects\AqlaSerializer\src\protobuf-net\aqlaserializer.xml</DocumentationFile>
+  </PropertyGroup> 
+  <ItemGroup>
+    <Reference Include="System.ServiceModel">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
+      <Project>{08f134ae-48e8-4a35-9dc7-2f31eaf4a66f}</Project>
+      <Name>RunSharp</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\protobuf-net\**\*.cs" />
+    <None Include="..\Licence.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Serialization.Xml" Version="4.3.0" />
+    <PackageReference Include="System.ServiceModel.Duplex" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.Http" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.0" />
+    <PackageReference Include="System.ServiceModel.Security" Version="4.8.0" />
+    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
+  </ItemGroup>
+</Project>
