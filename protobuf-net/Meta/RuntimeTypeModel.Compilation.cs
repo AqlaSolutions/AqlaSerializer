@@ -198,6 +198,8 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        private static int _autoCompileCounter;
+
         /// <summary>
         /// Fully compiles the current model into a static-compiled model instance
         /// </summary>
@@ -208,8 +210,9 @@ namespace AqlaSerializer.Meta
 #if DEBUG
             if (ValidateDll != null)
             {
-                var r = Compile("AutoCompile", "AutoCompile.dll");
-                RaiseValidateDll("AutoCompile.dll");
+                string name = "AutoCompile" + Interlocked.Increment(ref _autoCompileCounter) + ".dll";
+                var r = Compile("AutoCompile", name);
+                RaiseValidateDll(name);
                 return r;
             }
 #endif

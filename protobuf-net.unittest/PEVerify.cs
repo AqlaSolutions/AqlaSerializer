@@ -7,6 +7,7 @@ using System.Text;
 using System.IO;
 using NUnit.Framework;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace AqlaSerializer.unittest
 {
@@ -23,6 +24,12 @@ namespace AqlaSerializer.unittest
         public static void Verify(string path, int exitCode, bool deleteOnSuccess)
         {
 #if FAKE_COMPILE
+            return;
+#endif
+#if NET5_0
+            var references = Assembly.LoadFile(Path.GetFullPath(path)).GetReferencedAssemblies().Select(x => x.CodeBase).Where(x => x != null).ToArray();
+            var errors = new ILVerify.ILVerify(path, references).Run().ToList();
+            Assert.IsEmpty(errors);
             return;
 #endif
             // note; PEVerify can be found %ProgramFiles%\Microsoft SDKs\Windows\v6.0A\bin

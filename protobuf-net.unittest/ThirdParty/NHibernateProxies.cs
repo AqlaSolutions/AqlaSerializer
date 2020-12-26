@@ -134,7 +134,7 @@ namespace AqlaSerializer.unittest.ThirdParty
         {
             var model = BuildModel();
             model.CompileInPlace();
-            model.Serialize(Stream.Null, new Bar());
+            Assert.Throws<InvalidOperationException>(() => model.Serialize(Stream.Null, new Bar()));
         }
         [Test]
         public void AttemptToSerializeUnknownSubtypeShouldFail_Compile()

@@ -1123,10 +1123,11 @@ namespace AqlaSerializer.Meta
         }
 
 #if CHECK_COMPILED_VS_NOT
+        private static int _autoTestCounter;
         static void CompileForCheckAndValidate(RuntimeTypeModel rtm)
         {
 
-            const string name = "AutoTest";
+            string name = "AutoTest" + Interlocked.Increment(ref _autoTestCounter);
             rtm.Compile(name, name + ".dll");
             RaiseValidateDll(name + ".dll");
         }

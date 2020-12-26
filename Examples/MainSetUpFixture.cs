@@ -5,6 +5,8 @@ using System.Linq;
 using AqlaSerializer.Meta;
 using Examples;
 using NUnit.Framework;
+using System.Text;
+using System.Threading;
 
 [SetUpFixture]
 public class MainSetUpFixture
@@ -15,6 +17,17 @@ public class MainSetUpFixture
     public Action<IList<object>> UnhandledExceptionCheck { get; set; }
 
     static bool _validateInitialized;
+
+#if NET5_0
+    static int _inited;
+
+    [OneTimeSetUp]
+    public void InitNet5()
+    {
+        if (Interlocked.CompareExchange(ref _inited, 1, 0) == 0)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
+#endif
 
     [OneTimeSetUp]
     public void UnhandledExceptionRegistering()

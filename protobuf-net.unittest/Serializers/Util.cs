@@ -9,6 +9,8 @@ using System.IO;
 using NUnit.Framework;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Compiler;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace AqlaSerializer.unittest.Serializers
 {
@@ -53,6 +55,8 @@ namespace AqlaSerializer.unittest.Serializers
             }
         }
 
+        static int _testCounter;
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void TestModel(RuntimeTypeModel model, object value, string hex, [Values(false, true)] bool comp)
         {
             byte[] raw;
@@ -75,8 +79,10 @@ namespace AqlaSerializer.unittest.Serializers
             if (comp)
                 Assert.AreEqual(hex, GetHex(raw));
 
-            TypeModel compiled = model.Compile("compiled", "compiled.dll");
-            PEVerify.Verify("compiled.dll");
+            var name = new StackFrame(1).GetMethod().Name + Interlocked.Increment(ref _testCounter);
+
+            TypeModel compiled = model.Compile("compiled", $"compiled{name}.dll");
+            PEVerify.Verify($"compiled{name}.dll");
             using (MemoryStream ms = new MemoryStream())
             {
                 compiled.Serialize(ms, value);

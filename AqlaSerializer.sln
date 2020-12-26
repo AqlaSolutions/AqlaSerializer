@@ -55,7 +55,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWcfClient", "TestWcfCli
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWcfDto", "TestWcfDto\TestWcfDto.csproj", "{1A08F440-53DC-4C42-9CD1-C1507E5036A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aqlaserializer.unittest", "protobuf-net.unittest\aqlaserializer.unittest.csproj", "{7ABED973-7C99-4884-A2AE-96AF4658100C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "aqlaserializer.unittest", "protobuf-net.unittest\aqlaserializer.unittest.csproj", "{7ABED973-7C99-4884-A2AE-96AF4658100C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleDto", "SampleDto\SampleDto.csproj", "{8D53345D-C5D6-4510-8FDB-B6D8A63D65AE}"
 EndProject
@@ -121,11 +121,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "aqlaserializer_net5", "aqla
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunSharp.Tests", "..\..\RunSharp\src\RunSharp.Tests\RunSharp.Tests.csproj", "{2B26371B-9BBB-4E1C-A74A-FB50D13773D0}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RunSharp.TestsShared", "..\..\RunSharp\src\RunSharp.TestsShared\RunSharp.TestsShared.shproj", "{9225DF43-7709-4522-AFCA-F01DF2BF6E83}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		..\..\RunSharp\src\RunSharpShared\RunSharpShared.projitems*{08f134ae-48e8-4a35-9dc7-2f31eaf4a66f}*SharedItemsImports = 5
 		..\..\RunSharp\src\RunSharpShared\RunSharpShared.projitems*{1be6ac53-2c95-466e-b1d2-61e31493f169}*SharedItemsImports = 13
 		..\..\RunSharp\src\RunSharp.TestsShared\RunSharp.Tests.projitems*{2b26371b-9bbb-4e1c-a74a-fb50d13773d0}*SharedItemsImports = 5
+		..\..\RunSharp\src\RunSharp.TestsShared\RunSharp.Tests.projitems*{9225df43-7709-4522-afca-f01df2bf6e83}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CoreOnly|Any CPU = CoreOnly|Any CPU
@@ -2401,6 +2404,7 @@ Global
 		{1F3DAD34-F2EF-402B-9D50-F106B4457B33} = {71D3E579-BBA2-4020-B3F2-804481770FD2}
 		{6D36B502-ADC5-43B6-8928-3CDF10264CB1} = {71D3E579-BBA2-4020-B3F2-804481770FD2}
 		{2B26371B-9BBB-4E1C-A74A-FB50D13773D0} = {0234ECBD-E895-4A58-A97A-5D100CD878CF}
+		{9225DF43-7709-4522-AFCA-F01DF2BF6E83} = {0234ECBD-E895-4A58-A97A-5D100CD878CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5C096B7A-0555-4B78-BA17-BF857F6D2DB8}

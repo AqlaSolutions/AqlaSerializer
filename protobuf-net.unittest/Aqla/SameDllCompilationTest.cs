@@ -4,6 +4,9 @@ using NUnit.Framework;
 
 namespace AqlaSerializer.unittest.Aqla
 {
+#if NETCOREAPP
+    [Ignore("NetCore emits assemblies always in Run mode, they can't be unloaded so their files are kept locked, possible solution - emit into AssemblyLoadContext?")]
+#endif
     [TestFixture]
     public class SameDllCompilationTest
     {
