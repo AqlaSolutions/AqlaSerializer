@@ -8,14 +8,11 @@
     <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='Silverlight2' AND '$(Configuration)'!='iOS' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
-    <TargetFrameworks>net20;net30;net35;net40;net45</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(Configuration)' != 'Profile'">true</SignAssembly>
+    <TargetFrameworks>netstandard2.1;net20;net30;net35;net40;net45</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
-    <TargetFramework>net30</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -68,9 +65,11 @@
     <DefineConstants Condition="'$(TargetFramework)'=='net35'">$(DefineConstants); NET_3_0 NET_3_5</DefineConstants>
     <DefineConstants Condition="'$(TargetFramework)'=='net30'">$(DefineConstants); NET_3_0</DefineConstants>
   </PropertyGroup>
-  
   <PropertyGroup>
-    <DocumentationFile>o:\Dropbox\CodeProjects\AqlaSerializer\src\protobuf-net\aqlaserializer.xml</DocumentationFile>
+    <SignAssembly Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(Configuration)' != 'Profile'">true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DocumentationFile>$(TargetDir)\aqlaserializer.xml</DocumentationFile>
   </PropertyGroup> 
   <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1'">
     <Reference Include="System">
@@ -90,27 +89,46 @@
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.Serialization.Json" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.Serialization.Xml" Version="4.3.0" />
-    <PackageReference Include="System.ServiceModel.Duplex" Version="4.8.0" />
-    <PackageReference Include="System.ServiceModel.Http" Version="4.8.0" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.0" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.0" />
-    <PackageReference Include="System.ServiceModel.Security" Version="4.8.0" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
       <SetTargetFramework Condition="'$(TargetFramework)'=='netstandard2.1'">TargetFramework=netstandard2.1</SetTargetFramework>
       <SetTargetFramework Condition="'$(TargetFramework)'=='net20' OR '$(TargetFramework)'=='net30'">TargetFramework=net20</SetTargetFramework>
       <SetTargetFramework Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45'">TargetFramework=net35</SetTargetFramework>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="Lokad.ILPack" Version="0.1.6" />
+    <PackageReference Include="System.Private.ServiceModel">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+    <PackageReference Include="System.ServiceModel.Duplex">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Http">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.NetTcp">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Primitives">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Security">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Syndication">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Primitives">
+      <Version>4.8.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Duplex">
+      <Version>4.8.0</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Licence.txt">

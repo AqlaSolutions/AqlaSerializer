@@ -515,7 +515,7 @@ namespace AqlaSerializer.Meta
             if (options.AlsoCompileInPlace)
                 CompileInPlace();
             Freeze();
-            
+
 #if FEAT_IKVM
             IKVM.Reflection.AssemblyName an = new IKVM.Reflection.AssemblyName();
             an.Name = assemblyName;
@@ -537,6 +537,11 @@ namespace AqlaSerializer.Meta
                 asm.__SetImageRuntimeVersion(options.ImageRuntimeVersion, options.MetaDataVersion);
             }
             ModuleBuilder module = asm.DefineDynamicModule(moduleName, path);
+#elif NETSTANDARD
+            AssemblyName an = new AssemblyName();
+            an.Name = assemblyName;
+            AssemblyBuilder asm = AssemblyBuilder.DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndCollect);
+            ModuleBuilder module = asm.DefineDynamicModule(moduleName);
 #else
             AssemblyName an = new AssemblyName();
             an.Name = assemblyName;
@@ -576,7 +581,11 @@ namespace AqlaSerializer.Meta
             Type finalType = type.CreateType();
             if (!Helpers.IsNullOrEmpty(path))
             {
+#if NETSTANDARD
+                new Lokad.ILPack.AssemblyGenerator().GenerateAssembly(asm, path);
+#else
                 asm.Save(path);
+#endif
                 Helpers.DebugWriteLine("Wrote dll:" + path);
                 _compiledToPath = path;
             }
@@ -590,6 +599,12 @@ namespace AqlaSerializer.Meta
         [MethodImpl(MethodImplOptions.NoInlining)]
         bool CheckIterativeCompilation(string outputPath, System.Reflection.Assembly executingAssembly, CompiledAssemblyEqualityAttribute eqAttr)
         {
+            // TODO use AssemblyLoadContext and AssemblyDependencyResolver instead of AppDomain
+            // https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability
+            // but this is possible only in .net core, not in .net standard currently
+#if NETSTANDARD
+            return false;
+#else
             // lock file
             //using (var f = File.Open(options.OutputPath, FileMode.Open, FileAccess.Read, FileShare.None))
             byte[] data;
@@ -649,6 +664,7 @@ namespace AqlaSerializer.Meta
                 }
                 if (same) return true;
             }
+#endif
             File.Delete(outputPath);
             return false;
         }

@@ -1,5 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER
+// TODO for NETSTANDARD ProtoEndpointBehavior must be added with client.Endpoint.EndpointBehaviors.Add(endpoint);
+#if FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER && !NETSTANDARD
 using System;
 using System.ServiceModel.Configuration;
 

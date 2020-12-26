@@ -20,6 +20,8 @@ namespace AqlaSerializer.ServiceModel
     ///      <add name="ProtoBufSerialization" type="AqlaSerializer.ServiceModel.ProtoBehaviorExtension, protobuf-net, Version=1.0.0.255, Culture=neutral, PublicKeyToken=257b51d87d2e4d67"/>
     ///    </behaviorExtensions>
     ///  </extensions>
+    ///
+    /// For .NET Standard version ProtoEndpointBehavior must be added from code (after client construction) - with client.Endpoint.EndpointBehaviors.Add(new ProtoEndpointBehavior()) 
     /// 
     /// Configure your endpoints to have a behaviorConfiguration as follows:
     /// 
