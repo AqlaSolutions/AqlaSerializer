@@ -55,15 +55,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\protobuf-net_Portable\aqlaserializer_Portable.csproj">
-      <Project>{24ab5d8d-8161-4ba8-b643-bab10402d766}</Project>
-      <Name>aqlaserializer_Portable</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="protobuf-net">
       <HintPath>..\packages\protobuf-net.2.0.0.668\lib\portable-sl4+net40+wp7+windows8\protobuf-net.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">
+      <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
+      <Name>aqlaserializer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
