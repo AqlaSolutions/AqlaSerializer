@@ -18,3 +18,10 @@ Nuget: <a href="https://www.nuget.org/packages/aqlaserializer/">aqlaserializer</
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/wiki">wiki</a>.
 
 See also <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/Licence.txt">License.txt</a>.
+
+## Advanced  examples
+
+* <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/protobuf-net.unittest/AqlaAttributes/ImplicitFields.cs">Implicit fields</a>
+* <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/protobuf-net.unittest/Aqla/LinkedListAsLateReference.cs">LateReference mode for big LinkedLists to avoid stack overflow</a>
+* <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/protobuf-net.unittest/Aqla/NestedLevelsTest.cs">Control of nested elements serialization behavior</a>
+* <a href="https://github.com/AqlaSolutions/AqlaSerializer/blob/master/protobuf-net.unittest/Aqla/AddTypes.cs">Types registration from code</a>
