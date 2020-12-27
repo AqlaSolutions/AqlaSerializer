@@ -233,7 +233,7 @@ namespace AqlaSerializer.Meta
             MethodBuilder newMethod = EmitDefineMethod(
                 type,
                 baseMethod.Name,
-                (baseMethod.Attributes & ~MethodAttributes.Abstract) | MethodAttributes.Final,
+                (baseMethod.Attributes & ~MethodAttributes.Abstract &~MethodAttributes.NewSlot) | MethodAttributes.Final,
                 baseMethod.CallingConvention,
                 baseMethod.ReturnType,
                 parameters.Select((p, i) => new MethodContext.ParameterGenInfo(p.ParameterType, p.Name, i + 1)).ToArray(),

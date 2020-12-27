@@ -119,6 +119,7 @@ namespace Examples.Issues
             var model = CreateModel(true);
             CheckModel(model.Compile());
         }
+        
 #if FAKE_COMPILE
         [Ignore]
 #endif
