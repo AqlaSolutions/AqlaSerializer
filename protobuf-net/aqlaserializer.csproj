@@ -99,23 +99,24 @@
       <Aliases>global</Aliases>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(TargetFramework)'!='net20'">
+  <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(TargetFramework)'!='net20' AND !$(DefineConstants.Contains('PORTABLE'))">
     <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1' AND '$(TargetFramework)'!='net20'">
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net20' AND '$(TargetFramework)' != 'netstandard2.1' AND '$(Configuration)' != 'Unity'">
     <Reference Include="System.Runtime.Serialization">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.ServiceModel">
+    <Reference Condition="!$(DefineConstants.Contains('PORTABLE'))" Include="System.ServiceModel">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('PORTABLE'))">
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Windows" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Condition="$(DefineConstants.Contains('FEAT_COMPILER'))" Include="..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
@@ -163,7 +164,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <Import Condition="$(DefineConstants.Contains('PORTABLE'))" Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <ItemGroup Condition="$(DefineConstants.Contains('PORTABLE'))">
     <PackageReference Include="MSBuild.Sdk.Extras" Version="1.0.5" PrivateAssets="all" />
   </ItemGroup>

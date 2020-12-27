@@ -3,23 +3,65 @@
          xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!-- See http://msbuildtasks.tigris.org -->
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
-
+  <Import Project="packages\MSBuildTasks.1.5.0.235\tools\MSBuild.Community.Tasks.Targets"/>
+  
   <PropertyGroup>
     <RevGeneratorOutputFile>revtemp.txt</RevGeneratorOutputFile>
     <NugetDirectory>Nuget\lib</NugetDirectory>
     <ZipDirectory>Package</ZipDirectory>
   </PropertyGroup>
+  <PropertyGroup>
+    <VersionMajor>2</VersionMajor>
+    <VersionMinor>0</VersionMinor>
+    <VersionRevision>1</VersionRevision>
+  </PropertyGroup>
   <ItemGroup>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Phone8\aqlaserializer_Phone8.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Silverlight\aqlaserializer_Silverlight.csproj"/>
-    <ProjectToBuild Include="protobuf-net_Portable\aqlaserializer_Portable.csproj"/>
-    <ProjectToBuild Include="protobuf-net_WinRT\aqlaserializer_WinRT.csproj"/>
-    <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj"/>
-    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj"/>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+      <Properties>Configuration=Release</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=CoreOnly</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=Safe</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=iOS</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=Unity</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=UnityCoreOnly</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=Silverlight2</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=Silverlight2CoreOnly</Properties>
+    </ProjectToBuild>
 
+    
+    <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
+            <Properties>Configuration=Release</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
+            <Properties>Configuration=Release</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
+            <Properties>Configuration=CoreOnly</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
+            <Properties>Configuration=CoreOnly</Properties>
+    </ProjectToBuild>
 
+    
+    <ProjectToBuild Include="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj">
+            <Properties>Configuration=Release</Properties>
+    </ProjectToBuild>
+    <ProjectToBuild Include="precompile\precompile.csproj">
+            <Properties>Configuration=Release</Properties>
+    </ProjectToBuild>
   </ItemGroup>
   <Target Name="BuildKit">
     
@@ -31,98 +73,83 @@
 
     <MSBuild Projects="RevisionGenerator\RevisionGenerator.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
-    <Exec Command="RevisionGenerator\bin\Release\RevisionGenerator.exe 2016 2 > &quot;$(RevGeneratorOutputFile)&quot;" />
+    <Exec Command="RevisionGenerator\bin\Release\RevisionGenerator.exe 2021 1 > &quot;$(RevGeneratorOutputFile)&quot;" />
     <ReadLinesFromFile File="$(RevGeneratorOutputFile)">
        <Output TaskParameter="Lines" PropertyName="BuildRev"/>
     </ReadLinesFromFile>
     <Delete Files="$(RevGeneratorOutputFile)"/>
 
     <FileUpdate Files="protobuf-net\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     <FileUpdate Files="protobuf-net\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     <FileUpdate Files="protobuf-net.Extensions\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     <FileUpdate Files="protobuf-net.Extensions\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
 
     <FileUpdate Files="precompile\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     <FileUpdate Files="precompile\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*"[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
+            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     
     <FileUpdate Files="Nuget\aqlaserializer.nuspec"
-            Regex='(&lt;version&gt;[^\.]+\.[^\.]+)\.([^\.]+)(\.)([^\.]+)(&lt;/version&gt;)'
-            ReplacementText='$1.$2.$(BuildRev)$5' />
+            Regex='(&lt;version)&gt;([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)(&lt;/version&gt;)'
+            ReplacementText='$1&gt;$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     
     <Copy SourceFiles="Licence.txt" DestinationFolder="$(ZipDirectory)"/>
     <Copy SourceFiles="What Files Do I Need.txt" DestinationFolder="$(ZipDirectory)"/>
 
-    <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=Release" BuildInParallel="true"/>
-    <MSBuild Projects="@(ProjectToBuild)" Targets="Rebuild" Properties="Configuration=CoreOnly" BuildInParallel="true"/>
+    <MSBuild Projects="@(ProjectToBuild)" Targets="Clean;Rebuild" BuildInParallel="true"/>
 
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net20Safe"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=iOS"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Unity"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net30Safe"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net35Safe"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net40"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net40Safe"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net45"/>
-    <MSBuild Projects="protobuf-net\aqlaserializer.csproj" Targets="Rebuild" Properties="Configuration=Net45Safe"/>
-    
-    <MSBuild Projects="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
+    <Exec Command="Tools\AOTCompatlyzer.exe &quot;protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net\bin\iOS\net30\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
 
-    <MSBuild Projects="precompile\precompile.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
-
-
-    <Exec Command="Tools\AOTCompatlyzer.exe &quot;protobuf-net\bin\Unity\RunSharp.dll&quot; &quot;..\..\RunSharp\src\RunSharp\runsharp_key.snk&quot; &quot;protobuf-net\bin\Unity\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net_Portable\bin\Release\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;  &quot;protobuf-net_Portable\bin\CoreOnly\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net\bin\iOS\RunSharp.dll&quot; &quot;..\..\RunSharp\src\RunSharp\runsharp_key.snk&quot; &quot;protobuf-net\bin\iOS\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
-
-<ItemGroup>
-    <iOSFiles Include="protobuf-net\bin\iOS\aqlaserializer.*"/> 
-    <UnityFiles Include="protobuf-net\bin\Unity\aqlaserializer.*"/>
-    <UnityFilesDep Include="protobuf-net\bin\Unity\RunSharp.*"/>
-    <Net20SafeFiles Include="protobuf-net\bin\Net20Safe\aqlaserializer.*"/>
-    <Net20SafeFilesDep Include="protobuf-net\bin\Net20Safe\RunSharp.*"/>
-    <Net30SafeFiles Include="protobuf-net\bin\Net30Safe\aqlaserializer.*"/>
-    <Net30SafeFilesDep Include="protobuf-net\bin\Net30Safe\RunSharp.*"/>
-    <Net35SafeFiles Include="protobuf-net\bin\Net35Safe\aqlaserializer.*"/>
-    <Net35SafeFilesDep Include="protobuf-net\bin\Net35Safe\RunSharp.*"/>
-    <Net40SafeFiles Include="protobuf-net\bin\Net40Safe\aqlaserializer.*"/>
-    <Net40SafeFilesDep Include="protobuf-net\bin\Net40Safe\RunSharp.*"/>
-    <Net45SafeFiles Include="protobuf-net\bin\Net45Safe\aqlaserializer.*"/>
-    <Net45SafeFilesDep Include="protobuf-net\bin\Net45Safe\RunSharp.*"/>
-    <Net35Files Include="protobuf-net\bin\Net35\aqlaserializer.*"/>
-    <Net35FilesDep Include="protobuf-net\bin\Net35\RunSharp.*"/>
-    <Net40Files Include="protobuf-net\bin\Net40\aqlaserializer.*"/>
-    <Net40FilesDep Include="protobuf-net\bin\Net40\RunSharp.*"/>
-    <Net45Files Include="protobuf-net\bin\Net45\aqlaserializer.*"/>
-    <Net45FilesDep Include="protobuf-net\bin\Net45\RunSharp.*"/>
-    <Net20Files Include="protobuf-net\bin\Net20\aqlaserializer.*"/>
-    <Net20FilesDep Include="protobuf-net\bin\Net20\RunSharp.*"/>
-    <Net30Files Include="protobuf-net\bin\Release\aqlaserializer.*"/>
-    <Net30FilesDep Include="protobuf-net\bin\Release\RunSharp.*"/>
-    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\aqlaserializer.*"/>
-    <SLFiles Include="protobuf-net_Silverlight\bin\Release\aqlaserializer.*"/>
-    <SLFilesDep Include="protobuf-net_Silverlight\bin\Release\RunSharp.*"/>
-    <SLFiles_CoreOnly Include="protobuf-net_Silverlight\bin\CoreOnly\aqlaserializer.*"/>
-    <WP8Files Include="protobuf-net_Phone8\bin\Release\aqlaserializer.*"/>
-    <WP8FilesDep Include="protobuf-net_Phone8\bin\Release\RunSharp.*"/>
-    <WP8Files_CoreOnly Include="protobuf-net_Phone8\bin\CoreOnly\aqlaserializer.*"/>
-    <PortableFiles Include="protobuf-net_Portable\bin\Release\aqlaserializer.*"/>
-    <PortableFilesDep Include="protobuf-net_Portable\bin\Release\RunSharp.*"/>
-    <PortableFiles_CoreOnly Include="protobuf-net_Portable\bin\CoreOnly\aqlaserializer.*"/>
-    <WinRTFiles Include="protobuf-net_WinRT\bin\Release\aqlaserializer.*"/>
-    <WinRTFilesDep Include="protobuf-net_WinRT\bin\Release\RunSharp.*"/>
-    <WinRTFiles_CoreOnly Include="protobuf-net_WinRT\bin\CoreOnly\aqlaserializer.*"/>
+  <ItemGroup>
+    <iOSFiles Include="protobuf-net\bin\iOS\net30\aqlaserializer.*"/> 
+    <UnityFiles Include="protobuf-net\bin\Unity\net35\aqlaserializer.*"/>
+    <UnityFilesDep Include="protobuf-net\bin\Unity\net35\RunSharp.*"/>
+    <Net20SafeFiles Include="protobuf-net\bin\Safe\net20\aqlaserializer.*"/>
+    <Net20SafeFilesDep Include="protobuf-net\bin\Safe\net20\RunSharp.*"/>
+    <Net30SafeFiles Include="protobuf-net\bin\Safe\net30\aqlaserializer.*"/>
+    <Net30SafeFilesDep Include="protobuf-net\bin\Safe\net30\RunSharp.*"/>
+    <Net35SafeFiles Include="protobuf-net\bin\Safe\net35\aqlaserializer.*"/>
+    <Net35SafeFilesDep Include="protobuf-net\bin\Safe\net35\RunSharp.*"/>
+    <Net40SafeFiles Include="protobuf-net\bin\Safe\net40\aqlaserializer.*"/>
+    <Net40SafeFilesDep Include="protobuf-net\bin\Safe\net40\RunSharp.*"/>
+    <Net45SafeFiles Include="protobuf-net\bin\Safe\net45\aqlaserializer.*"/>
+    <Net45SafeFilesDep Include="protobuf-net\bin\Safe\net45\RunSharp.*"/>
+    <Net35Files Include="protobuf-net\bin\Release\net35\aqlaserializer.*"/>
+    <Net35FilesDep Include="protobuf-net\bin\Release\net35\RunSharp.*"/>
+    <Net40Files Include="protobuf-net\bin\Release\net40\aqlaserializer.*"/>
+    <Net40FilesDep Include="protobuf-net\bin\Release\net40\RunSharp.*"/>
+    <Net45Files Include="protobuf-net\bin\Release\net45\aqlaserializer.*"/>
+    <Net45FilesDep Include="protobuf-net\bin\Release\net45\RunSharp.*"/>
+    <Net20Files Include="protobuf-net\bin\Release\net20\aqlaserializer.*"/>
+    <Net20FilesDep Include="protobuf-net\bin\Release\net20\RunSharp.*"/>
+    <Net30Files Include="protobuf-net\bin\Release\net30\aqlaserializer.*"/>
+    <Net30FilesDep Include="protobuf-net\bin\Release\net30\RunSharp.*"/>
+    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\net30\aqlaserializer.*"/>
+    <NetStandardFiles Include="protobuf-net\bin\Release\netstandard2.1\aqlaserializer.*"/>
+    <NetStandardSafeFiles Include="protobuf-net\bin\Safe\netstandard2.1\aqlaserializer.*"/>
+    <NetStandardFiles_CoreOnly Include="protobuf-net\bin\CoreOnly\netstandard2.1\aqlaserializer.*"/>
+    <PortableFiles Include="protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
+    <PortableFilesDep Include="protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\RunSharp.*"/>
+    <PortableFiles_CoreOnly Include="protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
+    <SLFiles Include="bin-unsupported\Full\sl5\aqlaserializer.*"/>
+    <SLFilesDep Include="bin-unsupported\Full\sl5\RunSharp.*"/>
+    <SLFiles_CoreOnly Include="bin-unsupported\CoreOnly\sl5\aqlaserializer.*"/>
+    <WP8Files Include="bin-unsupported\Full\wp8\aqlaserializer.*"/>
+    <WP8FilesDep Include="bin-unsupported\Full\wp8\RunSharp.*"/>
+    <WP8Files_CoreOnly Include="bin-unsupported\CoreOnly\wp8\aqlaserializer.*"/>
+    <WinRTFiles Include="bin-unsupported\Full\winrt\aqlaserializer.*"/>
+    <WinRTFilesDep Include="bin-unsupported\Full\winrt\RunSharp.*"/>
+    <WinRTFiles_CoreOnly Include="bin-unsupported\CoreOnly\winrt\aqlaserializer.*"/>
 
     <PrecompileFiles Include="precompile\bin\Release\*.*"/>
 
@@ -132,7 +159,12 @@
     <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
     <AndroidFilesDep Include="protobuf-net_MonoDroid\bin\Release\RunSharp.*"/>
 
-</ItemGroup>
+  </ItemGroup>
+  
+    <Copy SourceFiles="@(NetStandardFiles)" DestinationFolder="$(NugetDirectory)\netstandard2.1"/>
+    <Copy SourceFiles="@(NetStandardFiles)" DestinationFolder="$(ZipDirectory)\Full\netstandard2.1"/>
+    <Copy SourceFiles="@(NetStandardSafeFiles)" DestinationFolder="$(ZipDirectory)\Full\netstandard2.1safe"/>
+    <Copy SourceFiles="@(NetStandardFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\netstandard2.1"/>   
 
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
     <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
@@ -165,22 +197,24 @@
     <Copy SourceFiles="@(Net45SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net45safe"/>
 
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(NugetDirectory)\unity3d"/>    
-
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     <Copy SourceFiles="@(UnityFilesDep)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl5"/>
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
-    <Copy SourceFiles="@(SLFilesDep)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
-    
+    <Copy SourceFiles="@(SLFilesDep)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>    
+    <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl5"/>
+
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
     <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
     <Copy SourceFiles="@(WP8FilesDep)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
+    <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
 
 
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFilesDep)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
+    <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
 
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(NugetDirectory)\netcore45"/>
     <Copy SourceFiles="@(WinRTFiles)" DestinationFolder="$(ZipDirectory)\Full\winrt"/>
@@ -191,9 +225,6 @@
     <Copy SourceFiles="@(iOSFilesDep)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
 
-    <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl5"/>
-    <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
-    <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
 
     <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/>
     <Copy SourceFiles="@(AndroidFilesDep)" DestinationFolder="$(ZipDirectory)\Full\android"/> 
@@ -204,7 +235,7 @@
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
   
-    <Exec Command="packages\NuGet.CommandLine.2.0.40000\tools\NuGet.exe pack $(NugetDirectory)\..\aqlaserializer.nuspec"/>
+    <Exec Command="nuget.exe pack $(NugetDirectory)\..\aqlaserializer.nuspec"/>
     
     <ItemGroup>
       <ZipFiles Include="$(ZipDirectory)\**\*"/>
@@ -214,17 +245,6 @@
          Files="@(ZipFiles)"
          ZipFileName="$(ZipDirectory)\aqlaserializer r$(BuildRev).zip" />
 
-    <!-- build the test project -->
-    <RemoveDir Directories="Examples\obj; Examples\bin"/>
-    <MSBuild Projects="Examples\Examples.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
-
-    <!-- build the test project -->
-    <RemoveDir Directories="protobuf-net.unittest\obj; protobuf-net.unittest\bin"/>
-    <MSBuild Projects="protobuf-net.unittest\aqlaserializer.unittest.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
-
-    <!-- build the test project -->
-    <RemoveDir Directories="precompile.tests\obj; precompile.tests\bin"/>
-    <MSBuild Projects="precompile.tests\precompile.tests.csproj" Properties="Configuration=Release" Targets="Rebuild"/>
-
   </Target>
 </Project>
+

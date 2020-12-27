@@ -15,7 +15,6 @@ NET_3_5
 NET_4_0
 
 FEAT_COMPILER
-FEAT_IKVM
 
 - subjective:
 
@@ -25,6 +24,7 @@ PLAT_NO_INTERLOCKED
 PLAT_NO_THREADSTATIC
 
 platform:
+FEAT_IKVM
 
 SILVERLIGHT
 
@@ -36,10 +36,11 @@ WINRT
 MONODROID
 IOS
 
-The list of platforms which have support compiler support:
+The list of platforms which have compiler support:
 
 Desktop
 Android
 Windows Phone 8
 Silverlight4
 Unity
+.NET Standard 2.1

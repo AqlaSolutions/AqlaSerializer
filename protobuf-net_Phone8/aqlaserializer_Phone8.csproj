@@ -119,7 +119,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\protobuf-net\**\*.cs" />
+    <Compile Include="..\protobuf-net\**\*.cs" Exclude="..\protobuf-net\obj\**\*" />
     <None Include="..\Licence.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -1,3 +1,2 @@
-"%Systemdrive%\Program Files (x86)\MSBuild\14.0\Bin\MsBuild.exe" all.build /p:WarningLevel=0
-@packages\NuGet.CommandLine.2.0.40000\tools\NuGet.exe pack Nuget\aqlaserializer.nuspec
+@"%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild" all.build /p:WarningLevel=0
 pause

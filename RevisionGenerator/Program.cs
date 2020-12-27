@@ -15,7 +15,10 @@ namespace RevisionGenerator
                 int year = int.Parse(args[0], CultureInfo.InvariantCulture);
                 int month = int.Parse(args[1], CultureInfo.InvariantCulture);
                 TimeSpan diff = (DateTime.UtcNow - new DateTime(year, month, 1, 1, 1, 1, DateTimeKind.Utc));
-                Console.WriteLine(((int)(diff.TotalDays * 2f)).ToString(CultureInfo.InvariantCulture));
+                if (diff.TotalDays < 0) 
+                    Console.WriteLine(0);
+                else
+                    Console.WriteLine(((int)(diff.TotalDays * 2f)).ToString(CultureInfo.InvariantCulture));
                 Console.ReadLine();
             }
             catch
