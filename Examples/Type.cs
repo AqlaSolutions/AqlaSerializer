@@ -32,7 +32,7 @@ namespace Examples
             byte[] expected = new byte[Encoding.UTF8.GetByteCount(s) + 2];
             Encoding.UTF8.GetBytes(s, 0, s.Length, expected, 2);
             expected[0] = 0x0A; // field-header
-            expected[1] = 0x70; // length
+            expected[1] = (byte)s.Length; // length
             Program.CheckBytes(orig, model, expected);
 
             model.CompileInPlace();

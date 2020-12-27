@@ -210,13 +210,16 @@ message KeyValuePair_String_Cat {
         [ProtoBuf.ProtoContract] public class Cat : Animal {}
 
         [Ignore("Parameter name - localization")]
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = @"The type specified is not a contract-type
-Parameter name: type")]
+        [Test]
         public void ProtoForNonContractTypeShouldThrowException()
         {
-            var model = TypeModel.Create();
-            model.AutoAddMissingTypes = false;
-            model.GetSchema(typeof(ProtoGenerationTypes.BrokenProto.Type2));
+            var ex = Assert.Throws<ArgumentException>(() => {
+                var model = TypeModel.Create();
+                model.AutoAddMissingTypes = false;
+                model.GetSchema(typeof(ProtoGenerationTypes.BrokenProto.Type2));
+            });
+            Assert.That(ex.Message, Is.EqualTo(@"The type specified is not a contract-type
+Parameter name: type"));
         }
 
         [Test]

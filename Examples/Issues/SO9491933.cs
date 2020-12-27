@@ -10,8 +10,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO9491933
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(6, typeof(B))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(6, typeof(B))]
         public class A
         {
             [ProtoBuf.ProtoMember(1)]
@@ -66,8 +65,7 @@ namespace Examples.Issues
             }
         }
 
-        [Ignore("Not introduced with AqlaSerializer")]
-        [Test]
+        [Ignore("Not introduced with AqlaSerializer"), Test]
         public void TestProtoBuf2()
         {
             IList<A> list = new List<A>

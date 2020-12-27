@@ -48,11 +48,14 @@ namespace Examples.Issues
         }
 
         [Ignore("Aqla serializer is more tolerant to constructors")]
-        [Test, ExpectedException(typeof(ProtoException), ExpectedMessage = "No parameterless constructor found for WithoutParameterlessCtor", MatchType=MessageMatch.Exact)]
+        [Test]
         public void CheckMeaningfulErrorIfNoParameterlessCtor()
         {
-            WithoutParameterlessCtor obj = new WithoutParameterlessCtor(123);
-            Serializer.DeepClone(obj);
+            var ex = Assert.Throws<ProtoException>(() => {
+                WithoutParameterlessCtor obj = new WithoutParameterlessCtor(123);
+                Serializer.DeepClone(obj);
+            });
+            Assert.That(ex.Message, Is.EqualTo("No parameterless constructor found for WithoutParameterlessCtor"));
         }
 
         [Test]

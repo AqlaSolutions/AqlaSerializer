@@ -131,8 +131,10 @@ namespace Examples.Issues
             Assert.IsTrue(model.CanSerialize(typeof(string)));
             Assert.IsTrue(model.CanSerialize(typeof(DateTime)));
             Assert.IsTrue(model.CanSerialize(typeof(DateTime?)));
+#if !NETCOREAPP
 
             Assert.IsFalse(model.CanSerialize(typeof(System.Windows.Media.Color)));
+#endif
             Assert.IsFalse(model.CanSerialize(typeof(DateTimeOffset)));
             Assert.IsFalse(model.CanSerialize(typeof(Action)));
         }
@@ -149,8 +151,10 @@ namespace Examples.Issues
             Assert.IsTrue(model.CanSerialize(typeof(string[])), "string");
             Assert.IsTrue(model.CanSerialize(typeof(DateTime[])), "DateTime");
             Assert.IsTrue(model.CanSerialize(typeof(DateTime?[])), "DateTime?");
+#if !NETCOREAPP
 
             Assert.IsFalse(model.CanSerialize(typeof(System.Windows.Media.Color[])), "Color");
+#endif
             Assert.IsFalse(model.CanSerialize(typeof(DateTimeOffset[])), "DateTimeOffset");
             Assert.IsFalse(model.CanSerialize(typeof(Action[])), "Action");
         }
@@ -179,8 +183,10 @@ namespace Examples.Issues
             Assert.IsTrue(model.CanSerialize(typeof(string[,])));
             Assert.IsTrue(model.CanSerialize(typeof(DateTime[,])));
             Assert.IsTrue(model.CanSerialize(typeof(DateTime?[,])));
+#if !NETCOREAPP
 
             Assert.IsFalse(model.CanSerialize(typeof(System.Windows.Media.Color[,])));
+#endif
             Assert.IsFalse(model.CanSerialize(typeof(DateTimeOffset[,])));
             Assert.IsFalse(model.CanSerialize(typeof(Action[,])));
         }

@@ -87,8 +87,7 @@ namespace Examples.Issue29
     {
     }
 
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(5, typeof(Alias))]
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(5, typeof(Alias))]
     public class AliasBase
     {
         [ProtoBuf.ProtoMember(6)]

@@ -33,8 +33,8 @@ namespace Examples
         internal static void CheckChild(IMLChild original, IMLChild clone)
         {
             Assert.AreNotSame(original, clone);
-            Assert.IsInstanceOfType(typeof(IMLChild), original, "Original type");
-            Assert.IsInstanceOfType(typeof(IMLChild), clone, "Clone type");
+            Assert.IsInstanceOf(typeof(IMLChild), original, "Original type");
+            Assert.IsInstanceOf(typeof(IMLChild), clone, "Clone type");
             Assert.AreEqual(0, clone.RootProperty, "RootProperty"); // not serialized
             Assert.AreEqual(original.ParentProperty, clone.ParentProperty, "ParentProperty");
             Assert.AreEqual(original.ChildProperty, clone.ChildProperty, "ChildProperty");
@@ -65,12 +65,14 @@ namespace Examples
             Assert.That(() => rtm.DeepClone(test), Throws.TypeOf<InvalidOperationException>());
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void TestRoots()
         {
-            var rtm = TypeModel.Create();
-            IMLTestRoots test = new IMLTestRoots { Roots = { CreateChild() } },
-                         clone = rtm.DeepClone(test);
+            Assert.Throws<InvalidOperationException>(() => {
+                var rtm = TypeModel.Create();
+                IMLTestRoots test = new IMLTestRoots { Roots = { CreateChild() } },
+                             clone = rtm.DeepClone(test);
+            });
         }
 
         [Test]
@@ -172,18 +174,22 @@ namespace Examples
             Assert.AreEqual(1, clone.Length);
             CheckParent(parents[0], clone[0]);
         }
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void TestCloneAsRootArray()
         {
-            IMLRoot[] roots = { CreateChild() };
-            var clone = Serializer.DeepClone(roots);
+            Assert.Throws<InvalidOperationException>(() => {
+                IMLRoot[] roots = { CreateChild() };
+                var clone = Serializer.DeepClone(roots);
 
+            });
         }
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void TestCloneAsRootList()
         {
-            var roots = new List<IMLRoot> { CreateChild() };
-            var clone = Serializer.DeepClone(roots);
+            Assert.Throws<InvalidOperationException>(() => {
+                var roots = new List<IMLRoot> { CreateChild() };
+                var clone = Serializer.DeepClone(roots);
+            });
         }
 
 

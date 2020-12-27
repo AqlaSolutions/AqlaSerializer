@@ -53,15 +53,19 @@ namespace Examples.SimpleStream
             Assert.AreEqual(150, no.Foo);
         }
 
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestUnterminatedGroup()
         {
-            Test3 t3 = Program.Build<Test3>(0x1B, 0x08, 0x96, 0x01 );// [start group 3] [test1]
+            Assert.Throws<ProtoException>(() => {
+                Test3 t3 = Program.Build<Test3>(0x1B, 0x08, 0x96, 0x01);// [start group 3] [test1]
+            });
         }
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestWrongGroupClosed()
         {
-            Test3 t3 = Program.Build<Test3>( 0x1B, 0x08, 0x96, 0x01, 0x24 );// [start group 3] [test1] [end group 4]
+            Assert.Throws<ProtoException>(() => {
+                Test3 t3 = Program.Build<Test3>(0x1B, 0x08, 0x96, 0x01, 0x24);// [start group 3] [test1] [end group 4]
+            });
         }
 
         [ProtoBuf.ProtoContract]
@@ -89,10 +93,12 @@ namespace Examples.SimpleStream
             Assert.AreEqual(130, t3.C[1].A);
         }
 
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestPrimativeList()
         {
-            Test1List t1 = Program.Build<Test1List>(0x0B, 0x96, 0x01, 0x0C); // [start:1] [150] [end:1]
+            Assert.Throws<ProtoException>(() => {
+                Test1List t1 = Program.Build<Test1List>(0x0B, 0x96, 0x01, 0x0C); // [start:1] [150] [end:1]
+            });
         }
     }
 }

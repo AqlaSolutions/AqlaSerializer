@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Web.Script.Serialization;
 using System.Xml.Serialization;
 
 namespace Examples.Issues
@@ -53,7 +52,7 @@ namespace Examples.Issues
 
             var clone = Serializer.DeepClone(obj);
             Assert.AreEqual(2, clone.Bars.Count);
-            Assert.IsInstanceOfType(typeof(List<Bar>), clone.Bars);
+            Assert.IsInstanceOf(typeof(List<Bar>), clone.Bars);
         }
 
         [Test]
@@ -69,23 +68,27 @@ namespace Examples.Issues
                 Assert.AreEqual(1, clone.Bars.Count());
             }
         }
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void XmlSerializer_DoesntSupportNakedEnumerables()
         {
-            var ser = new XmlSerializer(typeof(FooEnumerable));
-            using (var ms = new MemoryStream())
-            {
-                ser.Serialize(ms, new FooEnumerable { Bars = new[] { new Bar { } } });
-                ms.Position = 0;
-                var clone = (FooEnumerable)ser.Deserialize(ms);
-                Assert.IsNotNull(clone.Bars);
-                Assert.AreEqual(1, clone.Bars.Count());
-            }
+            Assert.Throws<InvalidOperationException>(() => {
+                var ser = new XmlSerializer(typeof(FooEnumerable));
+                using (var ms = new MemoryStream())
+                {
+                    ser.Serialize(ms, new FooEnumerable { Bars = new[] { new Bar { } } });
+                    ms.Position = 0;
+                    var clone = (FooEnumerable)ser.Deserialize(ms);
+                    Assert.IsNotNull(clone.Bars);
+                    Assert.AreEqual(1, clone.Bars.Count());
+                }
+            });
         }
+
+#if !NETCOREAPP
         [Test]
         public void JavaScriptSerializer_DoesSupportNakedEnumerables()
         {
-            var ser = new JavaScriptSerializer();
+            var ser = new System.Web.Script.Serialization.JavaScriptSerializer();
             using (var ms = new MemoryStream())
             {
                 string s = ser.Serialize(new FooEnumerable { Bars = new[] { new Bar { } } });
@@ -95,7 +98,7 @@ namespace Examples.Issues
                 Assert.AreEqual(1, clone.Bars.Count());
             }
         }
-
+#endif
         [Test]
         public void ProtobufNet_DoesSupportNakedEnumerables()
         {

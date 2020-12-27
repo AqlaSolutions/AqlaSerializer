@@ -16,8 +16,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO14540862
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(10, typeof(Derived))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(10, typeof(Derived))]
         public class Base
         {
             [ProtoBuf.ProtoMember(1)]
@@ -33,6 +32,9 @@ namespace Examples.Issues
             public string DerivedFirstProperty { get; set; }
         }
 
+#if NETCOREAPP && DEBUG
+        [Ignore("Another instance of dll loaded? AutoTest output file is locked because counter is started from 0 again")]
+#endif
         [Test]
         public void Execute()
         {

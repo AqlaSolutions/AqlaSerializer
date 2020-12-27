@@ -30,20 +30,19 @@ namespace Examples.Issues
         {
             var foo = new Bar<int> {BaseValue = 123, Value = 456};
             var clone = (Bar<int>) model.DeepClone(foo);
-            Assert.IsInstanceOfType(typeof(Bar<int>), clone, caption);
+            Assert.IsInstanceOf(typeof(Bar<int>), clone, caption);
             Assert.AreEqual(123, clone.BaseValue, caption);
             Assert.AreEqual(456, clone.Value, caption);
         }
 
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(2, typeof(Bar<int>))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(2, typeof(Bar<int>))]
         public class Foo
         {
             [ProtoBuf.ProtoMember(1)]
             public int BaseValue { get; set; }
         }
-        [ProtoBuf.ProtoContract(IgnoreListHandling = true)]
-        [DataContract]
+
+        [ProtoBuf.ProtoContract(IgnoreListHandling = true), DataContract]
         public class Bar<T> : Foo, IEnumerable<T>
         {
             public IEnumerator<T> GetEnumerator() { yield break; }

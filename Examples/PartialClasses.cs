@@ -60,11 +60,8 @@ namespace AqlaSerializer
     }
 
 
-    [ProtoBuf.ProtoPartialMember(1, "Number")]
-    [ProtoBuf.ProtoPartialMember(2, "Name")]
-    [ProtoBuf.ProtoPartialMember(3, "When")]
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(4, typeof(SubClassData))]
+    [ProtoBuf.ProtoPartialMember(1, "Number"), ProtoBuf.ProtoPartialMember(2, "Name"), ProtoBuf.ProtoPartialMember(3, "When"), ProtoBuf.ProtoContract,
+     ProtoBuf.ProtoInclude(4, typeof(SubClassData))]
     public partial class PartialData
     {
     }

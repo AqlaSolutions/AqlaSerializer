@@ -1,4 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
+#if !NETCOREAPP
 using System;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
@@ -18,3 +20,5 @@ namespace Examples.Issues
         }
     }
 }
+
+#endif

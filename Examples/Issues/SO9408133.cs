@@ -62,14 +62,17 @@ namespace Examples.Issues
             Test(model, obj1, obj2, "CompileInPlace");
             Test(model.Compile(), obj1, obj2, "Compile");
         }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "SomeType is not a valid sub-type of", MatchType = MessageMatch.Contains)]
+        [Test]
         public void TestStupidSetup()
         {
-            var model = RuntimeTypeModel.Create();
-            model.AutoCompile = false;
-            model.Add(typeof(ResourceNode<Ship>), false).AddSubType(1, typeof(ShipResource));
-            // I did this to myself... sigh
-            model.Add(typeof(ResourceNode<SomeType>), false).AddSubType(1, typeof(SomeType));
+            var ex = Assert.Throws<ArgumentException>(() => {
+                var model = RuntimeTypeModel.Create();
+                model.AutoCompile = false;
+                model.Add(typeof(ResourceNode<Ship>), false).AddSubType(1, typeof(ShipResource));
+                // I did this to myself... sigh
+                model.Add(typeof(ResourceNode<SomeType>), false).AddSubType(1, typeof(SomeType));
+            });
+            Assert.That(ex.Message, Does.Contain("SomeType is not a valid sub-type of"));
         }
         [Test]
         public void TestExplicitSetup()

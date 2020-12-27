@@ -10,8 +10,7 @@ using System.Text;
 
 namespace Examples.Issues
 {
-    [Ignore("Inheritance convertation is not supported in AqlaSerializer")]
-    [TestFixture]
+    [Ignore("Inheritance convertation is not supported in AqlaSerializer"), TestFixture]
     public class SO14020284
     {
         [Test]
@@ -59,8 +58,8 @@ namespace Examples.Issues
             [ProtoBuf.ProtoMember(1)]
             public int Y { get; set; }
         }
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(10, typeof(InheritedChild))]
+
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(10, typeof(InheritedChild))]
         public class InheritedBase
         {
             [ProtoBuf.ProtoMember(1)]

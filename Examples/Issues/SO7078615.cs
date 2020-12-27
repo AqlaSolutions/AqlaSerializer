@@ -55,7 +55,7 @@ namespace Examples.Issues
                 copy = wrapper.Message;
              }
             // check the data is all there
-            Assert.IsInstanceOfType(typeof(DogBarkedEvent), copy);
+            Assert.IsInstanceOf(typeof(DogBarkedEvent), copy);
             var typed = (DogBarkedEvent)copy;
             var orig = (DogBarkedEvent)msg;
             Assert.AreEqual(orig.Times, typed.Times);
@@ -104,14 +104,14 @@ namespace Examples.Issues
                 copy = wrapper.Message;
             }
             // check the data is all there
-            Assert.IsInstanceOfType(typeof(DogBarkedEvent), copy);
+            Assert.IsInstanceOf(typeof(DogBarkedEvent), copy);
             var typed = (DogBarkedEvent)copy;
             var orig = (DogBarkedEvent)msg;
             Assert.AreEqual(orig.Times, typed.Times);
             Assert.AreEqual(orig.NameOfDog, typed.NameOfDog);
         }
 
-        [Test, Ignore]
+        [Test, Ignore("Broken")]
         public void TestPerf()
         {
             int[] values = new int[100000000];

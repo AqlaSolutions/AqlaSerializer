@@ -33,7 +33,7 @@ namespace Examples.Issues.ComplexGenerics
             Query clone = tm.DeepClone<Query>(query);
             Assert.IsNotNull(clone);
             Assert.AreNotSame(clone, query);
-            Assert.IsInstanceOfType(query.GetType(), clone);
+            Assert.IsInstanceOf(query.GetType(), clone);
             Assert.AreEqual(((X)query).Result, ((X)clone).Result);
         }
         [Test]
@@ -44,7 +44,7 @@ namespace Examples.Issues.ComplexGenerics
             Query clone = Serializer.DeepClone<Query>(query);
             Assert.IsNotNull(clone);
             Assert.AreNotSame(clone, query);
-            Assert.IsInstanceOfType(query.GetType(), clone);
+            Assert.IsInstanceOf(query.GetType(), clone);
             Assert.AreEqual(((Y)query).Result, ((Y)clone).Result);
         }
         
@@ -73,11 +73,8 @@ namespace Examples.Issues.ComplexGenerics
         new T Result { get; set; }
     }
 
-    [ProtoBuf.ProtoInclude(21, typeof(W))]
-    [ProtoBuf.ProtoInclude(22, typeof(X))]
-    [ProtoBuf.ProtoInclude(23, typeof(Y))]
-    [ProtoBuf.ProtoInclude(25, typeof(SpecialQuery))]
-    [ProtoBuf.ProtoContract]
+    [ProtoBuf.ProtoInclude(21, typeof(W)), ProtoBuf.ProtoInclude(22, typeof(X)), ProtoBuf.ProtoInclude(23, typeof(Y)), ProtoBuf.ProtoInclude(25, typeof(SpecialQuery)),
+     ProtoBuf.ProtoContract]
     abstract public class Query : IQuery
     {
         public string Result
@@ -98,8 +95,8 @@ namespace Examples.Issues.ComplexGenerics
                 .ConvertFromInvariantString(value);
         }
     }
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(21, typeof(Z))]
+
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(21, typeof(Z))]
     abstract public class SpecialQuery : Query, IQuery<DataSet>
     {
         

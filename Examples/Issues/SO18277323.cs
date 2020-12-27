@@ -16,8 +16,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO18277323
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(3, typeof(SourceTableResponse))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(3, typeof(SourceTableResponse))]
         public class BaseResponse
         {
             [ProtoBuf.ProtoMember(1)]
@@ -32,8 +31,7 @@ namespace Examples.Issues
             public Dictionary<string, Dictionary<string, string>> FieldValuesByTableName { get; set; }
         }
 
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(3, typeof(CustomSourceTableResponse), DataFormat = ProtoBuf.DataFormat.Group)]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(3, typeof(CustomSourceTableResponse), DataFormat = ProtoBuf.DataFormat.Group)]
         public class CustomBaseResponse
         {
             [ProtoBuf.ProtoMember(1)]
@@ -103,7 +101,7 @@ namespace Examples.Issues
         private void CheckObject(BaseResponse obj)
         {
             Assert.IsNotNull(obj);
-            Assert.IsInstanceOfType(typeof(SourceTableResponse), obj);
+            Assert.IsInstanceOf(typeof(SourceTableResponse), obj);
             Assert.IsTrue(obj.Success);
             Assert.AreEqual("ok", obj.Error);
             SourceTableResponse typed = (SourceTableResponse)obj;
@@ -121,7 +119,7 @@ namespace Examples.Issues
         private void CheckObject(CustomBaseResponse obj)
         {
             Assert.IsNotNull(obj);
-            Assert.IsInstanceOfType(typeof(CustomSourceTableResponse), obj);
+            Assert.IsInstanceOf(typeof(CustomSourceTableResponse), obj);
             Assert.IsTrue(obj.Success);
             Assert.AreEqual("ok", obj.Error);
             CustomSourceTableResponse typed = (CustomSourceTableResponse)obj;

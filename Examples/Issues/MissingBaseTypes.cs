@@ -12,11 +12,7 @@ namespace Examples.Issues
     [TestFixture]
     public class MissingBaseTypes
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(15, typeof(D))]
-        [ProtoBuf.ProtoInclude(16, typeof(B))]
-        [ProtoBuf.ProtoInclude(17, typeof(C))]
-
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(15, typeof(D)), ProtoBuf.ProtoInclude(16, typeof(B)), ProtoBuf.ProtoInclude(17, typeof(C))]
         public class A
         {
             [ProtoBuf.ProtoMember(1)]

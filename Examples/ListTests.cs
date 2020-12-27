@@ -511,10 +511,13 @@ namespace Examples
         }
 
         [Ignore("Not relevant for Aqla")]
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
+        [Test]
         public void TestPackedArrayString()
         {
-            Serializer.DeepClone(new ArrayOfString());
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                Serializer.DeepClone(new ArrayOfString());
+            });
+            Assert.That(ex.Message, Is.EqualTo("Only simple data-types can use packed encoding"));
         }
         [ProtoBuf.ProtoContract]
         public class ArrayOfString
@@ -523,10 +526,13 @@ namespace Examples
             public string[] Items { get; set; }
         }
         [Ignore("Not relevant for Aqla")]
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
+        [Test]
         public void TestPackedListDateTime()
         {
-            Serializer.DeepClone(new ListOfDateTime());
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                Serializer.DeepClone(new ListOfDateTime());
+            });
+            Assert.That(ex.Message, Is.EqualTo("Only simple data-types can use packed encoding"));
         }
         [ProtoBuf.ProtoContract]
         public class ListOfDateTime
@@ -535,10 +541,13 @@ namespace Examples
             public List<DateTime> Items { get; set; }
         }
         [Ignore("Not relevant for Aqla")]
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Only simple data-types can use packed encoding")]
+        [Test]
         public void TestPackedCustomOfSubMessage()
         {
-            Serializer.DeepClone(new CustomOfSubMessage());
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                Serializer.DeepClone(new CustomOfSubMessage());
+            });
+            Assert.That(ex.Message, Is.EqualTo("Only simple data-types can use packed encoding"));
         }
 
         [ProtoBuf.ProtoContract]

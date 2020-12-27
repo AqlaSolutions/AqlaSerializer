@@ -11,9 +11,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO7333233
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(2, typeof(Ant))]
-        [ProtoBuf.ProtoInclude(3, typeof(Cat))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(2, typeof(Ant)), ProtoBuf.ProtoInclude(3, typeof(Cat))]
         public interface IBeast
         {
             [ProtoBuf.ProtoMember(1)]

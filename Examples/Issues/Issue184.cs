@@ -8,6 +8,7 @@ using AqlaSerializer.Meta;
 using System.IO;
 using AqlaSerializer;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 
 namespace Examples.Issues
 {
@@ -21,26 +22,35 @@ namespace Examples.Issues
             model.Add(typeof(IEnumerable<int>), false);
             model.CompileInPlace();
         }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Data of this type has inbuilt behaviour, and cannot be added to a model in this way: System.Decimal")]
+        [Test]
         public void CantCreateMetaTypeForInbuilt()
         {
-            var model = TypeModel.Create();
-            model.Add(typeof(decimal), false);
-            model.CompileInPlace();
+            var ex = Assert.Throws<ArgumentException>(() => {
+                var model = TypeModel.Create();
+                model.Add(typeof(decimal), false);
+                model.CompileInPlace();
+            });
+            Assert.That(ex.Message, Is.EqualTo("Data of this type has inbuilt behaviour, and cannot be added to a model in this way: System.Decimal"));
         }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate (System.Collections.Generic.IList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]])")]
+        [Test]
         public void CantSurrogateLists()
         {
-            var model = TypeModel.Create();
-            model.Add(typeof(IList<int>), false).SetSurrogate(typeof(InnocentType));
-            model.CompileInPlace();
+            var ex = Assert.Throws<ArgumentException>(() => {
+                var model = TypeModel.Create();
+                model.Add(typeof(IList<int>), false).SetSurrogate(typeof(InnocentType));
+                model.CompileInPlace();
+            });
+            StringAssert.StartsWith("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot use a surrogate (System.Collections.Generic.IList`1[[System.Int32, ", ex.Message);
         }
-        [Test, ExpectedException(typeof(ArgumentException), ExpectedMessage = "Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a surrogate")]
+        [Test]
         public void ListAsSurrogate()
         {
-            var model = TypeModel.Create();
-            model.Add(typeof(IMobileObject), false).SetSurrogate(typeof(MobileList<int>));
-            model.CompileInPlace();
+            var ex = Assert.Throws<ArgumentException>(() => {
+                var model = TypeModel.Create();
+                model.Add(typeof(IMobileObject), false).SetSurrogate(typeof(MobileList<int>));
+                model.CompileInPlace();
+            });
+            Assert.That(ex.Message, Is.EqualTo("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a surrogate"));
         }
 
 

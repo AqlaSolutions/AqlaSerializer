@@ -42,26 +42,32 @@ namespace Examples.Issues
             return model;
         }
         [Ignore("AqlaSerializer changed null handling")]
-        [Test, ExpectedException(typeof(NullReferenceException))]
+        [Test]
         public void ExecuteWithNullRuntime()
         {
-            var model = GetModel();
-            RunTestNull(model, "Runtime");
+            Assert.Throws<NullReferenceException>(() => {
+                var model = GetModel();
+                RunTestNull(model, "Runtime");
+            });
         }
         [Ignore("AqlaSerializer changed null handling")]
-        [Test, ExpectedException(typeof(NullReferenceException))]
+        [Test]
         public void ExecuteWithNullCompileInPlace()
         {
-            var model = GetModel();
-            model.CompileInPlace();
-            RunTestNull(model, "CompileInPlace");
+            Assert.Throws<NullReferenceException>(() => {
+                var model = GetModel();
+                model.CompileInPlace();
+                RunTestNull(model, "CompileInPlace");
+            });
         }
         [Ignore("AqlaSerializer changed null handling")]
-        [Test, ExpectedException(typeof(NullReferenceException))]
+        [Test]
         public void ExecuteWithNullCompile()
         {
-            var model = GetModel();
-            RunTestNull(model.Compile(), "Compile");
+            Assert.Throws<NullReferenceException>(() => {
+                var model = GetModel();
+                RunTestNull(model.Compile(), "Compile");
+            });
         }
         [Test]
         public void CompilesCleanly()

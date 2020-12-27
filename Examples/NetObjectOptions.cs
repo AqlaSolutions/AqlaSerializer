@@ -180,26 +180,26 @@ namespace Examples
             model.Add(typeof(BasicDynamicTestInner), true); // assume we can at least know candidates at runtime, for now
 
             Assert.IsNotNull(outer.Foo, "not null before");
-            Assert.IsInstanceOfType(typeof(BasicDynamicTestInner), outer.Foo, "typed before");
+            Assert.IsInstanceOf(typeof(BasicDynamicTestInner), outer.Foo, "typed before");
 
             var clone = (BasicDynamicTestOuter)model.DeepClone(outer);
             Assert.IsNotNull(clone, "clone exists (runtime)");
             Assert.AreNotSame(outer, clone, "clone is different (runtime)");
             Assert.IsNotNull(clone.Foo, "not null after (runtime)");
-            Assert.IsInstanceOfType(typeof(BasicDynamicTestInner), outer.Foo, "typed after (runtime)");
+            Assert.IsInstanceOf(typeof(BasicDynamicTestInner), outer.Foo, "typed after (runtime)");
 
             model.CompileInPlace();
             clone = (BasicDynamicTestOuter)model.DeepClone(outer);
             Assert.IsNotNull(clone, "clone exists (compile in place)");
             Assert.AreNotSame(outer, clone, "clone is different (compile in place)");
             Assert.IsNotNull(clone.Foo, "not null after (compile in place)");
-            Assert.IsInstanceOfType(typeof(BasicDynamicTestInner), outer.Foo, "typed after (compile in place)");
+            Assert.IsInstanceOf(typeof(BasicDynamicTestInner), outer.Foo, "typed after (compile in place)");
 
             clone = (BasicDynamicTestOuter)model.Compile().DeepClone(outer);
             Assert.IsNotNull(clone, "clone exists (full compile)");
             Assert.AreNotSame(outer, clone, "clone is different (full compile)");
             Assert.IsNotNull(clone.Foo, "not null after (full compile)");
-            Assert.IsInstanceOfType(typeof(BasicDynamicTestInner), outer.Foo, "typed after (full compile)");
+            Assert.IsInstanceOf(typeof(BasicDynamicTestInner), outer.Foo, "typed after (full compile)");
         }
 
 
@@ -223,14 +223,14 @@ namespace Examples
             public object Value { get; set; }
         }
 
-        [Ignore("Not introduced with AqlaSerializer")]
-        [Test] // this is failing currently; needs to handle base-type via dynamictype
+        [Ignore("Not introduced with AqlaSerializer"), Test]
+         // this is failing currently; needs to handle base-type via dynamictype
         public void TestUnknownDerivedType()
         {
             var obj = new Wrapper { Value = new Derived { Bar = 123, Foo = "abc" } };
 
             var clone = Serializer.DeepClone(obj);
-            Assert.IsInstanceOfType(typeof(Derived), clone.Value);
+            Assert.IsInstanceOf(typeof(Derived), clone.Value);
             Derived d = (Derived)clone.Value;
             Assert.AreEqual(123, d.Bar);
             Assert.AreEqual("abc", d.Foo);

@@ -13,8 +13,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO6174298
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(10, typeof(BinaryNode))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(10, typeof(BinaryNode))]
         public class Node
         {
             public virtual int Count() { return 1; }

@@ -10,8 +10,7 @@ using NUnit.Framework;
 
 namespace Examples
 {
-    [ProtoBuf.ProtoContract(InferTagFromName=true)]
-    [DataContract]
+    [ProtoBuf.ProtoContract(InferTagFromName = true), DataContract]
     public class TagData
     {
         [DataMember(Order = 1)]
@@ -27,8 +26,7 @@ namespace Examples
         public int Charlie { get; set; }
     }
 
-    [ProtoBuf.ProtoContract]
-    [DataContract]
+    [ProtoBuf.ProtoContract, DataContract]
     public class TagDataWithoutInfer
     {
         [DataMember(Order = 1)]

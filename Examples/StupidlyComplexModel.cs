@@ -8,9 +8,8 @@ using System.Linq;
 namespace Examples
 {
 #if DEBUG
-    [Ignore("Too slow")]
+    [Ignore("Too slow"), TestFixture]
 #endif
-    [TestFixture]
     public class StupidlyComplexModel
     {
         [Test]

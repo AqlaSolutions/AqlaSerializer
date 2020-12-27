@@ -369,8 +369,8 @@ namespace Examples
             var source = ArrayList.CreateFilled().Values;
             var copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
-            tm.Compile("TestArrayListDirect", "TestArrayListDirect.dll");
-            PEVerify.AssertValid("TestArrayListDirect.dll");
+            tm.Compile("TestArrayListDirect", $"TestArrayListDirect-{compile}-{forceSerialization}.dll");
+            PEVerify.AssertValid($"TestArrayListDirect-{compile}-{forceSerialization}.dll");
             copy = tm.DeepClone(source);
             Assert.That(copy, Is.EqualTo(source));
         }
@@ -512,8 +512,8 @@ namespace Examples
             }
             if (compile)
             {
-                tm.Compile("arrayarrayref", "arrayarrayref.dll");
-                PEVerify.AssertValid("arrayarrayref.dll");
+                tm.Compile("arrayarrayref", $"arrayarrayref-{asRef}.dll");
+                PEVerify.AssertValid($"arrayarrayref-{asRef}.dll");
             }
         }
 

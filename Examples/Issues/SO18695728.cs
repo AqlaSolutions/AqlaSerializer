@@ -24,8 +24,8 @@ namespace Examples.Issues
              var clone = Serializer.DeepClone(list);
 
              Assert.AreEqual(2, clone.Count);
-             Assert.IsInstanceOfType(typeof(GPSReading), clone[0]);
-             Assert.IsInstanceOfType(typeof(TemperatureReading), clone[1]);
+             Assert.IsInstanceOf(typeof(GPSReading), clone[0]);
+             Assert.IsInstanceOf(typeof(TemperatureReading), clone[1]);
         }
         [ProtoBuf.ProtoContract]
         public abstract class WebSyncedObject

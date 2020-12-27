@@ -8,8 +8,7 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue295
     {
-        [ProtoBuf.ProtoContract(SkipConstructor = true)]
-        [ProtoBuf.ProtoInclude(500, typeof(Plant))]
+        [ProtoBuf.ProtoContract(SkipConstructor = true), ProtoBuf.ProtoInclude(500, typeof(Plant))]
         public class Asset
         {
             public Asset()

@@ -3,7 +3,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+#if !NETCOREAPP
 using System.Runtime.Serialization.Formatters.Soap;
+#endif
 using System.Text;
 using System.Xml.Serialization;
 using NUnit.Framework;
@@ -263,11 +265,13 @@ namespace Examples.SimpleStream
         }
 
         [Ignore("Now should throw")]
-        [Test, ExpectedException(ExpectedException = typeof(ProtoException))]
+        [Test]
         public void TestSerializeUndefinedEnum()
         {
-            SomeEnumEntity dee = new SomeEnumEntity { Enum = 0 };
-            Serializer.Serialize(Stream.Null, dee);
+            Assert.Throws<ProtoException>(() => {
+                SomeEnumEntity dee = new SomeEnumEntity { Enum = 0 };
+                Serializer.Serialize(Stream.Null, dee);
+            });
         }
 
         [Ignore("Now should throw")]
@@ -312,11 +316,13 @@ namespace Examples.SimpleStream
         {
             public int X { get; set; }
         }
-        [Test, ExpectedException(ExpectedException = typeof(InvalidOperationException))]
+        [Test]
         public void TestNotAContract()
         {
-            NotAContract nac = new NotAContract { X = 4 };
-            Serializer.Serialize(Stream.Null, nac);
+            Assert.Throws<InvalidOperationException>(() => {
+                NotAContract nac = new NotAContract { X = 4 };
+                Serializer.Serialize(Stream.Null, nac);
+            });
         }
 
         public static bool LoadTestItem<T>(T item, int count, int protoCount, bool testBinary, bool testSoap, bool testXml, bool testProtoSharp, bool writeJson, bool testNetDcs, params byte[] expected) where T : class, new()
@@ -422,6 +428,7 @@ namespace Examples.SimpleStream
             }
             if (testSoap)
             {
+#if !NETCOREAPP
                 using (MemoryStream ms = new MemoryStream())
                 {
                     SoapFormatter sf = new SoapFormatter();
@@ -444,6 +451,7 @@ namespace Examples.SimpleStream
                     Console.WriteLine("||`SoapFormatter`||{0:###,###,###}||{1:###,###,###}||{2:###,###,###}||",
                         ms.Length, serializeWatch.ElapsedMilliseconds, deserializeWatch.ElapsedMilliseconds);
                 }
+#endif
             }
             if (testXml)
             {
@@ -472,6 +480,7 @@ namespace Examples.SimpleStream
             }
             if (testNetDcs)
             {
+#if !NETCOREAPP
                 using (MemoryStream ms = new MemoryStream())
                 {
                     NetDataContractSerializer nxser = new NetDataContractSerializer();
@@ -494,6 +503,7 @@ namespace Examples.SimpleStream
                     Console.WriteLine("||`NetDataContractSerializer`||{0:###,###,###}||{1:###,###,###}||{2:###,###,###}||",
                         ms.Length, serializeWatch.ElapsedMilliseconds, deserializeWatch.ElapsedMilliseconds);
                 }
+#endif
             }
             if (!(item is ISerializable))
             {

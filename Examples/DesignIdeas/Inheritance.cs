@@ -33,10 +33,8 @@ namespace Examples.DesignIdeas
      * repeated somebase data = 1
      * repeated sub1 data_sub1 = 2
      * repeated sub2 data_sub2 = 3
-     */ 
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(2, typeof(Sub1))]
-    [ProtoBuf.ProtoInclude(3, typeof(Sub2))]
+     */
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(2, typeof(Sub1)), ProtoBuf.ProtoInclude(3, typeof(Sub2))]
     public class SomeBase
     {
         [ProtoBuf.ProtoMember(10)]
@@ -59,7 +57,7 @@ namespace Examples.DesignIdeas
         {
             SomeBase sb = new SomeBase {Test = 12345};
             SomeBase clone = Serializer.DeepClone<SomeBase>(sb);
-            Assert.IsInstanceOfType(typeof(SomeBase), clone, "Type");
+            Assert.IsInstanceOf(typeof(SomeBase), clone, "Type");
             Assert.AreEqual(sb.Test, clone.Test, "Value");
         }
         [Test]
@@ -67,7 +65,7 @@ namespace Examples.DesignIdeas
         {
             SomeBase sb = new Sub1 { Test = 12345, Foo = "abc" };
             SomeBase clone = Serializer.DeepClone<SomeBase>(sb);
-            Assert.IsInstanceOfType(typeof(Sub1), clone, "Type");
+            Assert.IsInstanceOf(typeof(Sub1), clone, "Type");
             Assert.AreEqual(sb.Test, clone.Test, "Value");
             Assert.AreEqual(((Sub1)sb).Foo, ((Sub1)clone).Foo, "Foo");
         }
@@ -76,7 +74,7 @@ namespace Examples.DesignIdeas
         {
             SomeBase sb = new Sub2 { Test = 12345, Bar = 123.45F};
             SomeBase clone = Serializer.DeepClone<SomeBase>(sb);
-            Assert.IsInstanceOfType(typeof(Sub2), clone, "Type");
+            Assert.IsInstanceOf(typeof(Sub2), clone, "Type");
             Assert.AreEqual(sb.Test, clone.Test, "Value");
             Assert.AreEqual(((Sub2)sb).Bar, ((Sub2)clone).Bar, "Foo");
         }
@@ -98,13 +96,12 @@ namespace Examples.DesignIdeas
 
             Assert.IsTrue(Program.CheckBytes(sb, raw), "raw bytes");
             SomeBase clone = Program.Build<SomeBase>(raw);
-            Assert.IsInstanceOfType(typeof(Sub1), clone);
+            Assert.IsInstanceOf(typeof(Sub1), clone);
             Assert.AreEqual(sb.Test, clone.Test);
             Assert.AreEqual(((Sub1)sb).Foo, ((Sub1)clone).Foo);
         }
 
-        [Ignore]
-        [Test]
+        [Ignore("Not supported"), Test]
         public void InheritanceCheckBytesWrongOrder()
         {   // breaking change: not supported in v2; frankly, this is moot - the entire
             // inheritance chain is protobuf-net specific, and that always writes data in
@@ -112,7 +109,7 @@ namespace Examples.DesignIdeas
             // note sure this is a realistic concern
             byte[] raw = { 0x50, 0xB9, 0x60, 0x12, 0x05, 0x5A, 0x03, 0x61, 0x62, 0x63};
             SomeBase clone = Program.Build<SomeBase>(raw);
-            Assert.IsInstanceOfType(typeof(Sub1), clone);
+            Assert.IsInstanceOf(typeof(Sub1), clone);
             Assert.AreEqual(12345, clone.Test);
             Assert.AreEqual("abc", ((Sub1)clone).Foo);
         }

@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net5.0;net45</TargetFrameworks>
     <LangVersion>9.0</LangVersion>
@@ -10,11 +9,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER NET_3_0 NET_3_5 NET_4_0 NET_4_5 REMOTING</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <DefineConstants>TRACE;FEAT_COMPILER</DefineConstants>
+    <DefineConstants>TRACE;FEAT_COMPILER NET_3_0 NET_3_5 NET_4_0 NET_4_5 REMOTING</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
@@ -80,8 +79,5 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 </Project>

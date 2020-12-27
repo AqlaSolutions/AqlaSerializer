@@ -36,8 +36,8 @@ namespace Examples.Issues
                 Assert.AreEqual(456, clone.Z);
             }
         }
-        [Serializable]
-        [DataContract]
+
+        [Serializable, DataContract]
         public struct MyValueTypeViaFields : ISerializable
         {
             [DataMember(Order = 1)]

@@ -47,14 +47,12 @@ namespace Examples
             private readonly List<Party> parties = new List<Party>();
         }
 
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(1, typeof(Party))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Party))]
         public class BaseClass
         {
         }
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(1, typeof(Creditor))]
-        [ProtoBuf.ProtoInclude(2, typeof(Debtor))]
+
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Creditor)), ProtoBuf.ProtoInclude(2, typeof(Debtor))]
         public class Party : BaseClass
         {
         }

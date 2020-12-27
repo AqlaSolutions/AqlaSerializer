@@ -15,15 +15,17 @@ namespace Examples.Issues
         public void ExecuteWithoutAutoAddProtoContractTypesOnlyShouldWork()
         {
             var model = TypeModel.Create();
-            Assert.IsInstanceOfType(typeof(Foo), model.DeepClone(new Foo()));
+            Assert.IsInstanceOf(typeof(Foo), model.DeepClone(new Foo()));
         }
-        [Test, ExpectedException(typeof(InvalidOperationException),
-            ExpectedMessage = "Type is not expected, and no contract can be inferred: Examples.Issues.SO11871726+Foo")]
+        [Test]
         public void ExecuteWithAutoAddProtoContractTypesOnlyShouldFail()
         {
-            var model = TypeModel.Create();
-            model.AutoAddStrategy = new AutoAddStrategy(model) { AcceptableAttributes = AttributeType.ProtoBuf };
-            Assert.IsInstanceOfType(typeof(Foo), model.DeepClone(new Foo()));
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                var model = TypeModel.Create();
+                model.AutoAddStrategy = new AutoAddStrategy(model) { AcceptableAttributes = AttributeType.ProtoBuf };
+                Assert.IsInstanceOf(typeof(Foo), model.DeepClone(new Foo()));
+            });
+            Assert.That(ex.Message, Is.EqualTo("Type is not expected, and no contract can be inferred: Examples.Issues.SO11871726+Foo"));
         }
 
         [DataContract]

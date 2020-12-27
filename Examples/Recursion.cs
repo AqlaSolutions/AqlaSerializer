@@ -14,12 +14,14 @@ namespace Examples
     [TestFixture]
     public class Recursion
     {
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void BlowUp()
         {
-            RecursiveObject obj = new RecursiveObject();
-            obj.Yeuch = obj;
-            Serializer.Serialize(Stream.Null, obj);
+            Assert.Throws<ProtoException>(() => {
+                RecursiveObject obj = new RecursiveObject();
+                obj.Yeuch = obj;
+                Serializer.Serialize(Stream.Null, obj);
+            });
         }
     }
 }

@@ -18,9 +18,7 @@ namespace Examples.Issues
             string proto = Serializer.GetProto<Animal>();
         }
 
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(2, typeof(Cat))]
-        [ProtoBuf.ProtoInclude(3, typeof(Dog))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(2, typeof(Cat)), ProtoBuf.ProtoInclude(3, typeof(Dog))]
         public class Animal
         {
             [ProtoBuf.ProtoMember(1)]

@@ -11,8 +11,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO13162642
     {
-        [Ignore("See it later, very slow")]
-        [Test]
+        [Ignore("See it later, very slow"), Test]
         public void Execute()
         {
             using (var f = File.Create("Data.protobuf"))
@@ -28,8 +27,7 @@ namespace Examples.Issues
             Console.Read();
         }
 
-        [Ignore("Ok, see it later, very slow")]
-        [Test]
+        [Ignore("Ok, see it later, very slow"), Test]
         public void ExecuteWorkaround()
         {
             using (var f = File.Create("Data.protobuf"))

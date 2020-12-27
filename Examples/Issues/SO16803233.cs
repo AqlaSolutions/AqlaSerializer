@@ -41,7 +41,7 @@ namespace Examples.Issues
             model.CompileInPlace();
             Execute_WithLengthPrefix(model, "CompileInPlace");
             Execute_WithLengthPrefix(model.Compile(), "Compile");
-            model.Compile("SO16803233b", "SO16803233b.dll");
+            model.Compile("SO16803233b", $"SO16803233b-{comp}.dll");
             PEVerify.AssertValid("SO16803233b.dll");
         }
 

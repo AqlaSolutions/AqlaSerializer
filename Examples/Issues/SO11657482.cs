@@ -8,8 +8,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO11657482
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(1, typeof(Derived))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Derived))]
         public abstract class Base { }
 
         [ProtoBuf.ProtoContract]

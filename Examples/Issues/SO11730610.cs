@@ -8,8 +8,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO11730610
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(101, typeof(BaseClassInfo))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(101, typeof(BaseClassInfo))]
         public interface IDataRow
         {
             [ProtoBuf.ProtoMember(1)]
@@ -17,8 +16,7 @@ namespace Examples.Issues
         }
 
 
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(101, typeof (SomeClassRow))]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(101, typeof(SomeClassRow))]
         public class BaseClassInfo : IDataRow
         {
             [ProtoBuf.ProtoMember(1)]

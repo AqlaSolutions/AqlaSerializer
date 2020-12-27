@@ -29,10 +29,13 @@ namespace Examples
         private class PrivateType
         {
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public type cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateType)")]
+        [Test]
         public void PrivateTypeShouldFail()
         {
-            Compile<PrivateType>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivateType>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public type cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateType)"));
         }
         private class NonPublicWrapper
         {
@@ -41,10 +44,13 @@ namespace Examples
             {
             }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public type cannot be used with full dll compilation: Examples.NonPublic_Compile+NonPublicWrapper+IndirectlyPrivateType)")]
+        [Test]
         public void IndirectlyPrivateTypeShouldFail()
         {
-            Compile<NonPublicWrapper.IndirectlyPrivateType>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<NonPublicWrapper.IndirectlyPrivateType>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public type cannot be used with full dll compilation: Examples.NonPublic_Compile+NonPublicWrapper+IndirectlyPrivateType)"));
         }
         [ProtoBuf.ProtoContract]
         public class PrivateCallback
@@ -52,10 +58,13 @@ namespace Examples
             [ProtoBuf.ProtoBeforeSerialization]
             private void OnDeserialize() { }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage= "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateCallback.OnDeserialize)")]
+        [Test]
         public void PrivateCallbackShouldFail()
         {
-            Compile<PrivateCallback>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivateCallback>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateCallback.OnDeserialize)"));
         }
 
         [ProtoBuf.ProtoContract]
@@ -66,10 +75,13 @@ namespace Examples
             private int Foo;
 #pragma warning restore 0169
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateField.Foo)")]
+        [Test]
         public void PrivateFieldShouldFail()
         {
-            Compile<PrivateField>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivateField>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateField.Foo)"));
         }
         [ProtoBuf.ProtoContract]
         public class PrivateProperty
@@ -77,10 +89,13 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             private int Foo { get; set; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateProperty.get_Foo)")]
+        [Test]
         public void PrivatePropertyShouldFail()
         {
-            Compile<PrivateProperty>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivateProperty>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateProperty.get_Foo)"));
         }
         [ProtoBuf.ProtoContract]
         public class PrivatePropertyGet
@@ -88,10 +103,13 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             public int Foo { private get; set; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage= "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivatePropertyGet.get_Foo)")]
+        [Test]
         public void PrivatePropertyGetShouldFail()
         {
-            Compile<PrivatePropertyGet>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivatePropertyGet>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivatePropertyGet.get_Foo)"));
         }
         [ProtoBuf.ProtoContract]
         public class PrivatePropertySet
@@ -99,10 +117,13 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             public int Foo { get; private set; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Cannot apply changes to property Examples.NonPublic_Compile+PrivatePropertySet.Foo)")]
+        [Test]
         public void PrivatePropertySetShouldFail()
         {
-            Compile<PrivatePropertySet>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivatePropertySet>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Cannot apply changes to property Examples.NonPublic_Compile+PrivatePropertySet.Foo)"));
         }
         [ProtoBuf.ProtoContract]
         public class PrivateConditional
@@ -112,10 +133,13 @@ namespace Examples
 
             private bool ShouldSerializeFoo() { return true; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage = "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateConditional.ShouldSerializeFoo)")]
+        [Test]
         public void PrivateConditionalSetShouldFail()
         {
-            Compile<PrivateConditional>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivateConditional>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateConditional.ShouldSerializeFoo)"));
         }
         [ProtoBuf.ProtoContract]
         public class PrivateConstructor
@@ -124,10 +148,13 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             public int Foo { get; set; }
         }
-        [Test, ExpectedException(typeof(ProtoAggregateException), ExpectedMessage= "One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateConstructor..ctor)")]
+        [Test]
         public void PrivateConstructorShouldFail()
         {
-            Compile<PrivateConstructor>();
+            var ex = Assert.Throws<ProtoAggregateException>(() => {
+                Compile<PrivateConstructor>();
+            });
+            Assert.That(ex.Message, Is.EqualTo("One or multiple exceptions occurred: InvalidOperationException (Non-public member cannot be used with full dll compilation: Examples.NonPublic_Compile+PrivateConstructor..ctor)"));
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
+#if !NETCOREAPP
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,8 +27,8 @@ namespace Examples
             {
                 var basicDto = new BasicDto();
                 basicDto.Foo = new DateTime(rand.Next(1980, 2020), rand.Next(1, 13),
-                                            rand.Next(1, 29), rand.Next(0, 24),
-                                            rand.Next(0, 60), rand.Next(0, 60));
+                    rand.Next(1, 29), rand.Next(0, 24),
+                    rand.Next(0, 60), rand.Next(0, 60));
                 basicDto.Bar = (float)rand.NextDouble();
                 list.Add(basicDto);
             }
@@ -63,3 +65,5 @@ namespace Examples
         }
     }
 }
+
+#endif

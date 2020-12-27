@@ -81,21 +81,13 @@ namespace Examples.Issues
 
             }
         }
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(1, typeof(ProtoObject<string>))]
-        [ProtoBuf.ProtoInclude(2, typeof(ProtoObject<int>))]
-        [ProtoBuf.ProtoInclude(3, typeof(ProtoObject<List<string>>))]
-        [ProtoBuf.ProtoInclude(4, typeof(ProtoObject<Dictionary<string, string>>))]
-        [ProtoBuf.ProtoInclude(5, typeof(ProtoObject<List<TrafficEntry>>))]
-        [ProtoBuf.ProtoInclude(6, typeof(ProtoObject<Dictionary<string, int>>))]
-        [ProtoBuf.ProtoInclude(7, typeof(ProtoObject<bool>))]
-        [ProtoBuf.ProtoInclude(8, typeof(ProtoObject<double>))]
-        [ProtoBuf.ProtoInclude(9, typeof(ProtoObject<decimal>))]
-        [ProtoBuf.ProtoInclude(10, typeof(ProtoObject<float>))]
-        [ProtoBuf.ProtoInclude(11, typeof(ProtoObject<long>))]
-        [ProtoBuf.ProtoInclude(12, typeof(ProtoObject<SerializableException>))]
-        [ProtoBuf.ProtoInclude(13, typeof(ProtoObject<List<UrlStatus>>))]
-        [Serializable]
+
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(ProtoObject<string>)), ProtoBuf.ProtoInclude(2, typeof(ProtoObject<int>)),
+         ProtoBuf.ProtoInclude(3, typeof(ProtoObject<List<string>>)), ProtoBuf.ProtoInclude(4, typeof(ProtoObject<Dictionary<string, string>>)),
+         ProtoBuf.ProtoInclude(5, typeof(ProtoObject<List<TrafficEntry>>)), ProtoBuf.ProtoInclude(6, typeof(ProtoObject<Dictionary<string, int>>)),
+         ProtoBuf.ProtoInclude(7, typeof(ProtoObject<bool>)), ProtoBuf.ProtoInclude(8, typeof(ProtoObject<double>)), ProtoBuf.ProtoInclude(9, typeof(ProtoObject<decimal>)),
+         ProtoBuf.ProtoInclude(10, typeof(ProtoObject<float>)), ProtoBuf.ProtoInclude(11, typeof(ProtoObject<long>)),
+         ProtoBuf.ProtoInclude(12, typeof(ProtoObject<SerializableException>)), ProtoBuf.ProtoInclude(13, typeof(ProtoObject<List<UrlStatus>>)), Serializable]
         public abstract class ProtoObject
         {
             public static ProtoObject<T> Create<T>(T value)
@@ -117,8 +109,7 @@ namespace Examples.Issues
             }
         }
 
-        [ProtoBuf.ProtoContract]
-        [Serializable]
+        [ProtoBuf.ProtoContract, Serializable]
         public sealed class ProtoObject<T> : ProtoObject
         {
             public ProtoObject()

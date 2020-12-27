@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if NET_3_0
+#if NET_3_0 && !NETCOREAPP
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -88,7 +88,7 @@ namespace Examples.ServiceModel
     public class WcfTest
     {
         ServiceHost host;
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void StartServer()
         {
             try
@@ -108,7 +108,7 @@ namespace Examples.ServiceModel
             }
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void StopServer()
         {
             if (host != null)

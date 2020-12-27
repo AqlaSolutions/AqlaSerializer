@@ -177,16 +177,20 @@ enum blah {
 ", proto);
         }
 
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestConflictingKeys()
         {
-            TypeModel.Create().Serialize(Stream.Null, new TypeDuffKeys { Value = HasConflictingKeys.Foo });
+            Assert.Throws<ProtoException>(() => {
+                TypeModel.Create().Serialize(Stream.Null, new TypeDuffKeys { Value = HasConflictingKeys.Foo });
+            });
         }
 
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestConflictingValues()
         {
-            TypeModel.Create().Serialize(Stream.Null, new TypeDuffValues { Value = HasConflictingValues.Foo });
+            Assert.Throws<ProtoException>(() => {
+                TypeModel.Create().Serialize(Stream.Null, new TypeDuffValues { Value = HasConflictingValues.Foo });
+            });
         }
 
         [Test]
@@ -259,15 +263,19 @@ enum blah {
             TestNegEnum(NegEnum.B);
             TestNegEnum(NegEnum.C);
         }
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestNegEnumnotDefinedNeg()
         {
-            TestNegEnum((NegEnum)(-2));
+            Assert.Throws<ProtoException>(() => {
+                TestNegEnum((NegEnum)(-2));
+            });
         }
-        [Test, ExpectedException(typeof(ProtoException))]
+        [Test]
         public void TestNegEnumnotDefinedPos()
         {
-            TestNegEnum((NegEnum) 2);
+            Assert.Throws<ProtoException>(() => {
+                TestNegEnum((NegEnum)2);
+            });
         }
         [Test]
         public void ShouldBeAbleToSerializeExactDuplicatedEnumValues()

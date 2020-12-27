@@ -157,7 +157,7 @@ namespace TestMediaBrowser
         public void TestInheritedClone()
         {
             Thing original = new Animal();
-            Assert.IsInstanceOfType(typeof(Animal), Serializer.DeepClone(original));
+            Assert.IsInstanceOf(typeof(Animal), Serializer.DeepClone(original));
         }
         /*
         [Test]
@@ -341,7 +341,7 @@ namespace TestMediaBrowser
                 {
                     foreach (var foo in list)
                     {
-                        Serializer.Serialize(ms, foo);
+                        Serializer.SerializeWithLengthPrefix(ms, foo, PrefixStyle.Base128);
                     }
 
                     ms.Position = 0;
@@ -349,7 +349,7 @@ namespace TestMediaBrowser
                     list = new List<DummyPersistanceObject>();
                     for (int i = 0; i < 100000; i++)
                     {
-                        list.Add(Serializer.Deserialize<DummyPersistanceObject>(ms));
+                        list.Add(Serializer.DeserializeWithLengthPrefix<DummyPersistanceObject>(ms, PrefixStyle.Base128));
                     }
 
                 }

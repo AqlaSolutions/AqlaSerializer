@@ -31,7 +31,7 @@ namespace Examples.Issues
                 ms.Position = 0;
                 clone = Serializer.Deserialize<Node<int>>(ms);
             }
-            Assert.IsInstanceOfType(typeof(Node<int>.RootNode), clone);
+            Assert.IsInstanceOf(typeof(Node<int>.RootNode), clone);
             Assert.AreEqual("abc", clone.Key);
             Assert.AreEqual(1, clone.Value);
             children = clone.getChildren();
@@ -46,7 +46,7 @@ namespace Examples.Issues
             Assert.AreEqual(3, children[1].Value);
         }
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void Init()
         {
             RuntimeTypeModel.Default.Add(typeof(Node<int>), true).AddSubType(4, typeof(Node<int>.RootNode));
@@ -71,7 +71,7 @@ namespace Examples.Issues
                 ms.Position = 0;
                 clone = Serializer.Deserialize<Node<MyDto>>(ms);
             }
-            Assert.IsInstanceOfType(typeof(Node<MyDto>.RootNode), clone);
+            Assert.IsInstanceOf(typeof(Node<MyDto>.RootNode), clone);
             Assert.AreEqual("abc", clone.Key);
             Assert.AreEqual(1, clone.Value.Value);
             children = clone.getChildren();
@@ -86,36 +86,39 @@ namespace Examples.Issues
             Assert.AreEqual(3, children[1].Value.Value);
         }
 
-        [Test, ExpectedException(typeof(NotSupportedException), ExpectedMessage = "Nested or jagged lists and arrays are not supported"), Ignore("Needs attention")]
+        [Test, Ignore("Needs attention")]
         public void TestListMyDTO()
         {
-            Node<List<MyDto>> tree = new Node<List<MyDto>>.RootNode("abc", new List<MyDto> { new MyDto { Value = 1 }}), clone;
-            var children = tree.getChildren();
-            children.Add(new Node<List<MyDto>>("abc/def", new List<MyDto> { new MyDto { Value = 2 } }));
-            children.Add(new Node<List<MyDto>>("abc/ghi", new List<MyDto> { new MyDto { Value = 3 } }));
-            Assert.AreEqual(2, tree.getChildren().Count);
+            var ex = Assert.Throws<NotSupportedException>(() => {
+                Node<List<MyDto>> tree = new Node<List<MyDto>>.RootNode("abc", new List<MyDto> { new MyDto { Value = 1 } }), clone;
+                var children = tree.getChildren();
+                children.Add(new Node<List<MyDto>>("abc/def", new List<MyDto> { new MyDto { Value = 2 } }));
+                children.Add(new Node<List<MyDto>>("abc/ghi", new List<MyDto> { new MyDto { Value = 3 } }));
+                Assert.AreEqual(2, tree.getChildren().Count);
 
-            using (var ms = new MemoryStream())
-            {
-                Serializer.Serialize(ms, tree);
-                Assert.Greater(1, 0); // I always get these args the wrong way around, so always check!
-                Assert.Greater(ms.Length, 0, "stream length");
-                ms.Position = 0;
-                clone = Serializer.Deserialize<Node<List<MyDto>>>(ms);
-            }
+                using (var ms = new MemoryStream())
+                {
+                    Serializer.Serialize(ms, tree);
+                    Assert.Greater(1, 0); // I always get these args the wrong way around, so always check!
+                    Assert.Greater(ms.Length, 0, "stream length");
+                    ms.Position = 0;
+                    clone = Serializer.Deserialize<Node<List<MyDto>>>(ms);
+                }
 
-            Assert.AreEqual("abc", clone.Key);
-            Assert.AreEqual(1, clone.Value.Single().Value);
-            children = clone.getChildren();
-            Assert.AreEqual(2, children.Count);
+                Assert.AreEqual("abc", clone.Key);
+                Assert.AreEqual(1, clone.Value.Single().Value);
+                children = clone.getChildren();
+                Assert.AreEqual(2, children.Count);
 
-            Assert.IsFalse(children[0].HasChildren);
-            Assert.AreEqual("abc/def", children[0].Key);
-            Assert.AreEqual(2, children[0].Value.Single().Value);
+                Assert.IsFalse(children[0].HasChildren);
+                Assert.AreEqual("abc/def", children[0].Key);
+                Assert.AreEqual(2, children[0].Value.Single().Value);
 
-            Assert.IsFalse(children[1].HasChildren);
-            Assert.AreEqual("abc/ghi", children[1].Key);
-            Assert.AreEqual(3, children[1].Value.Single().Value);
+                Assert.IsFalse(children[1].HasChildren);
+                Assert.AreEqual("abc/ghi", children[1].Key);
+                Assert.AreEqual(3, children[1].Value.Single().Value);
+            });
+            Assert.That(ex.Message, Is.EqualTo("Nested or jagged lists and arrays are not supported"));
         }
 
         [Test]

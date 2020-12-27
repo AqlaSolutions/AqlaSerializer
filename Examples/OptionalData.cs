@@ -47,21 +47,25 @@ namespace Examples
             Test<RequiredImplicitZero>(3F, 5);
             Test<RequiredImplicitZero>(5F, 5);
         }
-        [ExpectedException(typeof(ProtoException), ExpectedMessage = "Can't use default value \"0\" on Required member Single Value (Examples.RequiredExplicitZero)")]
         [Test]
         public void TestRequiredExplicitZero()
         {
-            Test<RequiredExplicitZero>(0F, 5);
-            Test<RequiredExplicitZero>(3F, 5);
-            Test<RequiredExplicitZero>(5F, 5);
+            var ex = Assert.Throws<ProtoException>(() => {
+                Test<RequiredExplicitZero>(0F, 5);
+                Test<RequiredExplicitZero>(3F, 5);
+                Test<RequiredExplicitZero>(5F, 5);
+            });
+            Assert.That(ex.Message, Is.EqualTo("Can't use default value \"0\" on Required member Single Value (Examples.RequiredExplicitZero)"));
         }
         [Test]
-        [ExpectedException(typeof(ProtoException), ExpectedMessage = "Can't use default value \"5\" on Required member Single Value (Examples.RequiredExplicitFive)")]
         public void TestRequiredExplicitFive()
         {
-            Test<RequiredExplicitFive>(0F, 5);
-            Test<RequiredExplicitFive>(3F, 5);
-            Test<RequiredExplicitFive>(5F, 5);
+            var ex = Assert.Throws<ProtoException>(() => {
+                Test<RequiredExplicitFive>(0F, 5);
+                Test<RequiredExplicitFive>(3F, 5);
+                Test<RequiredExplicitFive>(5F, 5);
+            });
+            Assert.That(ex.Message, Is.EqualTo("Can't use default value \"5\" on Required member Single Value (Examples.RequiredExplicitFive)"));
         }
 
 

@@ -12,10 +12,7 @@ namespace Examples
     [TestFixture]
     public class TestAutoFields
     {
-
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoPartialMember(2, "IncludeIndirect")]
-        [ProtoBuf.ProtoPartialIgnore("IgnoreIndirect")]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoPartialMember(2, "IncludeIndirect"), ProtoBuf.ProtoPartialIgnore("IgnoreIndirect")]
         public class IgnorePOCO
         {
             [ProtoBuf.ProtoMember(1)]
@@ -23,8 +20,7 @@ namespace Examples
 
             public int IncludeIndirect { get; set; }
 
-            [ProtoBuf.ProtoMember(3)]
-            [ProtoBuf.ProtoIgnore]
+            [ProtoBuf.ProtoMember(3), ProtoBuf.ProtoIgnore]
             public int IgnoreDirect { get; set; }
 
             [ProtoBuf.ProtoMember(4)]
@@ -50,8 +46,7 @@ namespace Examples
             Assert.AreEqual(foo.IncludeIndirect, bar.IncludeIndirect, "IncludeIndirect");
         }
 
-        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllFields, ImplicitFirstTag = 4)]
-        [ProtoBuf.ProtoPartialIgnore("g_ignoreIndirect")]
+        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllFields, ImplicitFirstTag = 4), ProtoBuf.ProtoPartialIgnore("g_ignoreIndirect")]
         public class ImplicitFieldPOCO
         {
             public event EventHandler Foo;
@@ -211,8 +206,7 @@ namespace Examples
 
         }
 
-        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllPublic, ImplicitFirstTag = 4)]
-        [ProtoBuf.ProtoPartialIgnore("IgnoreIndirect")]
+        [ProtoBuf.ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllPublic, ImplicitFirstTag = 4), ProtoBuf.ProtoPartialIgnore("IgnoreIndirect")]
         public class ImplicitPublicPOCO
         {
             internal int ImplicitNonPublic { get; set;}

@@ -11,7 +11,7 @@
     <TargetFrameworks>netstandard2.1;net20;net30;net35;net40;net45</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FEAT_SERVICEMODEL FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
     <TargetFrameworks>netstandard2.1;net35</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>

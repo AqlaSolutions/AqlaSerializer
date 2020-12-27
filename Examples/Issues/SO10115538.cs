@@ -1,4 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+#if !NETCOREAPP
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,9 +16,8 @@ using AqlaSerializer.ServiceModel;
 namespace Examples.Issues
 {
 #if DEBUG
-    [Ignore("Don't test in DEBUG, too slow")]
+    [Ignore("Don't test in DEBUG, too slow"), TestFixture]
 #endif
-    [TestFixture]
     public class SO10115538
     {
         public class MyService : IMyService
@@ -39,8 +39,8 @@ namespace Examples.Issues
         {
             var endpoint =
                 new ServiceEndpoint(
-                ContractDescription.GetContract(typeof(IMyService)), new NetTcpBinding(SecurityMode.None),
-                new EndpointAddress("net.tcp://localhost:89/MyService/svc"));
+                    ContractDescription.GetContract(typeof(IMyService)), new NetTcpBinding(SecurityMode.None),
+                    new EndpointAddress("net.tcp://localhost:89/MyService/svc"));
             endpoint.Behaviors.Add(new ProtoEndpointBehavior());
             return new ChannelFactory<IMyService>(endpoint).CreateChannel();
             
@@ -48,7 +48,7 @@ namespace Examples.Issues
             //var client = factory.CreateChannel();
             //return client;
         }
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void StartServer()
         {
             try
@@ -57,8 +57,8 @@ namespace Examples.Issues
                 host = new ServiceHost(typeof(MyService),
                     new Uri("net.tcp://localhost:89/MyService"));
                 host.AddServiceEndpoint(typeof (IMyService), new NetTcpBinding(SecurityMode.None),
-                                        "net.tcp://localhost:89/MyService/svc").Behaviors.Add(
-                                            new ProtoEndpointBehavior());
+                    "net.tcp://localhost:89/MyService/svc").Behaviors.Add(
+                    new ProtoEndpointBehavior());
                 host.Open();
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ namespace Examples.Issues
             }
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void StopServer()
         {
             if (host != null)
@@ -107,7 +107,7 @@ namespace Examples.Issues
                 Assert.AreEqual("Mike", member2.FirstName);
 
                 Assert.AreEqual("Mike Hanrahan, 467c231f-f692-4432-ab1b-342c237b3ca9, Blocked, qwertt",
-                                member2.ToString());
+                    member2.ToString());
             }
         }
 
@@ -125,8 +125,7 @@ namespace Examples.Issues
         /// <summary>
         /// This entity represents a member or user of the site.
         /// </summary>
-        [DataContract]
-        [Serializable]
+        [DataContract, Serializable]
         public class Member : User
         {
             public override string ToString()
@@ -149,7 +148,7 @@ namespace Examples.Issues
             [DataMember(Order = 23)]
             public MemberAccountStatus AccountStatus { get; set; }
 
-            #region static
+#region static
 
             public static readonly string CacheCollectionKey = "MemberCollection";
 
@@ -160,13 +159,12 @@ namespace Examples.Issues
                 return CacheItemKeyPrefix + id.ToString();
             }
 
-            #endregion
+#endregion
         }
-         /// <summary>
+        /// <summary>
         /// This public class represents a user in the system.  For example, a user could be a member or a merchant user.
         /// </summary>
-        [DataContract]
-        [Serializable]
+        [DataContract, Serializable]
         public class User: Base
         {
             public User()
@@ -184,7 +182,7 @@ namespace Examples.Issues
             [DataMember(Order = 12, Name = "Last Name")]
             public string LastName { get; set; }
 
-            }
+        }
         /// <summary>
         /// This is the base public class for all entities involved in the request/response pattern of our services
         /// </summary>
@@ -192,15 +190,14 @@ namespace Examples.Issues
         /// The objects derived from this public class are used to transfer data from our service classes to our UIs and back again and they should 
         /// not contain any logic.
         /// </remarks>
-        [DataContract]
-        [Serializable]
+        [DataContract, Serializable]
         public abstract class Base
         {
             public Base()
             {
                 //Set some defaults for this
-                EnteredBy = System.Environment.UserName;
-                EnteredSource = System.Environment.MachineName;
+                EnteredBy = Environment.UserName;
+                EnteredSource = Environment.MachineName;
             }
 
             /// <summary>
@@ -313,7 +310,7 @@ namespace Examples.Issues
                 return derivedTypes;
             }
 
-            #region Static Methods
+#region Static Methods
 
 
             private static object _metaLock = new object();
@@ -355,7 +352,7 @@ namespace Examples.Issues
                 }
             }
 
-            #endregion
+#endregion
         }
         public enum EntityType
         {
@@ -365,6 +362,8 @@ namespace Examples.Issues
         {
             Blocked
         }
-        }
+    }
 
 }
+
+#endif

@@ -33,6 +33,7 @@ namespace Examples.Remoting
 
     }
 
+#if !NETCOREAPP
     [TestFixture]
     public class DbRemoting
     {
@@ -40,7 +41,7 @@ namespace Examples.Remoting
         [Test]
         public void LargePayload()
         {
-            DAL.Database db = DAL.NWindTests.LoadDatabaseFromFile<DAL.Database>(RuntimeTypeModel.Default);
+            Database db = NWindTests.LoadDatabaseFromFile<Database>(RuntimeTypeModel.Default);
             DatabaseCompat compat = Serializer.ChangeType<Database, DatabaseCompat>(db);
             DatabaseCompatRem rem = Serializer.ChangeType<Database, DatabaseCompatRem>(db);
 
@@ -80,6 +81,7 @@ namespace Examples.Remoting
             }
         }
     }
+#endif
 
     [Serializable, DataContract]
     public sealed class RegularFragment
@@ -130,6 +132,7 @@ namespace Examples.Remoting
     [TestFixture]
     public class RemotingDemo
     {
+#if !NETCOREAPP
         [Test]
         [Ignore("small messages known to be slower")]
         public void SmallPayload()
@@ -142,15 +145,15 @@ namespace Examples.Remoting
             {
                 // create a server and two identical messages
                 Server local = new Server(),
-                    remote = (Server)app.CreateInstanceAndUnwrap(typeof(Server).Assembly.FullName, typeof(Server).FullName);
+                       remote = (Server)app.CreateInstanceAndUnwrap(typeof(Server).Assembly.FullName, typeof(Server).FullName);
                 RegularFragment frag1 = new RegularFragment { Foo = 27, Bar = 123.45F };
                 Serializer.PrepareSerializer<ProtoFragment>();
                 ProtoFragment frag2 = new ProtoFragment { Foo = frag1.Foo, Bar = frag1.Bar };
                 // verify basic transport
                 RegularFragment localFrag1 = local.SomeMethod1(frag1),
-                    remoteFrag1 = remote.SomeMethod1(frag1);
+                                remoteFrag1 = remote.SomeMethod1(frag1);
                 ProtoFragment localFrag2 = local.SomeMethod2(frag2),
-                    remoteFrag2 = remote.SomeMethod2(frag2);
+                              remoteFrag2 = remote.SomeMethod2(frag2);
 
                 Assert.AreNotSame(localFrag1, remoteFrag1);
                 Assert.AreNotSame(localFrag2, remoteFrag2);
@@ -185,6 +188,7 @@ namespace Examples.Remoting
                 AppDomain.Unload(app);
             }
         }
+#endif
         [Test]
         public void TestRawSerializerPerformance()
         {
@@ -215,9 +219,11 @@ namespace Examples.Remoting
             Roundtrip(() => new DataContractSerializer(regular), LOOP,
                 (ser, dest) => ser.WriteObject(dest, frag1), (ser, src) => ser.ReadObject(src));
 
+#if !NETCOREAPP
             Roundtrip(() => new NetDataContractSerializer(), LOOP,
                 (ser, dest) => ser.Serialize(dest, frag1), (ser, src) => ser.Deserialize(src));
-
+            
+#endif
             model.CompileInPlace();
             Roundtrip("CompileInPlace", () => model, LOOP * 50,
                 (ser, dest) => ser.Serialize(dest, frag2), (ser, src) => ser.Deserialize(src, null, proto));

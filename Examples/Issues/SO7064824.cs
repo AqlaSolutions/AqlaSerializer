@@ -101,23 +101,26 @@ namespace TechnologyEvaluation.Protobuf.ArrayOfBaseClassTest
         }
 
         [Ignore("Not introduced with AqlaSerializer")]
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "Conflicting item/add type")]// needs dynamic handling of list itself
+        [Test]// needs dynamic handling of list itself
         public void TestBaseClassArrayContainerClass()
         {
-            var model = CreateModel();
-            var container = new BaseClassArrayContainerClass();
-            container.BaseArray = this.CreateArray();
-            var cloned = (BaseClassArrayContainerClass)model.DeepClone(container);
-            Expect(cloned.BaseArray, Is.Not.Null);
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                var model = CreateModel();
+                var container = new BaseClassArrayContainerClass();
+                container.BaseArray = this.CreateArray();
+                var cloned = (BaseClassArrayContainerClass)model.DeepClone(container);
+                Expect(cloned.BaseArray, Is.Not.Null);
 
-            foreach (var obj in cloned.BaseArray)
-            {
-                Expect(obj as Base, Is.Not.Null);
-            }
-            Expect(cloned.BaseArray[1] as Derived, Is.Not.Null);
+                foreach (var obj in cloned.BaseArray)
+                {
+                    Expect(obj as Base, Is.Not.Null);
+                }
+                Expect(cloned.BaseArray[1] as Derived, Is.Not.Null);
 
-            // this would be nice...
-            Expect(cloned.BaseArray.GetType(), Is.EqualTo(typeof(Base[])), "array type");
+                // this would be nice...
+                Expect(cloned.BaseArray.GetType(), Is.EqualTo(typeof(Base[])), "array type");
+            });
+            Assert.That(ex.Message, Is.EqualTo("Conflicting item/add type"));
         }
 
         RuntimeTypeModel CreateModel()

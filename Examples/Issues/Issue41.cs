@@ -7,9 +7,7 @@ using AqlaSerializer.Meta;
 
 namespace Issue41
 {
-
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(3, typeof(B))]
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(3, typeof(B))]
     public class A
     {
         [ProtoBuf.ProtoMember(1, Name = "PropA")]
@@ -28,8 +26,7 @@ namespace Issue41
         public string PropBB { get; set; }
     }
 
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(2, typeof(B_Orig))]
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(2, typeof(B_Orig))]
     public class A_Orig
     {
         [ProtoBuf.ProtoMember(1, Name = "PropA")]

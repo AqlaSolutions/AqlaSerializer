@@ -25,7 +25,7 @@ namespace Examples.Issues
             object clone = method.Invoke(null, new object[] { obj });
             Assert.IsNotNull(clone, "Create clone");
             Assert.AreNotSame(obj, clone, "Clone different instance");
-            Assert.IsInstanceOfType(type, clone, "Clone correct type");
+            Assert.IsInstanceOf(type, clone, "Clone correct type");
             object value = type.GetProperty("BaseProp").GetValue(clone, null);
             Assert.AreEqual(EXPECTED, value, "Clone value");
         }

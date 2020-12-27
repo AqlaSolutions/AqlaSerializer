@@ -60,8 +60,7 @@ namespace Examples.Issues
             }
         }
 
-        [Ignore("Not introduced with AqlaSerializer")]
-        [Test]
+        [Ignore("Not introduced with AqlaSerializer"), Test]
         public void RunTest() {
 
                 //Serialization Logic:

@@ -267,12 +267,15 @@ namespace Examples.Issues
         }
 
         [Ignore("AqlaSerializer is more tolerant to references")]
-        [Test, ExpectedException(typeof(InvalidOperationException), ExpectedMessage = "AsReference cannot be used with value-types; please see http://stackoverflow.com/q/14436606/")]
+        [Test]
         public void AreObjectReferencesSameAfterDeserialization()
         {
-            var model = TypeModel.Create();
-            model.AutoCompile = false;
-            ExecuteAllModes(model);
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                var model = TypeModel.Create();
+                model.AutoCompile = false;
+                ExecuteAllModes(model);
+            });
+            Assert.That(ex.Message, Is.EqualTo("AsReference cannot be used with value-types; please see http://stackoverflow.com/q/14436606/"));
         }
 
         static B CreateB()

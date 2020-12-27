@@ -42,10 +42,12 @@ namespace Examples.Issues
             Test(with.Compile(), without.Compile(), "Compile");
         }
 
-        [Test, ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void TryToDisableDefualtsOnDefault()
         {
-            RuntimeTypeModel.Default.UseImplicitZeroDefaults = false;
+            Assert.Throws<InvalidOperationException>(() => {
+                RuntimeTypeModel.Default.UseImplicitZeroDefaults = false;
+            });
         }
         [Test]
         public void CanEnalbeDefualtsOnDefault()

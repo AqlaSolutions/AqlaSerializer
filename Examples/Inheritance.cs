@@ -19,12 +19,15 @@ namespace Examples
             [ProtoBuf.ProtoMember(1)]
             public A A { get; set; }
         }
+
         [Test]
-        [ExpectedException(typeof(InvalidOperationException), ExpectedMessage="Unexpected sub-type: Examples.Inheritance+B")]
         public void UnknownSubtypeMessage()
         {
-            var c = new C { A = new B() };
-            Serializer.DeepClone(c);
+            var ex = Assert.Throws<InvalidOperationException>(() => {
+                var c = new C { A = new B() };
+                Serializer.DeepClone(c);
+            });
+            Assert.That(ex.Message, Is.EqualTo("Unexpected sub-type: Examples.Inheritance+B"));
         }
 
         [Test]
@@ -46,12 +49,11 @@ namespace Examples
             Foo foo = new Bar { Value = 1 };
             Foo clone = Serializer.DeepClone(foo);
             Assert.AreEqual(foo.Value, clone.Value);
-            Assert.IsInstanceOfType(typeof(Bar), clone);
+            Assert.IsInstanceOf(typeof(Bar), clone);
         }
     }
-    
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(2, typeof(Bar))]
+
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(2, typeof(Bar))]
     public class Foo
     {
         [ProtoBuf.ProtoMember(1)]

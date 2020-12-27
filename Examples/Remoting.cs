@@ -8,6 +8,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 using NUnit.Framework;
 using AqlaSerializer;
 
+#if NETCOREAPP
+using BinaryFormatterException = System.Runtime.Serialization.SerializationException;
+#else
+using BinaryFormatterException = System.ArgumentNullException;
+#endif
+
 namespace Examples
 {
     [ProtoBuf.ProtoContract, Serializable]
@@ -92,49 +98,57 @@ namespace Examples
                 
             }
         }
-        [Test, ExpectedException(typeof(ArgumentNullException))]
+        [Test]
         public void TestSerNullItem()
         {
-            BrokenSerEntity obj = new BrokenSerEntity { Value = 12345 };
-            using (MemoryStream ms = new MemoryStream())
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                bf.Serialize(ms, obj);
-            }
+            Assert.Throws<ArgumentNullException>(() => {
+                BrokenSerEntity obj = new BrokenSerEntity { Value = 12345 };
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryFormatter bf = new BinaryFormatter();
+                    bf.Serialize(ms, obj);
+                }
+            });
         }
-        [Test, ExpectedException(typeof(ArgumentNullException))]
+        [Test]
         public void TestSerNullContext()
         {
-            RemotingEntity obj = new RemotingEntity {Value = 12345};
-            Serializer.Serialize((SerializationInfo)null, obj);
+            Assert.Throws<ArgumentNullException>(() => {
+                RemotingEntity obj = new RemotingEntity { Value = 12345 };
+                Serializer.Serialize((SerializationInfo)null, obj);
 
+            });
         }
-        [Test, ExpectedException(typeof(ArgumentNullException))]
+        [Test]
         public void TestDeSerNullItem()
         {
+            Assert.Throws<BinaryFormatterException>(() => {
 
-            BrokenDeserEntity obj = new BrokenDeserEntity { Value = 12345 };
-            using (MemoryStream ms = new MemoryStream())
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                bf.Serialize(ms, obj);
-                ms.Position = 0;
-                try
+                BrokenDeserEntity obj = new BrokenDeserEntity { Value = 12345 };
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    BrokenDeserEntity clone = (BrokenDeserEntity)bf.Deserialize(ms);
+                    BinaryFormatter bf = new BinaryFormatter();
+                    bf.Serialize(ms, obj);
+                    ms.Position = 0;
+                    try
+                    {
+                        BrokenDeserEntity clone = (BrokenDeserEntity)bf.Deserialize(ms);
+                    }
+                    catch (TargetInvocationException ex)
+                    {
+                        if (ex.InnerException == null) throw;
+                        throw ex.InnerException;
+                    }
                 }
-                catch (TargetInvocationException ex)
-                {
-                    if (ex.InnerException == null) throw;
-                    throw ex.InnerException;
-                }
-            }
+            });
         }
-        [Test, ExpectedException(typeof(ArgumentNullException))]
+        [Test]
         public void TestDeSerNullContext()
         {
-            RemotingEntity obj = new RemotingEntity { Value = 12345 };
-            Serializer.Merge((SerializationInfo)null, obj);
+            Assert.Throws<ArgumentNullException>(() => {
+                RemotingEntity obj = new RemotingEntity { Value = 12345 };
+                Serializer.Merge((SerializationInfo)null, obj);
+            });
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
+#if !NETCOREAPP
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +9,7 @@ using NUnit.Framework;
 using AqlaSerializer;
 using System.Windows.Media;
 using AqlaSerializer.Meta;
+using ProtoBuf;
 
 namespace Examples.Issues
 {
@@ -14,10 +17,10 @@ namespace Examples.Issues
     public class Issue124
     {
         // note this is a simplified example that 
-        [ProtoBuf.ProtoContract]
+        [ProtoContract]
         public struct MyColor
         {
-            [ProtoBuf.ProtoMember(1, DataFormat=ProtoBuf.DataFormat.FixedSize)]
+            [ProtoMember(1, DataFormat=DataFormat.FixedSize)]
             public uint ARGB { get; set; }
 
             public static explicit operator MyColor  (Color color)
@@ -29,10 +32,10 @@ namespace Examples.Issues
                 return new Color { A = (byte)(color.ARGB >> 24), R = (byte)(color.ARGB >> 16), G = (byte)(color.ARGB >> 8), B = (byte)color.ARGB };
             }
         }
-        [ProtoBuf.ProtoContract]
+        [ProtoContract]
         public class TypeWithColor
         {
-            [ProtoBuf.ProtoMember(1)]
+            [ProtoMember(1)]
             public Color Color { get; set; }
         }
 
@@ -57,9 +60,9 @@ namespace Examples.Issues
         private void RoundtripTypeWithColor(RuntimeTypeModel model)
         {
             var orig = new TypeWithColor
-            {
-                Color = new Color { A = 1, R = 2, G = 3, B = 4 }
-            };
+                       {
+                           Color = new Color { A = 1, R = 2, G = 3, B = 4 }
+                       };
             var clone = (TypeWithColor)model.DeepClone(orig);
             Assert.AreEqual(1, clone.Color.A);
             Assert.AreEqual(2, clone.Color.R);
@@ -68,3 +71,5 @@ namespace Examples.Issues
         }
     }
 }
+
+#endif

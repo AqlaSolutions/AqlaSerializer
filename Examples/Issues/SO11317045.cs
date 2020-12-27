@@ -13,8 +13,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO11317045
     {
-        [ProtoBuf.ProtoContract]
-        [ProtoBuf.ProtoInclude(1, typeof(A), DataFormat = ProtoBuf.DataFormat.Group)]
+        [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(A), DataFormat = ProtoBuf.DataFormat.Group)]
         public class ABase
         {
         }
@@ -41,8 +40,7 @@ namespace Examples.Issues
             }
         }
 
-        [Ignore("AqlaSerializer - see later, what purpose?")]
-        [Test]
+        [Ignore("AqlaSerializer - see later, what purpose?"), Test]
         public void Execute()
         {
             var a = new A();
@@ -71,8 +69,8 @@ namespace Examples.Issues
         {
             int sum = original.B.Data.Sum(x => x.Sum(b => (int)b));
             var clone = (A)model.DeepClone(original);
-            Assert.IsInstanceOfType(typeof(A), clone);
-            Assert.IsInstanceOfType(typeof(B), clone.B);
+            Assert.IsInstanceOf(typeof(A), clone);
+            Assert.IsInstanceOf(typeof(B), clone.B);
             Assert.AreEqual(sum, clone.B.Data.Sum(x => x.Sum(b => (int)b)));
         }
 
@@ -83,7 +81,7 @@ namespace Examples.Issues
             NamedProtoInclude.Foo foo = new NamedProtoInclude.Bar();
             var clone = Serializer.DeepClone(foo);
 
-            Assert.IsInstanceOfType(typeof(NamedProtoInclude.Bar), foo);
+            Assert.IsInstanceOf(typeof(NamedProtoInclude.Bar), foo);
         }
 
     }
@@ -91,8 +89,7 @@ namespace Examples.Issues
 
 namespace Examples.Issues.NamedProtoInclude
 {
-    [ProtoBuf.ProtoContract]
-    [ProtoBuf.ProtoInclude(1, "Examples.Issues.NamedProtoInclude.Bar")]
+    [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, "Examples.Issues.NamedProtoInclude.Bar")]
     public class Foo
     {
 

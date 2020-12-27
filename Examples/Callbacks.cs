@@ -317,10 +317,13 @@ namespace Examples
             Test<TestInheritedImplementedAtChild, TestInheritedImplementedAtChildDerived>();
         }
 
-        [Test, ExpectedException(typeof(ProtoException), ExpectedMessage = "Duplicate ProtoBuf.ProtoBeforeSerializationAttribute callbacks on Examples.Callbacks+DuplicateCallbacks")]
+        [Test]
         public void TestDuplicateCallbacks()
         {
-            Serializer.Serialize(Stream.Null, new DuplicateCallbacks());
+            var ex = Assert.Throws<ProtoException>(() => {
+                Serializer.Serialize(Stream.Null, new DuplicateCallbacks());
+            });
+            Assert.That(ex.Message, Is.EqualTo("Duplicate ProtoBuf.ProtoBeforeSerializationAttribute callbacks on Examples.Callbacks+DuplicateCallbacks"));
         }
 
         [Test]

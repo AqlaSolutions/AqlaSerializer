@@ -5,8 +5,7 @@ using AqlaSerializer.Meta;
 using System;
 namespace Examples.Issues
 {
-    [Ignore("Not introduced with AqlaSerializer")]
-    [TestFixture]
+    [Ignore("Not introduced with AqlaSerializer"), TestFixture]
     public class SO16838287
     {
         [Test]
