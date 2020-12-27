@@ -11,7 +11,7 @@ It is a free open source project in which you can participiate.
 The implementation is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, .NET Standard 2.1 (.NET Core 3, .NET 5), Windows Phone 8, Silverlight, Xamarin.Android, etc. The code is heavily based on Marc Gravell's protobuf-net but there are a lot of improvements and fixes.
 
 Status: 
-though it's not actively developed now I consider it <b>stable</b> for all supported platforms. There are no major issues that require fixing. But I'm not sure about Core CLR support, it might require some testing.
+though it's not actively developed now I consider it <b>stable</b> for all supported platforms. There are no major issues that require fixing.  The NetStandard version is tested with same unit tests on .NET 5 runtime and it works well.
 
 Nuget: <a href="https://www.nuget.org/packages/aqlaserializer/">aqlaserializer</a>.
 
