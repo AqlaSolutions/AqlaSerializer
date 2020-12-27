@@ -5,10 +5,13 @@
     <RootNamespace>aqlaserializer</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyOriginatorKeyFile>..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
-    <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly</Configurations>
+    <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly;Silverlight2CoreOnly;UnityCoreOnly</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='Silverlight2' AND '$(Configuration)'!='iOS' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
     <TargetFrameworks>netstandard2.1;net20;net30;net35;net40;net45;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='CoreOnly'">
+    <TargetFrameworks>netstandard2.1;net30;net35;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'portable-net4+sl50+win8+wpa81+wp8+android+ios+uap'">
      <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
@@ -22,8 +25,8 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
   </PropertyGroup>
-  <PropertyGroup>
-    <DefineConstants Condition="'$(Configuration)'=='Debug' AND '$(TargetFramework)'=='net35'">$(DefineConstants); FEAT_SERVICEMODEL PLAT_XMLSERIALIZER</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug' AND ('$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net30')">
+    <DefineConstants>$(DefineConstants); REMOTING FEAT_SERVICEMODEL PLAT_XMLSERIALIZER</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug'">
     <DebugType>pdbonly</DebugType>
@@ -36,10 +39,13 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Profile' ">
     <TargetFramework>net30</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Release' OR '$(Configuration)' == 'Safe' OR '$(Configuration)' == 'Profile'">
-    <DefineConstants>FEAT_COMPILER PLAT_BINARYFORMATTER</DefineConstants>
-    <DefineConstants Condition="'$(TargetFramework)'!='net20'">$(DefineConstants); REMOTING PLAT_XMLSERIALIZER FEAT_SERVICEMODEL</DefineConstants>
-    <DefineConstants Condition="$(TargetFramework.Contains('portable-'))">Profile328 FEAT_SAFE PLAT_NO_THREADSTATIC PORTABLE NET_3_0 NET_3_5 NET_4_0</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' OR '$(Configuration)' == 'Safe' OR '$(Configuration)' == 'Profile' OR '$(Configuration)' == 'CoreOnly'">
+    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants Condition="'$(Configuration)' != 'CoreOnly' AND !$(TargetFramework.Contains('portable-'))">$(DefineConstants); FEAT_COMPILER</DefineConstants>
+    <DefineConstants Condition="'$(Configuration)' == 'CoreOnly'">$(DefineConstants); NO_RUNTIME</DefineConstants>
+    <DefineConstants Condition="!$(TargetFramework.Contains('portable-'))">$(DefineConstants); PLAT_BINARYFORMATTER</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'!='net20' AND !$(TargetFramework.Contains('portable-'))">$(DefineConstants); REMOTING PLAT_XMLSERIALIZER FEAT_SERVICEMODEL</DefineConstants>
+    <DefineConstants Condition="$(TargetFramework.Contains('portable-'))">$(DefineConstants); Profile328 FEAT_SAFE PLAT_NO_THREADSTATIC PORTABLE NET_3_0 NET_3_5 NET_4_0</DefineConstants>
     <DefineConstants>TRACE; $(DefineConstants)</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -56,6 +62,11 @@
     <TargetFramework>net30</TargetFramework>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Silverlight2CoreOnly' ">
+    <DefineConstants>TRACE;NO_RUNTIME SILVERLIGHT FEAT_SAFE</DefineConstants>
+    <TargetFramework>net30</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'iOS' ">
     <DefineConstants>TRACE; NO_RUNTIME FEAT_SAFE IOS PLAT_NO_INTERLOCKED</DefineConstants>
     <TargetFramework>net30</TargetFramework>
@@ -66,10 +77,10 @@
     <TargetFramework>net35</TargetFramework>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'CoreOnly' ">
-    <DefineConstants>TRACE;FEAT_SERVICEMODEL PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER NO_RUNTIME</DefineConstants>
-    <TargetFramework>net30</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  <PropertyGroup Condition=" '$(Configuration)' == 'UnityCoreOnly' ">
+    <DefineConstants>TRACE;NO_RUNTIME PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER PLAT_NO_INTERLOCKED FEAT_SAFE</DefineConstants>
+    <TargetFramework>net35</TargetFramework>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <DefineConstants Condition="'$(TargetFramework)'=='net45'">$(DefineConstants); NET_3_0 NET_3_5 NET_4_0 NET_4_5</DefineConstants>
