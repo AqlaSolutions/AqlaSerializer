@@ -9,6 +9,7 @@ namespace precompile.tests.Issues
     [TestFixture]
     public class SO11895998
     {
+        [Ignore("Phone7 is too old, sorry")]
         [Test]
         public void ExecutePhone7()
         {

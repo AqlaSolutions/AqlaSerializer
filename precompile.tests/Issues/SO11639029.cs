@@ -42,6 +42,7 @@ namespace precompile.tests.Issues
             Assert.AreEqual("b.dll", ctx.Inputs[1]);
         }
 
+        [Ignore("Silverlight is too old, sorry")]
         [Test]
         public void ExecuteSilverDto()
         {

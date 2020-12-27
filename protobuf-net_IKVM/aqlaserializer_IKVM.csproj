@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;FEAT_IKVM FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEAT_IKVM FEAT_COMPILER PLAT_BINARYFORMATTER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -32,7 +32,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;FEAT_IKVM FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
+    <DefineConstants>TRACE;FEAT_IKVM FEAT_COMPILER PLAT_BINARYFORMATTER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -43,7 +43,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'CoreOnly|AnyCPU'">
     <OutputPath>bin\CoreOnly\</OutputPath>
-    <DefineConstants>TRACE;FEAT_IKVM FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
+    <DefineConstants>TRACE;FEAT_IKVM FEAT_COMPILER PLAT_BINARYFORMATTER</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\Release\aqlaserializer.XML</DocumentationFile>
     <Optimize>true</Optimize>
@@ -64,10 +64,12 @@
       <HintPath>..\Tools\IKVM.Reflection.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\protobuf-net\**\*.cs" />
+    <Compile Include="..\protobuf-net\**\*.cs" Exclude="..\protobuf-net\obj\**\*" />
     <None Include="..\Licence.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -75,6 +77,12 @@
       <Link>IKVM-LICENSE</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\RunSharp\src\RunSharpIKVM\RunSharp_IKVM.csproj">
+      <Project>{c835bb75-7955-4315-b52c-fa59e25219f4}</Project>
+      <Name>RunSharp_IKVM</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

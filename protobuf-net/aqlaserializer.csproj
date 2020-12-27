@@ -11,11 +11,14 @@
     <TargetFrameworks>netstandard2.1;net20;net30;net35;net40;net45</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FEAT_SERVICEMODEL FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
-    <TargetFrameworks>netstandard2.1;net35</TargetFrameworks>
+    <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
+    <TargetFrameworks>netstandard2.1;net30;net35</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DefineConstants Condition="'$(Configuration)'=='Debug' AND '$(TargetFramework)'=='net35'">$(DefineConstants); FEAT_SERVICEMODEL PLAT_XMLSERIALIZER</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug'">
     <DebugType>pdbonly</DebugType>
@@ -26,8 +29,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release' OR '$(Configuration)'=='Safe'">
-    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER</DefineConstants>
-    <DefineConstants Condition="'$(TargetFramework)'!='net20'">$(DefineConstants); FEAT_SERVICEMODEL</DefineConstants>
+    <DefineConstants>TRACE;FEAT_COMPILER PLAT_BINARYFORMATTER</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)'!='net20'">$(DefineConstants); PLAT_XMLSERIALIZER FEAT_SERVICEMODEL</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Safe'">

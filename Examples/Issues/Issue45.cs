@@ -3,6 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using System;
 using AqlaSerializer;
+using System.IO;
 
 namespace Examples.Issues
 {
@@ -12,7 +13,12 @@ namespace Examples.Issues
         [Test]
         public void TestLateLoad()
         {
-            Assembly assembly = Assembly.Load(@"..\..\..\LateLoaded\bin\Release\LateLoaded.dll");
+#if DEBUG
+
+            Assembly assembly = Assembly.LoadFrom(Path.GetFullPath(@"..\..\..\..\LateLoaded\bin\Debug\LateLoaded.dll"));
+#else
+            Assembly assembly = Assembly.LoadFrom(Path.GetFullPath(@"..\..\..\..\LateLoaded\bin\Release\LateLoaded.dll"));
+#endif
             Type type = assembly.GetType("LateLoaded.Foo");
             Assert.IsNotNull(type, "Resolve type");
 

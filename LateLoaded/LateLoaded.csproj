@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LateLoaded</RootNamespace>
     <AssemblyName>LateLoaded</AssemblyName>
-    <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -103,6 +103,7 @@
     <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">
       <Project>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</Project>
       <Name>aqlaserializer</Name>
+      <SetTargetFramework>TargetFramework=net35</SetTargetFramework>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

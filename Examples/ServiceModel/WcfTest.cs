@@ -11,7 +11,7 @@ using AqlaSerializer.ServiceModel;
 namespace Examples.ServiceModel
 {
     // in case of errors, see: http://msdn.microsoft.com/en-us/library/ms733768.aspx
-    // for example: netsh http add urlacl url=http://+:84/MyService user=mydomain\myuser
+    // for example: netsh http add urlacl url=http://+:43084/MyService user=mydomain\myuser
     [DataContract]
     public class MyData
     {
@@ -95,14 +95,14 @@ namespace Examples.ServiceModel
             {
                 StopServer();
                 host = new ServiceHost(typeof(MyService),
-                    new Uri("http://localhost:84/MyService"));
+                    new Uri("http://localhost:43084/MyService"));
                 host.Open();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.GetType().FullName);
                 Console.WriteLine("You may need to execute (as admin):");
-                Console.WriteLine(@"netsh http add urlacl url=http://+:84/MyService/ user=""NT AUTHORITY\Authenticated Users""");
+                Console.WriteLine(@"netsh http add urlacl url=http://+:43084/MyService/ user=""NT AUTHORITY\Authenticated Users""");
                 Console.WriteLine(ex.Message);
                 throw;
             }

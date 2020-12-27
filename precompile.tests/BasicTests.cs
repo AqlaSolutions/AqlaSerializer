@@ -13,6 +13,7 @@ namespace precompile.tests
     [TestFixture]
     public class BasicTests
     {
+        [Ignore("Phone8 is too old, sorry")]
         [Test]
         public void ExecutePhone8()
         {
@@ -23,6 +24,7 @@ namespace precompile.tests
             Assert.IsTrue(ctx.Execute(), "Execute");
         }
 
+        [Ignore("Can't open MetroDto in VS2019")]
         [Test]
         public void ExecuteWinRT()
         {
