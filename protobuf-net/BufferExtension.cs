@@ -53,7 +53,7 @@ namespace AqlaSerializer
                         if(len != 0) throw new EndOfStreamException();
                         ms.Position = oldPos;
 #else
-                        Helpers.BlockCopy(ms.GetBuffer(), 0, tmp, offset, len);
+                        Helpers.BlockCopy(Helpers.GetBuffer(ms), 0, tmp, offset, len);
 #endif
                         _buffer = tmp;
                     }

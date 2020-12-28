@@ -40,10 +40,6 @@ namespace AqlaSerializer.Meta.Mapping
         public virtual MappedMember Map(MemberArgsValue args)
         {
             if (args.Member == null || (args.Family == MetaType.AttributeFamily.None && !args.IsEnumValueMember)) return null;
-            if (args.Member.Name == "Values")
-            {
-
-            }
             if (args.IsEnumValueMember) args.IsForced = true;
             var state = new MemberState(args);
             MemberMainSettingsValue m = state.MainValue;

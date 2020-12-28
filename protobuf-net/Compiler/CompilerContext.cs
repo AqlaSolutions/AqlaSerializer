@@ -1,4 +1,4 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2021
 #if FEAT_COMPILER
 //#define DEBUG_COMPILE
 using System;
@@ -51,9 +51,13 @@ namespace AqlaSerializer.Compiler
         internal void MarkLabel(CodeLabel label)
         {
             _il.MarkLabel(label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine("#: " + label.Index);
-#endif
+            TraceCompile("#: " + label.Index);
+        }
+
+        [System.Diagnostics.Conditional("DEBUG_COMPILE")]
+        private void TraceCompile(string value)
+        {
+            Helpers.DebugWriteLine(value);
         }
 
 #if !(FX11 || FEAT_IKVM)
@@ -140,7 +144,7 @@ namespace AqlaSerializer.Compiler
             if (storeTo.IsNullRef()) throw new ArgumentNullException(nameof(storeTo));
             var ctx = this;
             ctx.LoadValue(storeFrom);
-            if (storeTo.Type.IsValueType)
+            if (Helpers.IsValueType(storeTo.Type))
             {
                 CodeLabel notNull = ctx.DefineLabel(), endNull = ctx.DefineLabel();
                 ctx.BranchIfTrue(notNull, true);
@@ -181,19 +185,15 @@ namespace AqlaSerializer.Compiler
         {
             if(IsObject(type))
             { }
-            else if (type.IsValueType)
+            else if (Helpers.IsValueType(type))
             {
                 _il.Emit(OpCodes.Box, type);
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Box + ": " + type);
-#endif
+                TraceCompile(OpCodes.Box + ": " + type);
             }
             else
             {
                 _il.Emit(OpCodes.Castclass, MapType(typeof(object)));
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Castclass + ": " + type);
-#endif
+                TraceCompile(OpCodes.Castclass + ": " + type);
             }
         }
 
@@ -201,26 +201,22 @@ namespace AqlaSerializer.Compiler
         {
             if (IsObject(type))
             { }
-            else if (type.IsValueType)
+            else if (Helpers.IsValueType(type))
             {
                 switch (MetadataVersion)
                 {
                     case ILVersion.Net1:
                         _il.Emit(OpCodes.Unbox, type);
                         _il.Emit(OpCodes.Ldobj, type);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(OpCodes.Unbox + ": " + type);
-                        Helpers.DebugWriteLine(OpCodes.Ldobj + ": " + type);
-#endif
+                        TraceCompile(OpCodes.Unbox + ": " + type);
+                        TraceCompile(OpCodes.Ldobj + ": " + type);
                         break;
                     default:
 #if FX11
                         throw new NotSupportedException();
 #else
                         _il.Emit(OpCodes.Unbox_Any, type);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(OpCodes.Unbox_Any + ": " + type);
-#endif
+                        TraceCompile(OpCodes.Unbox_Any + ": " + type);
                         break;
 #endif
                 }
@@ -228,9 +224,7 @@ namespace AqlaSerializer.Compiler
             else
             {
                 _il.Emit(OpCodes.Castclass, type);
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Castclass + ": " + type);
-#endif
+                TraceCompile(OpCodes.Castclass + ": " + type);
             }
         }
         private readonly bool _isStatic;
@@ -389,9 +383,7 @@ namespace AqlaSerializer.Compiler
         private void Emit(OpCode opcode)
         {
             _il.Emit(opcode);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(opcode.ToString());
-#endif
+            TraceCompile(opcode.ToString());
         }
         public void LoadValue(string value)
         {
@@ -402,31 +394,23 @@ namespace AqlaSerializer.Compiler
             else
             {
                 _il.Emit(OpCodes.Ldstr, value);
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Ldstr + ": " + value);
-#endif
+                TraceCompile(OpCodes.Ldstr + ": " + value);
             }
         }
         public void LoadValue(float value)
         {
             _il.Emit(OpCodes.Ldc_R4, value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Ldc_R4 + ": " + value);
-#endif
+            TraceCompile(OpCodes.Ldc_R4 + ": " + value);
         }
         public void LoadValue(double value)
         {
             _il.Emit(OpCodes.Ldc_R8, value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Ldc_R8 + ": " + value);
-#endif
+            TraceCompile(OpCodes.Ldc_R8 + ": " + value);
         }
         public void LoadValue(long value)
         {
             _il.Emit(OpCodes.Ldc_I8, value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Ldc_I8 + ": " + value);
-#endif
+            TraceCompile(OpCodes.Ldc_I8 + ": " + value);
         }
 
         public void LoadValue(bool value)
@@ -452,16 +436,12 @@ namespace AqlaSerializer.Compiler
                     if (value >= -128 && value <= 127)
                     {
                         _il.Emit(OpCodes.Ldc_I4_S, (sbyte)value);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(OpCodes.Ldc_I4_S + ": " + value);
-#endif
+                        TraceCompile(OpCodes.Ldc_I4_S + ": " + value);
                     }
                     else
                     {
                         _il.Emit(OpCodes.Ldc_I4, value);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(OpCodes.Ldc_I4 + ": " + value);
-#endif
+                        TraceCompile(OpCodes.Ldc_I4 + ": " + value);
                     }
                     break;
 
@@ -484,9 +464,7 @@ namespace AqlaSerializer.Compiler
                 }
             }
             LocalBuilder result = _il.DeclareLocal(type);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine("$ " + result + ": " + type);
-#endif
+            TraceCompile("$ " + result + ": " + type);
             if (zeroed)
             {
                 // we should always zero them
@@ -500,7 +478,7 @@ namespace AqlaSerializer.Compiler
 
         void InitLocal(Type type, LocalBuilder local)
         {
-            if (local.LocalType.IsValueType)
+            if (Helpers.IsValueType(local.LocalType))
             {
                 _il.Emit(OpCodes.Ldloca, local);
                 _il.Emit(OpCodes.Initobj, type);
@@ -542,9 +520,7 @@ namespace AqlaSerializer.Compiler
             {
                 byte b = _isStatic ? (byte) 0 : (byte)1;
                 _il.Emit(OpCodes.Starg_S, b);
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Starg_S + ": $" + b);
-#endif                
+                TraceCompile(OpCodes.Starg_S + ": $" + b);
             }
             else
             {
@@ -566,9 +542,7 @@ namespace AqlaSerializer.Compiler
 #endif
                     OpCode code = UseShortForm(local) ? OpCodes.Stloc_S : OpCodes.Stloc;
                     _il.Emit(code, local);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(code + ": $" + local);
-#endif
+                    TraceCompile(code + ": $" + local);
 #if !FX11
                     break;
             }
@@ -595,9 +569,7 @@ namespace AqlaSerializer.Compiler
 #endif             
                         OpCode code = UseShortForm(local) ? OpCodes.Ldloc_S :  OpCodes.Ldloc;
                         _il.Emit(code, local.Value);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(code + ": $" + local.Value);
-#endif
+                        TraceCompile(code + ": $" + local.Value);
 #if !FX11
                         break;
                 }
@@ -717,7 +689,7 @@ namespace AqlaSerializer.Compiler
                 if (fromValue.Type == type) return fromValue.AsCopy();
                 // otherwise, load onto the stack and let the default handling (below) deal with it
                 LoadValue(fromValue);
-                if (!type.IsValueType && (fromValue.Type == null || !type.IsAssignableFrom(fromValue.Type)))
+                if (!Helpers.IsValueType(type) && (fromValue.Type == null || !type.IsAssignableFrom(fromValue.Type)))
                 { // need to cast
                     Cast(type);
                 }
@@ -816,16 +788,28 @@ namespace AqlaSerializer.Compiler
                     BindingFlags.Static | BindingFlags.Public));
         }
 
-        public void EmitCall(MethodInfo method)
+        public void EmitCall(MethodInfo method) { EmitCall(method, null); }
+        public void EmitCall(MethodInfo method, Type targetType)
         {
-            if (method == null) throw new ArgumentNullException(nameof(method));
+            Helpers.DebugAssert(method != null);
             CheckAccessibility(method);
-            OpCode opcode = (method.IsStatic || method.DeclaringType.IsValueType) ? OpCodes.Call : OpCodes.Callvirt;
+            OpCode opcode;
+            if (method.IsStatic || Helpers.IsValueType(method.DeclaringType))
+            {
+                opcode = OpCodes.Call;
+            }
+            else
+            {
+                opcode = OpCodes.Callvirt;
+                if (targetType != null && Helpers.IsValueType(targetType) && !Helpers.IsValueType(method.DeclaringType))
+                {
+                    Constrain(targetType);
+                }
+            }
             _il.EmitCall(opcode, method, null);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(opcode + ": " + method + " on " + method.DeclaringType);
-#endif
+            TraceCompile(opcode + ": " + method + " on " + method.DeclaringType + (targetType == null ? "" : (" via " + targetType)));
         }
+        
         /// <summary>
         /// Pushes a null reference onto the stack. Note that this should only
         /// be used to return a null (or set a variable to null); for null-tests
@@ -840,7 +824,7 @@ namespace AqlaSerializer.Compiler
 
         internal void WriteNullCheckedTail(Type type, IProtoSerializer tail, Compiler.Local valueFrom, bool cancelField)
         {
-            if (type.IsValueType)
+            if (Helpers.IsValueType(type))
             {
                 Type underlyingType = null;
 #if !FX11
@@ -889,7 +873,7 @@ namespace AqlaSerializer.Compiler
 #if !FX11
             Type underlyingType;
             
-            if (type.IsValueType && (underlyingType = Helpers.GetNullableUnderlyingType(type)) != null)
+            if (Helpers.IsValueType(type) && (underlyingType = Helpers.GetNullableUnderlyingType(type)) != null)
             {
                 if(tail.RequiresOldValue)
                 {
@@ -932,21 +916,17 @@ namespace AqlaSerializer.Compiler
             if (ctor == null) throw new ArgumentNullException(nameof(ctor));
             CheckAccessibility(ctor);
             _il.Emit(OpCodes.Newobj, ctor);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Newobj + ": " + ctor.DeclaringType);
-#endif
+            TraceCompile(OpCodes.Newobj + ": " + ctor.DeclaringType);
         }
 
         public void EmitCtor(Type type, params Type[] parameterTypes)
         {
             Helpers.DebugAssert(type != null);
             Helpers.DebugAssert(parameterTypes != null);
-            if (type.IsValueType && parameterTypes.Length == 0)
+            if (Helpers.IsValueType(type) && parameterTypes.Length == 0)
             {
                 _il.Emit(OpCodes.Initobj, type);
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Initobj + ": " + type);
-#endif
+                TraceCompile(OpCodes.Initobj + ": " + type);
             }
             else
             {
@@ -1092,9 +1072,7 @@ namespace AqlaSerializer.Compiler
             CheckAccessibility(field);
             OpCode code = field.IsStatic ? OpCodes.Ldsfld : OpCodes.Ldfld;
             _il.Emit(code, field);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + field + " on " + field.DeclaringType);
-#endif
+            TraceCompile(code + ": " + field + " on " + field.DeclaringType);
         }
 #if FEAT_IKVM
         public void StoreValue(System.Reflection.FieldInfo field)
@@ -1119,9 +1097,7 @@ namespace AqlaSerializer.Compiler
             CheckAccessibility(field);
             OpCode code = field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld;
             _il.Emit(code, field);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + field + " on " + field.DeclaringType);
-#endif
+            TraceCompile(code + ": " + field + " on " + field.DeclaringType);
         }
         public void LoadValue(PropertyInfo property)
         {
@@ -1180,7 +1156,7 @@ namespace AqlaSerializer.Compiler
 #endif
         internal void LoadAddress(Local local, Type type)
         {
-            if (type.IsValueType)
+            if (Helpers.IsValueType(type))
             {
                 LoadRefArg(local, type);
             }
@@ -1200,34 +1176,26 @@ namespace AqlaSerializer.Compiler
             if (ReferenceEquals(local, this.InputValue))
             {
                 _il.Emit(OpCodes.Ldarga_S, (_isStatic ? (byte)0 : (byte)1));
-#if DEBUG_COMPILE
-                    Helpers.DebugWriteLine(OpCodes.Ldarga_S + ": $" + (isStatic ? 0 : 1));
-#endif
+                TraceCompile(OpCodes.Ldarga_S + ": $" + (_isStatic ? 0 : 1));
             }
             else
             {
                 OpCode code = UseShortForm(local) ? OpCodes.Ldloca_S : OpCodes.Ldloca;
                 _il.Emit(code, local.Value);
-#if DEBUG_COMPILE
-                    Helpers.DebugWriteLine(code + ": $" + local.Value);
-#endif
+                TraceCompile(code + ": $" + local.Value);
             }
         }
         internal void Branch(CodeLabel label, bool @short)
         {
             OpCode code = @short ? OpCodes.Br_S : OpCodes.Br;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
         internal void BranchIfFalse(CodeLabel label, bool @short)
         {
             OpCode code = @short ? OpCodes.Brfalse_S :  OpCodes.Brfalse;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
 
 
@@ -1235,17 +1203,13 @@ namespace AqlaSerializer.Compiler
         {
             OpCode code = @short ? OpCodes.Brtrue_S : OpCodes.Brtrue;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
         internal void BranchIfEqual(CodeLabel label, bool @short)
         {
             OpCode code = @short ? OpCodes.Beq_S : OpCodes.Beq;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
         //internal void TestEqual()
         //{
@@ -1262,18 +1226,14 @@ namespace AqlaSerializer.Compiler
         {
             OpCode code = @short ? OpCodes.Bgt_S : OpCodes.Bgt;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
 
         internal void BranchIfLess(CodeLabel label, bool @short)
         {
             OpCode code = @short ? OpCodes.Blt_S : OpCodes.Blt;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
 
         internal void DiscardValue()
@@ -1300,9 +1260,7 @@ namespace AqlaSerializer.Compiler
                 {
                     labels[i] = jumpTable[i].Value;
                 }
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Switch.ToString());
-#endif
+                TraceCompile(OpCodes.Switch.ToString());
                 _il.Emit(OpCodes.Switch, labels);
             }
             else
@@ -1324,9 +1282,8 @@ namespace AqlaSerializer.Compiler
                     LoadValue(val);
                     LoadValue(MAX_JUMPS);
                     Emit(OpCodes.Div);
-#if DEBUG_COMPILE
-                Helpers.DebugWriteLine(OpCodes.Switch.ToString());
-#endif
+                    TraceCompile(OpCodes.Switch.ToString());
+
                     _il.Emit(OpCodes.Switch, blockLabels);
                     Branch(endOfSwitch, false);
 
@@ -1350,9 +1307,7 @@ namespace AqlaSerializer.Compiler
                             LoadValue(subtract);
                             Emit(OpCodes.Sub);
                         }
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(OpCodes.Switch.ToString());
-#endif
+                        TraceCompile(OpCodes.Switch.ToString());
                         _il.Emit(OpCodes.Switch, innerLabels);
                         if (count != 0)
                         { // force default to the very bottom
@@ -1368,60 +1323,46 @@ namespace AqlaSerializer.Compiler
         internal void EndFinally()
         {
             _il.EndExceptionBlock();
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine("EndExceptionBlock");
-#endif
+            TraceCompile("EndExceptionBlock");
         }
 
         internal void BeginFinally()
         {
             _il.BeginFinallyBlock();
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine("BeginFinallyBlock");
-#endif
+            TraceCompile("BeginFinallyBlock");
         }
 
         internal void EndTry(CodeLabel label, bool @short)
         {
             OpCode code = @short ? OpCodes.Leave_S : OpCodes.Leave;
             _il.Emit(code, label.Value);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(code + ": " + label.Index);
-#endif
+            TraceCompile(code + ": " + label.Index);
         }
 
         internal CodeLabel BeginTry()
         {
             CodeLabel label = new CodeLabel(_il.BeginExceptionBlock(), _nextLabel++);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine("BeginExceptionBlock: " + label.Index);
-#endif
+            TraceCompile("BeginExceptionBlock: " + label.Index);
             return label;
         }
 #if !FX11
         internal void Constrain(Type type)
         {
             _il.Emit(OpCodes.Constrained, type);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Constrained + ": " + type);
-#endif
+            TraceCompile(OpCodes.Constrained + ": " + type);
         }
 #endif
 
         internal void TryCast(Type type)
         {
             _il.Emit(OpCodes.Isinst, type);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Isinst + ": " + type);
-#endif
+            TraceCompile(OpCodes.Isinst + ": " + type);
         }
 
         internal void Cast(Type type)
         {
             _il.Emit(OpCodes.Castclass, type);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Castclass + ": " + type);
-#endif
+            TraceCompile(OpCodes.Castclass + ": " + type);
         }
         public IDisposable Using(Local local)
         {
@@ -1448,7 +1389,7 @@ namespace AqlaSerializer.Compiler
 
                 Type type = local.Type;
                 // check if **never** disposable
-                if ((type.IsValueType || type.IsSealed) &&
+                if ((Helpers.IsValueType(type) || type.IsSealed) &&
                     !ctx.MapType(typeof(IDisposable)).IsAssignableFrom(type))
                 {
                     return; // nothing to do! easiest "using" block ever
@@ -1471,7 +1412,7 @@ namespace AqlaSerializer.Compiler
                 Type type = _local.Type;
                 // remember that we've already (in the .ctor) excluded the case
                 // where it *cannot* be disposable
-                if (type.IsValueType)
+                if (Helpers.IsValueType(type))
                 {
                     _ctx.LoadAddress(_local, type);
                     switch (_ctx.MetadataVersion)
@@ -1556,10 +1497,7 @@ namespace AqlaSerializer.Compiler
         {
             LoadValue(length);
             _il.Emit(OpCodes.Newarr, elementType);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Newarr + ": " + elementType);
-#endif
-
+            TraceCompile(OpCodes.Newarr + ": " + elementType);
         }
 
         internal void LoadArrayValue(Local arr, Local i)
@@ -1584,14 +1522,12 @@ namespace AqlaSerializer.Compiler
                 case ProtoTypeCode.Single: Emit(OpCodes.Ldelem_R4); break;
                 case ProtoTypeCode.Double: Emit(OpCodes.Ldelem_R8); break;
                 default:
-                    if (type.IsValueType)
+                    if (Helpers.IsValueType(type))
                     {
                         _il.Emit(OpCodes.Ldelema, type);
                         _il.Emit(OpCodes.Ldobj, type);
-#if DEBUG_COMPILE
-                        Helpers.DebugWriteLine(OpCodes.Ldelema + ": " + type);
-                        Helpers.DebugWriteLine(OpCodes.Ldobj + ": " + type);
-#endif
+                        TraceCompile(OpCodes.Ldelema + ": " + type);
+                        TraceCompile(OpCodes.Ldobj + ": " + type);
                     }
                     else
                     {
@@ -1608,9 +1544,7 @@ namespace AqlaSerializer.Compiler
         internal void LoadValue(Type type)
         {
             _il.Emit(OpCodes.Ldtoken, type);
-#if DEBUG_COMPILE
-            Helpers.DebugWriteLine(OpCodes.Ldtoken + ": " + type);
-#endif
+            TraceCompile(OpCodes.Ldtoken + ": " + type);
             EmitCall(MapType(typeof(System.Type)).GetMethod("GetTypeFromHandle"));
         }
 

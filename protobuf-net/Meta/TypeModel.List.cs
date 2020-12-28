@@ -182,7 +182,10 @@ namespace AqlaSerializer.Meta
             if (iTypeInfo.IsGenericType)
             {
                 Type typeDef = iTypeInfo.GetGenericTypeDefinition();
-                if(typeDef == typeof(System.Collections.Generic.ICollection<>) || typeDef.GetTypeInfo().FullName == "System.Collections.Concurrent.IProducerConsumerCollection`1")
+                if(
+                   typeDef == model.MapType(typeof(System.Collections.Generic.IEnumerable<>))
+                || typeDef == model.MapType(typeof(System.Collections.Generic.ICollection<>))
+                || typeDef.GetTypeInfo().FullName == "System.Collections.Concurrent.IProducerConsumerCollection`1")
                 {
                         
                     Type[] iTypeArgs = iTypeInfo.GenericTypeArguments;

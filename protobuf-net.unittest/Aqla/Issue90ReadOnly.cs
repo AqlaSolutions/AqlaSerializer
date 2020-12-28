@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using AqlaSerializer.Meta;
+﻿using AqlaSerializer.Meta;
+using System.Collections.Generic;
 using NUnit.Framework;
 using ProtoBuf;
 
@@ -9,7 +9,7 @@ namespace AqlaSerializer.unittest.Aqla
     [TestFixture]
     public class Issue90ReadOnly
     {
-        [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+        [ProtoContract(ImplicitFields = ProtoBuf.ImplicitFields.AllPublic)]
         public class Sheep
         {
             public IReadOnlyCollection<string> Children { get; set; }

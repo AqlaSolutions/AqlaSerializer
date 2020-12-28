@@ -165,15 +165,16 @@ namespace AqlaSerializer.Serializers
                     {
                         Type type = GetMemberType(i);
                         ctx.LoadAddress(value, ExpectedType);
-                        switch (_members[i].Member.MemberType)
+
+                        if (_members[i].Member is FieldInfo fi)
                         {
-                            case MemberTypes.Field:
-                                ctx.LoadValue((FieldInfo)_members[i].Member);
-                                break;
-                            case MemberTypes.Property:
-                                ctx.LoadValue((PropertyInfo)_members[i].Member);
-                                break;
+                            ctx.LoadValue(fi);
                         }
+                        else if (_members[i].Member is PropertyInfo pi)
+                        {
+                            ctx.LoadValue(pi);
+                        }
+
                         ctx.LoadValue(i + 1);
                         ctx.LoadReaderWriter();
                         ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderBegin)));
@@ -271,14 +272,14 @@ namespace AqlaSerializer.Serializers
                         for (int i = 0; i < _members.Length; i++)
                         {
                             ctx.LoadAddress(objValue, ExpectedType);
-                            switch (_members[i].Member.MemberType)
+
+                            if (_members[i].Member is FieldInfo fi)
                             {
-                                case MemberTypes.Field:
-                                    ctx.LoadValue((FieldInfo)_members[i].Member);
-                                    break;
-                                case MemberTypes.Property:
-                                    ctx.LoadValue((PropertyInfo)_members[i].Member);
-                                    break;
+                                ctx.LoadValue(fi);
+                            }
+                            else if (_members[i].Member is PropertyInfo pi)
+                            {
+                                ctx.LoadValue(pi);
                             }
                             ctx.StoreValue(locals[i]);
                         }

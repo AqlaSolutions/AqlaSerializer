@@ -995,6 +995,26 @@ namespace AqlaSerializer
                        : null;
         }
 
+        internal static byte[] GetBuffer(System.IO.MemoryStream ms)
+        {
+#if NETSTANDARD
+            ArraySegment<byte> segment;
+            if(!ms.TryGetBuffer(out segment))
+            {
+                throw new InvalidOperationException("Unable to obtain underlying MemoryStream buffer");
+            } else if(segment.Offset != 0)
+            {
+                throw new InvalidOperationException("Underlying MemoryStream buffer was not zero-offset");
+            } else
+            {
+                return segment.Array;
+            }
+#elif PORTABLE
+            return ms.ToArray();
+#else
+            return ms.GetBuffer();
+#endif
+        }
     }
 
     namespace Internal

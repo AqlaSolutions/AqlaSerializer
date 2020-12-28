@@ -362,9 +362,9 @@ namespace AqlaSerializer.Serializers
             {
                 obj = Activator.CreateInstance(_constructType
 #if !CF && !SILVERLIGHT && !WINRT && !PORTABLE
-, true
+                , nonPublic: true
 #endif
-);
+                );
             }
             else
             {

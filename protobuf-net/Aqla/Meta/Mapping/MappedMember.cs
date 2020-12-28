@@ -50,6 +50,7 @@ namespace AqlaSerializer
             }
         }
 
+        public FieldInfo BackedField => MappingState.Input.BackingField;
         public MemberInfo Member => MappingState.Input.Member;
 
         public string Name => MappingState.MainValue.Name;

@@ -130,7 +130,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(arrayType != null, "arrayType should be non-null");
             if (!arrayType.IsArray || arrayType.GetArrayRank() != 1) throw new ArgumentException("should be single-dimension array; " + arrayType.FullName, nameof(arrayType));
             _itemType = tail.ExpectedType;
-            if (_itemType != arrayType.GetElementType()) throw new ArgumentException("Expected array type is " + arrayType.GetElementType() + " but tail type is " + _itemType);
+            if (_itemType != arrayType.GetElementType() && !Helpers.IsAssignableFrom(Tail.ExpectedType, arrayType.GetElementType())) throw new ArgumentException("Expected array type is " + arrayType.GetElementType() + " but tail type is " + _itemType);
             Helpers.DebugAssert(Tail.ExpectedType != model.MapType(typeof(byte)), "Should have used BlobSerializer");
             _writePacked = writePacked;
             _arrayType = arrayType;

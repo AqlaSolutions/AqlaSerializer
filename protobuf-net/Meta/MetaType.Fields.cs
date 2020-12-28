@@ -110,16 +110,34 @@ namespace AqlaSerializer.Meta
         /// </summary>        
         public MetaType Add(int fieldNumber, string memberName)
         {
-            AddField(fieldNumber, memberName, null, null, null);
+            return Add(fieldNumber, memberName, false);
+        }
+
+        /// <summary>
+        /// Adds a member (by name) to the MetaType
+        /// </summary>        
+        public MetaType Add(int fieldNumber, string memberName, bool useBackingFieldIfNoSetter)
+        {
+            AddField(fieldNumber, memberName, null, null, null, useBackingFieldIfNoSetter);
             return this;
         }
+
         /// <summary>
         /// Adds a member (by name) to the MetaType, returning the ValueMember rather than the fluent API.
         /// This is otherwise identical to Add.
         /// </summary>
         public ValueMember AddField(int fieldNumber, string memberName)
         {
-            return AddField(fieldNumber, memberName, null, null, null);
+            return AddField(fieldNumber, memberName, false);
+        }
+
+        /// <summary>
+        /// Adds a member (by name) to the MetaType, returning the ValueMember rather than the fluent API.
+        /// This is otherwise identical to Add.
+        /// </summary>
+        public ValueMember AddField(int fieldNumber, string memberName, bool useBackingFieldIfNoSetter)
+        {
+            return AddField(fieldNumber, memberName, null, null, null, useBackingFieldIfNoSetter);
         }
 
         /// <summary>
@@ -151,7 +169,15 @@ namespace AqlaSerializer.Meta
         /// </summary>        
         public MetaType Add(int fieldNumber, string memberName, object defaultValue)
         {
-            AddField(fieldNumber, memberName, null, null, defaultValue);
+            return Add(fieldNumber, memberName, defaultValue, false);
+        }
+
+        /// <summary>
+        /// Adds a member (by name) to the MetaType
+        /// </summary>        
+        public MetaType Add(int fieldNumber, string memberName, object defaultValue, bool useBackingFieldIfNoSetter)
+        {
+            AddField(fieldNumber, memberName, null, null, defaultValue, useBackingFieldIfNoSetter);
             return this;
         }
 
@@ -160,7 +186,15 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MetaType Add(int fieldNumber, string memberName, Type itemType, Type defaultType)
         {
-            AddField(fieldNumber, memberName, itemType, defaultType, null);
+            return Add(fieldNumber, memberName, itemType, defaultType, false);
+        }
+
+        /// <summary>
+        /// Adds a member (by name) to the MetaType, including an itemType and defaultType for representing lists
+        /// </summary>
+        public MetaType Add(int fieldNumber, string memberName, Type itemType, Type defaultType, bool useBackingFieldIfNoSetter)
+        {
+            AddField(fieldNumber, memberName, itemType, defaultType, null, useBackingFieldIfNoSetter);
             return this;
         }
 
@@ -170,10 +204,24 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType)
         {
-            return AddField(fieldNumber, memberName, itemType, defaultType, null);
+            return AddField(fieldNumber, memberName, itemType, defaultType, false);
+        }
+
+        /// <summary>
+        /// Adds a member (by name) to the MetaType, including an itemType and defaultType for representing lists, returning the ValueMember rather than the fluent API.
+        /// This is otherwise identical to Add.
+        /// </summary>
+        public ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, bool useBackingFieldIfNoSetter)
+        {
+            return AddField(fieldNumber, memberName, itemType, defaultType, null, useBackingFieldIfNoSetter);
         }
 
         private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue)
+        {
+            return AddField(fieldNumber, memberName, itemType, defaultType, defaultValue, false);
+        }
+
+        private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue, bool useBackingFieldIfNoSetter)
         {
             if (Type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
             MemberInfo mi = null;
@@ -220,8 +268,17 @@ namespace AqlaSerializer.Meta
             // it will be checked in ValueSerializedBuilder.CompleteLevel stage
             ResolveListTypes(_model, miType, ref itemType, ref defaultType);
 
+            MemberInfo backingField = null;
+            if (useBackingFieldIfNoSetter && (mi as PropertyInfo)?.CanWrite == false)
+            {
+                var backingMembers = Type.GetMember($"<{((PropertyInfo)mi).Name}>k__BackingField", Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (backingMembers != null && backingMembers.Length == 1 && (backingMembers[0] as FieldInfo) != null)
+                    backingField = backingMembers[0];
+            }
+
             var serializationSettings = new ValueSerializationSettings();
             var memberSettings = new MemberMainSettingsValue { Tag = fieldNumber };
+            if (backingField != null) memberSettings.Name = mi.Name;
 
             var level0 = serializationSettings.GetSettingsCopy(0).Basic;
             level0.Collection.ConcreteType = defaultType;
@@ -235,7 +292,7 @@ namespace AqlaSerializer.Meta
             def.Basic = level0.MakeDefaultNestedLevel();
             serializationSettings.DefaultLevel = def;
 
-            ValueMember newField = new ValueMember(memberSettings, serializationSettings, mi, Type, _model);
+            ValueMember newField = new ValueMember(memberSettings, serializationSettings, backingField ?? mi, Type, _model);
             Add(newField);
             return newField;
         }
@@ -243,7 +300,13 @@ namespace AqlaSerializer.Meta
         public void Add(MappedMember member)
         {
             var serializationSettings = member.MappingState.SerializationSettings.Clone();
-            var vm = new ValueMember(member.MainValue, serializationSettings, member.Member, this.Type, _model);
+            if (string.IsNullOrEmpty(member.Name) && member.BackedField != null)
+            {
+                MemberMainSettingsValue ms = member.MainValue;
+                ms.Name = member.Name;
+                member.MainValue = ms;
+            }
+            var vm = new ValueMember(member.MainValue, serializationSettings, member.BackedField ?? member.Member, this.Type, _model);
 #if WINRT
             TypeInfo finalType = _typeInfo;
 #else

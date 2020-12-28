@@ -35,6 +35,8 @@ namespace AqlaSerializer
         /// </summary>
         public bool UseLegacyTupleFields { get; set; }
 
+        public bool UseBackingFieldsIfNoSetter { get; set; }
+
         IMemberMapper _memberMapper;
 
         public IMemberMapper MemberMapper
@@ -159,6 +161,20 @@ namespace AqlaSerializer
                         FieldInfo field;
                         if ((property = member as PropertyInfo) != null)
                         {
+                            if (!property.CanWrite && UseBackingFieldsIfNoSetter)
+                            {
+                                // roslyn automatically implemented properties, in particular for get-only properties: <{Name}>k__BackingField;
+                                var backingFieldName = $"<{property.Name}>k__BackingField";
+                                foreach (var fieldMemeber in foundList)
+                                {
+                                    if ((fieldMemeber as FieldInfo != null) && fieldMemeber.Name == backingFieldName)
+                                    {
+                                        args.BackingField = (FieldInfo)fieldMemeber;
+                                        break;
+                                    }
+                                }
+                            }
+
                             bool isIndexer = property.GetIndexParameters().Length > 0;
                             bool isPublic = Helpers.GetGetMethod(property, false, false) != null;
 
@@ -167,7 +183,7 @@ namespace AqlaSerializer
                             bool canBeMapped = !isIndexer && hasGetterSetter;
 
                             if (canBeMapped &&
-                                (!mapped.ImplicitOnlyWriteable ||
+                                (!mapped.ImplicitOnlyWriteable || args.BackingField != null ||
                                  Helpers.CheckIfPropertyWritable
                                      (
                                          Model,

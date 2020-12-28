@@ -150,8 +150,9 @@ namespace AqlaSerializer.Meta
                         if (field.IsStatic && field.IsLiteral)
                         {
                             object enumVal;
-#if WINRT || PORTABLE || CF || FX11
-                            enumVal = field.GetValue(null);
+
+#if WINRT || PORTABLE || CF || FX11 || NETSTANDARD
+                            enumVal = Convert.ChangeType(field.GetValue(null), Enum.GetUnderlyingType(field.FieldType), System.Globalization.CultureInfo.InvariantCulture);
 #else
                             enumVal = field.GetRawConstantValue();
 #endif
