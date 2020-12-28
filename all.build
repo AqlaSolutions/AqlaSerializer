@@ -16,50 +16,50 @@
     <VersionRevision>1</VersionRevision>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
-      <Properties>Configuration=Release</Properties>
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
+            <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=CoreOnly</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=Safe</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=iOS</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=Unity</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=UnityCoreOnly</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=Silverlight2</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net\aqlaserializer.csproj">
+    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=Silverlight2CoreOnly</Properties>
     </ProjectToBuild>
 
     
-    <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
+    <ProjectToBuild Include="src\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
             <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
+    <ProjectToBuild Include="src\protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
             <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
+    <ProjectToBuild Include="src\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
             <Properties>Configuration=CoreOnly</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
+    <ProjectToBuild Include="src\protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
             <Properties>Configuration=CoreOnly</Properties>
     </ProjectToBuild>
 
     
-    <ProjectToBuild Include="protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj">
+    <ProjectToBuild Include="assorted\protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj">
             <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="precompile\precompile.csproj">
+    <ProjectToBuild Include="assorted\precompile\precompile.csproj">
             <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
   </ItemGroup>
@@ -71,31 +71,31 @@
 
     <!-- update the assembly / file versions with the last local revision -->    
 
-    <MSBuild Projects="RevisionGenerator\RevisionGenerator.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
+    <MSBuild Projects="assorted\RevisionGenerator\RevisionGenerator.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
-    <Exec Command="RevisionGenerator\bin\Release\RevisionGenerator.exe 2021 1 > &quot;$(RevGeneratorOutputFile)&quot;" />
+    <Exec Command="assorted\RevisionGenerator\bin\Release\RevisionGenerator.exe 2021 1 > &quot;$(RevGeneratorOutputFile)&quot;" />
     <ReadLinesFromFile File="$(RevGeneratorOutputFile)">
        <Output TaskParameter="Lines" PropertyName="BuildRev"/>
     </ReadLinesFromFile>
     <Delete Files="$(RevGeneratorOutputFile)"/>
 
-    <FileUpdate Files="protobuf-net\Properties\AssemblyInfo.cs"
+    <FileUpdate Files="src\protobuf-net\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-    <FileUpdate Files="protobuf-net\Properties\AssemblyInfo.cs"
+    <FileUpdate Files="src\protobuf-net\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-    <FileUpdate Files="protobuf-net.Extensions\Properties\AssemblyInfo.cs"
+    <FileUpdate Files="assorted\protobuf-net.Extensions\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-    <FileUpdate Files="protobuf-net.Extensions\Properties\AssemblyInfo.cs"
+    <FileUpdate Files="assorted\protobuf-net.Extensions\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
 
-    <FileUpdate Files="precompile\Properties\AssemblyInfo.cs"
+    <FileUpdate Files="assorted\precompile\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-    <FileUpdate Files="precompile\Properties\AssemblyInfo.cs"
+    <FileUpdate Files="assorted\precompile\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
     
@@ -108,39 +108,42 @@
 
     <MSBuild Projects="@(ProjectToBuild)" Targets="Clean;Rebuild" BuildInParallel="true"/>
 
-    <Exec Command="Tools\AOTCompatlyzer.exe &quot;protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;protobuf-net\bin\iOS\net30\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
+    <Exec Command="src\Tools\AOTCompatlyzer.exe &quot;src\protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\iOS\net30\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
 
   <ItemGroup>
-    <iOSFiles Include="protobuf-net\bin\iOS\net30\aqlaserializer.*"/> 
-    <UnityFiles Include="protobuf-net\bin\Unity\net35\aqlaserializer.*"/>
-    <UnityFilesDep Include="protobuf-net\bin\Unity\net35\RunSharp.*"/>
-    <Net20SafeFiles Include="protobuf-net\bin\Safe\net20\aqlaserializer.*"/>
-    <Net20SafeFilesDep Include="protobuf-net\bin\Safe\net20\RunSharp.*"/>
-    <Net30SafeFiles Include="protobuf-net\bin\Safe\net30\aqlaserializer.*"/>
-    <Net30SafeFilesDep Include="protobuf-net\bin\Safe\net30\RunSharp.*"/>
-    <Net35SafeFiles Include="protobuf-net\bin\Safe\net35\aqlaserializer.*"/>
-    <Net35SafeFilesDep Include="protobuf-net\bin\Safe\net35\RunSharp.*"/>
-    <Net40SafeFiles Include="protobuf-net\bin\Safe\net40\aqlaserializer.*"/>
-    <Net40SafeFilesDep Include="protobuf-net\bin\Safe\net40\RunSharp.*"/>
-    <Net45SafeFiles Include="protobuf-net\bin\Safe\net45\aqlaserializer.*"/>
-    <Net45SafeFilesDep Include="protobuf-net\bin\Safe\net45\RunSharp.*"/>
-    <Net35Files Include="protobuf-net\bin\Release\net35\aqlaserializer.*"/>
-    <Net35FilesDep Include="protobuf-net\bin\Release\net35\RunSharp.*"/>
-    <Net40Files Include="protobuf-net\bin\Release\net40\aqlaserializer.*"/>
-    <Net40FilesDep Include="protobuf-net\bin\Release\net40\RunSharp.*"/>
-    <Net45Files Include="protobuf-net\bin\Release\net45\aqlaserializer.*"/>
-    <Net45FilesDep Include="protobuf-net\bin\Release\net45\RunSharp.*"/>
-    <Net20Files Include="protobuf-net\bin\Release\net20\aqlaserializer.*"/>
-    <Net20FilesDep Include="protobuf-net\bin\Release\net20\RunSharp.*"/>
-    <Net30Files Include="protobuf-net\bin\Release\net30\aqlaserializer.*"/>
-    <Net30FilesDep Include="protobuf-net\bin\Release\net30\RunSharp.*"/>
-    <Net30Files_CoreOnly Include="protobuf-net\bin\CoreOnly\net30\aqlaserializer.*"/>
-    <NetStandardFiles Include="protobuf-net\bin\Release\netstandard2.1\aqlaserializer.*"/>
-    <NetStandardSafeFiles Include="protobuf-net\bin\Safe\netstandard2.1\aqlaserializer.*"/>
-    <NetStandardFiles_CoreOnly Include="protobuf-net\bin\CoreOnly\netstandard2.1\aqlaserializer.*"/>
-    <PortableFiles Include="protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
-    <PortableFilesDep Include="protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\RunSharp.*"/>
-    <PortableFiles_CoreOnly Include="protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
+    <iOSFiles Include="src\protobuf-net\bin\iOS\net30\aqlaserializer.*"/> 
+    <UnityFiles Include="src\protobuf-net\bin\Unity\net35\aqlaserializer.*"/>
+    <UnityFilesDep Include="src\protobuf-net\bin\Unity\net35\RunSharp.*"/>
+    <Net20SafeFiles Include="src\protobuf-net\bin\Safe\net20\aqlaserializer.*"/>
+    <Net20SafeFilesDep Include="src\protobuf-net\bin\Safe\net20\RunSharp.*"/>
+    <Net30SafeFiles Include="src\protobuf-net\bin\Safe\net30\aqlaserializer.*"/>
+    <Net30SafeFilesDep Include="src\protobuf-net\bin\Safe\net30\RunSharp.*"/>
+    <Net35SafeFiles Include="src\protobuf-net\bin\Safe\net35\aqlaserializer.*"/>
+    <Net35SafeFilesDep Include="src\protobuf-net\bin\Safe\net35\RunSharp.*"/>
+    <Net40SafeFiles Include="src\protobuf-net\bin\Safe\net40\aqlaserializer.*"/>
+    <Net40SafeFilesDep Include="src\protobuf-net\bin\Safe\net40\RunSharp.*"/>
+    <Net45SafeFiles Include="src\protobuf-net\bin\Safe\net45\aqlaserializer.*"/>
+    <Net45SafeFilesDep Include="src\protobuf-net\bin\Safe\net45\RunSharp.*"/>
+    <Net35Files Include="src\protobuf-net\bin\Release\net35\aqlaserializer.*"/>
+    <Net35FilesDep Include="src\protobuf-net\bin\Release\net35\RunSharp.*"/>
+    <Net40Files Include="src\protobuf-net\bin\Release\net40\aqlaserializer.*"/>
+    <Net40FilesDep Include="src\protobuf-net\bin\Release\net40\RunSharp.*"/>
+    <Net45Files Include="src\protobuf-net\bin\Release\net45\aqlaserializer.*"/>
+    <Net45FilesDep Include="src\protobuf-net\bin\Release\net45\RunSharp.*"/>
+    <Net20Files Include="src\protobuf-net\bin\Release\net20\aqlaserializer.*"/>
+    <Net20FilesDep Include="src\protobuf-net\bin\Release\net20\RunSharp.*"/>
+    <Net30Files Include="src\protobuf-net\bin\Release\net30\aqlaserializer.*"/>
+    <Net30FilesDep Include="src\protobuf-net\bin\Release\net30\RunSharp.*"/>
+    <Net30Files_CoreOnly Include="src\protobuf-net\bin\CoreOnly\net30\aqlaserializer.*"/>
+    <NetStandardFiles Include="src\protobuf-net\bin\Release\netstandard2.1\aqlaserializer.*"/>
+    <NetStandardSafeFiles Include="src\protobuf-net\bin\Safe\netstandard2.1\aqlaserializer.*"/>
+    <NetStandardFiles_CoreOnly Include="src\protobuf-net\bin\CoreOnly\netstandard2.1\aqlaserializer.*"/>
+    <PortableFiles Include="src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
+    <PortableFilesDep Include="src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\RunSharp.*"/>
+    <PortableFiles_CoreOnly Include="src\protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
+    <AndroidFiles Include="src\protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
+    <AndroidFilesDep Include="src\protobuf-net_MonoDroid\bin\Release\RunSharp.*"/>
+
     <SLFiles Include="bin-unsupported\Full\sl5\aqlaserializer.*"/>
     <SLFilesDep Include="bin-unsupported\Full\sl5\RunSharp.*"/>
     <SLFiles_CoreOnly Include="bin-unsupported\CoreOnly\sl5\aqlaserializer.*"/>
@@ -150,14 +153,12 @@
     <WinRTFiles Include="bin-unsupported\Full\winrt\aqlaserializer.*"/>
     <WinRTFilesDep Include="bin-unsupported\Full\winrt\RunSharp.*"/>
     <WinRTFiles_CoreOnly Include="bin-unsupported\CoreOnly\winrt\aqlaserializer.*"/>
+    
+    <PrecompileFiles Include="assorted\precompile\bin\Release\*.*"/>
 
-    <PrecompileFiles Include="precompile\bin\Release\*.*"/>
-
-    <EnyimFiles Include="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
+    <EnyimFiles Include="assorted\protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="assorted\protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
 
 
-    <AndroidFiles Include="protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
-    <AndroidFilesDep Include="protobuf-net_MonoDroid\bin\Release\RunSharp.*"/>
 
   </ItemGroup>
   
