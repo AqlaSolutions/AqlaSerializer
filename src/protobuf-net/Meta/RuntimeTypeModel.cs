@@ -77,7 +77,7 @@ namespace AqlaSerializer.Meta
             return type != model.MapType(typeof(Enum))
                    && type != model.MapType(typeof(object))
                    && type != model.MapType(typeof(ValueType))
-                   && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown)
+                   && (type.IsEnum || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown)
                    && !model.IsInbuiltType(type);
             //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
@@ -528,7 +528,7 @@ namespace AqlaSerializer.Meta
                         }
 
                         if (!shouldAdd || (
-                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this, type)))
+                            !type.IsEnum && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this, type)))
                         {
                             if (demand) ThrowUnexpectedType(type);
                             return key;
@@ -576,7 +576,7 @@ namespace AqlaSerializer.Meta
 
         bool IsInbuiltType(Type type)
         {
-            return !Helpers.IsEnum(type) && TryGetBasicTypeSerializer(type) != null;
+            return !type.IsEnum && TryGetBasicTypeSerializer(type) != null;
         }
 
         void AddDependencies(MetaType type)
@@ -1113,7 +1113,7 @@ namespace AqlaSerializer.Meta
             var initialWireType = source.WireType;
 #endif
             object result;
-            if (value == null && Helpers.IsValueType(ser.ExpectedType))
+            if (value == null && ser.ExpectedType.IsValueType)
             {
                 if (ser.RequiresOldValue) value = CreateInstance(ser, source);
                 result = ser.Read(value, source);
@@ -1442,7 +1442,7 @@ namespace AqlaSerializer.Meta
         {
             if (factory != null)
             {
-                if (type != null && Helpers.IsValueType(type)) throw new InvalidOperationException();
+                if (type != null && type.IsValueType) throw new InvalidOperationException();
                 if (!factory.IsStatic) throw new ArgumentException("A factory-method must be static", nameof(factory));
                 if ((type != null && factory.ReturnType != type) && factory.ReturnType != MapType(typeof(object))) throw new ArgumentException("The factory-method must return object" + (type == null ? "" : (" or " + type.FullName)), nameof(factory));
 

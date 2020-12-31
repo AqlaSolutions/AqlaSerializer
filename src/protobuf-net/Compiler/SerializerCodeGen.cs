@@ -225,7 +225,7 @@ namespace AqlaSerializer.Compiler
 
         public ContextualOperand StartSubItem(Operand objInstance, Operand boolPrefixLength)
         {
-            if ((object)objInstance != null && Helpers.IsValueType(objInstance.GetReturnType(g.TypeMapper))) objInstance = null; // no need to box value types here
+            if ((object)objInstance != null && objInstance.GetReturnType(g.TypeMapper).IsValueType) objInstance = null; // no need to box value types here
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.StartSubItem), objInstance, boolPrefixLength, g.ArgReaderWriter());
         }
 

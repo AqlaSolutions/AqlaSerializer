@@ -46,7 +46,7 @@ namespace AqlaSerializer.Meta
             return !IsSimpleValue && !_model.ProtoCompatibility.SuppressOwnRootFormat && !ForceCompactFormatForRoot;
         }
 
-        bool IsSimpleValue => Helpers.IsEnum(Type);
+        bool IsSimpleValue => Type.IsEnum;
 
         static void AddDependenciesRecursively(MetaType mt, Dictionary<MetaType, bool> set)
         {
@@ -125,7 +125,7 @@ namespace AqlaSerializer.Meta
         IProtoTypeSerializer BuildRootSerializer()
         {
             IProtoTypeSerializer ser = MakeModelTypeRerouteForRoot();
-            if (Helpers.IsEnum(Type))
+            if (Type.IsEnum)
             {
                 if (!GetRootStartsGroup())
                     ser = new RootFieldNumberDecorator(ser, ListHelpers.FieldItem);
@@ -168,7 +168,7 @@ namespace AqlaSerializer.Meta
             // because the value is treated as single object
             // #2 For members: ordinal ValueMembers are used and they will handle references when appropriate
 
-            if (Helpers.IsEnum(Type))
+            if (Type.IsEnum)
             {
                 Debug.Assert(IsSimpleValue);
                 return new WireTypeDecorator(WireType.Variant, new EnumSerializer(Type, GetEnumMap(), true));
@@ -205,7 +205,7 @@ namespace AqlaSerializer.Meta
                 WireType wt;
                 ser = (IProtoTypeSerializer)_model.ValueSerializerBuilder.BuildValueFinalSerializer(vs, false, out wt);
 
-                mayContainReferencesInside = !Helpers.IsValueType(itemType);
+                mayContainReferencesInside = !itemType.IsValueType;
 
                 return ser;
             }
@@ -224,7 +224,7 @@ namespace AqlaSerializer.Meta
             if (_settingsValueFinal.IsAutoTuple)
             {
                 if (_tupleCtor == null) throw new InvalidOperationException("Can't find tuple constructor");
-                mayContainReferencesInside = _tupleFields.Any(f => !Helpers.IsValueType(f.MemberType));
+                mayContainReferencesInside = _tupleFields.Any(f => !f.MemberType.IsValueType);
                 return new TupleSerializer(_model, _tupleCtor, _tupleFields.ToArray(), _settingsValueFinal.PrefixLength.GetValueOrDefault(true));
             }
 
@@ -260,7 +260,7 @@ namespace AqlaSerializer.Meta
                 {
                     fieldNumbers[i] = member.FieldNumber;
                     serializers[i++] = member.Serializer;
-                    if (!Helpers.IsValueType(member.MemberType)) mayContainReferencesInside = true;
+                    if (!member.MemberType.IsValueType) mayContainReferencesInside = true;
                 }
             }
 
@@ -310,7 +310,7 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                if (Helpers.IsEnum(Type)) return true;
+                if (Type.IsEnum) return true;
 
                 if (_settingsValueFinalSet)
                 {

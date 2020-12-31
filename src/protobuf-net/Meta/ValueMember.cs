@@ -148,7 +148,7 @@ namespace AqlaSerializer.Meta
 
                 FinalizingSettings?.Invoke(this, new FinalizingSettingsArgs(this));
 
-                if (FieldNumber < 1 && !Helpers.IsEnum(ParentType) && !_isAccessHandledOutside) throw new ProtoException("FieldNumber < 1 for member " + Member);
+                if (FieldNumber < 1 && !ParentType.IsEnum && !_isAccessHandledOutside) throw new ProtoException("FieldNumber < 1 for member " + Member);
 
                 if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
@@ -459,7 +459,7 @@ namespace AqlaSerializer.Meta
 
         private static bool IsValidMapKeyType(Type type)
         {
-            if (type == null || Helpers.IsEnum(type)) return false;
+            if (type == null || type.IsEnum) return false;
             switch (Helpers.GetTypeCode(type))
             {
                 case ProtoTypeCode.Boolean:

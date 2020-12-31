@@ -112,7 +112,7 @@ namespace AqlaSerializer.Meta
 
                 MemberLevelSettingsValue m = _settingsValueFinal.Member;
 
-                if (_settingsValueFinal.EnumPassthru == null && Helpers.IsEnum(Type))
+                if (_settingsValueFinal.EnumPassthru == null && Type.IsEnum)
                 {
 #if WINRT
                     _settingsValueFinal.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);

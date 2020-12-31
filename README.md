@@ -14,10 +14,7 @@ The implementation is compatible with most of the .NET family, including .NET 2.
 * .NET Framework 2.0+
 * .NET Framework 2.0+ with IKVM
 * .NET Standard 2.1+ (including .NET Core 3 and .NET 5)
-*  UAP 10.0(+?)
-*  Unity3D (?)
-*  Xamarin.Android
-*  Portable (Silverlight 5, Windows Phone 8.1, Windows 8, Android, iOS)
+*  Portable (Silverlight 5, Windows Phone 8.1, Windows 8, Android, iOS, UAP10?)
 
 ## Runtime Installation
 

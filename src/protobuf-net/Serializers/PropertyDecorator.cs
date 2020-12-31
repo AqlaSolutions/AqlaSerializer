@@ -68,7 +68,7 @@ namespace AqlaSerializer.Serializers
             {
                 throw new InvalidOperationException("Cannot serialize property without a get accessor");
             }
-            if (!writeValue && (!tail.RequiresOldValue || Helpers.IsValueType(tail.ExpectedType)))
+            if (!writeValue && (!tail.RequiresOldValue || tail.ExpectedType.IsValueType))
             { // so we can't save the value, and the tail doesn't use it either... not helpful
                 // or: can't write the value, so the struct value will be lost
                 throw new InvalidOperationException("Cannot apply changes to property " + property.DeclaringType.FullName + "." + property.Name);
@@ -94,7 +94,7 @@ namespace AqlaSerializer.Serializers
             if (_canSetInRuntime
                 && (!Tail.RequiresOldValue // always set where can't check oldVal
                     // and if it's value type or nullable with changed null/not null or ref
-                    || (Helpers.IsValueType(_property.PropertyType) && oldVal != null && newVal != null)
+                    || (_property.PropertyType.IsValueType && oldVal != null && newVal != null)
                     || !ReferenceEquals(oldVal, newVal)
                    ))
             {
@@ -121,7 +121,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER 
-        public override bool EmitReadReturnsValue => Helpers.IsValueType(_forType);
+        public override bool EmitReadReturnsValue => _forType.IsValueType;
 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
@@ -186,7 +186,7 @@ namespace AqlaSerializer.Serializers
                         {
                             var condition = !g.StaticFactory.InvokeReferenceEquals(oldVal, newVal);
 
-                            if (Helpers.IsValueType(_property.PropertyType))
+                            if (_property.PropertyType.IsValueType)
                                 condition = (oldVal.AsOperand != null && newVal.AsOperand != null) || condition;
 
                             g.If(condition);

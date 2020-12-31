@@ -103,7 +103,7 @@ namespace AqlaSerializer.Meta
         internal WireType GetWireType(ProtoTypeCode code, BinaryDataFormat format, ref Type type, out int modelKey)
         {
             modelKey = -1;
-            if (Helpers.IsEnum(type))
+            if (type.IsEnum)
             {
                 modelKey = GetKey(ref type);
                 return WireType.Variant;
@@ -141,7 +141,7 @@ namespace AqlaSerializer.Meta
 
             if (modelKey >= 0)
             {   // write the header, but defer to the model
-                if (Helpers.IsEnum(type))
+                if (type.IsEnum)
                 { // no header
                     if (isRoot)
                         ProtoWriter.WriteFieldHeaderBegin(EnumRootTag, writer);
@@ -860,7 +860,7 @@ namespace AqlaSerializer.Meta
         private object DeserializeAny(ProtoReader reader, Type type, object value, bool noAutoCreate, bool isRoot)
         {
             int key = GetKey(ref type);
-            if (key >= 0 && !Helpers.IsEnum(type))
+            if (key >= 0 && !type.IsEnum)
             {
                 return Deserialize(key, value, reader, isRoot);
             }
@@ -911,7 +911,7 @@ namespace AqlaSerializer.Meta
                 ThrowUnexpectedType(type);
             }
 
-            if (Helpers.IsEnum(type))
+            if (type.IsEnum)
             {
                 if (isRoot && reader.ReadFieldHeader() != EnumRootTag) return false;
                 value = Deserialize(modelKey, value, reader, false);
@@ -1210,7 +1210,7 @@ public static RuntimeTypeModel Create()
                     }
                     int key = GetKey(ref type);
 
-                    if (key >= 0 && !Helpers.IsEnum(type))
+                    if (key >= 0 && !type.IsEnum)
                     {
                         using (MemoryStream ms = new MemoryStream())
                         {

@@ -31,7 +31,7 @@ namespace AqlaSerializer.Meta
     {
         internal EnumSerializer.EnumPair[] GetEnumMap()
         {
-            if (!Helpers.IsEnum(Type)) return null;
+            if (!Type.IsEnum) return null;
             if (GetFinalSettingsCopy().EnumPassthru.GetValueOrDefault()) return null;
             var fields = _fields.Cast<ValueMember>().ToArray();
             EnumSerializer.EnumPair[] result = new EnumSerializer.EnumPair[fields.Length];
@@ -115,7 +115,7 @@ namespace AqlaSerializer.Meta
                     FieldInfo field = fieldsPropsUnfiltered[i] as FieldInfo;
                     if (field != null)
                     {
-                        if (!field.IsInitOnly && !Helpers.IsValueType(type)) return null; // all public fields must be readonly to be counted a tuple but there is an exclusion for structs
+                        if (!field.IsInitOnly && !type.IsValueType) return null; // all public fields must be readonly to be counted a tuple but there is an exclusion for structs
                         memberList.Add(field);
                     }
                 }

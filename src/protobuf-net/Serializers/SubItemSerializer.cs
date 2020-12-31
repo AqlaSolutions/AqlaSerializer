@@ -96,7 +96,7 @@ namespace AqlaSerializer.Serializers
                 {
                     // write requires the object for StartSubItem; read doesn't
                     // (if recursion-check is disabled [subtypes] then null is fine too)
-                    if (Helpers.IsValueType(type) || !recursionCheck) { ctx.LoadNullRef(); }
+                    if (type.IsValueType || !recursionCheck) { ctx.LoadNullRef(); }
                     else { ctx.LoadValue(val); }
                     ctx.LoadWriter(true);
                 }
@@ -138,7 +138,7 @@ namespace AqlaSerializer.Serializers
             if (!EmitDedicatedMethod(ctx, valueFrom, false))
             {
                 ctx.LoadValue(valueFrom);
-                if (Helpers.IsValueType(type)) ctx.CastToObject(type);
+                if (type.IsValueType) ctx.CastToObject(type);
                 ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
                 ctx.LoadWriter(true);
                 ctx.EmitCall(Helpers.GetStaticMethod(typeof(ProtoWriter), recursionCheck ? "WriteObject" : "WriteRecursionSafeObject", new Type[] { typeof(object), typeof(int), typeof(ProtoWriter), ProtoWriter.ByRefStateType }));
@@ -149,7 +149,7 @@ namespace AqlaSerializer.Serializers
             if (!EmitDedicatedMethod(ctx, valueFrom, true))
             {
                 ctx.LoadValue(valueFrom);
-                if (Helpers.IsValueType(type)) ctx.CastToObject(type);
+                if (type.IsValueType) ctx.CastToObject(type);
                 ctx.LoadValue(ctx.MapMetaKeyToCompiledKey(key)); // re-map for formality, but would expect identical, else dedicated method
                 ctx.LoadReader(true);
                 ctx.EmitCall(Helpers.GetStaticMethod(typeof(ProtoReader), "ReadObject",

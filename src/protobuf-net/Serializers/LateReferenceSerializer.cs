@@ -44,7 +44,7 @@ namespace AqlaSerializer.Serializers
             if (model == null) throw new ArgumentNullException(nameof(model));
             ExpectedType = type;
             _model = model;
-            if (Helpers.IsValueType(type))
+            if (type.IsValueType)
                 throw new ArgumentException("Can't create " + this.GetType().Name + " for non-reference type " + type.Name + "!");
             _typeKey = typeKey;
             _baseTypeKey = baseTypeKey;

@@ -34,7 +34,7 @@ namespace AqlaSerializer.Serializers
         {
             _enableReferenceVersioningSeeking = enableReferenceVersioningSeeking;
             _protoCompatibility = protoCompatibility;
-            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !Helpers.IsValueType(type), false, false, model) : serializer;
+            _serializer = wrap ? new NetObjectValueDecorator(serializer, Helpers.GetNullableUnderlyingType(type) != null, !type.IsValueType, false, false, model) : serializer;
         }
 
         public Type ExpectedType => _serializer.ExpectedType;

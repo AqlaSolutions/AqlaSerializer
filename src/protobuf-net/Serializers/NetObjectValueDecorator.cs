@@ -60,7 +60,7 @@ namespace AqlaSerializer.Serializers
 
             int baseKey = model.GetKey(type, false, true);
             int key = model.GetKey(type, false, false);
-            if (!Helpers.IsValueType(type) && key >= 0 && baseKey >= 0 && ValueSerializerBuilder.CanTypeBeAsLateReferenceOnBuildStage(key, model, true))
+            if (!type.IsValueType && key >= 0 && baseKey >= 0 && ValueSerializerBuilder.CanTypeBeAsLateReferenceOnBuildStage(key, model, true))
             {
                 var mt = model[key];
 #if SILVERLIGHT
@@ -95,7 +95,7 @@ namespace AqlaSerializer.Serializers
 
         static Type MakeReturnNullable(Type type, bool make, TypeModel model)
         {
-            if (!make || !Helpers.IsValueType(type) || Helpers.GetNullableUnderlyingType(type) != null) return type;
+            if (!make || !type.IsValueType || Helpers.GetNullableUnderlyingType(type) != null) return type;
             return model.MapType(typeof(Nullable<>)).MakeGenericType(type);
         }
 
@@ -152,7 +152,7 @@ namespace AqlaSerializer.Serializers
         public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             var type = ExpectedType;
-            if (source.WireType == WireType.Null) return Helpers.IsValueType(type) ? Activator.CreateInstance(type) : null;
+            if (source.WireType == WireType.Null) return type.IsValueType ? Activator.CreateInstance(type) : null;
 
             if (!RequiresOldValue) value = null;
 
@@ -223,7 +223,7 @@ namespace AqlaSerializer.Serializers
             NetObjectHelpers.ReadNetObject_End(value, r, source, oldValue, type, options);
             if (!r.ShouldRead)
             {
-                if (Helpers.IsValueType(ExpectedType) && value == null)
+                if (ExpectedType.IsValueType && value == null)
                     value = Activator.CreateInstance(ExpectedType);
             }
             return value;
@@ -305,7 +305,7 @@ namespace AqlaSerializer.Serializers
             {
                 g.If(g.ReaderFunc.WireType() == WireType.Null);
                 {
-                    if (Helpers.IsValueType(ExpectedType))
+                    if (ExpectedType.IsValueType)
                         g.InitObj(nullableValue);
                     else
                         g.Assign(nullableValue, null);
@@ -466,7 +466,7 @@ namespace AqlaSerializer.Serializers
 
                     g.If(!shouldRead);
                     {
-                        if (Helpers.IsValueType(ExpectedType) && (EmitReadReturnsValue || RequiresOldValue))
+                        if (ExpectedType.IsValueType && (EmitReadReturnsValue || RequiresOldValue))
                         {
                             g.If(inputValueBoxed.AsOperand == null);
                             {
@@ -516,7 +516,7 @@ namespace AqlaSerializer.Serializers
                 using (Local value = nullableUnderlying == null ? inputValue.AsCopy() : ctx.Local(nullableUnderlying))
                 {
                     var g = ctx.G;
-                    bool canBeNull = nullableUnderlying != null || !Helpers.IsValueType(ExpectedType);
+                    bool canBeNull = nullableUnderlying != null || !ExpectedType.IsValueType;
                     bool allowNullWireType = _allowNullWireType;
                     if (canBeNull && allowNullWireType)
                     {

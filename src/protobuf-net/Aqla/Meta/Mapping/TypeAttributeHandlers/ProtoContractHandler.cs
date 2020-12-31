@@ -36,7 +36,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
             {
                 object tmp;
                 if (item.TryGet("Name", out tmp)) main.Name = (string)tmp;
-                if (Helpers.IsEnum(s.Type)) // note this is subtly different to AsEnum; want to do this even if [Flags]
+                if (s.Type.IsEnum) // note this is subtly different to AsEnum; want to do this even if [Flags]
                 {
 #if !FEAT_IKVM
                     // IKVM can't access EnumPassthruHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property

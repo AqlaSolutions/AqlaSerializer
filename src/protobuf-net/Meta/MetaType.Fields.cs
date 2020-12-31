@@ -229,7 +229,7 @@ namespace AqlaSerializer.Meta
             mi = Helpers.IsEnum(Type) ? Type.GetTypeInfo().GetDeclaredField(memberName) : Helpers.GetInstanceMember(Type.GetTypeInfo(), memberName);
 
 #else
-            MemberInfo[] members = Type.GetMember(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            MemberInfo[] members = Type.GetMember(memberName, Type.IsEnum ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (members != null && members.Length == 1) mi = members[0];
 #endif
             if (mi == null) throw new ArgumentException("Unable to determine member: " + memberName, nameof(memberName));
@@ -271,7 +271,7 @@ namespace AqlaSerializer.Meta
             MemberInfo backingField = null;
             if (useBackingFieldIfNoSetter && (mi as PropertyInfo)?.CanWrite == false)
             {
-                var backingMembers = Type.GetMember($"<{((PropertyInfo)mi).Name}>k__BackingField", Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var backingMembers = Type.GetMember($"<{((PropertyInfo)mi).Name}>k__BackingField", Type.IsEnum ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 if (backingMembers != null && backingMembers.Length == 1 && (backingMembers[0] as FieldInfo) != null)
                     backingField = backingMembers[0];
             }
@@ -338,7 +338,7 @@ namespace AqlaSerializer.Meta
                 _model.TakeLock(ref opaqueToken);
                 ThrowIfFrozen();
 
-                if (!IsFieldFree(member.FieldNumber) && !Helpers.IsEnum(Type)) throw new ArgumentException(string.Format("FieldNumber {0} for {1} was already taken", member.FieldNumber, member), nameof(member));
+                if (!IsFieldFree(member.FieldNumber) && !Type.IsEnum) throw new ArgumentException(string.Format("FieldNumber {0} for {1} was already taken", member.FieldNumber, member), nameof(member));
                 _fields.Add(member);
                 member.FinalizingSettings += (s, a) => FinalizingMemberSettings?.Invoke(this, a);
             }

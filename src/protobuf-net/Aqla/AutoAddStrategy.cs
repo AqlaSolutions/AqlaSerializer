@@ -118,7 +118,7 @@ namespace AqlaSerializer
 
                 var members = new List<MappedMember>();
 
-                bool isEnum = Helpers.IsEnum(type);
+                bool isEnum = type.IsEnum;
 #if WINRT
                 System.Collections.Generic.IEnumerable<MemberInfo> foundList;
                 if (isEnum) {
@@ -382,14 +382,14 @@ namespace AqlaSerializer
         protected AttributeFamily GetContractFamily_Full(Type type, AttributeMap[] attributes)
         {
             if (Helpers.GetNullableUnderlyingType(type) != null) return AttributeFamily.None;
-            if (!Helpers.IsEnum(type) && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
+            if (!type.IsEnum && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
             return GetContractFamily(type, attributes);
         }
 
         protected virtual AttributeFamily GetContractFamily(Type type, AttributeMap[] attributes)
         {
             if (Helpers.GetNullableUnderlyingType(type) != null) return AttributeFamily.None;
-            if (!Helpers.IsEnum(type) && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
+            if (!type.IsEnum && Helpers.GetTypeCode(type) != ProtoTypeCode.Unknown) return AttributeFamily.None; // known types are not contracts
             AttributeFamily family = AttributeFamily.None;
             bool isList = type.IsArray || TypeModel.GetListItemType(Model, type) != null;
             for (int i = 0; i < attributes.Length; i++)
@@ -435,7 +435,7 @@ namespace AqlaSerializer
 
             if (family == AttributeFamily.None)
             {
-                if (Helpers.IsEnum(type))
+                if (type.IsEnum)
                 {
                     // it's not required to specify attributes on enum
 

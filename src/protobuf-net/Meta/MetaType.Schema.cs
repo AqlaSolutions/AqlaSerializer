@@ -122,7 +122,7 @@ namespace AqlaSerializer.Meta
                     NewLine(builder, indent).Append('}');
                 }
             }
-            else if (Helpers.IsEnum(Type))
+            else if (Type.IsEnum)
             {
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
                 if (_settingsValueFinal.EnumPassthru.GetValueOrDefault())

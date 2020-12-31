@@ -156,7 +156,7 @@ namespace AqlaSerializer.Meta
                 (
                 (Helpers.GetNullableUnderlyingType(itemType) != null && Helpers.GetNullableUnderlyingType(ser.ExpectedType) == null)
                 // TODO get rid of ugly casting, maybe use builder pattern
-                || (!Helpers.IsValueType(itemType) && !(ser is NetObjectValueDecorator))
+                || (!itemType.IsValueType && !(ser is NetObjectValueDecorator))
                 ))
             {
                 // nested level may be not collection and already wrapped with nonull, may later add check whether handled as registered vs as nested
@@ -250,7 +250,7 @@ namespace AqlaSerializer.Meta
                             !_model.ProtoCompatibility.SuppressNullWireType,
                             _model);
                     }
-                    else if (!Helpers.IsValueType(l.EffectiveType) || Helpers.GetNullableUnderlyingType(l.EffectiveType) != null)
+                    else if (!l.EffectiveType.IsValueType || Helpers.GetNullableUnderlyingType(l.EffectiveType) != null)
                     {
                         ser = new NoNullDecorator(_model, ser, false);
                     }
@@ -343,7 +343,7 @@ namespace AqlaSerializer.Meta
 
         internal static bool CanTypeBeNull(Type type)
         {
-            return !Helpers.IsValueType(type) || Helpers.GetNullableUnderlyingType(type) != null;
+            return !type.IsValueType || Helpers.GetNullableUnderlyingType(type) != null;
         }
 
         static void ThrowIfHasMoreLevels(ValueSerializationSettings settings, int currentLevelNr, MemberLevelSettingsValue currentLevel, string description)
@@ -391,7 +391,7 @@ namespace AqlaSerializer.Meta
             defaultWireType = WireType.None;
             IProtoSerializerWithWireType ser = null;
 
-            if (Helpers.IsEnum(type))
+            if (type.IsEnum)
             {
                 if (allowComplexTypes && _model != null)
                 {
@@ -524,7 +524,7 @@ namespace AqlaSerializer.Meta
 
         internal static bool CanTypeBeAsReference(Type type)
         {
-            return !Helpers.IsValueType(type);
+            return !type.IsValueType;
         }
 
         IProtoSerializerWithWireType TryGetBasicTypeSerializer(BinaryDataFormat dataFormat, Type type, out WireType defaultWireType, bool overwriteList)
@@ -629,7 +629,7 @@ namespace AqlaSerializer.Meta
             if (value is string)
             {
                 string s = (string)value;
-                if (Helpers.IsEnum(type)) return Helpers.ParseEnum(type, s);
+                if (type.IsEnum) return Helpers.ParseEnum(type, s);
 
                 switch (Helpers.GetTypeCode(type))
                 {
@@ -675,7 +675,7 @@ namespace AqlaSerializer.Meta
             if (convertType != null) return Convert.ChangeType(value, convertType, CultureInfo.InvariantCulture);
             throw new ArgumentException("Unable to process default value: " + value + ", " + type.FullName);
 #else
-            if (Helpers.IsEnum(type)) return Enum.ToObject(type, value);
+            if (type.IsEnum) return Enum.ToObject(type, value);
             return Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
 #endif
         }

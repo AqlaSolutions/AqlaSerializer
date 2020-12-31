@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
 #endif
             if (method != null && method.ReturnType == type)
             {
-                if (Helpers.IsValueType(type))
+                if (type.IsValueType)
                 {
                     MethodInfo toString = GetCustomToString(type);
                     if (toString == null || toString.ReturnType != model.MapType(typeof(string))) return null; // need custom ToString, fools

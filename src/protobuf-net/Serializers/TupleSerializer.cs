@@ -67,13 +67,13 @@ namespace AqlaSerializer.Serializers
             if ((prop = _members[index].Member as PropertyInfo) != null)
             {
                 if (obj == null)
-                    return Helpers.IsValueType(prop.PropertyType) ? Activator.CreateInstance(prop.PropertyType) : null;
+                    return prop.PropertyType.IsValueType ? Activator.CreateInstance(prop.PropertyType) : null;
                 return Helpers.GetPropertyValue(prop, obj);
             }
             else if ((field = _members[index].Member as FieldInfo) != null)
             {
                 if (obj == null)
-                    return Helpers.IsValueType(field.FieldType) ? Activator.CreateInstance(field.FieldType) : null;
+                    return field.FieldType.IsValueType ? Activator.CreateInstance(field.FieldType) : null;
                 return field.GetValue(obj);
             }
             else

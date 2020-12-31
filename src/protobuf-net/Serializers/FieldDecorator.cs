@@ -72,7 +72,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
 #if FEAT_COMPILER
-        public override bool EmitReadReturnsValue => Helpers.IsValueType(_forType);
+        public override bool EmitReadReturnsValue => _forType.IsValueType;
 
         protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

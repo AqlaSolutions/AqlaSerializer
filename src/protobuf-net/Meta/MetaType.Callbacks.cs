@@ -47,7 +47,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public CallbackSet Callbacks => _callbacks ?? (_callbacks = new CallbackSet(this));
 
-        bool IsValueType => Helpers.IsValueType(Type);
+        bool IsValueType => Type.IsValueType;
 
         /// <summary>
         /// Assigns the callbacks to use during serialiation/deserialization.

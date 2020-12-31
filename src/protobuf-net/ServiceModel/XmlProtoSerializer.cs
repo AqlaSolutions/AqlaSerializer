@@ -26,7 +26,7 @@ namespace AqlaSerializer.ServiceModel
             this._key = key;
             this._isList = isList;
             this._type = type;
-            this._isEnum = Helpers.IsEnum(type);
+            this._isEnum = type.IsEnum;
         }
         /// <summary>
         /// Attempt to create a new serializer for the given model and type
@@ -56,7 +56,7 @@ namespace AqlaSerializer.ServiceModel
             _key = GetKey(model, ref type, out _isList);
             this._model = model;
             this._type = type;
-            this._isEnum = Helpers.IsEnum(type);
+            this._isEnum = type.IsEnum;
             if (_key < 0) throw new ArgumentOutOfRangeException(nameof(type), "Type not recognised by the model: " + type.FullName);
         }
         static int GetKey(TypeModel model, ref Type type, out bool isList)

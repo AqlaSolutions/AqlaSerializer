@@ -149,7 +149,7 @@ namespace AqlaSerializer.Compiler
             if (storeTo.IsNullRef()) throw new ArgumentNullException(nameof(storeTo));
             var ctx = this;
             ctx.LoadValue(storeFrom);
-            if (Helpers.IsValueType(storeTo.Type))
+            if (storeTo.Type.IsValueType)
             {
                 CodeLabel notNull = ctx.DefineLabel(), endNull = ctx.DefineLabel();
                 ctx.BranchIfTrue(notNull, true);
@@ -190,7 +190,7 @@ namespace AqlaSerializer.Compiler
         {
             if(IsObject(type))
             { }
-            else if (Helpers.IsValueType(type))
+            else if (type.IsValueType)
             {
                 _il.Emit(OpCodes.Box, type);
                 TraceCompile(OpCodes.Box + ": " + type);
@@ -206,7 +206,7 @@ namespace AqlaSerializer.Compiler
         {
             if (IsObject(type))
             { }
-            else if (Helpers.IsValueType(type))
+            else if (type.IsValueType)
             {
                 switch (MetadataVersion)
                 {
@@ -483,7 +483,7 @@ namespace AqlaSerializer.Compiler
 
         internal void InitLocal(Type type, LocalBuilder local)
         {
-            if (Helpers.IsValueType(local.LocalType))
+            if (local.LocalType.IsValueType)
             {
                 _il.Emit(OpCodes.Ldloca, local);
                 _il.Emit(OpCodes.Initobj, type);
@@ -694,7 +694,7 @@ namespace AqlaSerializer.Compiler
                 if (fromValue.Type == type) return fromValue.AsCopy();
                 // otherwise, load onto the stack and let the default handling (below) deal with it
                 LoadValue(fromValue);
-                if (!Helpers.IsValueType(type) && (fromValue.Type == null || !type.IsAssignableFrom(fromValue.Type)))
+                if (!type.IsValueType && (fromValue.Type == null || !type.IsAssignableFrom(fromValue.Type)))
                 { // need to cast
                     Cast(type);
                 }
@@ -799,14 +799,14 @@ namespace AqlaSerializer.Compiler
             Helpers.DebugAssert(method != null);
             CheckAccessibility(method);
             OpCode opcode;
-            if (method.IsStatic || Helpers.IsValueType(method.DeclaringType))
+            if (method.IsStatic || method.DeclaringType.IsValueType)
             {
                 opcode = OpCodes.Call;
             }
             else
             {
                 opcode = OpCodes.Callvirt;
-                if (targetType != null && Helpers.IsValueType(targetType) && !Helpers.IsValueType(method.DeclaringType))
+                if (targetType != null && targetType.IsValueType && !method.DeclaringType.IsValueType)
                 {
                     Constrain(targetType);
                 }
@@ -829,7 +829,7 @@ namespace AqlaSerializer.Compiler
 
         internal void WriteNullCheckedTail(Type type, IProtoSerializer tail, Compiler.Local valueFrom, bool cancelField)
         {
-            if (Helpers.IsValueType(type))
+            if (type.IsValueType)
             {
                 Type underlyingType = null;
 #if !FX11
@@ -878,7 +878,7 @@ namespace AqlaSerializer.Compiler
 #if !FX11
             Type underlyingType;
             
-            if (Helpers.IsValueType(type) && (underlyingType = Helpers.GetNullableUnderlyingType(type)) != null)
+            if (type.IsValueType && (underlyingType = Helpers.GetNullableUnderlyingType(type)) != null)
             {
                 if(tail.RequiresOldValue)
                 {
@@ -928,7 +928,7 @@ namespace AqlaSerializer.Compiler
         {
             Helpers.DebugAssert(type != null);
             Helpers.DebugAssert(parameterTypes != null);
-            if (Helpers.IsValueType(type) && parameterTypes.Length == 0)
+            if (type.IsValueType && parameterTypes.Length == 0)
             {
                 _il.Emit(OpCodes.Initobj, type);
                 TraceCompile(OpCodes.Initobj + ": " + type);
@@ -1161,7 +1161,7 @@ namespace AqlaSerializer.Compiler
 #endif
         internal void LoadAddress(Local local, Type type)
         {
-            if (Helpers.IsValueType(type))
+            if (type.IsValueType)
             {
                 LoadRefArg(local, type);
             }
@@ -1394,7 +1394,7 @@ namespace AqlaSerializer.Compiler
 
                 Type type = local.Type;
                 // check if **never** disposable
-                if ((Helpers.IsValueType(type) || type.IsSealed) &&
+                if ((type.IsValueType || type.IsSealed) &&
                     !ctx.MapType(typeof(IDisposable)).IsAssignableFrom(type))
                 {
                     return; // nothing to do! easiest "using" block ever
@@ -1417,7 +1417,7 @@ namespace AqlaSerializer.Compiler
                 Type type = _local.Type;
                 // remember that we've already (in the .ctor) excluded the case
                 // where it *cannot* be disposable
-                if (Helpers.IsValueType(type))
+                if (type.IsValueType)
                 {
                     _ctx.LoadAddress(_local, type);
                     switch (_ctx.MetadataVersion)
@@ -1527,7 +1527,7 @@ namespace AqlaSerializer.Compiler
                 case ProtoTypeCode.Single: Emit(OpCodes.Ldelem_R4); break;
                 case ProtoTypeCode.Double: Emit(OpCodes.Ldelem_R8); break;
                 default:
-                    if (Helpers.IsValueType(type))
+                    if (type.IsValueType)
                     {
                         _il.Emit(OpCodes.Ldelema, type);
                         _il.Emit(OpCodes.Ldobj, type);

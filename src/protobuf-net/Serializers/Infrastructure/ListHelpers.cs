@@ -71,7 +71,7 @@ namespace AqlaSerializer.Serializers
                 default:
                     return false; // nope
             }
-            if (!Helpers.IsValueType(itemType)) return false;
+            if (!itemType.IsValueType) return false;
             return Helpers.GetNullableUnderlyingType(itemType) == null;
         }
 

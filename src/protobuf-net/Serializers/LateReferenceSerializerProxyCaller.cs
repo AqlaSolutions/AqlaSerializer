@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
         public LateReferenceSerializerProxyCaller(ILateReferenceSerializerProxy proxy, Type type, int typeKey)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            if (Helpers.IsValueType(type))
+            if (type.IsValueType)
                 throw new ArgumentException("Can't create " + this.GetType().Name + " for non-reference type " + type.Name + "!");
             ExpectedType = type;
             _proxy = proxy;

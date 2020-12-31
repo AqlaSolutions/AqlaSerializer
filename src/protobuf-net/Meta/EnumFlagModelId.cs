@@ -15,7 +15,7 @@ namespace AqlaSerializer.Meta
         {
             _acceptDefault = acceptDefault;
             var t = value.GetType();
-            if (!Helpers.IsEnum(t)) throw new ArgumentException("Expected Enum as a generic argument");
+            if (!t.IsEnum) throw new ArgumentException("Expected Enum as a generic argument");
             Value = value;
             _modelIdMask = ExtractEnumLongValue(Value);
         }

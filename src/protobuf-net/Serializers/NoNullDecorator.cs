@@ -31,7 +31,7 @@ namespace AqlaSerializer.Serializers
         {
             _throwIfNull = throwIfNull;
             Type tailType = tail.ExpectedType;
-            if (Helpers.IsValueType(tailType))
+            if (tailType.IsValueType)
             {
                 _expectedType = model.MapType(typeof(Nullable<>)).MakeGenericType(tailType);
             }
