@@ -24,11 +24,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WcfEndpoint", "WcfEndpoint"
 		Info.txt = Info.txt
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{7754B31E-246D-4D0E-B7D9-6CB20A896A9D}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\packages.config = .nuget\packages.config
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Enyim", "Enyim", "{191D726D-E5AD-43BB-89F1-35FD1245CCE0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BasicHttp", "BasicHttp", "{5596B72F-58A0-4E0B-B029-B2ECC0B4CB41}"

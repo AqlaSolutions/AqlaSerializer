@@ -539,11 +539,7 @@ namespace AqlaSerializer
 
         internal static System.Type GetNullableUnderlyingType(System.Type type)
         {
-#if NO_GENERICS
-            return null; // never a Nullable<T>, so always returns null
-#else
             return Nullable.GetUnderlyingType(type);
-#endif
         }
 
         internal static bool IsValueType(Type type)

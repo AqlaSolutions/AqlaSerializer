@@ -2075,11 +2075,8 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             return false;
         }
 
-#if NO_GENERICS
-        readonly Stack _trapNoteReserved = new Stack();
-#else
+
         readonly Stack<int> _trapNoteReserved = new Stack<int>();
-#endif
         int _trappedKey;
 
         public static int ReserveNoteObject(ProtoReader reader)

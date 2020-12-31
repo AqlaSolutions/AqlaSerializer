@@ -216,9 +216,7 @@ namespace AqlaSerializer.Meta
         private static bool CheckDictionaryAccessors(TypeModel model, Type pair, Type value)
         {
 
-#if NO_GENERICS
-            return false;
-#elif WINRT
+#if WINRT
             TypeInfo finalType = pair.GetTypeInfo();
             return finalType.IsGenericType && finalType.GetGenericTypeDefinition() == typeof(System.Collections.Generic.KeyValuePair<,>)
                 && finalType.GenericTypeArguments[1] == value;
