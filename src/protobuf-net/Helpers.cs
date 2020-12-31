@@ -316,66 +316,7 @@ namespace AqlaSerializer
             } while (swapped);
 #endif
         }
-
-        public static void BlockCopy(byte[] from, int fromIndex, byte[] to, int toIndex, int count)
-        {
-#if MF || WINRT
-            Array.Copy(from, fromIndex, to, toIndex, count);
-#else
-            Buffer.BlockCopy(from, fromIndex, to, toIndex, count);
-#endif
-        }
-#if WINRT
-        internal static MemberInfo GetInstanceMember(TypeInfo declaringType, string name)
-        {
-            PropertyInfo prop = declaringType.GetDeclaredProperty(name);
-            MethodInfo method;
-            if (prop != null && (method = Helpers.GetGetMethod(prop, true, true)) != null && !method.IsStatic) return prop;
-
-            FieldInfo field = declaringType.GetDeclaredField(name);
-            if (field != null && !field.IsStatic) return field;
-
-            return null;
-        }
-        internal static MethodInfo GetInstanceMethod(TypeInfo declaringType, string name)
-        {
-            foreach (MethodInfo method in declaringType.DeclaredMethods)
-            {
-                if (!method.IsStatic && method.Name == name)
-                {
-                    return method;
-                }
-            }
-            return null;
-        }
-        internal static MethodInfo GetStaticMethod(TypeInfo declaringType, string name)
-        {
-            foreach (MethodInfo method in declaringType.DeclaredMethods)
-            {
-                if (method.IsStatic && method.Name == name)
-                {
-                    return method;
-                }
-            }
-            return null;
-        }
-        internal static MethodInfo GetInstanceMethod(Type declaringType, string name, Type[] types)
-        {
-            return GetInstanceMethod(declaringType.GetTypeInfo(), name, types);
-        }
-        internal static MethodInfo GetInstanceMethod(TypeInfo declaringType, string name, Type[] types)
-        {
-            if (types == null) types = EmptyTypes;
-            foreach (MethodInfo method in declaringType.DeclaredMethods)
-            {
-                if (!method.IsStatic && method.Name == name)
-                {
-                    if(IsMatch(method.GetParameters(), types)) return method;
-                }
-            }
-            return null;
-        }
-#else
+        
         internal static MethodInfo GetInstanceMethod(Type declaringType, string name)
         {
             return declaringType.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -396,15 +337,10 @@ namespace AqlaSerializer
                 null, types, null);
 #endif
         }
-#endif
 
         internal static bool IsSubclassOf(Type type, Type baseClass)
         {
-#if WINRT
-            return type.GetTypeInfo().IsSubclassOf(baseClass);
-#else
             return type.IsSubclassOf(baseClass);
-#endif
         }
         public static readonly Type[] EmptyTypes =
 #if PORTABLE || WINRT || CF2 || CF35
@@ -412,26 +348,7 @@ namespace AqlaSerializer
 #else
             Type.EmptyTypes;
 #endif
-
-#if WINRT
-        private static readonly Type[] knownTypes = new Type[] {
-                typeof(bool), typeof(char), typeof(sbyte), typeof(byte),
-                typeof(short), typeof(ushort), typeof(int), typeof(uint),
-                typeof(long), typeof(ulong), typeof(float), typeof(double),
-                typeof(decimal), typeof(string),
-                typeof(DateTime), typeof(TimeSpan), typeof(Guid), typeof(Uri),
-                typeof(byte[]), typeof(System.Type)};
-        private static readonly ProtoTypeCode[] knownCodes = new ProtoTypeCode[] {
-            ProtoTypeCode.Boolean, ProtoTypeCode.Char, ProtoTypeCode.SByte, ProtoTypeCode.Byte,
-            ProtoTypeCode.Int16, ProtoTypeCode.UInt16, ProtoTypeCode.Int32, ProtoTypeCode.UInt32,
-            ProtoTypeCode.Int64, ProtoTypeCode.UInt64, ProtoTypeCode.Single, ProtoTypeCode.Double,
-            ProtoTypeCode.Decimal, ProtoTypeCode.String,
-            ProtoTypeCode.DateTime, ProtoTypeCode.TimeSpan, ProtoTypeCode.Guid, ProtoTypeCode.Uri,
-            ProtoTypeCode.ByteArray, ProtoTypeCode.Type
-        };
-
-#endif
-
+        
         public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance)
         {
             return GetPropertyValue(prop, instance, null);
@@ -541,64 +458,10 @@ namespace AqlaSerializer
         {
             return Nullable.GetUnderlyingType(type);
         }
-
-        internal static bool IsValueType(Type type)
-        {
-#if WINRT
-            return type.GetTypeInfo().IsValueType;
-#else
-            return type.IsValueType;
-#endif
-        }
-
-#if FEAT_IKVM
-        internal static bool IsValueType(System.Type type)
-        {
-#if WINRT
-            return type.GetTypeInfo().IsValueType;
-#else
-            return type.IsValueType;
-#endif
-        }
-#endif
-
-        internal static bool IsPrimitive(Type type)
-        {
-#if WINRT
-            return type.GetTypeInfo().IsPrimitive;
-#else
-            return type.IsPrimitive;
-#endif
-        }
-
-        internal static bool IsEnum(Type type)
-        {
-#if WINRT
-            return type.GetTypeInfo().IsEnum;
-#else
-            return type.IsEnum;
-#endif
-        }
-
-#if FEAT_IKVM
-        internal static bool IsEnum(System.Type type)
-        {
-#if WINRT
-            return type.GetTypeInfo().IsEnum;
-#else
-            return type.IsEnum;
-#endif
-        }
-#endif
-
+        
         internal static MethodInfo GetGetMethod(PropertyInfo property, bool nonPublic, bool allowInternal)
         {
             if (property == null) return null;
-#if WINRT
-            MethodInfo method = property.GetMethod;
-            if (!nonPublic && method != null && !method.IsPublic) method = null;
-            return method;
-#else
             MethodInfo method = property.GetGetMethod(nonPublic);
             if (method == null && !nonPublic && allowInternal)
             { // could be "internal" or "protected internal"; look for a non-public, then back-check
@@ -609,17 +472,11 @@ namespace AqlaSerializer
                 }
             }
             return method;
-#endif
         }
 #if FEAT_IKVM
         internal static System.Reflection.MethodInfo GetGetMethod(System.Reflection.PropertyInfo property, bool nonPublic, bool allowInternal)
         {
             if (property == null) return null;
-#if WINRT
-            var method = property.GetMethod;
-            if (!nonPublic && method != null && !method.IsPublic) method = null;
-            return method;
-#else
             var method = property.GetGetMethod(nonPublic);
             if (method == null && !nonPublic && allowInternal)
             { // could be "internal" or "protected internal"; look for a non-public, then back-check
@@ -630,17 +487,12 @@ namespace AqlaSerializer
                 }
             }
             return method;
-#endif
         }
 #endif
+
         internal static MethodInfo GetSetMethod(PropertyInfo property, bool nonPublic, bool allowInternal)
         {
             if (property == null) return null;
-#if WINRT
-            MethodInfo method = property.SetMethod;
-            if (!nonPublic && method != null && !method.IsPublic) method = null;
-            return method;
-#else
             MethodInfo method = property.GetSetMethod(nonPublic);
             if (method == null && !nonPublic && allowInternal)
             { // could be "internal" or "protected internal"; look for a non-public, then back-check
@@ -651,17 +503,12 @@ namespace AqlaSerializer
                 }
             }
             return method;
-#endif
+
         }
 #if FEAT_IKVM
         internal static System.Reflection.MethodInfo GetSetMethod(System.Reflection.PropertyInfo property, bool nonPublic, bool allowInternal)
         {
             if (property == null) return null;
-#if WINRT
-            var method = property.SetMethod;
-            if (!nonPublic && method != null && !method.IsPublic) method = null;
-            return method;
-#else
             var method = property.GetSetMethod(nonPublic);
             if (method == null && !nonPublic && allowInternal)
             { // could be "internal" or "protected internal"; look for a non-public, then back-check
@@ -672,7 +519,6 @@ namespace AqlaSerializer
                 }
             }
             return method;
-#endif
         }
 #endif
 
@@ -688,37 +534,6 @@ namespace AqlaSerializer
             return true;
         }
 #endif
-#if WINRT
-        private static bool IsMatch(ParameterInfo[] parameters, Type[] parameterTypes)
-        {
-            if (parameterTypes == null) parameterTypes = EmptyTypes;
-            if (parameters.Length != parameterTypes.Length) return false;
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                if (parameters[i].ParameterType != parameterTypes[i]) return false;
-            }
-            return true;
-        }
-        internal static ConstructorInfo GetConstructor(TypeInfo type, Type[] parameterTypes, bool nonPublic)
-        {
-            foreach (ConstructorInfo ctor in type.DeclaredConstructors)
-            {
-                if (!nonPublic && !ctor.IsPublic) continue;
-                if (IsMatch(ctor.GetParameters(), parameterTypes)) return ctor;
-            }
-            return null;
-        }
-        internal static ConstructorInfo[] GetConstructors(TypeInfo typeInfo, bool nonPublic)
-        {
-            if (nonPublic) return System.Linq.Enumerable.ToArray(typeInfo.DeclaredConstructors);
-            return System.Linq.Enumerable.ToArray(
-                System.Linq.Enumerable.Where(typeInfo.DeclaredConstructors, x => x.IsPublic));
-        }
-        internal static PropertyInfo GetProperty(TypeInfo type, string name, bool nonPublic)
-        {
-            return type.GetDeclaredProperty(name);
-        }
-#else
 
         internal static ConstructorInfo GetConstructor(Type type, Type[] parameterTypes, bool nonPublic)
         {
@@ -746,41 +561,25 @@ namespace AqlaSerializer
                 nonPublic ? BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
                           : BindingFlags.Instance | BindingFlags.Public);
         }
-#endif
 
 
-internal static object ParseEnum(Type type, string value)
-{
-#if FEAT_IKVM
-            FieldInfo[] fields = type.GetFields();
-            foreach (FieldInfo field in fields)
-            {
-                if (string.Equals(field.Name, value, StringComparison.OrdinalIgnoreCase)) return field.GetRawConstantValue();
-            }
-            throw new ArgumentException("Enum value could not be parsed: " + value + ", " + type.FullName);
-#else
-    		return Enum.Parse(type, value, true);
-#endif
-}
+        internal static object ParseEnum(Type type, string value)
+        {
+        #if FEAT_IKVM
+                    FieldInfo[] fields = type.GetFields();
+                    foreach (FieldInfo field in fields)
+                    {
+                        if (string.Equals(field.Name, value, StringComparison.OrdinalIgnoreCase)) return field.GetRawConstantValue();
+                    }
+                    throw new ArgumentException("Enum value could not be parsed: " + value + ", " + type.FullName);
+        #else
+    		        return Enum.Parse(type, value, true);
+        #endif
+        }
 
 
         internal static MemberInfo[] GetInstanceFieldsAndProperties(Type type, bool publicOnly)
         {
-#if WINRT
-            System.Collections.Generic.List<MemberInfo> members = new System.Collections.Generic.List<MemberInfo>();
-            foreach(FieldInfo field in type.GetRuntimeFields())
-            {
-                if(field.IsStatic) continue;
-                if(field.IsPublic || !publicOnly) members.Add(field);
-            }
-            foreach(PropertyInfo prop in type.GetRuntimeProperties())
-            {
-                MethodInfo getter = Helpers.GetGetMethod(prop, true, true);
-                if(getter == null || getter.IsStatic) continue;
-                if(getter.IsPublic || !publicOnly) members.Add(prop);
-            }
-            return members.ToArray();
-#else
             BindingFlags flags = publicOnly ? BindingFlags.Public | BindingFlags.Instance : BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
             PropertyInfo[] props = type.GetProperties(flags);
             FieldInfo[] fields = type.GetFields(flags);
@@ -788,26 +587,10 @@ internal static object ParseEnum(Type type, string value)
             props.CopyTo(members, 0);
             fields.CopyTo(members, props.Length);
             return members;
-#endif
         }
 #if FEAT_IKVM
         internal static System.Reflection.MemberInfo[] GetInstanceFieldsAndProperties(System.Type type, bool publicOnly)
         {
-#if WINRT
-            var members = new System.Collections.Generic.List<System.Reflection.MemberInfo>();
-            foreach(var field in type.GetRuntimeFields())
-            {
-                if(field.IsStatic) continue;
-                if(field.IsPublic || !publicOnly) members.Add(field);
-            }
-            foreach(var prop in type.GetRuntimeProperties())
-            {
-                var getter = Helpers.GetGetMethod(prop, true, true);
-                if(getter == null || getter.IsStatic) continue;
-                if(getter.IsPublic || !publicOnly) members.Add(prop);
-            }
-            return members.ToArray();
-#else
             var flags = publicOnly ? System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance : System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
             var props = type.GetProperties(flags);
             var fields = type.GetFields(flags);
@@ -815,7 +598,6 @@ internal static object ParseEnum(Type type, string value)
             props.CopyTo(members, 0);
             fields.CopyTo(members, props.Length);
             return members;
-#endif
         }
 #endif
         internal static Type GetMemberType(MemberInfo member)

@@ -35,11 +35,7 @@ namespace AqlaSerializer
         /// <exception cref="NotSupportedException">If the platform does not support constructor-skipping</exception>
         public static object GetUninitializedObject(Type type)
         {
-#if NETSTANDARD
-            object obj = TryGetUninitializedObjectWithFormatterServices(type);
-            if (obj != null) return obj;
-#endif
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if NETSTANDARD || (PLAT_BINARYFORMATTER && !(WINRT || PHONE8))
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
 #else
             if (_getUninitializedObject == null)
@@ -64,34 +60,9 @@ namespace AqlaSerializer
 #endif
         }
 
-#if NETSTANDARD // this is inspired by DCS: https://github.com/dotnet/corefx/blob/c02d33b18398199f6acc17d375dab154e9a1df66/src/System.Private.DataContractSerialization/src/System/Runtime/Serialization/XmlFormatReaderGenerator.cs#L854-L894
-        static volatile Func<Type, object> getUninitializedObject;
-        static internal object TryGetUninitializedObjectWithFormatterServices(Type type)
-        {
-            if (getUninitializedObject == null)
-            {
-                try {
-                    var formatterServiceType = typeof(string).GetTypeInfo().Assembly.GetType("System.Runtime.Serialization.FormatterServices");
-                    MethodInfo method = formatterServiceType?.GetMethod("GetUninitializedObject", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
-                    if (method != null)
-                    {
-                        getUninitializedObject = (Func<Type, object>)method.CreateDelegate(typeof(Func<Type, object>));
-                    }
-                }
-                catch  { /* best efforts only */ }
-                if(getUninitializedObject == null) getUninitializedObject = x => null;
-            }
-            return getUninitializedObject(type);
-        }
-#endif
-
-
         static Func<Type, object> _getUninitializedObject;
 
-#if FX11
-        private BclHelpers() { } // not a static class for C# 1.2 reasons
-#endif
-        const int FieldTimeSpanValue = 0x01, FieldTimeSpanScale = 0x02, FieldTimeSpanKind = 0x03;
+        private const int FieldTimeSpanValue = 0x01, FieldTimeSpanScale = 0x02, FieldTimeSpanKind = 0x03;
 
         internal static readonly DateTime[] EpochOrigin = {
             new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -122,15 +93,16 @@ namespace AqlaSerializer
             WriteTimeSpanImpl(timeSpan, dest, DateTimeKind.Unspecified, ref state);
         }
 
-        private static void WriteTimeSpanImpl(TimeSpan timeSpan, ProtoWriter dest, DateTimeKind kind)
+        private static void WriteTimeSpanImpl(TimeSpan timeSpan, ProtoWriter dest, DateTimeKind kind, ref ProtoWriter.State state)
         {
             if (dest == null) throw new ArgumentNullException(nameof(dest));
-            switch(dest.WireType)
+            long value;
+            switch (dest.WireType)
             {
                 case WireType.String:
                 case WireType.StartGroup:
                     TimeSpanScale scale;
-                    long value = timeSpan.Ticks;
+                    value = timeSpan.Ticks;
                     if (timeSpan == TimeSpan.MaxValue)
                     {
                         value = 1;
@@ -171,25 +143,27 @@ namespace AqlaSerializer
                         scale = TimeSpanScale.Ticks;
                     }
 
-                    SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, dest);
-            
-                    if(value != 0) {
-                        ProtoWriter.WriteFieldHeader(FieldTimeSpanValue, WireType.SignedVariant, dest);
-                        ProtoWriter.WriteInt64(value, dest);
-                    }
-                    if(scale != TimeSpanScale.Days) {
-                        ProtoWriter.WriteFieldHeader(FieldTimeSpanScale, WireType.Variant, dest);
-                        ProtoWriter.WriteInt32((int)scale, dest);
-                    }
-                    if(kind != DateTimeKind.Unspecified)
+                    SubItemToken token = ProtoWriter.StartSubItem(null, dest, ref state);
+
+                    if (value != 0)
                     {
-                        ProtoWriter.WriteFieldHeader(FieldTimeSpanKind, WireType.Variant, dest);
-                        ProtoWriter.WriteInt32((int)kind, dest);
+                        ProtoWriter.WriteFieldHeader(FieldTimeSpanValue, WireType.SignedVariant, dest, ref state);
+                        ProtoWriter.WriteInt64(value, dest, ref state);
                     }
-                    ProtoWriter.EndSubItem(token, dest);
+                    if (scale != TimeSpanScale.Days)
+                    {
+                        ProtoWriter.WriteFieldHeader(FieldTimeSpanScale, WireType.Variant, dest, ref state);
+                        ProtoWriter.WriteInt32((int)scale, dest, ref state);
+                    }
+                    if (kind != DateTimeKind.Unspecified)
+                    {
+                        ProtoWriter.WriteFieldHeader(FieldTimeSpanKind, WireType.Variant, dest, ref state);
+                        ProtoWriter.WriteInt32((int)kind, dest, ref state);
+                    }
+                    ProtoWriter.EndSubItem(token, dest, ref state);
                     break;
                 case WireType.Fixed64:
-                    ProtoWriter.WriteInt64(timeSpan.Ticks, dest);
+                    ProtoWriter.WriteInt64(timeSpan.Ticks, dest, ref state);
                     break;
                 default:
                     throw new ProtoException("Unexpected wire-type: " + dest.WireType.ToString());
@@ -327,12 +301,49 @@ namespace AqlaSerializer
         /// <summary>
         /// Parses a DateTime from a protobuf stream using the standardized format, google.protobuf.Timestamp
         /// </summary>
+        [Obsolete(ProtoReader.UseStateAPI, false)]
+        public static DateTime ReadTimestamp(ProtoReader source)
+        {
+            ProtoReader.State state = source.DefaultState();
+            return ReadTimestamp(source, ref state);
+        }
+
+        /// <summary>
+        /// Parses a DateTime from a protobuf stream using the standardized format, google.protobuf.Timestamp
+        /// </summary>
         public static DateTime ReadTimestamp(ProtoReader source, ref ProtoReader.State state)
         {
             // note: DateTime is only defined for just over 0000 to just below 10000;
             // TimeSpan has a range of +/- 10,675,199 days === 29k years;
             // so we can just use epoch time delta
             return TimestampEpoch + ReadDuration(source, ref state);
+        }
+
+        /// <summary>
+        /// Writes a DateTime to a protobuf stream using the standardized format, google.protobuf.Timestamp
+        /// </summary>
+        [Obsolete(ProtoWriter.UseStateAPI, false)]
+        public static void WriteTimestamp(DateTime value, ProtoWriter dest)
+        {
+            ProtoWriter.State state = dest.DefaultState();
+            WriteTimestamp(value, dest, ref state);
+        }
+
+        /// <summary>
+        /// Writes a DateTime to a protobuf stream using the standardized format, google.protobuf.Timestamp
+        /// </summary>
+        public static void WriteTimestamp(DateTime value, ProtoWriter dest, ref ProtoWriter.State state)
+        {
+            var seconds = ToDurationSeconds(value - TimestampEpoch, out int nanos);
+
+            if (nanos < 0)
+            {   // from Timestamp.proto:
+                // "Negative second values with fractions must still have
+                // non -negative nanos values that count forward in time."
+                seconds--;
+                nanos += 1000000000;
+            }
+            WriteSecondsNanos(seconds, nanos, dest, ref state);
         }
 
         private static TimeSpan FromDurationSeconds(long seconds, int nanos)
@@ -360,63 +371,6 @@ namespace AqlaSerializer
         }
 
         /// <summary>
-        /// Writes a DateTime to a protobuf stream using the standardized format, google.protobuf.Timestamp
-        /// </summary>
-        public static void WriteTimestamp(DateTime value, ProtoWriter dest, ref ProtoWriter.State state)
-        {
-            var seconds = ToDurationSeconds(value - TimestampEpoch, out int nanos);
-
-            if (nanos < 0)
-            {   // from Timestamp.proto:
-                // "Negative second values with fractions must still have
-                // non -negative nanos values that count forward in time."
-                seconds--;
-                nanos += 1000000000;
-            }
-            WriteSecondsNanos(seconds, nanos, dest, ref state);
-        }
-
-        /// <summary>
-        /// Writes a DateTime to a protobuf stream, excluding the <c>Kind</c>
-        /// </summary>
-        [Obsolete(ProtoWriter.UseStateAPI, false)]
-        public static void WriteDateTime(DateTime value, ProtoWriter dest)
-        {
-            ProtoWriter.State state = dest.DefaultState();
-            WriteDateTimeImpl(value, dest, false, ref state);
-        }
-
-        /// <summary>
-        /// Writes a DateTime to a protobuf stream using the standardized format, google.protobuf.Timestamp
-        /// </summary>
-        [Obsolete(ProtoWriter.UseStateAPI, false)]
-        public static void WriteTimestamp(DateTime value, ProtoWriter dest)
-        {
-            ProtoWriter.State state = dest.DefaultState();
-            WriteTimestamp(value, dest, ref state);
-        }
-
-        /// <summary>
-        /// Writes a DateTime to a protobuf stream, including the <c>Kind</c>
-        /// </summary>
-        [Obsolete(ProtoWriter.UseStateAPI, false)]
-        public static void WriteDateTimeWithKind(DateTime value, ProtoWriter dest)
-        {
-            ProtoWriter.State state = dest.DefaultState();
-            WriteDateTimeImpl(value, dest, true, ref state);
-        }
-
-        /// <summary>
-        /// Parses a DateTime from a protobuf stream using the standardized format, google.protobuf.Timestamp
-        /// </summary>
-        [Obsolete(ProtoReader.UseStateAPI, false)]
-        public static DateTime ReadTimestamp(ProtoReader source)
-        {
-            ProtoReader.State state = source.DefaultState();
-            return ReadTimestamp(source, ref state);
-        }
-
-        /// <summary>
         /// Parses a DateTime from a protobuf stream
         /// </summary>
         public static DateTime ReadDateTime(ProtoReader source, ref ProtoReader.State state)
@@ -430,6 +384,16 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a DateTime to a protobuf stream, excluding the <c>Kind</c>
         /// </summary>
+        [Obsolete(ProtoWriter.UseStateAPI, false)]
+        public static void WriteDateTime(DateTime value, ProtoWriter dest)
+        {
+            ProtoWriter.State state = dest.DefaultState();
+            WriteDateTimeImpl(value, dest, false, ref state);
+        }
+
+        /// <summary>
+        /// Writes a DateTime to a protobuf stream, excluding the <c>Kind</c>
+        /// </summary>
         public static void WriteDateTime(DateTime value, ProtoWriter dest, ref ProtoWriter.State state)
         {
             WriteDateTimeImpl(value, dest, false, ref state);
@@ -438,19 +402,19 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a DateTime to a protobuf stream, including the <c>Kind</c>
         /// </summary>
-        public static void WriteDateTimeWithKind(DateTime value, ProtoWriter dest, ref ProtoWriter.State state)
+        [Obsolete(ProtoWriter.UseStateAPI, false)]
+        public static void WriteDateTimeWithKind(DateTime value, ProtoWriter dest)
         {
+            ProtoWriter.State state = dest.DefaultState();
             WriteDateTimeImpl(value, dest, true, ref state);
         }
 
         /// <summary>
-        /// Parses a decimal from a protobuf stream
+        /// Writes a DateTime to a protobuf stream, including the <c>Kind</c>
         /// </summary>
-        [Obsolete(ProtoReader.UseStateAPI, false)]
-        public static decimal ReadDecimal(ProtoReader reader)
+        public static void WriteDateTimeWithKind(DateTime value, ProtoWriter dest, ref ProtoWriter.State state)
         {
-            ProtoReader.State state = reader.DefaultState();
-            return ReadDecimal(reader, ref state);
+            WriteDateTimeImpl(value, dest, true, ref state);
         }
 
         private static void WriteDateTimeImpl(DateTime value, ProtoWriter dest, bool includeKind, ref ProtoWriter.State state)
@@ -481,6 +445,119 @@ namespace AqlaSerializer
                     break;
             }
             WriteTimeSpanImpl(delta, dest, includeKind ? value.Kind : DateTimeKind.Unspecified, ref state);
+        }
+
+        private static long ReadTimeSpanTicks(ProtoReader source, ref ProtoReader.State state, out DateTimeKind kind)
+        {
+            kind = DateTimeKind.Unspecified;
+            switch (source.WireType)
+            {
+                case WireType.String:
+                case WireType.StartGroup:
+                    SubItemToken token = ProtoReader.StartSubItem(source, ref state);
+                    int fieldNumber;
+                    TimeSpanScale scale = TimeSpanScale.Days;
+                    long value = 0;
+                    while ((fieldNumber = source.ReadFieldHeader(ref state)) > 0)
+                    {
+                        switch (fieldNumber)
+                        {
+                            case FieldTimeSpanScale:
+                                scale = (TimeSpanScale)source.ReadInt32(ref state);
+                                break;
+                            case FieldTimeSpanValue:
+                                source.Assert(ref state, WireType.SignedVariant);
+                                value = source.ReadInt64(ref state);
+                                break;
+                            case FieldTimeSpanKind:
+                                kind = (DateTimeKind)source.ReadInt32(ref state);
+                                switch (kind)
+                                {
+                                    case DateTimeKind.Unspecified:
+                                    case DateTimeKind.Utc:
+                                    case DateTimeKind.Local:
+                                        break; // fine
+                                    default:
+                                        throw new ProtoException("Invalid date/time kind: " + kind.ToString());
+                                }
+                                break;
+                            default:
+                                source.SkipField(ref state);
+                                break;
+                        }
+                    }
+                    ProtoReader.EndSubItem(token, source, ref state);
+                    switch (scale)
+                    {
+                        case TimeSpanScale.Days:
+                            return value * TimeSpan.TicksPerDay;
+                        case TimeSpanScale.Hours:
+                            return value * TimeSpan.TicksPerHour;
+                        case TimeSpanScale.Minutes:
+                            return value * TimeSpan.TicksPerMinute;
+                        case TimeSpanScale.Seconds:
+                            return value * TimeSpan.TicksPerSecond;
+                        case TimeSpanScale.Milliseconds:
+                            return value * TimeSpan.TicksPerMillisecond;
+                        case TimeSpanScale.Ticks:
+                            return value;
+                        case TimeSpanScale.MinMax:
+                            switch (value)
+                            {
+                                case 1: return long.MaxValue;
+                                case -1: return long.MinValue;
+                                default: throw new ProtoException("Unknown min/max value: " + value.ToString());
+                            }
+                        default:
+                            throw new ProtoException("Unknown timescale: " + scale.ToString());
+                    }
+                case WireType.Fixed64:
+                    return source.ReadInt64(ref state);
+                default:
+                    throw new ProtoException("Unexpected wire-type: " + source.WireType.ToString());
+            }
+        }
+
+        private const int FieldDecimalLow = 0x01, FieldDecimalHigh = 0x02, FieldDecimalSignScale = 0x03;
+
+        /// <summary>
+        /// Parses a decimal from a protobuf stream
+        /// </summary>
+        [Obsolete(ProtoReader.UseStateAPI, false)]
+        public static decimal ReadDecimal(ProtoReader reader)
+        {
+            ProtoReader.State state = reader.DefaultState();
+            return ReadDecimal(reader, ref state);
+        }
+        /// <summary>
+        /// Parses a decimal from a protobuf stream
+        /// </summary>
+        public static decimal ReadDecimal(ProtoReader reader, ref ProtoReader.State state)
+        {
+            ulong low = 0;
+            uint high = 0;
+            uint signScale = 0;
+
+            int fieldNumber;
+            SubItemToken token = ProtoReader.StartSubItem(reader, ref state);
+            while ((fieldNumber = reader.ReadFieldHeader(ref state)) > 0)
+            {
+                switch (fieldNumber)
+                {
+                    case FieldDecimalLow: low = reader.ReadUInt64(ref state); break;
+                    case FieldDecimalHigh: high = reader.ReadUInt32(ref state); break;
+                    case FieldDecimalSignScale: signScale = reader.ReadUInt32(ref state); break;
+                    default: reader.SkipField(ref state); break;
+                }
+            }
+            ProtoReader.EndSubItem(token, reader, ref state);
+
+            int lo = (int)(low & 0xFFFFFFFFL),
+                mid = (int)((low >> 32) & 0xFFFFFFFFL),
+                hi = (int)high;
+            bool isNeg = (signScale & 0x0001) == 0x0001;
+            byte scale = (byte)((signScale & 0x01FE) >> 1);
+            return new decimal(lo, mid, hi, isNeg, scale);
         }
 
         /// <summary>
@@ -572,78 +649,50 @@ namespace AqlaSerializer
             return false;
         }
 
-        private static long ReadTimeSpanTicks(ProtoReader source, ref ProtoReader.State state, out DateTimeKind kind)
+        /// <summary>
+        /// Writes a decimal to a protobuf stream
+        /// </summary>
+        public static void WriteDecimal(decimal value, ProtoWriter writer, ref ProtoWriter.State state)
         {
-            kind = DateTimeKind.Unspecified;
-            switch (source.WireType)
+            ulong low;
+            uint high, signScale;
+            if (s_decimalOptimized) // the JIT should remove the non-preferred implementation, at least on modern runtimes
             {
-                case WireType.String:
-                case WireType.StartGroup:
-                    SubItemToken token = ProtoReader.StartSubItem(source, ref state);
-                    int fieldNumber;
-                    TimeSpanScale scale = TimeSpanScale.Days;
-                    long value = 0;
-                    while ((fieldNumber = source.ReadFieldHeader(ref state)) > 0)
-                    {
-                        switch (fieldNumber)
-                        {
-                            case FieldTimeSpanScale:
-                                scale = (TimeSpanScale)source.ReadInt32(ref state);
-                                break;
-                            case FieldTimeSpanValue:
-                                source.Assert(ref state, WireType.SignedVariant);
-                                value = source.ReadInt64(ref state);
-                                break;
-                            case FieldTimeSpanKind:
-                                kind = (DateTimeKind)source.ReadInt32(ref state);
-                                switch (kind)
-                                {
-                                    case DateTimeKind.Unspecified:
-                                    case DateTimeKind.Utc:
-                                    case DateTimeKind.Local:
-                                        break; // fine
-                                    default:
-                                        throw new ProtoException("Invalid date/time kind: " + kind.ToString());
-                                }
-                                break;
-                            default:
-                                source.SkipField(ref state);
-                                break;
-                        }
-                    }
-                    ProtoReader.EndSubItem(token, source, ref state);
-                    switch (scale)
-                    {
-                        case TimeSpanScale.Days:
-                            return value * TimeSpan.TicksPerDay;
-                        case TimeSpanScale.Hours:
-                            return value * TimeSpan.TicksPerHour;
-                        case TimeSpanScale.Minutes:
-                            return value * TimeSpan.TicksPerMinute;
-                        case TimeSpanScale.Seconds:
-                            return value * TimeSpan.TicksPerSecond;
-                        case TimeSpanScale.Milliseconds:
-                            return value * TimeSpan.TicksPerMillisecond;
-                        case TimeSpanScale.Ticks:
-                            return value;
-                        case TimeSpanScale.MinMax:
-                            switch (value)
-                            {
-                                case 1: return long.MaxValue;
-                                case -1: return long.MinValue;
-                                default: throw new ProtoException("Unknown min/max value: " + value.ToString());
-                            }
-                        default:
-                            throw new ProtoException("Unknown timescale: " + scale.ToString());
-                    }
-                case WireType.Fixed64:
-                    return source.ReadInt64(ref state);
-                default:
-                    throw new ProtoException("Unexpected wire-type: " + source.WireType.ToString());
+                var dec = new DecimalAccessor(value);
+                ulong a = ((ulong)dec.Mid) << 32, b = ((ulong)dec.Lo) & 0xFFFFFFFFL;
+                low = a | b;
+                high = (uint)dec.Hi;
+                signScale = (uint)(((dec.Flags >> 15) & 0x01FE) | ((dec.Flags >> 31) & 0x0001));
             }
+            else
+            {
+                int[] bits = decimal.GetBits(value);
+                ulong a = ((ulong)bits[1]) << 32, b = ((ulong)bits[0]) & 0xFFFFFFFFL;
+                low = a | b;
+                high = (uint)bits[2];
+                signScale = (uint)(((bits[3] >> 15) & 0x01FE) | ((bits[3] >> 31) & 0x0001));
+            }
+            SubItemToken token = ProtoWriter.StartSubItem(null, writer, ref state);
+
+            if (low != 0)
+            {
+                ProtoWriter.WriteFieldHeader(FieldDecimalLow, WireType.Variant, writer, ref state);
+                ProtoWriter.WriteUInt64(low, writer, ref state);
+            }
+            if (high != 0)
+            {
+                ProtoWriter.WriteFieldHeader(FieldDecimalHigh, WireType.Variant, writer, ref state);
+                ProtoWriter.WriteUInt32(high, writer, ref state);
+            }
+            if (signScale != 0)
+            {
+                ProtoWriter.WriteFieldHeader(FieldDecimalSignScale, WireType.Variant, writer, ref state);
+                ProtoWriter.WriteUInt32(signScale, writer, ref state);
+            }
+            ProtoWriter.EndSubItem(token, writer, ref state);
         }
 
-        private const int FieldDecimalLow = 0x01, FieldDecimalHigh = 0x02, FieldDecimalSignScale = 0x03;
+        private const int FieldGuidLow = 1, FieldGuidHigh = 2;
 
         /// <summary>
         /// Provides access to the inner fields of a decimal.
@@ -710,35 +759,33 @@ namespace AqlaSerializer
             ProtoWriter.State state = dest.DefaultState();
             WriteGuid(value, dest, ref state);
         }
-        /// <summary>
-        /// Parses a decimal from a protobuf stream
-        /// </summary>
-        public static decimal ReadDecimal(ProtoReader reader, ref ProtoReader.State state)
-        {
-            ulong low = 0;
-            uint high = 0;
-            uint signScale = 0;
 
-            int fieldNumber;
-            SubItemToken token = ProtoReader.StartSubItem(reader, ref state);
-            while ((fieldNumber = reader.ReadFieldHeader(ref state)) > 0)
+        /// <summary>
+        /// Writes a Guid to a protobuf stream
+        /// </summary>        
+        public static void WriteGuid(Guid value, ProtoWriter dest, ref ProtoWriter.State state)
+        {
+            SubItemToken token = ProtoWriter.StartSubItem(null, dest, ref state);
+            if (value != Guid.Empty)
             {
-                switch (fieldNumber)
+                if (s_guidOptimized)
                 {
-                    case FieldDecimalLow: low = reader.ReadUInt64(ref state); break;
-                    case FieldDecimalHigh: high = reader.ReadUInt32(ref state); break;
-                    case FieldDecimalSignScale: signScale = reader.ReadUInt32(ref state); break;
-                    default: reader.SkipField(ref state); break;
+                    var obj = new GuidAccessor(value);
+                    ProtoWriter.WriteFieldHeader(FieldGuidLow, WireType.Fixed64, dest, ref state);
+                    ProtoWriter.WriteUInt64(obj.Low, dest, ref state);
+                    ProtoWriter.WriteFieldHeader(FieldGuidHigh, WireType.Fixed64, dest, ref state);
+                    ProtoWriter.WriteUInt64(obj.High, dest, ref state);
+                }
+                else
+                {
+                    byte[] blob = value.ToByteArray();
+                    ProtoWriter.WriteFieldHeader(FieldGuidLow, WireType.Fixed64, dest, ref state);
+                    ProtoWriter.WriteBytes(blob, 0, 8, dest, ref state);
+                    ProtoWriter.WriteFieldHeader(FieldGuidHigh, WireType.Fixed64, dest, ref state);
+                    ProtoWriter.WriteBytes(blob, 8, 8, dest, ref state);
                 }
             }
-            ProtoReader.EndSubItem(token, reader, ref state);
-
-            int lo = (int)(low & 0xFFFFFFFFL),
-                mid = (int)((low >> 32) & 0xFFFFFFFFL),
-                hi = (int)high;
-            bool isNeg = (signScale & 0x0001) == 0x0001;
-            byte scale = (byte)((signScale & 0x01FE) >> 1);
-            return new decimal(lo, mid, hi, isNeg, scale);
+            ProtoWriter.EndSubItem(token, dest, ref state);
         }
 
         /// <summary>
@@ -749,63 +796,6 @@ namespace AqlaSerializer
         {
             ProtoReader.State state = source.DefaultState();
             return ReadGuid(source, ref state);
-        }
-        /// <summary>
-        /// Writes a decimal to a protobuf stream
-        /// </summary>
-        public static void WriteDecimal(decimal value, ProtoWriter writer)
-        {
-            int[] bits = decimal.GetBits(value);
-            ulong a = ((ulong)bits[1]) << 32, b = ((ulong)bits[0]) & 0xFFFFFFFFL;
-            ulong low = a | b;
-            uint high = (uint)bits[2];
-            uint signScale = (uint)(((bits[3] >> 15) & 0x01FE) | ((bits[3] >> 31) & 0x0001));
-
-            SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, writer);
-            if (low != 0) {
-                ProtoWriter.WriteFieldHeader(FieldDecimalLow, WireType.Variant, writer);
-                ProtoWriter.WriteUInt64(low, writer);
-            }
-            if (high != 0)
-            {
-                ProtoWriter.WriteFieldHeader(FieldDecimalHigh, WireType.Variant, writer);
-                ProtoWriter.WriteUInt32(high, writer);
-            }
-            if (signScale != 0)
-            {
-                ProtoWriter.WriteFieldHeader(FieldDecimalSignScale, WireType.Variant, writer);
-                ProtoWriter.WriteUInt32(signScale, writer);
-            }
-            ProtoWriter.EndSubItem(token, writer);
-        }
-
-        private const int FieldGuidLow = 1, FieldGuidHigh = 2;
-        /// <summary>
-        /// Writes a Guid to a protobuf stream
-        /// </summary>        
-        public static void WriteGuid(Guid value, ProtoWriter dest)
-        {
-            byte[] blob = value.ToByteArray();
-
-            SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, dest);
-            if (value != Guid.Empty)
-            {
-                ProtoWriter.WriteFieldHeader(FieldGuidLow, WireType.Fixed64, dest);
-                ProtoWriter.WriteBytes(blob, 0, 8, dest);
-                ProtoWriter.WriteFieldHeader(FieldGuidHigh, WireType.Fixed64, dest);
-                ProtoWriter.WriteBytes(blob, 8, 8, dest);
-            }
-            ProtoWriter.EndSubItem(token, dest);
-        }
-
-        /// <summary>
-        /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
-        /// </summary>
-        [Obsolete(ProtoReader.UseStateAPI, false)]
-        public static object ReadNetObject(object value, ProtoReader source, int key, Type type, NetObjectOptions options)
-        {
-            ProtoReader.State state = source.DefaultState();
-            return ReadNetObject(source, ref state, value, key, type, options);
         }
 
         /// <summary>
@@ -840,17 +830,6 @@ namespace AqlaSerializer
                     (byte)c, (byte)(c >> 8), (byte)(c >> 16), (byte)(c >> 24));
             }
         }
-
-        /// <summary>
-        /// Writes an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
-        /// </summary>
-        [Obsolete(ProtoWriter.UseStateAPI, false)]
-        public static void WriteNetObject(object value, ProtoWriter dest, int key, NetObjectOptions options)
-        {
-            ProtoWriter.State state = dest.DefaultState();
-            WriteNetObject(value, dest, ref state, key, options);
-        }
-
 
         /// <summary>
         /// Optional behaviours that introduce .NET-specific functionality
