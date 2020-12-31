@@ -52,14 +52,14 @@ namespace AqlaSerializer.Serializers
             return _accessors.Get != null ? _accessors.Get(instance) : _field.GetValue(instance);
         }
 
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             Helpers.DebugAssert(value != null);
             Tail.Write(GetValue(value), dest);
 
         }
 
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value != null);
             object newVal = Tail.Read(Tail.RequiresOldValue ? GetValue(value) : null, source);

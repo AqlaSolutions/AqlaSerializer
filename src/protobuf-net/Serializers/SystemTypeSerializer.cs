@@ -28,12 +28,12 @@ namespace AqlaSerializer.Serializers
         public Type ExpectedType => expectedType;
 
 #if !FEAT_IKVM
-        void IProtoSerializer.Write(object value, ProtoWriter dest)
+        void IProtoSerializer.void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteType((Type)value, dest);
         }
 
-        object IProtoSerializer.Read(object value, ProtoReader source)
+        object IProtoSerializer.Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             

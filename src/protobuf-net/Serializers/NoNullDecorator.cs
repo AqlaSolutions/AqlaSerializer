@@ -46,12 +46,12 @@ namespace AqlaSerializer.Serializers
         public override bool RequiresOldValue => true;
 
 #if !FEAT_IKVM
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             return Tail.Read(Tail.RequiresOldValue ? value : null, source);
         }
 
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             if (value != null)
             {

@@ -48,7 +48,7 @@ namespace AqlaSerializer.Serializers
             this._defaultValue = defaultValue;
         }
 #if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             if (!object.Equals(value, _defaultValue))
             {
@@ -57,7 +57,7 @@ namespace AqlaSerializer.Serializers
             else 
                 ProtoWriter.WriteFieldHeaderCancelBegin(dest);
         }
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             return Tail.Read(value, source);
         }

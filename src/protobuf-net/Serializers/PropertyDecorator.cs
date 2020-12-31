@@ -77,13 +77,13 @@ namespace AqlaSerializer.Serializers
 
 
 #if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             Helpers.DebugAssert(value != null);
             Tail.Write(_accessors.Get != null ? _accessors.Get(value) : Helpers.GetPropertyValue(_property, value), dest);
         }
 
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value != null);
 

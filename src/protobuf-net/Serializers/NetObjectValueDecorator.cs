@@ -149,7 +149,7 @@ namespace AqlaSerializer.Serializers
 
 
 #if !FEAT_IKVM
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             var type = ExpectedType;
             if (source.WireType == WireType.Null) return Helpers.IsValueType(type) ? Activator.CreateInstance(type) : null;
@@ -229,7 +229,7 @@ namespace AqlaSerializer.Serializers
             return value;
         }
 
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             if (_allowNullWireType && value == null)
             {

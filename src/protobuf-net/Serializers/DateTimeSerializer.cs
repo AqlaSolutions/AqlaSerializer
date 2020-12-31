@@ -35,12 +35,12 @@ namespace AqlaSerializer.Serializers
             _includeKind = model != null && model.SerializeDateTimeKind();
         }
 #if !FEAT_IKVM
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             return BclHelpers.ReadDateTime(source);
         }
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             if(_includeKind)
                 BclHelpers.WriteDateTimeWithKind((DateTime)value, dest);

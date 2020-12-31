@@ -48,12 +48,12 @@ namespace AqlaSerializer.Serializers
         }
 
 #if !FEAT_IKVM
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             _proxy.LateReferenceSerializer.Write(value, dest);
         }
 
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             return _proxy.LateReferenceSerializer.Read(value, source);
         }

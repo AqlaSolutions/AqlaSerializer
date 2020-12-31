@@ -28,11 +28,11 @@ namespace AqlaSerializer.Serializers
         public override Type ExpectedType => expectedType;
 
 #if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteUInt16((ushort)(char)value, dest);
         }
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             return (char)source.ReadUInt16();

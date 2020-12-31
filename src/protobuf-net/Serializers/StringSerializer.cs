@@ -28,7 +28,7 @@ namespace AqlaSerializer.Serializers
         }
         public Type ExpectedType => expectedType;
 
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteString((string)value, dest);
         }
@@ -36,7 +36,7 @@ namespace AqlaSerializer.Serializers
         
         public bool CanCancelWriting { get; }
 
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             

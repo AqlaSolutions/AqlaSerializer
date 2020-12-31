@@ -32,13 +32,13 @@ namespace AqlaSerializer.Serializers
 
 
 #if !FEAT_IKVM
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             
             return source.ReadUInt64();
         }
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteUInt64((ulong)value, dest);
         }

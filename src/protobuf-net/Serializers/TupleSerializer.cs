@@ -81,7 +81,7 @@ namespace AqlaSerializer.Serializers
                 throw new InvalidOperationException();
             }          
         }
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             object[] values = new object[_members.Length];
             bool invokeCtor = false;
@@ -119,7 +119,7 @@ namespace AqlaSerializer.Serializers
             }
             return value;
         }
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
             for (int i = 0; i < _tails.Length; i++)

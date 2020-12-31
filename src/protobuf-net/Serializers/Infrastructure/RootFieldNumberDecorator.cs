@@ -41,12 +41,12 @@ namespace AqlaSerializer.Serializers
         public bool CanCancelWriting { get; } // cannot because it doesn't need to be inside field so nothing to cancel
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 #if !FEAT_IKVM
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             if (source.ReadFieldHeader() != _number) throw new ProtoException("Expected tag " + _number);
             return _serializer.Read(value, source);
         }
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteFieldHeaderBegin(_number, dest);
             _serializer.Write(value, dest);

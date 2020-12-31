@@ -51,7 +51,7 @@ namespace AqlaSerializer.Serializers
         /// </summary>
         /// <param name="value">The value to be serialized.</param>
         /// <param name="dest">The writer entity that is accumulating the output data.</param>
-        void Write(object value, ProtoWriter dest);
+        void Write(ProtoWriter dest, ref ProtoWriter.State state, object value);
 
         /// <summary>
         /// Perform the steps necessary to deserialize this data.
@@ -59,7 +59,7 @@ namespace AqlaSerializer.Serializers
         /// <param name="value">The current value, if appropriate.</param>
         /// <param name="source">The reader providing the input data.</param>
         /// <returns>The updated / replacement value.</returns>
-        object Read(object value, ProtoReader source);
+        object Read(ProtoReader source, ref ProtoReader.State state, object value);
 #endif
         /// <summary>
         /// Indicates whether a Read operation <em>replaces</em> the existing value, or

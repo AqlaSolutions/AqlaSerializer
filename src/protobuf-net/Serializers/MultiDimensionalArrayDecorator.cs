@@ -28,7 +28,7 @@ namespace AqlaSerializer.Serializers
         // will be always group or string and won't change between group and string in same session
         public bool DemandWireTypeStabilityStatus() => true;
 #if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             _listHelpers.Write(value, null,
                                () =>
@@ -42,7 +42,7 @@ namespace AqlaSerializer.Serializers
                                    },  dest);
         }
 
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Array result = null;
 

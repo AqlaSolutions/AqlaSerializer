@@ -32,13 +32,13 @@ namespace AqlaSerializer.Serializers
         public bool CanCancelWriting { get; }
 
 #if !FEAT_IKVM
-        public virtual object Read(object value, ProtoReader source)
+        public virtual object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             
             return source.ReadUInt16();
         }
-        public virtual void Write(object value, ProtoWriter dest)
+        public virtual void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteUInt16((ushort)value, dest);
         }

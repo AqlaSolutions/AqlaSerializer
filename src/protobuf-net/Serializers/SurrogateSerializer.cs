@@ -149,7 +149,7 @@ namespace AqlaSerializer.Serializers
             _rootTail.Write(_toTail.Invoke(null, new object[] { value }), writer);
         }
 
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             int reservedTrap = -1;
 

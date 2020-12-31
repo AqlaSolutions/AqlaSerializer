@@ -107,7 +107,7 @@ namespace AqlaSerializer.Serializers
             }
         }
 
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(_allowOverwriteOnRead || value == null); // since replaces
             int wireValue = source.ReadInt32();
@@ -122,7 +122,7 @@ namespace AqlaSerializer.Serializers
             source.ThrowEnumException(ExpectedType, wireValue);
             return null; // to make compiler happy
         }
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             if (_map == null)
             {

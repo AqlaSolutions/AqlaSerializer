@@ -171,7 +171,7 @@ namespace AqlaSerializer.Serializers
             return r;
         }
 
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             int trappedKey = ProtoReader.ReserveNoteObject(source);
             object builderInstance = _builderFactory.Invoke(null, null);

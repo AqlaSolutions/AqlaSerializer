@@ -33,12 +33,12 @@ namespace AqlaSerializer.Serializers
 
 
 #if !FEAT_IKVM
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             return source.ReadDouble();
         }
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteDouble((double)value, dest);
         }

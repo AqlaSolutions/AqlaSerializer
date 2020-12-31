@@ -53,12 +53,12 @@ namespace AqlaSerializer.Serializers
         public bool CanCancelWriting { get; }
 
 #if !FEAT_IKVM
-        void IProtoSerializer.Write(object value, ProtoWriter dest)
+        void IProtoSerializer.void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteRecursionSafeObject(value, _baseKey, dest);
         }
 
-        object IProtoSerializer.Read(object value, ProtoReader source)
+        object IProtoSerializer.Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             return ProtoReader.ReadObject(value, _baseKey, source);
         }

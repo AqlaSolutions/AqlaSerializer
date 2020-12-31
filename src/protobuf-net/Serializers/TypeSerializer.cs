@@ -218,7 +218,7 @@ namespace AqlaSerializer.Serializers
             return false;
         }
 
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             var token = ProtoWriter.StartSubItem(value, (_isRootType && dest.TakeIsExpectingRootType()) || _prefixLength, dest);
             if (_isRootType) Callback(value, TypeModel.CallbackType.BeforeSerialize, dest.Context);
@@ -247,7 +247,7 @@ namespace AqlaSerializer.Serializers
             if (_isRootType) Callback(value, TypeModel.CallbackType.AfterSerialize, dest.Context);
             ProtoWriter.EndSubItem(token, dest);
         }
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             var token = ProtoReader.StartSubItem(source);
             if (_isRootType && value != null) { Callback(value, TypeModel.CallbackType.BeforeDeserialize, source.Context); }

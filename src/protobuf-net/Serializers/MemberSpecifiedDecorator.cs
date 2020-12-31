@@ -38,7 +38,7 @@ namespace AqlaSerializer.Serializers
             this._setSpecified = setSpecified;
         }
 #if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             if(_getSpecified == null || (bool)_getSpecified.Invoke(value, null))
             {
@@ -47,7 +47,7 @@ namespace AqlaSerializer.Serializers
             else
                 ProtoWriter.WriteFieldHeaderCancelBegin(dest);
         }
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             object result = Tail.Read(value, source);
             _setSpecified?.Invoke(value, new object[] { true });

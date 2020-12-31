@@ -36,11 +36,11 @@ namespace AqlaSerializer.Serializers
         public override Type ExpectedType { get { return expectedType; } }
         public override bool RequiresOldValue { get { return false; } }
         
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             Tail.Write(absoluteUriProperty.GetValue(value, null), dest);
         }
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // not expecting incoming
             string s = (string)Tail.Read(null, source);

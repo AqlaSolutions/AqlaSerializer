@@ -33,12 +33,12 @@ namespace AqlaSerializer.Serializers
         
 
 #if !FEAT_IKVM
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             Tail.Write(((Uri)value).OriginalString, dest);
         }
 
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // not expecting incoming
             string s = (string)Tail.Read(null, source);

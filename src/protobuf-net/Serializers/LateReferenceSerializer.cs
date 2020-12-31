@@ -51,7 +51,7 @@ namespace AqlaSerializer.Serializers
         }
 
 #if !FEAT_IKVM
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
 #if DEBUG
             Debug.Assert(value != null);
@@ -60,7 +60,7 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.NoteLateReference(_baseTypeKey, value, dest);
         }
 
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             // TODO what may happen if old value is already existing reference? do we need to consider it?
             var v = _subTypeHelpers.TryRead(_model[_typeKey], value?.GetType(), source);

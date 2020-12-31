@@ -30,11 +30,11 @@ namespace AqlaSerializer.Serializers
         public bool CanCancelWriting { get; }
 
 #if !FEAT_IKVM
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             BclHelpers.WriteGuid((Guid)value, dest);
         }
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             Helpers.DebugAssert(value == null); // since replaces
             return BclHelpers.ReadGuid(source);

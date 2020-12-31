@@ -65,11 +65,11 @@ namespace AqlaSerializer.Serializers
 
         Type IProtoSerializer.ExpectedType => _head.ExpectedType;
 
-        void IProtoSerializer.Write(object value, ProtoWriter dest)
+        void IProtoSerializer.void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             _serializer(value, dest);
         }
-        object IProtoSerializer.Read(object value, ProtoReader source)
+        object IProtoSerializer.Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             return _deserializer(value, source);
         }

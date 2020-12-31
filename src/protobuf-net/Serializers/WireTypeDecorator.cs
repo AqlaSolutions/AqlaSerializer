@@ -40,7 +40,7 @@ namespace AqlaSerializer.Serializers
         private bool NeedsHint => ((int)_wireType & ~7) != 0;
 
 #if !FEAT_IKVM
-        public override object Read(object value, ProtoReader source)
+        public override object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             // ReadFieldHeader called outside
             // so wireType is read already too!
@@ -49,7 +49,7 @@ namespace AqlaSerializer.Serializers
             else if (NeedsHint) { source.Hint(_wireType); }
             return Tail.Read(value, source);
         }
-        public override void Write(object value, ProtoWriter dest)
+        public override void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             // WriteFieldHeaderBegin called outside
             // but wireType is not set yet

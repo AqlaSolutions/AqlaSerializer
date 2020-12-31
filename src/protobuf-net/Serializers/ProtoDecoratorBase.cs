@@ -26,8 +26,8 @@ namespace AqlaSerializer.Serializers
         public abstract bool RequiresOldValue { get; }
         public virtual bool CanCancelWriting => Tail.CanCancelWriting;
 #if !FEAT_IKVM
-        public abstract void Write(object value, ProtoWriter dest);
-        public abstract object Read(object value, ProtoReader source);
+        public abstract void Write(ProtoWriter dest, ref ProtoWriter.State state, object value);
+        public abstract object Read(ProtoReader source, ref ProtoReader.State state, object value);
 #endif
 
 #if FEAT_COMPILER

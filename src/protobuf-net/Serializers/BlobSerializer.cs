@@ -34,7 +34,7 @@ namespace AqlaSerializer.Serializers
 
         private readonly bool _overwriteList;
 #if !FEAT_IKVM
-        public object Read(object value, ProtoReader source)
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
         {
             var result = ProtoReader.AppendBytes(_overwriteList ? null : (byte[])value, source);
             if (_overwriteList || value == null)
@@ -42,7 +42,7 @@ namespace AqlaSerializer.Serializers
             return result;
         }
 
-        public void Write(object value, ProtoWriter dest)
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
         {
             ProtoWriter.WriteBytes((byte[])value, dest);
         }
