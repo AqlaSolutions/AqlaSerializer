@@ -10,14 +10,10 @@ using System.IO;
 using System.Text;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;
+using System.Runtime.CompilerServices;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
-#endif
-
-#if MF
-using EndOfStreamException = System.ApplicationException;
-using OverflowException = System.ApplicationException;
 #endif
 
 namespace AqlaSerializer
@@ -26,8 +22,9 @@ namespace AqlaSerializer
     /// A stateful reader, used to read a protobuf stream. Typical usage would be (sequentially) to call
     /// ReadFieldHeader and (after matching the field) an appropriate Read* method.
     /// </summary>
-    public sealed class ProtoReader : IDisposable
+    public abstract partial class ProtoReader : IDisposable
     {
+        internal const string UseStateAPI = "If possible, please use the State API; a transitionary implementation is provided, but this API may be removed in a future version";
         Stream _source;
 
         internal Stream UnderlyingStream => _source;
@@ -93,13 +90,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Creates a new reader against a stream
         /// </summary>
-        /// <param name="source">The source stream</param>
-        /// <param name="model">The model to use for serialization; this can be null, but this will impair the ability to deserialize sub-objects</param>
-        /// <param name="context">Additional context about this serialization operation</param>
-        public ProtoReader(Stream source, TypeModel model, SerializationContext context) 
-        {
-            Init(this, source, model, context, TO_EOF);
-        }
+        private protected ProtoReader() { }
 
         public ProtoReader MakeSubReader(int anyPositionFromRootReaderStart)
         {
@@ -123,17 +114,6 @@ namespace AqlaSerializer
         /// </summary>
         public bool InternStrings { get { return _internStrings; } set { _internStrings = value; } }
 
-        /// <summary>
-        /// Creates a new reader against a stream
-        /// </summary>
-        /// <param name="source">The source stream</param>
-        /// <param name="model">The model to use for serialization; this can be null, but this will impair the ability to deserialize sub-objects</param>
-        /// <param name="context">Additional context about this serialization operation</param>
-        /// <param name="length">The number of bytes to read, or -1 to read until the end of the stream</param>
-        public ProtoReader(Stream source, TypeModel model, SerializationContext context, int length)
-        {
-            Init(this, source, model, context, length);
-        }
         /// <summary>
         /// Creates a new reader against a stream
         /// </summary>
@@ -275,6 +255,38 @@ namespace AqlaSerializer
             }
             throw AddErrorData(new OverflowException(), this);
         }
+
+        private protected enum Read32VarintMode
+        {
+            Signed,
+            Unsigned,
+            FieldHeader,
+        }
+
+        private uint ReadUInt32Varint(ref State state, Read32VarintMode mode)
+        {
+            int read = ImplTryReadUInt32VarintWithoutMoving(ref state, mode, out uint value);
+            if (read <= 0)
+            {
+                if (mode == Read32VarintMode.FieldHeader) return 0;
+                ThrowEoF(this, ref state);
+            }
+            ImplSkipBytes(ref state, read);
+            return value;
+        }
+
+        private ulong ReadUInt64Varint(ref State state)
+        {
+            int read = ImplTryReadUInt64VarintWithoutMoving(ref state, out ulong value);
+            if (read <= 0)
+            {
+                ThrowEoF(this, ref state);
+            }
+            ImplSkipBytes(ref state, read);
+            return value;
+        }
+
+        private protected abstract int ImplTryReadUInt64VarintWithoutMoving(ref State state, out ulong value);
         private uint ReadUInt32Variant(bool trimNegative)
         {
             uint value;
@@ -312,6 +324,16 @@ namespace AqlaSerializer
             }
             return false;
         }
+
+        /// <summary>
+        /// Reads an unsigned 32-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public uint ReadUInt32()
+        {
+            State state = DefaultState();
+            return ReadUInt32(ref state);
+        }
         /// <summary>
         /// Reads an unsigned 32-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
@@ -338,6 +360,61 @@ namespace AqlaSerializer
         }
         
         /// <summary>
+        /// Reads a signed 32-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public int ReadInt32()
+        {
+            State state = DefaultState();
+            return ReadInt32(ref state);
+        }
+
+        private protected abstract uint ImplReadUInt32Fixed(ref State state);
+        private protected abstract ulong ImplReadUInt64Fixed(ref State state);
+
+        /// <summary>
+        /// Reads a signed 16-bit integer from the stream: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public short ReadInt16()
+        {
+            State state = DefaultState();
+            return ReadInt16(ref state);
+        }
+        
+        /// <summary>
+        /// Reads an unsigned 16-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public ushort ReadUInt16()
+        {
+            State state = DefaultState();
+            return ReadUInt16(ref state);
+        }
+
+        /// <summary>
+        /// Reads an unsigned 8-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public byte ReadByte()
+        {
+            State state = DefaultState();
+            return ReadByte(ref state);
+        }
+
+        internal long InitialUnderlyingStreamPosition { get; private set; }
+
+        /// <summary>
+        /// Reads a signed 8-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public sbyte ReadSByte()
+        {
+            State state = DefaultState();
+            return ReadSByte(ref state);
+        }
+
+        /// <summary>
         /// Returns the position of the current reader (note that this is not necessarily the same as the position
         /// in the underlying stream, if multiple readers are used on the same stream)
         /// </summary>
@@ -355,7 +432,15 @@ namespace AqlaSerializer
         /// </summary>
         public long LongPosition { get { return _position64; } }
 
-        internal long InitialUnderlyingStreamPosition { get; private set; }
+        /// <summary>
+        /// Returns the position of the current reader (note that this is not necessarily the same as the position
+        /// in the underlying stream, if multiple readers are used on the same stream)
+        /// </summary>
+#pragma warning disable RCS1163 // Unused parameter.
+        public long GetPosition(ref State state) => _longPosition;
+#pragma warning restore RCS1163 // Unused parameter.
+
+        internal void Advance(long count) => _longPosition += count;
 
         internal void Ensure(int count, bool strict)
         {
@@ -471,32 +556,33 @@ namespace AqlaSerializer
         /// <summary>
         /// Reads a signed 16-bit integer from the stream: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>
-        public short ReadInt16()
+        public short ReadInt16(ref State state)
         {
-            checked { return (short)ReadInt32(); }
+            checked { return (short)ReadInt32(ref state); }
         }
+
         /// <summary>
         /// Reads an unsigned 16-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
-        public ushort ReadUInt16()
+        public ushort ReadUInt16(ref State state)
         {
-            checked { return (ushort)ReadUInt32(); }
+            checked { return (ushort)ReadUInt32(ref state); }
         }
 
         /// <summary>
         /// Reads an unsigned 8-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
-        public byte ReadByte()
+        public byte ReadByte(ref State state)
         {
-            checked { return (byte)ReadUInt32(); }
+            checked { return (byte)ReadUInt32(ref state); }
         }
 
         /// <summary>
         /// Reads a signed 8-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>
-        public sbyte ReadSByte()
+        public sbyte ReadSByte(ref State state)
         {
-            checked { return (sbyte)ReadInt32(); }
+            checked { return (sbyte)ReadInt32(ref state); }
         }
 
         /// <summary>
@@ -527,16 +613,26 @@ namespace AqlaSerializer
         }
         private const long Int64Msb = ((long)1) << 63;
         private const int Int32Msb = ((int)1) << 31;
-        private static int Zag(uint ziggedValue)
+        private protected static int Zag(uint ziggedValue)
         {
             int value = (int)ziggedValue;
             return (-(value & 0x01)) ^ ((value >> 1) & ~ProtoReader.Int32Msb);
         }
 
-        private static long Zag(ulong ziggedValue)
+        private protected static long Zag(ulong ziggedValue)
         {
             long value = (long)ziggedValue;
             return (-(value & 0x01L)) ^ ((value >> 1) & ~ProtoReader.Int64Msb);
+        }
+
+        /// <summary>
+        /// Reads a signed 64-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public long ReadInt64()
+        {
+            State state = DefaultState();
+            return ReadInt64(ref state);
         }
         /// <summary>
         /// Reads a signed 64-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
@@ -646,29 +742,31 @@ namespace AqlaSerializer
             throw EoF(this);
         }
 
-#if NO_GENERICS
-        private System.Collections.Hashtable stringInterner;
-        private string Intern(string value)
+        private protected static readonly UTF8Encoding UTF8 = new UTF8Encoding();
+
+        /// <summary>
+        /// Reads a string from the stream (using UTF8); supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public string ReadString()
         {
-            if (value == null) return null;
-            if (value.Length == 0) return "";
-            if (stringInterner == null)
-            {
-                stringInterner = new System.Collections.Hashtable();
-                stringInterner.Add(value, value);      
-            }
-            else if (stringInterner.ContainsKey(value))
-            {
-                value = (string)stringInterner[value];
-            }
-            else
-            {
-                stringInterner.Add(value, value);
-            }
-            return value;
+            State state = DefaultState();
+            return ReadString(ref state);
         }
-#else
-        private System.Collections.Generic.Dictionary<string,string> _stringInterner;
+
+        private protected abstract string ImplReadString(ref State state, int bytes);
+
+        /// <summary>
+        /// Throws an exception indication that the given value cannot be mapped to an enum.
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public void ThrowEnumException(Type type, int value)
+        {
+            State state = DefaultState();
+            ThrowEnumException(ref state, type, value);
+        }
+
+		private Dictionary<string, string> _stringInterner;
         private string Intern(string value)
         {
             if (value == null) return null;
@@ -689,9 +787,9 @@ namespace AqlaSerializer
             }
             return value;
         }
-#endif
 
         static readonly UTF8Encoding Encoding = new UTF8Encoding();
+
         /// <summary>
         /// Reads a string from the stream (using UTF8); supported wire-types: String
         /// </summary>
@@ -726,18 +824,27 @@ namespace AqlaSerializer
         /// <summary>
         /// Throws an exception indication that the given value cannot be mapped to an enum.
         /// </summary>
-        public void ThrowEnumException(System.Type type, int value)
+        public void ThrowEnumException(ref State state, System.Type type, int value)
         {
             string desc = type == null ? "<null>" : type.FullName;
-            throw AddErrorData(new ProtoException("No " + desc + " enum is mapped to the wire-value " + value.ToString()), this);
+            throw AddErrorData(new ProtoException("No " + desc + " enum is mapped to the wire-value " + value.ToString()), this, ref state);
         }
-        private Exception CreateWireTypeException()
+
+        private protected Exception CreateWireTypeException(ref State state)
         {
-            return CreateException("Invalid wire-type; this usually means you have over-written a file without truncating or setting the length; see http://stackoverflow.com/q/2152978/23354");
+            return CreateException(ref state, $"Invalid wire-type ({WireType}); this usually means you have over-written a file without truncating or setting the length; see https://stackoverflow.com/q/2152978/23354");
         }
-        private Exception CreateException(string message)
+
+        /// <summary>
+        /// Reads (merges) a sub-message from the stream, internally calling StartSubItem and EndSubItem, and (in between)
+        /// parsing the message in accordance with the model associated with the reader
+        /// </summary>
+        public static object ReadObject(object value, int key, ProtoReader reader, ref State state)
+            => ReadTypedObject(reader, ref state, value, key, null);
+
+        private Exception CreateException(ref State state, string message)
         {
-            return AddErrorData(new ProtoException(message), this);
+            return AddErrorData(new ProtoException(message), this, ref state);
         }
         /// <summary>
         /// Reads a double-precision number from the stream; supported wire-types: Fixed32, Fixed64
@@ -808,6 +915,17 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
 }
 
         /// <summary>
+        /// Begins consuming a nested message in the stream; supported wire-types: StartGroup, String
+        /// </summary>
+        /// <remarks>The token returned must be help and used when callining EndSubItem</remarks>
+        [Obsolete(UseStateAPI, false)]
+        public static SubItemToken StartSubItem(ProtoReader reader)
+        {
+            State state = reader.DefaultState();
+            return StartSubItem(reader, ref state);
+        }
+
+        /// <summary>
         /// Makes the end of consuming a nested message in the stream; the stream must be either at the correct EndGroup
         /// marker, or all fields of the sub-message must have been consumed (in either case, this means ReadFieldHeader
         /// should return zero)
@@ -864,6 +982,56 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 /*default:
                     throw reader.BorkedIt(); */
             }
+        }
+        
+        /// <summary>
+        /// Reads a field header from the stream, setting the wire-type and retuning the field number. If no
+        /// more fields are available, then 0 is returned. This methods respects sub-messages.
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public int ReadFieldHeader()
+        {
+            State state = DefaultState();
+            return ReadFieldHeader(ref state);
+        }
+        
+        private int ReadFieldHeaderFallback(ref State state)
+        {
+            int read = ImplTryReadUInt32VarintWithoutMoving(ref state, Read32VarintMode.FieldHeader, out var tag);
+            if (read == 0)
+            {
+                WireType = 0;
+                return _fieldNumber = 0;
+            }
+            ImplSkipBytes(ref state, read);
+            return SetTag(tag);
+        }
+        private static void ThrowUnexpectedEndGroup()
+            => throw new ProtoException("Unexpected end-group in source data; this usually means the source data is corrupt");
+        private static void ThrowInvalidField(int fieldNumber)
+            => throw new ProtoException("Invalid field in source data: " + fieldNumber.ToString());
+
+        /// <summary>
+        /// Looks ahead to see whether the next field in the stream is what we expect
+        /// (typically; what we've just finished reading - for example ot read successive list items)
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public bool TryReadFieldHeader(int field)
+        {
+            State state = DefaultState();
+            return TryReadFieldHeader(ref state, field);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int SetTag(uint tag)
+        {
+            if((_fieldNumber = (int)(tag >> 3)) < 1) ThrowInvalidField(_fieldNumber);
+            if ((WireType = (WireType)(tag & 7)) == WireType.EndGroup)
+            {
+                if (_depth > 0) return 0; // spoof an end, but note we still set the field-number
+                ThrowUnexpectedEndGroup();
+            }
+            return _fieldNumber;
         }
 
         public bool IsExpectingRoot => _expectRoot;
@@ -1021,6 +1189,17 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
         }
 
         /// <summary>
+        /// Verifies that the stream's current wire-type is as expected, or a specialized sub-type (for example,
+        /// SignedVariant) - in which case the current wire-type is updated. Otherwise an exception is thrown.
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public void Assert(WireType wireType)
+        {
+            State state = DefaultState();
+            Assert(ref state, wireType);
+        }
+
+        /// <summary>
         /// Discards the data for the current field.
         /// </summary>
         public void SkipField()
@@ -1096,6 +1275,18 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 ProtoReader.Seek(_source, underlyingAdvanceLen, _ioBuffer);
         }
 
+        private protected abstract void ImplSkipBytes(ref State state, long count);
+
+        /// <summary>
+        /// Discards the data for the current field.
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public void SkipField()
+        {
+            State state = DefaultState();
+            SkipField(ref state);
+        }
+
         public long SeekAndExchangeBlockEnd(long anyPositionFromRootReaderStart, long newBlockEnd = long.MaxValue)
         {
             if (newBlockEnd < anyPositionFromRootReaderStart)
@@ -1116,6 +1307,18 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             long end = _blockEnd64;
             _blockEnd64 = newBlockEnd;
             return end;
+        }
+
+        private protected abstract int ImplTryReadUInt32VarintWithoutMoving(ref State state, Read32VarintMode mode, out uint value);
+
+        /// <summary>
+        /// Reads an unsigned 64-bit integer from the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public ulong ReadUInt64()
+        {
+            State state = DefaultState();
+            return ReadUInt64(ref state);
         }
 
         /// <summary>
@@ -1146,6 +1349,27 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                     throw CreateWireTypeException();
             }
         }
+
+        /// <summary>
+        /// Reads a single-precision number from the stream; supported wire-types: Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public float ReadSingle()
+        {
+            State state = DefaultState();
+            return ReadSingle(ref state);
+        }
+        
+        /// <summary>
+        /// Reads a double-precision number from the stream; supported wire-types: Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public double ReadDouble()
+        {
+            State state = DefaultState();
+            return ReadDouble(ref state);
+        }
+        
         /// <summary>
         /// Reads a single-precision number from the stream; supported wire-types: Fixed32, Fixed64
         /// </summary>
@@ -1185,18 +1409,41 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
         /// <summary>
         /// Reads a boolean value from the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
-        /// <returns></returns>
+        public bool ReadBoolean(ref State state)
+        {
+            return ReadUInt32(ref state) != 0;
+        }
+
+        /// <summary>
+        /// Reads a boolean value from the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
         public bool ReadBoolean()
         {
-            switch (ReadUInt32())
-            {
-                case 0: return false;
-                case 1: return true;
-                default: throw CreateException("Unexpected boolean value");
-            }
+            State state = DefaultState();
+            return ReadBoolean(ref state);
         }
 
         private static readonly byte[] EmptyBlob = new byte[0];
+        /// <summary>
+        /// Reads a byte-sequence from the stream, appending them to an existing byte-sequence (which can be null); supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static byte[] AppendBytes(byte[] value, ProtoReader reader)
+        {
+            State state = reader.DefaultState();
+            return reader.AppendBytes(ref state, value);
+        }
+
+        /// <summary>
+        /// Reads a byte-sequence from the stream, appending them to an existing byte-sequence (which can be null); supported wire-types: String
+        /// </summary>
+        public static byte[] AppendBytes(byte[] value, ProtoReader reader, ref State state)
+            => reader.AppendBytes(ref state, value);
+
+        internal static readonly byte[] EmptyBlob = new byte[0];
+
+        private protected abstract void ImplReadBytes(ref State state, ArraySegment<byte> target);
         /// <summary>
         /// Reads a byte-sequence from the stream, appending them to an existing byte-sequence (which can be null); supported wire-types: String
         /// </summary>
@@ -1264,15 +1511,16 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
         //    {
         //        length -= read;
         //    }
-        //    if (length > 0) throw EoF(null);
+        //    if (length > 0) ThrowEoF();
         //    return buffer;
         //}
         private static int ReadByteOrThrow(Stream source)
         {
             int val = source.ReadByte();
-            if (val < 0) throw EoF(null);
+            if (val < 0) ThrowEoF();
             return val;
         }
+
         /// <summary>
         /// Reads the length-prefix of a message from a stream without buffering additional data, allowing a fixed-length
         /// reader to be created.
@@ -1316,12 +1564,12 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
         {
             int read;
             if (source == null) throw new ArgumentNullException(nameof(source));
-            while(count > 0 && (read = source.Read(buffer, offset, count)) > 0)
+            while (count > 0 && (read = source.Read(buffer, offset, count)) > 0)
             {
                 count -= read;
                 offset += read;
             }
-            if (count > 0) throw EoF(null);
+            if (count > 0) ThrowEoF();
         }
         /// <summary>
         /// Reads a given number of bytes directly from the source. An exception is thrown if the data is not all available.
@@ -1356,6 +1604,57 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             long len64 = ReadLongLengthPrefix(source, expectHeader, style, out fieldNumber, out bytesRead);
             return checked((int)len64);
         }
+
+        private static void ThrowEoF()
+        {
+            State state = default;
+            ThrowEoF(null, ref state);
+        }
+
+        /// <summary>Read a varint if possible</summary>
+        /// <returns>The number of bytes consumed; 0 if no data available</returns>
+        private static int TryReadUInt64Varint(Stream source, out ulong value)
+        {
+            value = 0;
+            int b = source.ReadByte();
+            if (b < 0) { return 0; }
+            value = (uint)b;
+            if ((value & 0x80) == 0) { return 1; }
+            value &= 0x7F;
+            int bytesRead = 1, shift = 7;
+            while (bytesRead < 9)
+            {
+                b = source.ReadByte();
+                if (b < 0) ThrowEoF();
+                value |= ((ulong)b & 0x7F) << shift;
+                shift += 7;
+                bytesRead++;
+
+                if ((b & 0x80) == 0) return bytesRead;
+            }
+            b = source.ReadByte();
+            if (b < 0) ThrowEoF();
+            if ((b & 1) == 0) // only use 1 bit from the last byte
+            {
+                value |= ((ulong)b & 0x7F) << shift;
+                return ++bytesRead;
+            }
+            throw new OverflowException();
+        }
+       
+        internal void CheckFullyConsumed()
+        {
+            if (_isFixedLength)
+            {
+                if (_dataRemaining64 != 0) throw new ProtoException("Incorrect number of bytes consumed");
+            }
+            else
+            {
+                if (_available != 0) throw new ProtoException("Unconsumed data left in the buffer; this suggests corrupt input");
+            }
+        }
+
+        private protected abstract bool IsFullyConsumed(ref State state);
         /// <summary>
         /// Reads the length-prefix of a message from a stream without buffering additional data, allowing a fixed-length
         /// reader to be created.
@@ -1466,6 +1765,16 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             throw new OverflowException();
         }
 
+        /// <summary>
+        /// Copies the current field into the instance as extension data
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public void AppendExtensionData(IExtensible instance)
+        {
+            State state = DefaultState();
+            AppendExtensionData(ref state, instance);
+        }
+
         internal static void Seek(Stream source, long count, byte[] buffer)
         {
             if (source.CanSeek)
@@ -1505,7 +1814,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                     BufferPool.ReleaseBufferToPool(ref buffer);
                 }
             }
-            if (count > 0) throw EoF(null);
+            if (count > 0) ThrowEoF();
         }
         internal static Exception AddErrorData(Exception exception, ProtoReader source)
         {
@@ -1518,10 +1827,6 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
 #endif
             return exception;
 
-        }
-        private static Exception EoF(ProtoReader source)
-        {
-            return AddErrorData(new EndOfStreamException(), source);
         }
 
         /// <summary>
@@ -1603,12 +1908,22 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             return _model.GetKey(ref type);
         }
 
+        /// <summary>
+        /// Reads a Type from the stream, using the model's DynamicTypeFormatting if appropriate; supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public Type ReadType()
+        {
+            State state = DefaultState();
+            return ReadType(ref state);
+        }
+
         internal NetObjectCache NetCache
         {
             get { return _netCache; }
         }
 
-        internal System.Type DeserializeType(string value)
+        internal Type DeserializeType(string value)
         {
             return TypeModel.DeserializeType(_model, value);
         }
@@ -1631,6 +1946,23 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 reader._trapCount--;
             }
         }
+
+
+        /// <summary>
+        /// throw an EOF
+        /// </summary>
+        protected static void ThrowEoF(ProtoReader reader, ref State state)
+        {
+            throw EoF(reader, ref state);
+        }
+        /// <summary>
+        /// Create an EOF
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Exception EoF(ProtoReader reader, ref State state)
+        {
+            return AddErrorData(new EndOfStreamException(), reader, ref state);
+        }
         
         /// <summary>
         /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
@@ -1645,6 +1977,25 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             if (trappedKey != trueKey) throw new InvalidOperationException("NoteReservedTrappedObject called for " + trappedKey + " but waiting for " + trueKey);
             stack.Pop();
             reader._netCache.SetKeyedObject(trueKey, value);
+        }
+
+        /// <summary>
+        /// Create an Overflow
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Exception Overflow(ProtoReader reader, ref State state)
+        {
+            return AddErrorData(new OverflowException(), reader, ref state);
+        }
+
+        internal static void ThrowOverflow(ProtoReader reader, ref State state)
+        {
+            throw Overflow(reader, ref state);
+        }
+        internal static void ThrowOverflow()
+        {
+            State state = default;
+            ThrowOverflow(null, ref state);
         }
 
         /// <summary>
@@ -1747,91 +2098,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             _netCache.SetKeyedObject(newObjectKey, null); // use null as a temp
             _trappedKey = newObjectKey;
         }
-       
-        internal void CheckFullyConsumed()
-        {
-            if (_isFixedLength)
-            {
-                if (_dataRemaining64 != 0) throw new ProtoException("Incorrect number of bytes consumed");
-            }
-            else
-            {
-                if (_available != 0) throw new ProtoException("Unconsumed data left in the buffer; this suggests corrupt input");
-            }
-        }
 
-        #region RECYCLER
-
-        internal static ProtoReader Create(Stream source, TypeModel model, SerializationContext context, int len)
-            => Create(source, model, context, (long)len);
-        internal static ProtoReader Create(Stream source, TypeModel model, SerializationContext context, long len)
-        {
-            ProtoReader reader = GetRecycled();
-            if (reader == null)
-            {
-                return new ProtoReader(source, model, context, len);
-            }
-            Init(reader, source, model, context, len);
-            return reader;
-        }
-
-#if !PLAT_NO_THREADSTATIC
-        [ThreadStatic]
-        private static ProtoReader _lastReader;
-
-        private static ProtoReader GetRecycled()
-        {
-            ProtoReader tmp = _lastReader;
-            _lastReader = null;
-            return tmp;
-        }
-        internal static void Recycle(ProtoReader reader)
-        {
-            if(reader != null)
-            {
-                reader.Dispose();
-                _lastReader = reader;
-            }
-        }
-#elif !PLAT_NO_INTERLOCKED
-        private static object lastReader;
-        private static ProtoReader GetRecycled()
-        {
-            return (ProtoReader)System.Threading.Interlocked.Exchange(ref lastReader, null);
-        }
-        internal static void Recycle(ProtoReader reader)
-        {
-            if(reader != null)
-            {
-                reader.Dispose();
-                System.Threading.Interlocked.Exchange(ref lastReader, reader);
-            }
-        }
-#else
-        private static readonly object recycleLock = new object();
-        private static ProtoReader lastReader;
-        private static ProtoReader GetRecycled()
-        {
-            lock(recycleLock)
-            {
-                ProtoReader tmp = lastReader;
-                lastReader = null;
-                return tmp;
-            }            
-        }
-        internal static void Recycle(ProtoReader reader)
-        {
-            if(reader != null)
-            {
-                reader.Dispose();
-                lock(recycleLock)
-                {
-                    lastReader = reader;
-                }
-            }
-        }
-#endif
-
-#endregion
+        internal abstract void Recycle();
     }
 }

@@ -9,10 +9,6 @@ using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;
 
-#if MF
-using OverflowException = System.ApplicationException;
-#endif
-
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 #endif
@@ -20,13 +16,15 @@ using Type = IKVM.Reflection.Type;
 namespace AqlaSerializer
 {
     /// <summary>
-    /// Represents an output stream for writing protobuf data.
-    /// 
+    /// <para>Represents an output stream for writing protobuf data.</para>
+    /// <para>
     /// Why is the API backwards (static methods with writer arguments)?
     /// See: http://marcgravell.blogspot.com/2010/03/last-will-be-first-and-first-will-be.html
+    /// </para>
     /// </summary>
-    public sealed class ProtoWriter : IDisposable
+    public abstract partial class ProtoWriter : IDisposable
     {
+        internal const string UseStateAPI = ProtoReader.UseStateAPI;
         internal Stream UnderlyingStream => _dest;
 
         private Stream _dest;
@@ -66,6 +64,19 @@ namespace AqlaSerializer
             value = r.Value.Value;
             referenceKey = r.Value.ReferenceKey;
             return true;
+        }
+
+        /// <summary>
+        /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type).
+        /// </summary>
+        /// <param name="value">The object to write.</param>
+        /// <param name="key">The key that uniquely identifies the type within the model.</param>
+        /// <param name="writer">The destination.</param>
+        [Obsolete(ProtoWriter.UseStateAPI, false)]
+        public static void WriteObject(object value, int key, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteObject(value, key, writer, ref state);
         }
 
         /// <summary>
@@ -121,6 +132,20 @@ namespace AqlaSerializer
         {
             // no argument checks here for performance
             writer._model.Serialize(key, value, writer, false);
+        }
+        /// <summary>
+        /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type) - but the
+        /// caller is asserting that this relationship is non-recursive; no recursion check will be
+        /// performed.
+        /// </summary>
+        /// <param name="value">The object to write.</param>
+        /// <param name="key">The key that uniquely identifies the type within the model.</param>
+        /// <param name="writer">The destination.</param>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteRecursionSafeObject(object value, int key, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteRecursionSafeObject(value, key, writer, ref state);
         }
 
         //internal static void WriteAuxiliaryObject(int tag, object value, ProtoWriter writer)
@@ -316,6 +341,16 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a field-header, indicating the format of the next data we plan to write.
         /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteFieldHeader(int fieldNumber, WireType wireType, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteFieldHeader(fieldNumber, wireType, writer, ref state);
+        }
+
+        /// <summary>
+        /// Writes a field-header, indicating the format of the next data we plan to write.
+        /// </summary>
         public static void WriteFieldHeader(int fieldNumber, WireType wireType, ProtoWriter writer)
         {
 #if DEBUG
@@ -334,6 +369,16 @@ namespace AqlaSerializer
             if(fieldNumber < 0) throw new ArgumentOutOfRangeException(nameof(fieldNumber));
             if (writer._fieldStarted) throw new InvalidOperationException("Cannot write a field until a wire type for field " + writer._fieldNumber + " has been written");
             WriteFieldHeaderNoCheck(fieldNumber, wireType, writer);
+        }
+
+        /// <summary>
+        /// Writes a byte-array to the stream; supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteBytes(byte[] data, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteBytes(data, writer, ref state);
         }
         
         static void WriteFieldHeaderNoCheck(int fieldNumber, WireType wireType, ProtoWriter writer) {
@@ -372,10 +417,47 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a byte-array to the stream; supported wire-types: String
         /// </summary>
-        public static void WriteBytes(byte[] data, ProtoWriter writer)
+        public static void WriteBytes(byte[] data, ProtoWriter writer, ref State state)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
-            ProtoWriter.WriteBytes(data, 0, data.Length, writer);
+            WriteBytes(data, 0, data.Length, writer, ref state);
+        }
+        /// <summary>
+        /// Writes a byte-array to the stream; supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteBytes(byte[] data, int offset, int length, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteBytes(data, offset, length, writer, ref state);
+        }
+
+        /// <summary>
+        /// Writes a byte-array to the stream; supported wire-types: String
+        /// </summary>
+        public static void WriteBytes(byte[] data, int offset, int length, ProtoWriter writer, ref State state)
+        {
+            switch (writer.WireType)
+            {
+                case WireType.Fixed32:
+                    if (length != 4) throw new ArgumentException(nameof(length));
+                    writer.ImplWriteBytes(ref state, data, offset, 4);
+                    writer.AdvanceAndReset(4);
+                    return;
+                case WireType.Fixed64:
+                    if (length != 8) throw new ArgumentException(nameof(length));
+                    writer.ImplWriteBytes(ref state, data, offset, 8);
+                    writer.AdvanceAndReset(8);
+                    return;
+                case WireType.String:
+                    writer.AdvanceAndReset(writer.ImplWriteVarint32(ref state, (uint)length) + length);
+                    if (length == 0) return;
+                    writer.ImplWriteBytes(ref state, data, offset, length);
+                    break;
+                default:
+                    ThrowException(writer);
+                    break;
+            }
         }
         /// <summary>
         /// Writes a byte-array to the stream; supported wire-types: String
@@ -457,6 +539,7 @@ namespace AqlaSerializer
             }
 
         }
+
         private static void IncrementedAndReset(int length, ProtoWriter writer)
         {
             Helpers.DebugAssert(length >= 0);
@@ -586,6 +669,16 @@ namespace AqlaSerializer
             }
         }
 
+        /// <summary>
+        /// Indicates the start of a nested record.
+        /// </summary>
+        /// <param name="instance">The instance to write.</param>
+        /// <param name="writer">The destination.</param>
+        /// <param name="state">Writer state</param>
+        /// <returns>A token representing the state of the stream; this token is given to EndSubItem.</returns>
+        public static SubItemToken StartSubItem(object instance, ProtoWriter writer, ref State state)
+            => writer.StartSubItem(ref state, instance, PrefixStyle.Base128);
+
         void DebugFlushFile()
         {
             bool prev = _streamAsBufferAllowed;
@@ -594,15 +687,17 @@ namespace AqlaSerializer
             _streamAsBufferAllowed = prev;
             _dest.Flush();
         }
-        
+
         /// <summary>
         /// Indicates the end of a nested record.
         /// </summary>
         /// <param name="token">The token obtained from StartubItem.</param>
         /// <param name="writer">The destination.</param>
+        [Obsolete(UseStateAPI, false)]
         public static void EndSubItem(SubItemToken token, ProtoWriter writer)
         {
-            EndSubItem(token, writer, PrefixStyle.Base128);
+            State state = writer.DefaultState();
+            writer.EndSubItem(ref state, token, PrefixStyle.Base128);
         }
         
         private static void EndSubItem(SubItemToken token, ProtoWriter writer, PrefixStyle style)
@@ -851,6 +946,21 @@ namespace AqlaSerializer
         {
             return IsFlushAdvised(_ioIndex);
         }
+        /// <summary>
+        /// Writes any buffered data (if possible) to the underlying stream.
+        /// </summary>
+        /// <param name="writer">The writer to flush</param>
+        /// <remarks>It is not always possible to fully flush, since some sequences
+        /// may require values to be back-filled into the byte-stream.</remarks>
+        internal static void Flush(ProtoWriter writer)
+        {
+            if ((writer._streamAsBufferAllowed || writer._flushLock == 0) && writer._ioIndex != 0)
+            {
+                writer._dest.Write(writer._ioBuffer, 0, writer._ioIndex);
+                writer._ioIndex = 0;
+
+            }
+        }
 
         bool IsFlushAdvised(int whenSize)
         {
@@ -909,6 +1019,8 @@ namespace AqlaSerializer
             _lateReferences.Reset();
         }
 
+        private bool _needFlush;
+
         private byte[] _ioBuffer;
         
         private int _ioIndex;
@@ -918,6 +1030,26 @@ namespace AqlaSerializer
         // note that this is used by some of the unit tests and should not be removed
         public static int GetPosition(ProtoWriter writer) { return checked((int) writer._position64); }
         internal long InitialUnderlyingStreamPosition { get; }
+        protected private void Advance(long count) => _position64 += count;
+        /// <summary>
+        /// Flushes data to the underlying stream, and releases any resources. The underlying stream is *not* disposed
+        /// by this operation.
+        /// </summary>
+        public void Close()
+        {
+            CheckDepthFlushlock();
+            Dispose();
+        }
+        protected private void AdvanceAndReset(int count)
+        {
+            _position64 += count;
+            WireType = WireType.None;
+        }
+        protected private void AdvanceAndReset(long count)
+        {
+            _position64 += count;
+            WireType = WireType.None;
+        }
         private long _position64;
         private static void DemandSpace(int required, ProtoWriter writer)
         {
@@ -937,13 +1069,21 @@ namespace AqlaSerializer
         /// Flushes data to the underlying stream, and releases any resources. The underlying stream is *not* disposed
         /// by this operation.
         /// </summary>
-        public void Close()
+        public void Close(ref State state)
         {
-            CheckDepthFlushlock();
+            CheckClear(ref state);
             Dispose();
         }
 
-        internal void CheckDepthFlushlock()
+        internal void CheckClear(ref State state)
+        {
+            if (depth != 0 || !TryFlush(ref state)) throw new InvalidOperationException("The writer is in an incomplete state");
+            _needFlush = false; // because we ^^^ *JUST DID*
+        }
+
+        private protected static readonly UTF8Encoding UTF8 = new UTF8Encoding();
+
+        internal void Abandon()
         {
             if (_depth != 0 || _flushLock != 0 || _fieldStarted) throw new InvalidOperationException("The writer is in an incomplete state");
         }
@@ -955,7 +1095,15 @@ namespace AqlaSerializer
 
         bool _streamAsBufferAllowed;
 
-        public bool AllowStreamRewriting => _streamAsBufferAllowed;
+        public bool AllowStreamRewriting => _streamAsBufferAllowed;       
+
+        /// <summary>
+        /// Writes any buffered data (if possible) to the underlying stream.
+        /// </summary>
+        /// <param name="state">Wwriter state</param>
+        /// <remarks>It is not always possible to fully flush, since some sequences
+        /// may require values to be back-filled into the byte-stream.</remarks>
+        private protected abstract bool TryFlush(ref State state);
 
         /// <summary>
         /// Writes any buffered data (if possible) to the underlying stream.
@@ -972,7 +1120,7 @@ namespace AqlaSerializer
 
             }
         }
-        
+
         /// <summary>
         /// Works only if position is in buffer and not flushed yet
         /// </summary>
@@ -1004,17 +1152,46 @@ namespace AqlaSerializer
             writer._ioBuffer[writer._ioIndex - 1] &= 0x7F;
             writer._position64 += count;
         }
+
+        /// <summary>
+        /// Indicates the end of a nested record.
+        /// </summary>
+        /// <param name="token">The token obtained from StartubItem.</param>
+        /// <param name="writer">The destination.</param>
+        /// <param name="state">Writer state</param>
+        public static void EndSubItem(SubItemToken token, ProtoWriter writer, ref State state)
+            => writer.EndSubItem(ref state, token, PrefixStyle.Base128);
+
  
         static readonly UTF8Encoding Encoding = new UTF8Encoding();
-        
-        internal static uint Zig(int value)
-        {        
+
+        /// <summary>
+        /// Writes a signed 16-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        public static void WriteInt16(short value, ProtoWriter writer, ref State state)
+            => WriteInt32(value, writer, ref state);
+
+        private static uint Zig(int value)
+        {
             return (uint)((value << 1) ^ (value >> 31));
         }
-        internal static ulong Zig(long value)
+
+        /// <summary>
+        /// Writes an unsigned 16-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        public static void WriteUInt16(ushort value, ProtoWriter writer, ref State state)
+            => WriteUInt32(value, writer, ref state);
+
+        private static ulong Zig(long value)
         {
             return (ulong)((value << 1) ^ (value >> 63));
         }
+
+        /// <summary>
+        /// Writes an unsigned 8-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        public static void WriteByte(byte value, ProtoWriter writer, ref State state)
+            => WriteUInt32(value, writer, ref state);
         private static void WriteUInt64Variant(ulong value, ProtoWriter writer)
         {
             DemandSpace(10, writer);
@@ -1026,6 +1203,21 @@ namespace AqlaSerializer
             } while ((value >>= 7) != 0);
             writer._ioBuffer[writer._ioIndex - 1] &= 0x7F;
             writer._position64 += count;
+        }
+        /// <summary>
+        /// Writes a signed 8-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        public static void WriteSByte(sbyte value, ProtoWriter writer, ref State state)
+            => WriteInt32(value, writer, ref state);
+
+        /// <summary>
+        /// Writes a signed 32-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteInt32(int value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteInt32(value, writer, ref state);
         }
         /// <summary>
         /// Writes a string to the stream; supported wire-types: String
@@ -1058,6 +1250,68 @@ namespace AqlaSerializer
             IncrementedAndReset(actual, writer);
         }
         /// <summary>
+        /// Writes a string to the stream; supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteString(string value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteString(value, writer, ref state);
+        }
+
+        protected private abstract void ImplWriteString(ref State state, string value, int expectedBytes);
+        protected private abstract int ImplWriteVarint32(ref State state, uint value);
+        protected private abstract int ImplWriteVarint64(ref State state, ulong value);
+        protected private abstract void ImplWriteFixed32(ref State state, uint value);
+        
+        protected private abstract void ImplWriteFixed64(ref State state, ulong value);
+        protected private abstract void ImplWriteBytes(ref State state, byte[] data, int offset, int length);
+        protected private abstract void ImplWriteBytes(ref State state, System.Buffers.ReadOnlySequence<byte> data);
+        protected private abstract void ImplCopyRawFromStream(ref State state, Stream source);
+        protected private abstract bool ImplDemandFlushOnDispose { get; }
+
+        /// <summary>
+        /// Writes an unsigned 64-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteUInt64(ulong value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteUInt64(value, writer, ref state);
+        }
+        protected private abstract void ImplEndLengthPrefixedSubItem(ref State state, SubItemToken token, PrefixStyle style);
+
+        /// <summary>
+        /// Writes a signed 64-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteInt64(long value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteInt64(value, writer, ref state);
+        }
+        private protected abstract SubItemToken ImplStartLengthPrefixedSubItem(ref State state, object instance, PrefixStyle style);
+
+        /// <summary>
+        /// Writes an unsigned 16-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteUInt32(uint value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteUInt32(value, writer, ref state);
+        }
+
+        /// <summary>
+        /// Writes a double-precision number to the stream; supported wire-types: Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteDouble(double value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteDouble(value, writer, ref state);
+        }
+        /// <summary>
         /// Writes an unsigned 64-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
         public static void WriteUInt64(ulong value, ProtoWriter writer)
@@ -1078,6 +1332,15 @@ namespace AqlaSerializer
                 default:
                     throw CreateException(writer);
             }
+        }
+        /// <summary>
+        /// Writes a single-precision number to the stream; supported wire-types: Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteSingle(float value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteSingle(value, writer, ref state);
         }
 
         public void WriteLengthPrefix(ulong length)
@@ -1169,6 +1432,18 @@ namespace AqlaSerializer
                     throw CreateException(writer);
             }
         }
+        internal static void ThrowException(ProtoWriter writer)
+            => throw CreateException(writer);
+
+        /// <summary>
+        /// Writes a boolean to the stream; supported wire-types: Variant, Fixed32, Fixed64
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteBoolean(bool value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteBoolean(value, writer, ref state);
+        }
 
         public static bool TryWriteBuiltinTypeValue(object value, ProtoTypeCode typecode, bool allowSystemType, ProtoWriter writer)
         {
@@ -1243,6 +1518,16 @@ namespace AqlaSerializer
         }
 
         /// <summary>
+        /// Copies any extension data stored for the instance to the underlying stream
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void AppendExtensionData(IExtensible instance, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            AppendExtensionData(instance, writer, ref state);
+        }
+
+        /// <summary>
         /// Behavior same as <see cref="ListHelpers"/> with ProtoCompatibility = off
         /// </summary>
         internal static void WriteArrayContent<T>(T[] arr, WireType wt, Action<T, ProtoWriter> writer, ProtoWriter dest)
@@ -1265,37 +1550,51 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a signed 16-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>
+        [Obsolete(UseStateAPI, false)]
         public static void WriteInt16(short value, ProtoWriter writer)
         {
-            ProtoWriter.WriteInt32(value, writer);
+            State state = writer.DefaultState();
+            WriteInt32(value, writer, ref state);
         }
+
         /// <summary>
         /// Writes an unsigned 16-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
+        [Obsolete(UseStateAPI, false)]
         public static void WriteUInt16(ushort value, ProtoWriter writer)
         {
-            ProtoWriter.WriteUInt32(value, writer);
+            State state = writer.DefaultState();
+            WriteUInt32(value, writer, ref state);
         }
+
         /// <summary>
         /// Writes an unsigned 8-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
+        [Obsolete(UseStateAPI, false)]
         public static void WriteByte(byte value, ProtoWriter writer)
         {
-            ProtoWriter.WriteUInt32(value, writer);
+            State state = writer.DefaultState();
+            WriteUInt32(value, writer, ref state);
         }
+
+        /// <summary>
+        /// Writes a Type to the stream, using the model's DynamicTypeFormatting if appropriate; supported wire-types: String
+        /// </summary>
+        [Obsolete(UseStateAPI, false)]
+        public static void WriteType(Type value, ProtoWriter writer)
+        {
+            State state = writer.DefaultState();
+            WriteType(value, writer, ref state);
+        }
+
         /// <summary>
         /// Writes a signed 8-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>
+        [Obsolete(UseStateAPI, false)]
         public static void WriteSByte(sbyte value, ProtoWriter writer)
         {
-            ProtoWriter.WriteInt32(value, writer);
-        }
-        private static void WriteInt32ToBuffer(int value, byte[] buffer, int index)
-        {
-            buffer[index] = (byte)value;
-            buffer[index + 1] = (byte)(value >> 8);
-            buffer[index + 2] = (byte)(value >> 16);
-            buffer[index + 3] = (byte)(value >> 24);
+            State state = writer.DefaultState();
+            WriteInt32(value, writer, ref state);
         }
 
         private static void WriteInt32ToBufferBE(int value, byte[] buffer, int index)
@@ -1445,9 +1744,9 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a boolean to the stream; supported wire-types: Variant, Fixed32, Fixed64
         /// </summary>
-        public static void WriteBoolean(bool value, ProtoWriter writer)
+        public static void WriteBoolean(bool value, ProtoWriter writer, ref State state)
         {
-            ProtoWriter.WriteUInt32(value ? (uint)1 : (uint)0, writer);
+            ProtoWriter.WriteUInt32(value ? (uint)1 : (uint)0, writer, ref state);
         }
 
         /// <summary>
@@ -1493,7 +1792,7 @@ namespace AqlaSerializer
 
             return bytes;
         }
-        
+
         internal string SerializeType(System.Type type)
         {
             return TypeModel.SerializeType(_model, type);
@@ -1505,14 +1804,13 @@ namespace AqlaSerializer
         {
             //NetCache.SetKeyedObject(NetObjectCache.Root, value);
         }
-
         /// <summary>
         /// Writes a Type to the stream, using the model's DynamicTypeFormatting if appropriate; supported wire-types: String
         /// </summary>
-        public static void WriteType(System.Type value, ProtoWriter writer)
+        public static void WriteType(System.Type value, ProtoWriter writer, ref State state)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
-            WriteString(writer.SerializeType(value), writer);
+            WriteString(writer.SerializeType(value), writer, ref state);
         }
     }
 }

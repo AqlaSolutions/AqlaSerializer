@@ -35,6 +35,8 @@ using AqlaSerializer.Serializers;
 using System.Threading;
 using System.IO;
 using AltLinq; using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 
 namespace AqlaSerializer.Meta
@@ -132,6 +134,7 @@ namespace AqlaSerializer.Meta
             OPTIONS_UseImplicitZeroDefaults = 32,
             OPTIONS_AllowParseableTypes = 64,
             OPTIONS_IncludeDateTimeKind = 256;
+           OPTIONS_InternStrings = 512;
 
         private bool GetOption(short option)
         {
@@ -220,6 +223,21 @@ namespace AqlaSerializer.Meta
             get { return GetOption(OPTIONS_IncludeDateTimeKind); }
             set { SetOption(OPTIONS_IncludeDateTimeKind, value); }
         }
+
+    /// <summary>
+    /// Global switch that determines whether a single instance of the same string should be used during deserialization.
+    /// </summary>
+    /// <remarks>Note this does not use the global .NET string interner</remarks>
+    public new bool InternStrings
+    {
+        get { return GetOption(OPTIONS_InternStrings); }
+        set { SetOption(OPTIONS_InternStrings, value); }
+    }
+
+    /// <summary>
+    /// Global switch that determines whether a single instance of the same string should be used during deserialization.
+    /// </summary>
+    protected internal override bool GetInternStrings() => InternStrings;
 
         /// <summary>
         /// Should the <c>Kind</c> be included on date/time values?
@@ -311,6 +329,15 @@ namespace AqlaSerializer.Meta
         }
 
         internal bool IsInitialized { get; }
+	    [Flags]
+	    internal enum CommonImports
+	    {
+	        None = 0,
+	        Bcl = 1,
+	        Timestamp = 2,
+	        Duration = 4,
+	        Protogen = 8
+	    }
         readonly int _serviceTypesCount;
 
 
@@ -319,6 +346,28 @@ namespace AqlaSerializer.Meta
         /// allowing additional configuration.
         /// </summary>
         public MetaType this[Type type] => (MetaType)_types[FindOrAddAuto(type, true, false, false)];
+
+	    private void TryGetCoreSerializer(BasicList list, Type itemType)
+	    {
+	        var coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, itemType, out _, false, false, false, false);
+	        if (coreSerializer != null)
+	        {
+	            return;
+	        }
+	        int index = FindOrAddAuto(itemType, false, false, false);
+	        if (index < 0)
+	        {
+	            return;
+	        }
+	        var temp = ((MetaType)types[index]).GetSurrogateOrBaseOrSelf(false);
+	        if (list.Contains(temp))
+	        {
+	            return;
+	        }
+	        // could perhaps also implement as a queue, but this should work OK for sane models
+	        list.Add(temp);
+	        CascadeDependents(list, temp);
+	    }
 
         internal MetaType this[int key] => (MetaType)_types[key];
 
@@ -341,16 +390,18 @@ namespace AqlaSerializer.Meta
         static readonly BasicList.MatchPredicate
             MetaTypeFinder = MetaTypeFinderImpl,
             BasicTypeFinder = BasicTypeFinderImpl;
+
         static bool MetaTypeFinderImpl(object value, object ctx)
         {
             return ((MetaType)value).Type == (Type)ctx;
         }
+
         static bool BasicTypeFinderImpl(object value, object ctx)
         {
             return ((BasicType)value).Type == (Type)ctx;
         }
 
-        private void WaitOnLock(MetaType type)
+        private void WaitOnLock()
         {
             int opaqueToken = 0;
             try
@@ -412,7 +463,7 @@ namespace AqlaSerializer.Meta
             metaType = null;
             var info = GetTypeInfoFromDictionary(type);
             int key = -1;
-            
+
             // the fast happy path: meta-types we've already seen
             if (info != null)
             {
@@ -420,7 +471,7 @@ namespace AqlaSerializer.Meta
                 metaType = info.Value.MetaType;
                 if (metaType.IsPending)
                 {
-                    WaitOnLock(metaType);
+                    WaitOnLock();
                 }
                 return key;
             }
@@ -438,7 +489,7 @@ namespace AqlaSerializer.Meta
 
             // check for proxy types
             Type underlyingType = ResolveProxies(type);
-            if (underlyingType != null)
+            if (underlyingType != null && underlyingType != type)
             {
                 key = _types.IndexOf(MetaTypeFinder, underlyingType);
                 type = underlyingType; // if new added, make it reflect the underlying type
@@ -454,6 +505,8 @@ namespace AqlaSerializer.Meta
             if (key < 0)
             {
                 int opaqueToken = 0;
+                Type origType = type;
+                bool weAdded = false;
                 try
                 {
                     TakeLock(ref opaqueToken);
@@ -475,15 +528,16 @@ namespace AqlaSerializer.Meta
                         }
 
                         if (!shouldAdd || (
-                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this,type)))
+                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this, type)))
                         {
                             if (demand) ThrowUnexpectedType(type);
                             return key;
                         }
+
                         metaType = Create(type);
                     }
+
                     metaType.IsPending = true;
-                    bool weAdded = false;
 
                     // double-checked
                     int winner = _types.IndexOf(MetaTypeFinder, type);
@@ -510,8 +564,12 @@ namespace AqlaSerializer.Meta
                 finally
                 {
                     ReleaseLock(opaqueToken);
+                    if (weAdded)
+                    {
+                        ResetKeyCache();
+                    }
+                    AddDependencies(metaType);
                 }
-                AddDependencies(metaType);
             }
             return key;
         }
@@ -1040,7 +1098,7 @@ namespace AqlaSerializer.Meta
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
-        protected internal override object Deserialize(int key, object value, ProtoReader source, bool isRoot)
+        protected internal override object DeserializeCore(int key, object value, ProtoReader source, bool isRoot)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -1314,6 +1372,8 @@ namespace AqlaSerializer.Meta
                 }
             }
         }
+
+        #pragma warning disable RCS1159 // Use EventHandler<T>.
         /// <summary>
         /// If a lock-contention is detected, this event signals the *owner* of the lock responsible for the blockage, indicating
         /// what caused the problem; this is only raised if the lock-owning code successfully completes.
@@ -1347,6 +1407,36 @@ namespace AqlaSerializer.Meta
             _defaultFactory = methodInfo;
         }
         private MethodInfo _defaultFactory;
+
+    private void VerifyNotNested(Type type, Type itemType)
+    {
+        if (itemType != null)
+        {
+            Type nestedItemType = null, nestedDefaultType = null;
+            ResolveListTypes(itemType, ref nestedItemType, ref nestedDefaultType);
+            if (nestedItemType != null)
+            {
+                throw TypeModel.CreateNestedListsNotSupported(type);
+            }
+        }
+    }
+
+    private static void RetrieveArrayListTypes(Type type, out Type itemType, out Type defaultType)
+    {
+        if (type.GetArrayRank() != 1)
+        {
+            throw new NotSupportedException("Multi-dimension arrays are supported");
+        }
+        itemType = type.GetElementType();
+        if (itemType == typeof(byte))
+        {
+            defaultType = itemType = null;
+        }
+        else
+        {
+            defaultType = type;
+        }
+    }
 
         internal void VerifyFactory(MethodInfo factory, Type type)
         {

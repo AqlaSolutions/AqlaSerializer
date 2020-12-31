@@ -1,6 +1,5 @@
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
@@ -225,26 +224,11 @@ namespace AqlaSerializer
                 }
             }
         }
-#if NO_GENERICS
-        private ReferenceHashtable objectKeys;
-        private System.Collections.Hashtable stringKeys;
-        private class ReferenceHashtable : System.Collections.Hashtable
-        {
-            protected override int GetHash(object key)
-            {
-                return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(key);
-            }
-            protected override bool KeyEquals(object item, object key)
-            {
-                return item == key;
-            }
-        }   
-#else
 
-        private System.Collections.Generic.Dictionary<string, int> _stringKeys;
-
+		private Dictionary<string, int> _stringKeys;
+		
 #if !CF && !PORTABLE // CF lacks the ability to get a robust reference-based hash-code, so we'll do it the harder way instead
-        private System.Collections.Generic.Dictionary<object, int> _objectKeys;
+		private System.Collections.Generic.Dictionary<object, int> _objectKeys;
         private sealed class ReferenceComparer : System.Collections.Generic.IEqualityComparer<object>
         {
             public static readonly ReferenceComparer Default = new ReferenceComparer();
@@ -260,8 +244,6 @@ namespace AqlaSerializer
                 return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
             }
         }
-#endif
-
 #endif
 
         internal void Clear()

@@ -36,6 +36,8 @@ namespace AqlaSerializer.Meta
         volatile IProtoSerializerWithWireType _serializer;
         internal IProtoSerializerWithWireType Serializer => BuildSerializer();
 
+        private MemberInfo backingMember;
+
         /// <summary>
         /// The number that identifies this member in a protobuf stream
         /// </summary>
@@ -54,6 +56,22 @@ namespace AqlaSerializer.Meta
         public bool IsRequired { get { return _main.IsRequiredInSchema; } set { ThrowIfFrozen(); _main.IsRequiredInSchema = value; } }
 
         /// <summary>
+        /// Gets the backing member (field/property) which this member relates to
+        /// </summary>
+        public MemberInfo BackingMember
+        {
+            get { return backingMember; }
+            set
+            {
+                if (backingMember != value)
+                {
+                    ThrowIfFrozen();
+                    backingMember = value;
+                }
+            }
+        }
+
+        /// <summary>
         /// The default value of the item (members with this value will not be serialized)
         /// </summary>
         public object DefaultValue
@@ -66,7 +84,7 @@ namespace AqlaSerializer.Meta
                 _vsByClient.DefaultValue = value;
             }
         }
-        
+
         /// <summary>
         /// Gets the member (field/property) which this member relates to.
         /// </summary>
@@ -408,6 +426,124 @@ namespace AqlaSerializer.Meta
             return ((FieldInfo)Member).GetRawConstantValue();
 #endif
         }
+        /// <summary>
+        /// Specifies the data-format that should be used for the value, when IsMap is enabled
+        /// </summary>
+        public DataFormat MapValueFormat
+        {
+            get { return mapValueFormat; }
+            set
+            {
+                if (mapValueFormat != value)
+                {
+                    ThrowIfFrozen();
+                    mapValueFormat = value;
+                }
+            }
+        }
+        /// <summary>
+        /// Specifies the data-format that should be used for the key, when IsMap is enabled
+        /// </summary>
+        public DataFormat MapKeyFormat
+        {
+            get { return mapKeyFormat; }
+            set
+            {
+                if (mapKeyFormat != value)
+                {
+                    ThrowIfFrozen();
+                    mapKeyFormat = value;
+                }
+            }
+        }
+
+        private static bool IsValidMapKeyType(Type type)
+        {
+            if (type == null || Helpers.IsEnum(type)) return false;
+            switch (Helpers.GetTypeCode(type))
+            {
+                case ProtoTypeCode.Boolean:
+                case ProtoTypeCode.Byte:
+                case ProtoTypeCode.Char:
+                case ProtoTypeCode.Int16:
+                case ProtoTypeCode.Int32:
+                case ProtoTypeCode.Int64:
+                case ProtoTypeCode.String:
+
+                case ProtoTypeCode.SByte:
+                case ProtoTypeCode.UInt16:
+                case ProtoTypeCode.UInt32:
+                case ProtoTypeCode.UInt64:
+                    return true;
+            }
+            return false;
+        }
+
+        internal bool ResolveMapTypes(out Type dictionaryType, out Type keyType, out Type valueType)
+        {
+            dictionaryType = keyType = valueType = null;
+            try
+            {
+                var info = MemberType;
+                if (ImmutableCollectionDecorator.IdentifyImmutable(MemberType, out _, out _, out _, out _, out _, out _))
+                {
+                    return false;
+                }
+                if (info.IsInterface && info.IsGenericType && info.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                {
+                    var typeArgs = MemberType.GetGenericArguments();
+                    if (IsValidMapKeyType(typeArgs[0]))
+                    {
+                        keyType = typeArgs[0];
+                        valueType = typeArgs[1];
+                        dictionaryType = MemberType;
+                    }
+                    return false;
+                }
+                foreach (var iType in MemberType.GetInterfaces())
+                {
+                    info = iType;
+
+                    if (info.IsGenericType && info.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                    {
+                        if (dictionaryType != null) throw new InvalidOperationException("Multiple dictionary interfaces implemented by type: " + MemberType.FullName);
+                        var typeArgs = iType.GetGenericArguments();
+
+                        if (IsValidMapKeyType(typeArgs[0]))
+                        {
+                            keyType = typeArgs[0];
+                            valueType = typeArgs[1];
+                            dictionaryType = MemberType;
+                        }
+                    }
+                }
+                if (dictionaryType == null) return false;
+
+                // (note we checked the key type already)
+                // not a map if value is repeated
+                Type itemType = null, defaultType = null;
+                model.ResolveListTypes(valueType, ref itemType, ref defaultType);
+                if (itemType != null) return false;
+
+                return dictionaryType != null;
+            }
+            catch
+            {
+                // if it isn't a good fit; don't use "map"
+                return false;
+            }
+        }
+
+        private DataFormat mapKeyFormat, mapValueFormat;
+
+        /// <summary>
+        /// Indicates that the member should be treated as a protobuf Map
+        /// </summary>
+        public bool IsMap
+        {
+            get { return HasFlag(OPTIONS_IsMap); }
+            set { SetFlag(OPTIONS_IsMap, value, true); }
+        }
 
         /// <summary>
         /// Specifies methods for working with optional data members.
@@ -482,10 +618,7 @@ namespace AqlaSerializer.Meta
             return vm;
         }
 
-        internal sealed class Comparer : System.Collections.IComparer
-#if !NO_GENERICS
-, System.Collections.Generic.IComparer<ValueMember>
-#endif
+        internal sealed class Comparer : System.Collections.IComparer, IComparer<ValueMember>
         {
             public static readonly ValueMember.Comparer Default = new Comparer();
             public int Compare(object x, object y)

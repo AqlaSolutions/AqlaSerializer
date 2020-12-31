@@ -31,6 +31,37 @@ namespace AqlaSerializer
         /// </summary>
         internal static SerializationContext Default { get; }
 
+        private System.Runtime.Serialization.StreamingContextStates state = System.Runtime.Serialization.StreamingContextStates.Persistence;
+        /// <summary>
+        /// Gets or sets the source or destination of the transmitted data.
+        /// </summary>
+        public System.Runtime.Serialization.StreamingContextStates State
+        {
+            get { return state; }
+            set { if (state != value) { ThrowIfFrozen(); state = value; } }
+        }
+
+		/// <summary>
+		/// Convert a SerializationContext to a StreamingContext
+		/// </summary>
+		public static implicit operator System.Runtime.Serialization.StreamingContext(SerializationContext ctx)
+        {
+            if (ctx == null) return new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.Persistence);
+            return new System.Runtime.Serialization.StreamingContext(ctx.state, ctx.context);
+        }
+        /// <summary>
+        /// Convert a StreamingContext to a SerializationContext
+        /// </summary>
+        public static implicit operator SerializationContext (System.Runtime.Serialization.StreamingContext ctx)
+        {
+            SerializationContext result = new SerializationContext();
+
+            result.Context = ctx.Context;
+            result.State = ctx.State;
+
+			return result;
+        }
+
 #if PLAT_BINARYFORMATTER || (SILVERLIGHT && NET_4_0)
 
 #if !(WINRT || PHONE7 || PHONE8)

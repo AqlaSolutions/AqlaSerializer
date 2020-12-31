@@ -221,7 +221,7 @@ namespace AqlaSerializer.Meta
             throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + Type.FullName + " or once its settings were used for generating member serializer");
         }
 
-        
+
         /// <summary>
         /// Get the name of the type being represented
         /// </summary>
@@ -234,6 +234,102 @@ namespace AqlaSerializer.Meta
         public enum AttributeFamily
         {
             None = 0, ProtoBuf = 1, DataContractSerialier = 2, XmlSerializer = 4, AutoTuple = 8, Aqla = 16, ImplicitFallback = 32, SystemSerializable = 64
+        }
+
+        private static IEnumerable<Type> GetAllGenericArguments(Type type)
+        {
+            var genericArguments = type.GetGenericArguments();
+            foreach (var arg in genericArguments)
+            {
+                yield return arg;
+                foreach (var inner in GetAllGenericArguments(arg))
+                {
+                    yield return inner;
+                }
+            }
+        }
+
+
+        internal IEnumerable<Type> GetAllGenericArguments()
+        {
+            return GetAllGenericArguments(Type);
+        }
+
+        private static StringBuilder AddOption(StringBuilder builder, ref bool hasOption)
+        {
+            if (hasOption)
+                return builder.Append(", ");
+            hasOption = true;
+            return builder.Append(" [");
+        }
+
+        private static StringBuilder CloseOption(StringBuilder builder, ref bool hasOption)
+        {
+            if (hasOption)
+            {
+                hasOption = false;
+                return builder.Append("]");
+            }
+            return builder;
+        }
+
+        private static bool IsImplicitDefault(object value)
+        {
+            try
+            {
+                if (value == null) return false;
+                switch (Helpers.GetTypeCode(value.GetType()))
+                {
+                    case ProtoTypeCode.Boolean: return !(bool)value;
+                    case ProtoTypeCode.Byte: return ((byte)value) == 0;
+                    case ProtoTypeCode.Char: return ((char)value) == '\0';
+                    case ProtoTypeCode.DateTime: return ((DateTime)value) == default;
+                    case ProtoTypeCode.Decimal: return ((decimal)value) == 0M;
+                    case ProtoTypeCode.Double: return ((double)value) == 0;
+                    case ProtoTypeCode.Int16: return ((short)value) == 0;
+                    case ProtoTypeCode.Int32: return ((int)value) == 0;
+                    case ProtoTypeCode.Int64: return ((long)value) == 0;
+                    case ProtoTypeCode.SByte: return ((sbyte)value) == 0;
+                    case ProtoTypeCode.Single: return ((float)value) == 0;
+                    case ProtoTypeCode.String: return value != null && ((string)value).Length == 0;
+                    case ProtoTypeCode.TimeSpan: return ((TimeSpan)value) == TimeSpan.Zero;
+                    case ProtoTypeCode.UInt16: return ((ushort)value) == 0;
+                    case ProtoTypeCode.UInt32: return ((uint)value) == 0;
+                    case ProtoTypeCode.UInt64: return ((ulong)value) == 0;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private static bool CanPack(Type type)
+        {
+            if (type == null) return false;
+            switch (Helpers.GetTypeCode(type))
+            {
+                case ProtoTypeCode.Boolean:
+                case ProtoTypeCode.Byte:
+                case ProtoTypeCode.Char:
+                case ProtoTypeCode.Double:
+                case ProtoTypeCode.Int16:
+                case ProtoTypeCode.Int32:
+                case ProtoTypeCode.Int64:
+                case ProtoTypeCode.SByte:
+                case ProtoTypeCode.Single:
+                case ProtoTypeCode.UInt16:
+                case ProtoTypeCode.UInt32:
+                case ProtoTypeCode.UInt64:
+                    return true;
+            }
+            return false;
+        }
+
+        internal bool HasSurrogate
+        {
+            get
+            {
+                return surrogate != null;
+            }
         }
 
 

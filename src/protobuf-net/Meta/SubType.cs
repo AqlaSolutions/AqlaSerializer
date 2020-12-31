@@ -1,6 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
+using System.Collections.Generic;
 using AqlaSerializer.Serializers;
 
 namespace AqlaSerializer.Meta
@@ -10,10 +11,7 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed class SubType
     {
-        internal sealed class Comparer : System.Collections.IComparer
-#if !NO_GENERICS
-, System.Collections.Generic.IComparer<SubType>
-#endif
+        internal sealed class Comparer : System.Collections.IComparer, IComparer<SubType>
         {
             public static readonly Comparer Default = new Comparer();
             public int Compare(object x, object y)

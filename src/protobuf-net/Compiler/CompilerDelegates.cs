@@ -2,7 +2,7 @@
 #if FEAT_COMPILER
 namespace AqlaSerializer.Compiler
 {
-    internal delegate void ProtoSerializer(object value, ProtoWriter dest);
-    internal delegate object ProtoDeserializer(object value, ProtoReader source);
+    internal delegate void ProtoSerializer(ProtoWriter dest, ref ProtoWriter.State state, object value);
+    internal delegate object ProtoDeserializer(ProtoReader source, ref ProtoReader.State state, object value);
 }
 #endif

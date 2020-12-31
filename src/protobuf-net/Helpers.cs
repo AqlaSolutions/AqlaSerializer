@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.Threading;
+using System.Text;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -191,19 +192,9 @@ namespace AqlaSerializer
 #endif
         }
 
-        public static System.Text.StringBuilder AppendLine(System.Text.StringBuilder builder)
+        public static StringBuilder AppendLine(StringBuilder builder)
         {
-#if CF2
-            return builder.Append("\r\n");
-#elif FX11
-            return builder.Append(Environment.NewLine);
-#else
             return builder.AppendLine();
-#endif
-        }
-        public static bool IsNullOrEmpty(string value)
-        { // yes, FX11 lacks this!
-            return value == null || value.Length == 0;
         }
 
         [System.Diagnostics.Conditional("DEBUG")]
@@ -226,11 +217,7 @@ namespace AqlaSerializer
         public static void DebugWriteLine(string message)
         {
 #if DEBUG
-#if MF
-            Microsoft.SPOT.Debug.Print(message);
-#else
             System.Diagnostics.Debug.WriteLine(message);
-#endif
 #endif
         }
         [System.Diagnostics.Conditional("TRACE")]
@@ -253,12 +240,10 @@ namespace AqlaSerializer
 #if DEBUG
             if (!condition)
             {
-#if MF
-                Microsoft.SPOT.Debug.Assert(false, message);
-#else
+#pragma warning disable RCS1178 // Call Debug.Fail instead of Debug.Assert.
                 System.Diagnostics.Debug.Assert(false, message);
+#pragma warning restore RCS1178 // Call Debug.Fail instead of Debug.Assert.
             }
-#endif
 #endif
         }
         [System.Diagnostics.Conditional("DEBUG")]
@@ -271,13 +256,9 @@ namespace AqlaSerializer
         [System.Diagnostics.Conditional("DEBUG")]
         public static void DebugAssert(bool condition)
         {
-#if DEBUG
-#if MF
-            Microsoft.SPOT.Debug.Assert(condition);
-#else
-            if(!condition && System.Diagnostics.Debugger.IsAttached) System.Diagnostics.Debugger.Break();
+#if DEBUG   
+            if (!condition && System.Diagnostics.Debugger.IsAttached) System.Diagnostics.Debugger.Break();
             System.Diagnostics.Debug.Assert(condition);
-#endif
 #endif
         }
 
@@ -342,15 +323,6 @@ namespace AqlaSerializer
             Array.Copy(from, fromIndex, to, toIndex, count);
 #else
             Buffer.BlockCopy(from, fromIndex, to, toIndex, count);
-#endif
-        }
-        public static bool IsInfinity(float value)
-        {
-#if MF
-            const float inf = (float)1.0 / (float)0.0, minf = (float)-1.0F / (float)0.0;
-            return value == inf || value == minf;
-#else
-            return float.IsInfinity(value);
 #endif
         }
 #if WINRT
@@ -432,16 +404,6 @@ namespace AqlaSerializer
             return type.GetTypeInfo().IsSubclassOf(baseClass);
 #else
             return type.IsSubclassOf(baseClass);
-#endif
-        }
-
-        public static bool IsInfinity(double value)
-        {
-#if MF
-            const double inf = (double)1.0 / (double)0.0, minf = (double)-1.0F / (double)0.0;
-            return value == inf || value == minf;
-#else
-            return double.IsInfinity(value);
 #endif
         }
         public static readonly Type[] EmptyTypes =
@@ -791,8 +753,8 @@ namespace AqlaSerializer
 #endif
 
 
-        internal static object ParseEnum(Type type, string value)
-        {
+internal static object ParseEnum(Type type, string value)
+{
 #if FEAT_IKVM
             FieldInfo[] fields = type.GetFields();
             foreach (FieldInfo field in fields)
@@ -801,9 +763,9 @@ namespace AqlaSerializer
             }
             throw new ArgumentException("Enum value could not be parsed: " + value + ", " + type.FullName);
 #else
-            return Enum.Parse(type, value, true);
+    		return Enum.Parse(type, value, true);
 #endif
-        }
+}
 
 
         internal static MemberInfo[] GetInstanceFieldsAndProperties(Type type, bool publicOnly)

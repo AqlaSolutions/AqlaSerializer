@@ -3,6 +3,7 @@ using System;
 using System.IO;
 
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using AqlaSerializer.Internal;
 #if FEAT_IKVM
@@ -70,10 +71,10 @@ namespace AqlaSerializer.Meta
             ExtensibleUtil = new ExtensibleUtil(this);
         }
 
-/// <summary>
-/// Should the <c>Kind</c> be included on date/time values?
-/// </summary>
-protected internal virtual bool SerializeDateTimeKind() { return false; }
+		/// <summary>
+		/// Should the <c>Kind</c> be included on date/time values?
+		/// </summary>
+		protected internal virtual bool SerializeDateTimeKind() { return false; }
 
         /// <summary>
         /// Resolve a System.Type to the compiler-specific type
@@ -217,15 +218,15 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             }
         }
 #endif
-        /// <summary>
-        /// Writes a protocol-buffer representation of the given instance to the supplied stream.
-        /// </summary>
-        /// <param name="value">The existing instance to be serialized (cannot be null).</param>
-        /// <param name="dest">The destination stream to write to.</param>
-        public void Serialize(Stream dest, object value)
-        {
-            Serialize(dest, value, null);
-        }
+		/// <summary>
+		/// Writes a protocol-buffer representation of the given instance to the supplied stream.
+		/// </summary>
+		/// <param name="value">The existing instance to be serialized (cannot be null).</param>
+		/// <param name="dest">The destination stream to write to.</param>
+		public void Serialize(Stream dest, object value)
+		{
+		    Serialize(dest, value, null);
+		}
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream.
         /// </summary>
@@ -250,18 +251,11 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// </summary>
         /// <param name="value">The existing instance to be serialized (cannot be null).</param>
         /// <param name="dest">The destination writer to write to.</param>
+        [Obsolete(ProtoWriter.UseStateAPI, false)]
         public void Serialize(ProtoWriter dest, object value)
         {
-#if FEAT_IKVM
-            throw new NotSupportedException();
-#else
-            if (dest == null) throw new ArgumentNullException(nameof(dest));
-            dest.CheckDepthFlushlock();
-            dest.SetRootObject(value);
-            SerializeCore(dest, value, true);
-            dest.CheckDepthFlushlock();
-            ProtoWriter.Flush(dest);
-#endif
+            ProtoWriter.State state = dest.DefaultState();
+            Serialize(dest, ref state, value);
         }
 
         /// <summary>
@@ -278,6 +272,21 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         public T DeserializeWithLengthPrefix<T>(Stream source, T value, PrefixStyle style, int fieldNumber)
         {
             return (T)DeserializeWithLengthPrefix(source, value, MapType(typeof(T)), style, fieldNumber);
+        }
+
+        /// <summary>
+        /// Writes a protocol-buffer representation of the given instance to the supplied writer.
+        /// </summary>
+        /// <param name="value">The existing instance to be serialized (cannot be null).</param>
+        /// <param name="dest">The destination writer to write to.</param>
+        /// <param name="state">Writer state</param>
+        public void Serialize(ProtoWriter dest, ref ProtoWriter.State state, object value)
+        {
+            if (dest == null) throw new ArgumentNullException(nameof(dest));
+            dest.CheckClear(ref state);
+            dest.SetRootObject(value);
+            SerializeCore(dest, ref state, value);
+            dest.CheckClear(ref state);
         }
 
         /// <summary>
@@ -467,7 +476,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// <param name="resolver">On a field-by-field basis, the type of object to deserialize (can be null if "type" is specified). </param>
         /// <param name="type">The type of object to deserialize (can be null if "resolver" is specified).</param>
         /// <returns>The sequence of deserialized objects.</returns>
-        public System.Collections.IEnumerable DeserializeItems(System.IO.Stream source, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver)
+        public IEnumerable DeserializeItems(System.IO.Stream source, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver)
         {
             return DeserializeItems(source, type, style, expectedField, resolver, null);
         }
@@ -488,31 +497,30 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// <param name="type">The type of object to deserialize (can be null if "resolver" is specified).</param>
         /// <returns>The sequence of deserialized objects.</returns>
         /// <param name="context">Additional information about this serialization operation.</param>
-        public System.Collections.IEnumerable DeserializeItems(System.IO.Stream source, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, SerializationContext context)
+        public IEnumerable DeserializeItems(System.IO.Stream source, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, SerializationContext context)
         {
             return new DeserializeItemsIterator(this, source, type, style, expectedField, resolver, context);
         }
 
-#if !NO_GENERICS
-        /// <summary>
-        /// Reads a sequence of consecutive length-prefixed items from a stream, using
-        /// either base-128 or fixed-length prefixes. Base-128 prefixes with a tag
-        /// are directly comparable to serializing multiple items in succession
-        /// (use the <see cref="Serializer.ListItemTag"/> tag to emulate the implicit behavior
-        /// when serializing a list/array). When a tag is
-        /// specified, any records with different tags are silently omitted. The
-        /// tag is ignored. The tag is ignores for fixed-length prefixes.
-        /// </summary>
-        /// <typeparam name="T">The type of object to deserialize.</typeparam>
-        /// <param name="source">The binary stream containing the serialized records.</param>
-        /// <param name="style">The prefix style used in the data.</param>
-        /// <param name="expectedField">The tag of records to return (if non-positive, then no tag is
-        /// expected and all records are returned).</param>
-        /// <returns>The sequence of deserialized objects.</returns>
-        public System.Collections.Generic.IEnumerable<T> DeserializeItems<T>(Stream source, PrefixStyle style, int expectedField)
-        {
-            return DeserializeItems<T>(source, style, expectedField, null);
-        }
+		/// <summary>
+		/// Reads a sequence of consecutive length-prefixed items from a stream, using
+		/// either base-128 or fixed-length prefixes. Base-128 prefixes with a tag
+		/// are directly comparable to serializing multiple items in succession
+		/// (use the <see cref="Serializer.ListItemTag"/> tag to emulate the implicit behavior
+		/// when serializing a list/array). When a tag is
+		/// specified, any records with different tags are silently omitted. The
+		/// tag is ignored. The tag is ignores for fixed-length prefixes.
+		/// </summary>
+		/// <typeparam name="T">The type of object to deserialize.</typeparam>
+		/// <param name="source">The binary stream containing the serialized records.</param>
+		/// <param name="style">The prefix style used in the data.</param>
+		/// <param name="expectedField">The tag of records to return (if non-positive, then no tag is
+		/// expected and all records are returned).</param>
+		/// <returns>The sequence of deserialized objects.</returns>
+		public IEnumerable<T> DeserializeItems<T>(Stream source, PrefixStyle style, int expectedField)
+		{
+		    return DeserializeItems<T>(source, style, expectedField, null);
+		}
         /// <summary>
         /// Reads a sequence of consecutive length-prefixed items from a stream, using
         /// either base-128 or fixed-length prefixes. Base-128 prefixes with a tag
@@ -529,24 +537,22 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// expected and all records are returned).</param>
         /// <returns>The sequence of deserialized objects.</returns>
         /// <param name="context">Additional information about this serialization operation.</param>
-        public System.Collections.Generic.IEnumerable<T> DeserializeItems<T>(Stream source, PrefixStyle style, int expectedField, SerializationContext context)
+        public IEnumerable<T> DeserializeItems<T>(Stream source, PrefixStyle style, int expectedField, SerializationContext context)
         {
             return new DeserializeItemsIterator<T>(this, source, style, expectedField, context);
         }
 
-        private sealed class DeserializeItemsIterator<T> : DeserializeItemsIterator,
-            System.Collections.Generic.IEnumerator<T>,
-            System.Collections.Generic.IEnumerable<T>
+        private sealed class DeserializeItemsIterator<T> : DeserializeItemsIterator, IEnumerator<T>, IEnumerable<T>
         {
-            System.Collections.Generic.IEnumerator<T> System.Collections.Generic.IEnumerable<T>.GetEnumerator() { return this; }
+            IEnumerator<T> IEnumerable<T>.GetEnumerator() { return this; }
             public new T Current => (T)base.Current;
             void IDisposable.Dispose() { }
             public DeserializeItemsIterator(TypeModel model, Stream source, PrefixStyle style, int expectedField, SerializationContext context)
                 : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context) { }
         }
 #endif
-        private class DeserializeItemsIterator : IEnumerator, IEnumerable
-        {
+		private class DeserializeItemsIterator : IEnumerator, IEnumerable
+		{
             IEnumerator IEnumerable.GetEnumerator() { return this; }
             private bool _haveObject;
 
@@ -578,7 +584,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 this._model = model;
                 this._context = context;
             }
-        }
+}
 
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied stream,
@@ -674,7 +680,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         {
             return (T)Deserialize(source, value, typeof(T));
         }
-        #endif        
+        #endif
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -687,7 +693,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         public object Deserialize(Stream source, object value, System.Type type)
         {
             return Deserialize(source, value, type, null);
-        }        
+        }
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -702,7 +708,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         {
             return Deserialize(source, value, type, ProtoReader.TO_EOF, context);
         }
-        
+
         private bool PrepareDeserialize(object value, ref Type type)
         {
             if (type == null)
@@ -717,14 +723,12 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 }
             }
             bool autoCreate = true;
-#if !NO_GENERICS
             Type underlyingType = Helpers.GetNullableUnderlyingType(type);
             if (underlyingType != null)
             {
                 type = underlyingType;
                 autoCreate = false;
             }
-#endif
             return autoCreate;
         }
 
@@ -808,10 +812,52 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             return obj;
 #endif
         }
+
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="key">Represents the type (including inheritance) to consider.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="isRoot"></param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        protected internal abstract object Deserialize(int key, object value, ProtoReader source, bool isRoot);
+
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="type">The type (including inheritance) to consider.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="length">The number of bytes to consume (or -1 to read to the end of the stream).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        /// <param name="context">Additional information about this serialization operation.</param>
+        public object Deserialize(Stream source, object value, System.Type type, int length, SerializationContext context)
+            => Deserialize(source, value, type, length == int.MaxValue ? long.MaxValue : (long)length, context);
+
+        /// <summary>
+        /// Applies a protocol-buffer reader to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="type">The type (including inheritance) to consider.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The reader to apply to the instance (cannot be null).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        [Obsolete(ProtoReader.UseStateAPI, false)]
+        public object Deserialize(ProtoReader source, object value, Type type)
+        {
+            ProtoReader.State state = source.DefaultState();
+            return Deserialize(source, ref state, value, type);
+        }
         
         internal const int EnumRootTag = 1;
 #if !FEAT_IKVM
-        private object DeserializeCore(ProtoReader reader, Type type, object value, bool noAutoCreate, bool isRoot)
+        private object DeserializeAny(ProtoReader reader, Type type, object value, bool noAutoCreate, bool isRoot)
         {
             int key = GetKey(ref type);
             if (key >= 0 && !Helpers.IsEnum(type))
@@ -931,16 +977,16 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
 #endif
 
 #if !NO_RUNTIME
-        /// <summary>
-        /// Creates a new runtime model, to which the caller
-        /// can add support for a range of types. A model
-        /// can be used "as is", or can be compiled for
-        /// optimal performance.
-        /// </summary>
-        public static RuntimeTypeModel Create()
-        {
-            return Create(false, ProtoCompatibilitySettingsValue.Default);
-        }
+/// <summary>
+/// Creates a new runtime model, to which the caller
+/// can add support for a range of types. A model
+/// can be used "as is", or can be compiled for
+/// optimal performance.
+/// </summary>
+public static RuntimeTypeModel Create()
+{
+    return Create(false, ProtoCompatibilitySettingsValue.Default);
+}
 
         /// <summary>
         /// Creates a new runtime model, to which the caller
@@ -998,13 +1044,20 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
 #endif
             return null;
         }
+
+        internal bool TryDeserializeAuxiliaryType(ProtoReader reader, ref ProtoReader.SolidState state, DataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, object parentListOrType)
+        {
+            var liquid = state.Liquify();
+            var result = TryDeserializeAuxiliaryType(reader, ref liquid, format, tag, type, ref value,
+                skipOtherFields, asListItem, autoCreate, insideList, parentListOrType);
+            state = liquid.Solidify();
+            return result;
+        }
+
         /// <summary>
         /// Indicates whether the supplied type is explicitly modelled by the model
         /// </summary>
-        public bool IsDefined(Type type)
-        {
-            return GetKey(ref type) >= 0;
-        }
+        public bool IsDefined(Type type) => GetKey(ref type) >= 0;
         /// <summary>
         /// Provides the key that represents a given type in the current model.
         /// The type is also normalized for proxies at the same time.
@@ -1046,17 +1099,27 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// <param name="isRoot"></param>
         protected internal abstract void Serialize(int key, object value, ProtoWriter dest, bool isRoot);
 
+        private readonly Dictionary<Type, KnownTypeKey> knownKeys = new Dictionary<Type, KnownTypeKey>();
+
+        // essentially just a ValueTuple<int,Type> - I just don't want the extra dependency
+        private readonly struct KnownTypeKey
+        {
+            public KnownTypeKey(Type type, int key)
+            {
+                Type = type;
+                Key = key;
+            }
+
+            public int Key { get; }
+
+            public Type Type { get; }
+        }
+
         /// <summary>
-        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// Get a typed serializer for <typeparamref name="T"/>
         /// </summary>
-        /// <param name="key">Represents the type (including inheritance) to consider.</param>
-        /// <param name="value">The existing instance to be modified (can be null).</param>
-        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
-        /// <param name="isRoot"></param>
-        /// <returns>The updated instance; this may be different to the instance argument if
-        /// either the original instance was null, or the stream defines a known sub-type of the
-        /// original instance.</returns>
-        protected internal abstract object Deserialize(int key, object value, ProtoReader source, bool isRoot);
+        protected internal virtual IProtoSerializer<T> GetSerializer<T>()
+            => this as IProtoSerializer<T>;
         
         //internal ProtoSerializer Create(IProtoSerializer head)
         //{
@@ -1085,6 +1148,18 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             /// Invoked after an object is deserialized
             /// </summary>
             AfterDeserialize
+        }
+
+        /// <summary>
+        /// Advertise that a type's key can have changed
+        /// </summary>
+        internal void ResetKeyCache()
+        {
+            // clear *everything* (think: multi-level - can be many descendents)
+            lock (knownKeys)
+            {
+                knownKeys.Clear();
+            }
         }
 
         internal bool ForceSerializationDuringClone { get; set; }
@@ -1207,6 +1282,18 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         }
 
         /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="key">Represents the type (including inheritance) to consider.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="state">Reader state</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        protected internal abstract object DeserializeCore(ProtoReader source, ref ProtoReader.State state, int key, object value);
+
+        /// <summary>
         /// Indicates that the given type was not expected, and cannot be processed.
         /// </summary>
         protected internal static void ThrowUnexpectedType(Type type)
@@ -1222,9 +1309,10 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
 #endif
             throw new InvalidOperationException("Type is not expected, and no contract can be inferred: " + fullName);
         }
-        internal static Exception CreateNestedListsNotSupported()
+
+        internal static Exception CreateNestedListsNotSupported(Type type)
         {
-            return new NotSupportedException("Nested or jagged lists and arrays are not supported");
+            return new NotSupportedException("Nested or jagged lists and arrays are not supported: " + (type?.FullName ?? "(null)"));
         }
         /// <summary>
         /// Indicates that the given type cannot be constructed; it may still be possible to 
@@ -1242,10 +1330,20 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             {
                 TypeFormatEventArgs args = new TypeFormatEventArgs(type);
                 handler(model, args);
-                if (!Helpers.IsNullOrEmpty(args.FormattedName)) return args.FormattedName;
+                if (!string.IsNullOrEmpty(args.FormattedName)) return args.FormattedName;
             }
             return type.AssemblyQualifiedName;
         }
+
+        /// <summary>
+        /// Global switch that determines whether a single instance of the same string should be used during deserialization.
+        /// </summary>
+        public bool InternStrings => GetInternStrings();
+
+        /// <summary>
+        /// Global switch that determines whether a single instance of the same string should be used during deserialization.
+        /// </summary>
+        protected internal virtual bool GetInternStrings() => false;
 
         internal static System.Type DeserializeType(TypeModel model, string value)
         {
@@ -1266,28 +1364,20 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// <remarks>Note that primitives always return false, even though the engine
         /// will, if forced, try to serialize such</remarks>
         /// <returns>True if this type is recognised as a serializable entity, else false</returns>
-        public bool CanSerializeContractType(Type type)
-        {
-            return CanSerialize(type, false, true, true);
-        }
+        public bool CanSerializeContractType(Type type) => CanSerialize(type, false, true, true);
 
         /// <summary>
         /// Returns true if the type supplied is a basic type with inbuilt handling,
         /// a recognised contract type, or a *list* of a basic / contract type. 
         /// </summary>
-        public bool CanSerialize(Type type)
-        {
-            return CanSerialize(type, true, true, true);
-        }
+        public bool CanSerialize(Type type) => CanSerialize(type, true, true, true);
 
         /// <summary>
         /// Returns true if the type supplied is a basic type with inbuilt handling,
         /// or a *list* of a basic type with inbuilt handling
         /// </summary>
-        public bool CanSerializeBasicType(Type type)
-        {
-            return CanSerialize(type, true, false, true);
-        }
+        public bool CanSerializeBasicType(Type type) => CanSerialize(type, true, false, true);
+
         private bool CanSerialize(Type type, bool allowBasic, bool allowContract, bool allowLists)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -1316,7 +1406,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 }
                 else
                 {
-                    itemType = GetListItemType(this, type);
+                    itemType = GetListItemType(type);
                 }
                 if (itemType != null) return CanSerialize(itemType, allowBasic, allowContract, true);
             }
@@ -1333,11 +1423,13 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// </summary>
         /// <param name="type">The type to generate a .proto definition for, or <c>null</c> to generate a .proto that represents the entire model</param>
         /// <returns>The .proto definition as a string</returns>
-        public virtual string GetSchema(Type type)
+        /// <param name="syntax">The .proto syntax to use for the operation</param>
+        public virtual string GetSchema(Type type, ProtoSyntax syntax)
         {
             throw new NotSupportedException();
         }
 
+        #pragma warning disable RCS1159 // Use EventHandler<T>.
         /// <summary>
         /// Used to provide custom services for writing and parsing type names when using dynamic types. Both parsing and formatting
         /// are provided on a single API as it is essential that both are mapped identically at all times.
@@ -1406,6 +1498,13 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
 #endif
         }
 
+        /// <summary>
+        /// Suggest a .proto definition for the given type
+        /// </summary>
+        /// <param name="type">The type to generate a .proto definition for, or <c>null</c> to generate a .proto that represents the entire model</param>
+        /// <returns>The .proto definition as a string</returns>
+        public virtual string GetSchema(Type type) => GetSchema(type, ProtoSyntax.Proto2);
+
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         internal static Type ResolveKnownType(string name, TypeModel model, Assembly assembly)
         {
@@ -1455,6 +1554,55 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 return Deserialize<TTo>(ms);
             }
         }
+#pragma warning restore RCS1159 // Use EventHandler<T>.
+
+        /// <summary>
+        /// Creates a new IFormatter that uses protocol-buffer [de]serialization.
+        /// </summary>
+        /// <returns>A new IFormatter to be used during [de]serialization.</returns>
+        /// <param name="type">The type of object to be [de]deserialized by the formatter.</param>
+        public System.Runtime.Serialization.IFormatter CreateFormatter(Type type)
+        {
+            return new Formatter(this, type);
+        }
+
+        internal sealed class Formatter : System.Runtime.Serialization.IFormatter
+        {
+            private readonly TypeModel model;
+            private readonly Type type;
+            internal Formatter(TypeModel model, Type type)
+            {
+                this.model = model ?? throw new ArgumentNullException(nameof(model));
+                this.type = type ?? throw new ArgumentNullException(nameof(type));
+            }
+
+            public System.Runtime.Serialization.SerializationBinder Binder { get; set; }
+
+            public System.Runtime.Serialization.StreamingContext Context { get; set; }
+
+            public object Deserialize(Stream serializationStream)
+                => model.Deserialize(serializationStream, null, type, (long)-1, Context);
+            /// <summary>
+            /// Writes a protocol-buffer representation of the given instance to the supplied writer.
+            /// </summary>
+            /// <param name="value">The existing instance to be serialized (cannot be null).</param>
+            /// <param name="dest">The destination writer to write to.</param>
+            public void Serialize(ProtoWriter dest, object value)
+            {
+    #if FEAT_IKVM
+                throw new NotSupportedException();
+    #else
+                if (dest == null) throw new ArgumentNullException(nameof(dest));
+                dest.CheckDepthFlushlock();
+                dest.SetRootObject(value);
+                SerializeCore(dest, value, true);
+                dest.CheckDepthFlushlock();
+                ProtoWriter.Flush(dest);
+    #endif
+            }
+
+            public System.Runtime.Serialization.ISurrogateSelector SurrogateSelector { get; set; }
+        }
 #endif
 
         /// <summary>
@@ -1477,6 +1625,4 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             }
         }
     }
-
 }
-

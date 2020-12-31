@@ -1,7 +1,6 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 
 using System;
-using System.Threading;
 namespace AqlaSerializer
 {
     internal sealed class BufferPool
@@ -21,9 +20,11 @@ namespace AqlaSerializer
 #endif
         }
         private BufferPool() { }
-        const int PoolSize = 20;
-        internal const int BufferLength = 1024;
+        private const int POOL_SIZE = 20;
+        internal const int BUFFER_LENGTH = 1024;
         private static readonly object[] Pool = new object[PoolSize];
+
+        internal static byte[] GetBuffer() => GetBuffer(BUFFER_LENGTH);
 
         internal static byte[] GetBuffer()
         {
@@ -50,6 +51,48 @@ namespace AqlaSerializer
         }
 
         static readonly bool Is32Bit = IntPtr.Size <= 4;
+
+        internal static byte[] GetCachedBuffer(int minSize)
+        {
+            lock (Pool)
+            {
+                var bestIndex = -1;
+                byte[] bestMatch = null;
+                for (var i = 0; i < Pool.Length; i++)
+                {
+                    var buffer = Pool[i];
+                    if (buffer == null || buffer.Size < minSize)
+                    {
+                        continue;
+                    }
+                    if (bestMatch != null && bestMatch.Length < buffer.Size)
+                    {
+                        continue;
+                    }
+
+                    var tmp = buffer.Buffer;
+                    if (tmp == null)
+                    {
+                        Pool[i] = null;
+                    }
+                    else
+                    {
+                        bestMatch = tmp;
+                        bestIndex = i;
+                    }
+                }
+
+                if (bestIndex >= 0)
+                {
+                    Pool[bestIndex] = null;
+                }
+
+                return bestMatch;
+            }
+        }
+
+        // https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/gcallowverylargeobjects-element
+        private const int MaxByteArraySize = int.MaxValue - 56;
 
         internal static void ResizeAndFlushLeft(ref byte[] buffer, int toFitAtLeastBytes, int copyFromIndex, int copyBytes)
         {
@@ -105,6 +148,22 @@ namespace AqlaSerializer
             }
             // if no space, just drop it on the floor
             buffer = null;
+        }
+
+        private class CachedBuffer
+        {
+            private readonly WeakReference _reference;
+
+            public int Size { get; }
+
+            public bool IsAlive => _reference.IsAlive;
+            public byte[] Buffer => (byte[])_reference.Target;
+
+            public CachedBuffer(byte[] buffer)
+            {
+                Size = buffer.Length;
+                _reference = new WeakReference(buffer);
+            }
         }
 
     }

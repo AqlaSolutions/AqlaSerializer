@@ -1,4 +1,5 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿using System;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_GENERICS
 using System.Collections.Generic;
 #endif
@@ -296,7 +297,7 @@ namespace AqlaSerializer
         /// <returns>True if data for the field was present, false otherwise.</returns>
         public static bool TryGetValue<TValue>(TypeModel model, IExtensible instance, int tag, BinaryDataFormat format, bool allowDefinedTag, out TValue value)
         {
-            value = default(TValue);
+            value = default;
             bool set = false;
             foreach (TValue val in model.ExtensibleUtil.GetExtendedValues<TValue>(instance, tag, format, true, allowDefinedTag))
             {
