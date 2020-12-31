@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf.Reflection;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     public partial class CommonCodeGenerator
     {

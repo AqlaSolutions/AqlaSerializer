@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     /// <summary>
     /// Abstract root for a general purpose code-generator

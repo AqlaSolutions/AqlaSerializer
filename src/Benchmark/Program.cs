@@ -1,7 +1,7 @@
 ﻿#pragma warning disable RCS1213
 
 using BenchmarkDotNet.Running;
-using ProtoBuf;
+using AqlaSerializer;
 using System;
 
 namespace Benchmark

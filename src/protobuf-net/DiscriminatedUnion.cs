@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>Represent multiple types as a union; this is used as part of OneOf -
     /// note that it is the caller's responsbility to only read/write the value as the same type</summary>

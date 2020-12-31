@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     public partial class ProtoWriter
     {

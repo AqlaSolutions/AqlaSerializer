@@ -1,4 +1,4 @@
-﻿namespace ProtoBuf
+﻿namespace AqlaSerializer
 {
     /// <summary>
     /// Abstract API capable of serializing/deserializing

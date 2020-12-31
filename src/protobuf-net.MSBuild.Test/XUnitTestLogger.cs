@@ -2,7 +2,7 @@
 using System.Collections;
 using Xunit.Abstractions;
 
-namespace ProtoBuf.Build
+namespace AqlaSerializer.Build
 {
     class XUnitTestLogger : ILogger
     {

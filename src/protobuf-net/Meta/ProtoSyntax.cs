@@ -1,4 +1,4 @@
-﻿namespace ProtoBuf.Meta
+﻿namespace AqlaSerializer.Meta
 {
     /// <summary>
     /// Indiate the variant of the protobuf .proto DSL syntax to use

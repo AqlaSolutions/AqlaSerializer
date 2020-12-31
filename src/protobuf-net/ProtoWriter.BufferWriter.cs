@@ -1,5 +1,5 @@
 ﻿//#if PLAT_SPANS
-//using ProtoBuf.Meta;
+//using AqlaSerializer.Meta;
 //using System;
 //using System.Buffers;
 //using System.IO;
@@ -7,7 +7,7 @@
 //using System.Runtime.InteropServices;
 //using System.Text;
 
-//namespace ProtoBuf
+//namespace AqlaSerializer
 //{
 //    public partial class ProtoWriter
 //    {

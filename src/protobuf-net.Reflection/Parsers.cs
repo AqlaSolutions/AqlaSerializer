@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf.Reflection;
-using ProtoBuf;
-using ProtoBuf.Reflection;
+using AqlaSerializer;
+using AqlaSerializer.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -2236,7 +2236,7 @@ namespace Google.Protobuf.Reflection
 
 #pragma warning restore CS1591
 }
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     internal static class ErrorExtensions
     {

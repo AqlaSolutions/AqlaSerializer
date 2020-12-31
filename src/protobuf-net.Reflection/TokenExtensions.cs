@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     internal static class TokenExtensions
     {

@@ -1,4 +1,4 @@
-﻿namespace ProtoBuf
+﻿namespace AqlaSerializer
 {
     /// <summary>
     /// Registry of known errors / warnings

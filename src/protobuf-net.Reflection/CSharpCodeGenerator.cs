@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     /// <summary>
     /// A code generator that writes C#

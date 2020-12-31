@@ -1,12 +1,12 @@
 ﻿#if !NO_RUNTIME
 using System;
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
 #if FEAT_COMPILER
 using System.Reflection.Emit;
 #endif
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     internal sealed class SubItemSerializer : IProtoTypeSerializer
     {

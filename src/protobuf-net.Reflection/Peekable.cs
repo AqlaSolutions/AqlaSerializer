@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     internal sealed class Peekable<T> : IDisposable
     {

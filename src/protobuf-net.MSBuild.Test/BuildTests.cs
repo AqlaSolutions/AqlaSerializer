@@ -9,7 +9,7 @@ using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace ProtoBuf.Build
+namespace AqlaSerializer.Build
 {
     internal class MSBuildFixture : IDisposable
     {

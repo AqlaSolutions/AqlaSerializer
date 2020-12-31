@@ -1,12 +1,12 @@
 ﻿using Google.Protobuf.Reflection;
-using ProtoBuf.Reflection;
+using AqlaSerializer.Reflection;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// A code generator that writes VB

@@ -2,8 +2,8 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using ProtoBuf;
-using ProtoBuf.Meta;
+using AqlaSerializer;
+using AqlaSerializer.Meta;
 using System;
 using System.IO;
 

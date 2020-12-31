@@ -1,13 +1,13 @@
 ﻿#pragma warning disable RCS1165
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 using System;
 #if FEAT_COMPILER
-using ProtoBuf.Compiler;
+using AqlaSerializer.Compiler;
 #endif
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     internal class MapDecorator<TDictionary, TKey, TValue> : ProtoDecoratorBase where TDictionary : class, IDictionary<TKey, TValue>
     {

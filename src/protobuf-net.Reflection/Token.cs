@@ -1,7 +1,7 @@
 ﻿using Google.Protobuf.Reflection;
 using System;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
     internal struct Token
     {

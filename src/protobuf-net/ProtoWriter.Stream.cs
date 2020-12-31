@@ -1,8 +1,8 @@
-﻿using ProtoBuf.Meta;
+﻿using AqlaSerializer.Meta;
 using System;
 using System.IO;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     public partial class ProtoWriter
     {

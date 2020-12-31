@@ -2,7 +2,7 @@
 using System;
 using Xunit.Abstractions;
 
-namespace ProtoBuf.Build
+namespace AqlaSerializer.Build
 {
     class ConsoleOutput : ITestOutputHelper
     {

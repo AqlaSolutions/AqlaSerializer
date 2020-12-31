@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     [Serializable]
     public readonly partial struct DiscriminatedUnionObject : ISerializable

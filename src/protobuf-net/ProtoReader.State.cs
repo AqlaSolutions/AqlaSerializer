@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     public partial class ProtoReader
     {

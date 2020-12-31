@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace ProtoBuf.Reflection
+namespace AqlaSerializer.Reflection
 {
 #pragma warning disable RCS1194 // Implement exception constructors.
     internal class ParserException : Exception

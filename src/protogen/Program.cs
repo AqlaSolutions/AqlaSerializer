@@ -1,6 +1,6 @@
 ﻿using Google.Protobuf.Reflection;
-using ProtoBuf;
-using ProtoBuf.Reflection;
+using AqlaSerializer;
+using AqlaSerializer.Reflection;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -2,9 +2,9 @@
 using System;
 using System.Reflection;
 
-using ProtoBuf.Meta;
+using AqlaSerializer.Meta;
 
-namespace ProtoBuf.Serializers
+namespace AqlaSerializer.Serializers
 {
     internal sealed class NullDecorator : ProtoDecoratorBase
     {

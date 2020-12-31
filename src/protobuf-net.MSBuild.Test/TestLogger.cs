@@ -1,7 +1,7 @@
 ﻿using Microsoft.Build.Framework;
 using System.Collections.Generic;
 
-namespace ProtoBuf.Build
+namespace AqlaSerializer.Build
 {
     class TestLogger : ILogger
     {

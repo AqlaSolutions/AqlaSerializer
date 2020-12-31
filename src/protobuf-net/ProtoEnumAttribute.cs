@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Used to define protocol-buffer specific behavior for

@@ -1,4 +1,4 @@
-// The types in here indicate how protobuf-net represents certain types when using protobuf-net specific
+// The types in here indicate how protobuf-net represents certain types when using AqlaSerializer-net specific
 // library features. Note that it is not *required* to use any of these types, and cross-platform code
 // should usually avoid them completely (ideally starting from a .proto schema)
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ProtoBuf
+namespace AqlaSerializer
 {
     /// <summary>
     /// Controls the formatting of elements in a dictionary, and indicates that

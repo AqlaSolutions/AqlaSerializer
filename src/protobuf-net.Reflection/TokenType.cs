@@ -1,4 +1,4 @@
-﻿namespace ProtoBuf.Reflection
+﻿namespace AqlaSerializer.Reflection
 {
     internal enum TokenType
     {

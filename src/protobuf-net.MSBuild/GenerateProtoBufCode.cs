@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace ProtoBuf.MSBuild
+namespace AqlaSerializer.MSBuild
 {
     public class GenerateProtoBufCode : Task
     {
