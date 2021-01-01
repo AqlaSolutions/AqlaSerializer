@@ -77,8 +77,12 @@ namespace Examples
             File.Delete(fileName);
         }
 
-        //[Test]
-        public void GenerateCorrect([Values(400 * 1024 * 1024)] int count)
+#if !DEBUG
+        [TestCase(400 * 1024 * 1024)]
+#else
+        [TestCase(1 * 1024 * 1024)]
+#endif
+        public void GenerateCorrect(int count)
         {
             var m = TypeModel.Create();
             m.Add(typeof(Wrapper), false).SetSurrogate(typeof(Surrogate));

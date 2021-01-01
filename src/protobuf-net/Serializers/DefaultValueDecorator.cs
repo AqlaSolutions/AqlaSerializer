@@ -23,6 +23,9 @@ namespace AqlaSerializer.Serializers
         public bool DemandWireTypeStabilityStatus() => false;
         public override Type ExpectedType => Tail.ExpectedType;
         public override bool RequiresOldValue => Tail.RequiresOldValue;
+        
+        public override bool CanCancelWriting => true;
+
         private readonly object _defaultValue;
         public DefaultValueDecorator(TypeModel model, object defaultValue, IProtoSerializerWithWireType tail) : base(tail)
         {

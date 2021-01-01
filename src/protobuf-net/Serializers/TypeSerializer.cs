@@ -6,6 +6,7 @@ using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;
+using TriAxis.RunSharp;
 #endif
 
 #if FEAT_IKVM
@@ -82,7 +83,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(fieldNumbers != null);
             Helpers.DebugAssert(serializers != null);
             Helpers.DebugAssert(fieldNumbers.Length == serializers.Length);
-
+            
             Helpers.Sort(fieldNumbers, serializers);
             bool hasSubTypes = false;
             for (int i = 1; i < fieldNumbers.Length; i++)
@@ -219,7 +220,7 @@ namespace AqlaSerializer.Serializers
 
         public void Write(object value, ProtoWriter dest)
         {
-            var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
+            var token = ProtoWriter.StartSubItem(value, (_isRootType && dest.TakeIsExpectingRootType()) || _prefixLength, dest);
             if (_isRootType) Callback(value, TypeModel.CallbackType.BeforeSerialize, dest.Context);
             // write inheritance first
             IProtoSerializerWithWireType next;
@@ -383,6 +384,9 @@ namespace AqlaSerializer.Serializers
         }
 #endif
         public bool RequiresOldValue => true;
+        
+        public bool CanCancelWriting { get; }
+
 
 #if FEAT_COMPILER
         public bool EmitReadReturnsValue { get; } = false; // updates field directly        
@@ -396,7 +400,9 @@ namespace AqlaSerializer.Serializers
                 using (Compiler.Local loc = ctx.GetLocalWithValue(expected, valueFrom))
                 using (Compiler.Local token = ctx.Local(typeof(SubItemToken)))
                 {
-                    g.Assign(token, g.WriterFunc.StartSubItem(loc, _prefixLength));
+                    Operand prefixLength = _prefixLength;
+                    if (_isRootType) prefixLength = g.WriterFunc.TakeIsExpectingRootType_bool() || _prefixLength;
+                    g.Assign(token, g.WriterFunc.StartSubItem(loc, prefixLength));
                     // pre-callbacks
                     EmitCallbackIfNeeded(ctx, loc, TypeModel.CallbackType.BeforeSerialize);
 

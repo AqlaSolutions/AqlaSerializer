@@ -26,7 +26,7 @@ namespace AqlaSerializer.Compiler
             Type = type;
             _ctx = ctx;
             _fromPool = false;
-            AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
+            AsOperand = new ContextualOperand(new CodeGen._Local(ctx.G, value), ctx.G.TypeMapper);
         }
 
 #if FEAT_IKVM
@@ -38,6 +38,9 @@ namespace AqlaSerializer.Compiler
 
         internal Local(CompilerContext ctx, Type type, bool fromPool = true, bool zeroed = false)
         {
+#if DEBUG_COMPILE_2 && false
+            zeroed = true;
+#endif
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
             if (type == null) throw new ArgumentNullException(nameof(type));
             _ctx = ctx;
@@ -45,7 +48,8 @@ namespace AqlaSerializer.Compiler
                 _value = ctx.GetFromPool(type, zeroed);
             Type = type;
             _fromPool = fromPool;
-            AsOperand = new ContextualOperand(new FakeOperand(this), ctx.RunSharpContext.TypeMapper);
+
+            AsOperand = _value != null ? new ContextualOperand(new CodeGen._Local(ctx.G, _value), ctx.G.TypeMapper) : ctx.G.Arg(0);
         }
 
         [Obsolete("Don't use == on Local", true)]
@@ -136,47 +140,6 @@ namespace AqlaSerializer.Compiler
         }
 
         public ContextualOperand AsOperand { get; }
-
-        class FakeOperand : Operand
-        {
-            readonly Local _local;
-
-            public FakeOperand(Local local)
-            {
-                _local = local;
-            }
-
-            protected override bool DetectsLeaking => false;
-
-            protected override void EmitGet(CodeGen g)
-            {
-                LeakedState = false;
-                if (_local._ctx == null) throw new ObjectDisposedException("Local");
-                _local._ctx.LoadValue(_local);
-            }
-
-            protected override void EmitSet(CodeGen g, Operand value, bool allowExplicitConversion)
-            {
-                LeakedState = false;
-                if (_local._ctx == null) throw new ObjectDisposedException("Local");
-                EmitGetHelper(g, value, _local.Type, allowExplicitConversion);
-                _local._ctx.StoreValue(_local);
-            }
-
-            protected override void EmitAddressOf(CodeGen g)
-            {
-                LeakedState = false;
-                if (_local._ctx == null) throw new ObjectDisposedException("Local");
-                _local._ctx.LoadRefArg(_local, _local.Type);
-            }
-
-            public override Type GetReturnType(ITypeMapper typeMapper)
-            {
-                return _local.Type;
-            }
-
-            protected override bool TrivialAccess => true;
-        }
     }
 }
 

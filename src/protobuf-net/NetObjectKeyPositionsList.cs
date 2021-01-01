@@ -8,9 +8,9 @@ namespace AqlaSerializer
 {
     internal class NetObjectKeyPositionsList
     {
-        List<int> _keyToPosition = new List<int>(2048);
+        List<long> _keyToPosition = new List<long>(2048);
         
-        public void SetPosition(int key, int position)
+        public void SetPosition(int key, long position)
         {
             if (position < 0 || (key > 0 && position == 0)) throw new ArgumentOutOfRangeException(nameof(position));
             while (_keyToPosition.Count - 1 < key)
@@ -18,7 +18,7 @@ namespace AqlaSerializer
             _keyToPosition[key] = position;
         }
 
-        public int GetPosition(int key)
+        public long GetPosition(int key)
         {
             if (_keyToPosition.Count - 1 < key) ThrowNotFound(key);
             var r = _keyToPosition[key];
@@ -27,11 +27,11 @@ namespace AqlaSerializer
         }
 
         int _exportKnownCount;
-        int _previousExportedPosition;
+        long _previousExportedPosition;
         int _importKnownCount;
-        int _previousImportedPosition;
+        long _previousImportedPosition;
 
-        public int[] ExportNew()
+        public long[] ExportNew()
         {
             var arr = _keyToPosition.Skip(_exportKnownCount).ToArray();
             if (arr.Length == 0) return arr;
@@ -60,9 +60,9 @@ namespace AqlaSerializer
             _importingLock = false;
         }
         
-        public void ImportNext(IEnumerable<int> enumerable)
+        public void ImportNext(IEnumerable<long> enumerable)
         {
-            int acc = _previousImportedPosition;
+            long acc = _previousImportedPosition;
             foreach (var cur in enumerable)
             {
                 acc += cur;
@@ -86,7 +86,7 @@ namespace AqlaSerializer
         public NetObjectKeyPositionsList Clone()
         {
             var r = (NetObjectKeyPositionsList)MemberwiseClone();
-            r._keyToPosition = new List<int>(_keyToPosition);
+            r._keyToPosition = new List<long>(_keyToPosition);
             return r;
         }
     }

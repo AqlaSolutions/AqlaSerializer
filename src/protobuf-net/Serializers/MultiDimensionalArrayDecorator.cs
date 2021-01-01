@@ -39,7 +39,7 @@ namespace AqlaSerializer.Serializers
                                            ProtoWriter.WriteFieldHeader(ListHelpers.FieldLength, WireType.Variant, dest);
                                            ProtoWriter.WriteInt32(arr.GetLength(i), dest);
                                        }
-                                   }, null, dest);
+                                   },  dest);
         }
 
         public override object Read(object value, ProtoReader source)
@@ -56,7 +56,7 @@ namespace AqlaSerializer.Serializers
             _listHelpers.Read(
                 () =>
                     {
-                        if (source.TryReadFieldHeader(ListHelpers.FieldLength))
+                        if (source.FieldNumber == ListHelpers.FieldLength)
                         {
                             int length = source.ReadInt32();
                             lengths[deepestRank++] = length;
@@ -149,6 +149,7 @@ namespace AqlaSerializer.Serializers
 
         public override Type ExpectedType => _arrayType;
         public override bool RequiresOldValue => AppendToCollection;
+        public override bool CanCancelWriting => _listHelpers.CanCancelWriting;
 
 #if FEAT_COMPILER
         public override bool EmitReadReturnsValue => true;
@@ -193,11 +194,11 @@ namespace AqlaSerializer.Serializers
 
                 _listHelpers.EmitRead(
                     ctx.G,
-                    (onSuccess, onFail) =>
+                    (fieldNumber, onSuccess, onFail) =>
                     {
                         using (ctx.StartDebugBlockAuto(this, "meta"))
                         {
-                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(ListHelpers.FieldLength));
+                            g.If(fieldNumber == ListHelpers.FieldLength);
                             {
                                 g.Assign(lengthTemp, g.ReaderFunc.ReadInt32());
                                 g.Switch(deepestRank);

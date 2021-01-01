@@ -56,6 +56,8 @@ namespace AqlaSerializer.Serializers
 #endif
 
         public bool RequiresOldValue => true;
+        
+        public bool CanCancelWriting => true;
         public Type ExpectedType { get; }
         private readonly Type _declaredType;
         private readonly MethodInfo _toTail, _fromTail;
@@ -162,6 +164,7 @@ namespace AqlaSerializer.Serializers
 
             if (!Helpers.IsValueType(ExpectedType))
                 ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
+            
             return r;
         }
 #endif

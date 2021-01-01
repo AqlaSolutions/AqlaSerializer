@@ -28,6 +28,9 @@ namespace AqlaSerializer.Serializers
 
 
         bool IProtoSerializer.RequiresOldValue => false;
+        
+        public bool CanCancelWriting { get; }
+
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {

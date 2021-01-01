@@ -53,29 +53,29 @@ namespace AqlaSerializer.Serializers
             {
                 using (ctx.StartDebugBlockAuto(this))
                 {
-                ctx.LoadValue(valueFrom);
-                ctx.LoadValue(typeof(Uri).GetProperty("OriginalString"));
-                Tail.EmitWrite(ctx, null);
-            }
+                    ctx.LoadValue(valueFrom);
+                    ctx.LoadValue(typeof(Uri).GetProperty("OriginalString"));
+                    Tail.EmitWrite(ctx, null);
+                }
             }
 
             protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
             {
                 using (ctx.StartDebugBlockAuto(this))
                 {
-                Tail.EmitRead(ctx, valueFrom);
-                ctx.CopyValue();
-                Compiler.CodeLabel @nonEmpty = ctx.DefineLabel(), @end = ctx.DefineLabel();
-                ctx.LoadValue(typeof(string).GetProperty("Length"));
-                ctx.BranchIfTrue(@nonEmpty, true);
-                ctx.DiscardValue();
-                ctx.LoadNullRef();
-                ctx.Branch(@end, true);
-                ctx.MarkLabel(@nonEmpty);
-                ctx.LoadValue((int)UriKind.RelativeOrAbsolute);
-                ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)), ctx.MapType(typeof(UriKind)));
-                ctx.MarkLabel(@end);
-            }
+                    Tail.EmitRead(ctx, valueFrom);
+                    ctx.CopyValue();
+                    Compiler.CodeLabel @nonEmpty = ctx.DefineLabel(), @end = ctx.DefineLabel();
+                    ctx.LoadValue(typeof(string).GetProperty("Length"));
+                    ctx.BranchIfTrue(@nonEmpty, true);
+                    ctx.DiscardValue();
+                    ctx.LoadNullRef();
+                    ctx.Branch(@end, true);
+                    ctx.MarkLabel(@nonEmpty);
+                    ctx.LoadValue((int)UriKind.RelativeOrAbsolute);
+                    ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)), ctx.MapType(typeof(UriKind)));
+                    ctx.MarkLabel(@end);
+                }
             }
     #endif 
         }

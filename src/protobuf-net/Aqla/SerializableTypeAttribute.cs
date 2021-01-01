@@ -104,7 +104,11 @@ namespace AqlaSerializer
         /// </summary>
         public Type CollectionItemType { get { return TypeSettings.Member.Collection.ItemType; } set { TypeSettings.Member.Collection.ItemType = value; } }
 
-
+        /// <summary>
+        /// If true, when used as root object will not support root null checking or references to root
+        /// </summary>
+        public bool ForceCompactFormatForRoot { get { return TypeSettings.ForceCompactFormatForRoot; } set { TypeSettings.ForceCompactFormatForRoot = value; } }
+        
         /// <summary>
         /// If specified, do NOT treat this type as a list, even if it looks like one.
         /// </summary>
@@ -194,10 +198,5 @@ namespace AqlaSerializer
             OPTIONS_InferTagFromName = 1,
             OPTIONS_InferTagFromNameHasValue = 2,
             OPTIONS_UseAqlaMembersOnly = 4;
-
-        /// <summary>
-        /// Forces <see cref="BinaryDataFormat.Group"/>
-        /// </summary>
-        public bool IsGroup { get { return TypeSettings.IsGroup; } set { TypeSettings.IsGroup = value; } }
     }
 }

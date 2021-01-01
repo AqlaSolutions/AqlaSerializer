@@ -1,3 +1,4 @@
+using AqlaSerializer.Meta;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
@@ -5,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace AqlaSerializer.LongDataTests
 {
@@ -67,72 +69,55 @@ namespace AqlaSerializer.LongDataTests
                 obj.Items.Add(new MyModelInner { Id = i, SomeString = "a long string that will be repeated lots and lots of times in the output data" });
             return obj;
         }
-        [Fact(Skip="long running")]
+
+        private readonly ITestOutputHelper _output;
+
+        public LongDataTests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
+        [Fact]//(Skip="long running")]
         public void CanSerializeLongData()
         {
-
-
-            Console.WriteLine($"PID: {Process.GetCurrentProcess().Id}");
+            _output.WriteLine($"PID: {Process.GetCurrentProcess().Id}");
             const string path = "large.data";
             var watch = Stopwatch.StartNew();
             const int COUNT = 50000000;
 
-            Console.WriteLine($"Creating model with {COUNT} items...");
+            _output.WriteLine($"Creating model with {COUNT} items...");
             var outer = CreateOuterModel(COUNT);
             watch.Stop();
-            Console.WriteLine($"Created in {watch.ElapsedMilliseconds}ms");
+            _output.WriteLine($"Created in {watch.ElapsedMilliseconds}ms");
 
             var model = new MyModelWrapper { Group = outer };
             int oldHash = model.GetHashCode();
-            using (var file = File.Create(path))
+            var rtm = TypeModel.Create();
+            
+            rtm.Add(typeof(MyModelOuter), true);
+            rtm.Add(typeof(MyModelInner), true);
+            rtm.Add(typeof(MyModelWrapper), true);
+            rtm.CompileInPlace();
+            //if (false)
             {
-                Console.Write("Serializing...");
-                watch = Stopwatch.StartNew();
-                Serializer.Serialize(file, model);
-                watch.Stop();
-                Console.WriteLine();
-                Console.WriteLine($"Wrote: {COUNT} in {file.Length >> 20} MiB ({file.Length / COUNT} each), {watch.ElapsedMilliseconds}ms");
-            }
-
-            using (var file = File.OpenRead(path))
-            {
-                Console.WriteLine($"Verifying {file.Length >> 20} MiB...");
-                watch = Stopwatch.StartNew();
-                using (var reader = new ProtoReader(file, null, null))
+                using (var file = File.Create(path))
                 {
-                    int i = -1;
-                    try
-                    {
-                        Assert.Equal(2, reader.ReadFieldHeader());
-                        Assert.Equal(WireType.StartGroup, reader.WireType);
-                        var tok = ProtoReader.StartSubItem(reader);
-
-                        for (i = 0; i < COUNT; i++)
-                        {
-                            Assert.Equal(1, reader.ReadFieldHeader());
-                            Assert.Equal(WireType.String, reader.WireType);
-                            reader.SkipField();
-                        }
-                        Assert.False(reader.ReadFieldHeader() > 0);
-                        ProtoReader.EndSubItem(tok, reader);
-                    }
-                    catch
-                    {
-                        Console.WriteLine($"field 2, {i} of {COUNT}, @ {reader.LongPosition}");
-                        throw;
-                    }
+                    Console.Write("Serializing...");
+                    watch = Stopwatch.StartNew();
+                    rtm.Serialize(file, model);
+                    watch.Stop();
+                    _output.WriteLine($"Wrote: {COUNT} in {file.Length >> 20} MiB ({file.Length / COUNT} each), {watch.ElapsedMilliseconds}ms");
                 }
-                watch.Start();
-                Console.WriteLine($"Verified {file.Length >> 20} MiB in {watch.ElapsedMilliseconds}ms");
             }
             using (var file = File.OpenRead(path))
             {
-                Console.WriteLine($"Deserializing {file.Length >> 20} MiB");
+                _output.WriteLine($"Deserializing {file.Length >> 20} MiB");
                 watch = Stopwatch.StartNew();
-                var clone = Serializer.Deserialize<MyModelWrapper>(file);
+                var clone = rtm.Deserialize<MyModelWrapper>(file);
                 watch.Stop();
                 var newHash = clone.GetHashCode();
-                Console.WriteLine($"{oldHash} vs {newHash}, {newHash == oldHash}, {watch.ElapsedMilliseconds}ms");
+                _output.WriteLine($"{oldHash} vs {newHash}, {newHash == oldHash}, {watch.ElapsedMilliseconds}ms");
+                Assert.Equal(oldHash, newHash);
             }
         }
     }

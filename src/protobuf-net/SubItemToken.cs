@@ -1,4 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+
+using System;
+
 namespace AqlaSerializer
 {
     /// <summary>
@@ -8,7 +11,22 @@ namespace AqlaSerializer
     public struct SubItemToken
     {
         internal readonly long Value64;
-        internal SubItemToken(int value) { this.Value64 = value; }
-        internal SubItemToken(long value) { this.Value64 = value; }
+        /// <summary>
+        /// Used to seek back if written group ended up empty
+        /// </summary>
+        internal SeekOnEndOrMakeNullFieldCondition? SeekOnEndOrMakeNullField;
+        internal SubItemToken(int value) : this((long)value) { }
+
+        internal SubItemToken(long value) : this()
+        {
+            this.Value64 = value;
+        }
+    }
+
+    public struct SeekOnEndOrMakeNullFieldCondition
+    {
+        public long? ThenTrySeekToPosition;
+        public long PositionShouldBeEqualTo;
+        public int? NullFieldNumber;
     }
 }

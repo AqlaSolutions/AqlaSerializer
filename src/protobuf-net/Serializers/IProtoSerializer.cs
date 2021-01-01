@@ -68,6 +68,11 @@ namespace AqlaSerializer.Serializers
         /// </summary>
         bool RequiresOldValue { get; }
 
+        /// <summary>
+        /// Indiciates that this or inner serializer might call <see cref="ProtoWriter.WriteFieldHeaderCancelBegin"/>
+        /// </summary>
+        bool CanCancelWriting { get; }
+
 #if FEAT_COMPILER
         /// <summary>
         /// Now all Read operations return a value because input value is passed not as ref. But some EmitRead operations may replace the old value instead of pushing new value to stack.

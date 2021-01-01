@@ -170,6 +170,7 @@ namespace AqlaSerializer
             reader._trapCount = 0;
             reader._trappedKey = 0;
             reader._trapNoteReserved.Clear();
+            reader._expectRoot = false;
             if(reader._netCache == null) reader._netCache = new NetObjectCache();
             reader._netCache.ResetRoot();
         }
@@ -290,6 +291,18 @@ namespace AqlaSerializer
         private bool TryReadUInt32Variant(out uint value)
         {
             int read = TryReadUInt32VariantWithoutMoving(false, out value);
+            if (read > 0)
+            {
+                _ioIndex += read;
+                _available -= read;
+                _position64 += read;
+                return true;
+            }
+            return false;
+        }
+        private bool TryReadUInt64Variant(out ulong value)
+        {
+            int read = TryReadUInt64VariantWithoutMoving(out value);
             if (read > 0)
             {
                 _ioIndex += read;
@@ -910,8 +923,8 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             // reader (which moves the status to Error, since ReadFieldHeader must
             // then be called)
             if (_blockEnd64 <= _position64 || _wireType == WireType.EndGroup) { return 0; }
-            uint tag;
-            if (TryReadUInt32Variant(out tag) && tag != 0)
+            ulong tag;
+            if (TryReadUInt64Variant(out tag) && tag != 0)
             {
                 _wireType = (WireType)(tag & 7);
                 _fieldNumber = (int)(tag >> 3);
@@ -952,6 +965,23 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Looks ahead to see the next field in the stream
+        /// </summary>
+        public int? TryPeekFieldHeader()
+        {
+            _expectRoot = false;
+            // check for virtual end of stream
+            if (_blockEnd64 <= _position64 || _wireType == WireType.EndGroup) return 0;
+            int read = TryReadUInt32VariantWithoutMoving(false, out uint tag);
+            if (read > 0)
+            {
+                if ((WireType)(tag & 7) == WireType.EndGroup) return 0;
+                return (int)tag >> 3;
+            }
+            return null;
         }
 
         /// <summary>

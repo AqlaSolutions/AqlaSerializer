@@ -82,24 +82,33 @@ namespace AqlaSerializer.Meta
             SetSettings(s, level);
         }
 
-        internal void SetForAllLevels(Func<LevelValue, LevelValue> setter)
+        internal void SetForAllLevels(Func<LevelValue, LevelValue> setter, bool frozen)
         {
             if (DefaultLevel != null)
-                DefaultLevel = setter(DefaultLevel.Value);
+            {
+                var newLevel = setter(DefaultLevel.Value);
+                if (frozen && !newLevel.Equals(DefaultLevel)) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
+                DefaultLevel = newLevel;
+            }
+
             for (int i = 0; i < _levels.Count; i++)
             {
                 var level = _levels[i];
                 if (level == null) continue;
-                _levels[i] = setter(level.Value);
+                LevelValue newValue = setter(level.Value);
+                if (frozen && !newValue.Equals(level)) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
+                _levels[i] = newValue;
             }
         }
 
-        internal void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter)
+        internal void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter, bool frozen)
         {
             if (DefaultLevel != null)
             {
                 var v = DefaultLevel.Value;
-                v.Basic = setter(DefaultLevel.Value.Basic);
+                MemberLevelSettingsValue newValue = setter(DefaultLevel.Value.Basic);
+                if (frozen && !newValue.Equals(v.Basic)) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
+                v.Basic = newValue;
                 DefaultLevel = v;
             }
             for (int i = 0; i < _levels.Count; i++)
@@ -107,7 +116,10 @@ namespace AqlaSerializer.Meta
                 var level = _levels[i];
                 if (level == null) continue;
                 var v = level.Value;
-                v.Basic = setter(level.Value.Basic);
+                MemberLevelSettingsValue newValue = setter(level.Value.Basic);
+                if (frozen && !newValue.Equals(level.Value.Basic)) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
+                v.Basic = newValue;
+
                 _levels[i] = v;
             }
         }

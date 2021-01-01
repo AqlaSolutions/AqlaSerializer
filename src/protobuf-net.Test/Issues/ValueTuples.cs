@@ -29,9 +29,10 @@ namespace AqlaSerializer.Issues
             using (var ms = new MemoryStream())
             {
                 var rtm = AqlaSerializer.Meta.TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
-                Serializer.Serialize(ms, GetNamedTupleData());
+                rtm.Serialize(ms, GetNamedTupleData());
                 hex = BitConverter.ToString(ms.ToArray()); // GetBuffer() not available on all TFMs
             }
+
             Assert.Equal(@"08-7B-12-03-64-65-66-1A-0C-08-01-12-03-61-62-63-12-03-64-65-66", hex);
             // 08-7B: field 1: 123
             // 12-03: field 2, 3 bytes

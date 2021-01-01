@@ -67,6 +67,9 @@ namespace AqlaSerializer.Meta
         /// <remarks>An in-place compile can access non-public types / members</remarks>
         public void CompileInPlace()
         {
+#if DISABLE_COMPILE_IN_PLACE
+            return;
+#endif
             BuildAllSerializers();
             foreach (MetaType type in _types)
             {

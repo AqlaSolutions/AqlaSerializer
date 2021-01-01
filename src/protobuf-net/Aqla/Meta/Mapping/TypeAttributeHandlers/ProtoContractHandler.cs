@@ -63,6 +63,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                     {
                         s.ImplicitFields = (ImplicitFieldsMode)(int)tmp; // note that this uses the bizarre unboxing rules of enums/underlying-types
                     }
+
                     if (item.TryGet("SkipConstructor", out tmp)) main.SkipConstructor = (bool)tmp;
                     if (item.TryGet("IgnoreListHandling", out tmp)) main.IgnoreListHandling = (bool)tmp;
                     if (item.TryGet("AsReferenceDefault", out tmp))
@@ -72,14 +73,25 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                         else
                             main.Member.Format = ValueSerializerBuilder.GetDefaultLegacyFormat(s.Type, model);
                     }
+
                     if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) s.ImplicitFirstTag = (int)tmp;
                     if (item.TryGet("ConstructType", out tmp)) main.ConstructType = (Type)tmp;
-                    if (item.TryGet("IsGroup", out tmp)) main.IsGroup = (bool)tmp;
+                    if (item.TryGet("IsGroup", out tmp))
+                    {
+                        var v = (bool)tmp;
+                        var defaultIsGroup = !model.ProtoCompatibility.UseLengthPrefixedNestingAsDefault;
+                        if (v) // if set always disable length prefix
+                            main.PrefixLength = false;
+                        else if (defaultIsGroup) // if not set enable length prefix only if it's not enabled by default
+                            main.PrefixLength = true;
+                    }
+
                 }
 
                 s.SettingsValue = main;
                 return TypeAttributeHandlerResult.Done;
             }
+
             return TypeAttributeHandlerResult.Continue;
         }
     }

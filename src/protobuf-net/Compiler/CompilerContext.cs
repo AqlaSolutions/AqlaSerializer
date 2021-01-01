@@ -43,6 +43,11 @@ namespace AqlaSerializer.Compiler
         static int _next;
 #endif
 
+        internal LocalBuilder DeclareLocal(Type type)
+        {
+            return _il.DeclareLocal(type);
+        }
+        
         internal CodeLabel DefineLabel()
         {
             CodeLabel result = new CodeLabel(_il.DefineLabel(), _nextLabel++);
@@ -476,7 +481,7 @@ namespace AqlaSerializer.Compiler
             return result;
         }
 
-        void InitLocal(Type type, LocalBuilder local)
+        internal void InitLocal(Type type, LocalBuilder local)
         {
             if (Helpers.IsValueType(local.LocalType))
             {

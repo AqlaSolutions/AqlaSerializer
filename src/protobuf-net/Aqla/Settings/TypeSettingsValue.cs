@@ -23,14 +23,14 @@ namespace AqlaSerializer.Settings
         /// Also set Member.Collection.ConcreteType
         /// </summary>
         public Type ConstructType;
-        public bool IsGroup;
+        public bool ForceCompactFormatForRoot;
         public bool IsAutoTuple;
         public MemberLevelSettingsValue Member;
 
         public TypeSettingsValue GetInitializedToValueOrDefault()
         {
             var x = this;
-            x.PrefixLength = x.PrefixLength.GetValueOrDefault(true);
+            x.PrefixLength = x.PrefixLength.GetValueOrDefault(false);
             x.EnumPassthru = x.EnumPassthru.GetValueOrDefault();
             x.Member = x.Member.GetInitializedToValueOrDefault();
             return x;

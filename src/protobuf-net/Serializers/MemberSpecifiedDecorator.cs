@@ -26,6 +26,8 @@ namespace AqlaSerializer.Serializers
         // may be not specified, right?
         public override Type ExpectedType => Tail.ExpectedType;
         public override bool RequiresOldValue => true;
+        
+        public override bool CanCancelWriting => true;
         private readonly MethodInfo _getSpecified, _setSpecified;
         
         public MemberSpecifiedDecorator(MethodInfo getSpecified, MethodInfo setSpecified, IProtoSerializerWithWireType tail)

@@ -66,6 +66,7 @@ namespace AqlaSerializer
             public int NewTypeRefKey;
             public bool ShouldRead;
             public SeekToken? SeekToReturn;
+            public bool IsSkipped;
         }
 
         public struct SeekToken
@@ -77,7 +78,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Reads an *implementation specific* bundled .NET object, including (as options) type-metadata, identity/re-use, etc.
         /// </summary>
-        public static ReadReturnValue ReadNetObject_Start(ref object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, ref int typeKey, bool handleMissingKeys)
+        public static ReadReturnValue ReadNetObject_Start(ref object value, ProtoReader source, ref Type type, BclHelpers.NetObjectOptions options, ref int typeKey, bool handleMissingKeys, bool replaceOldValue)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -89,22 +90,27 @@ namespace AqlaSerializer
                 NewTypeRefKey = -1,
                 IsDynamic = false,
                 IsLateReference = false,
-                Token = ProtoReader.StartSubItem(source)
+                Token = ProtoReader.StartSubItem(source),
             };
             
             int fieldNumber;
             if ((fieldNumber = source.ReadFieldHeader()) == 0)
             {
                 // null handling
+                // it can be handled outside if null wire type is allowed, or here
+                // it's a different rule for different conditions
+                // so we can't rely on it
                 value = null;
                 return r;
             }
+            bool hasObject = false;
             do
             {
                 int tmp;
                 switch (fieldNumber)
                 {
                     case FieldExistingObjectKey:
+                        hasObject = true;
                         tmp = source.ReadInt32();
                         value = source.NetCache.GetKeyedObject(tmp, handleMissingKeys);
                         if (value == null)
@@ -113,7 +119,7 @@ namespace AqlaSerializer
                             ProtoReader.EndSubItem(r.Token, true, source);
                             var seekToken = new SeekToken
                             {
-                                Position = source.Position, // store position on group end
+                                Position = source.LongPosition, // store position on group end
                                 BlockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp))
                             };
 
@@ -126,7 +132,8 @@ namespace AqlaSerializer
                                 ref type,
                                 options,
                                 ref typeKey,
-                                false);
+                                false,
+                                replaceOldValue);
 
                             Helpers.DebugAssert(r.SeekToReturn == null);
 
@@ -146,7 +153,7 @@ namespace AqlaSerializer
                         {
                             // so we skipped it
                             // have to seek
-                            var pos = source.Position;
+                            var pos = source.LongPosition;
                             long blockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp));
                             if (!ProtoReader.HasSubValue(WireType.String, source)) throw new ProtoException("New type could not be found on specified position, net key: " + tmp);
                             ReadNewType(source, out type, out typeKey);
@@ -163,8 +170,10 @@ namespace AqlaSerializer
                         break;
                     case FieldLateReferenceObject:
                     case FieldObject:
+                        hasObject = true;
                         if (fieldNumber == FieldLateReferenceObject) r.IsLateReference = true;
                         r.ShouldRead = true;
+                        if (replaceOldValue) value = null; // old value doesn't matter anymore
                         bool wasNull = value == null;
                         bool lateSet = wasNull && ((options & BclHelpers.NetObjectOptions.LateSet) != 0);
                         if (r.NewObjectKey >= 0 && !lateSet)
@@ -185,6 +194,17 @@ namespace AqlaSerializer
                         break;
                 }
             } while ((fieldNumber = source.ReadFieldHeader()) > 0);
+
+            if (!hasObject)
+            {
+                r.IsSkipped = true;
+                if (r.NewObjectKey > 0)
+                {
+                    if (value == null) throw new ProtoException("NetObjectHelpers: oldValue == null but no object is provided, can't track reference, type = " + type);
+                    source.NetCache.SetKeyedObject(r.NewObjectKey, value);
+                }
+            }
+
             return r;
 #endif
         }
@@ -205,6 +225,7 @@ namespace AqlaSerializer
             FieldNewTypeKey = 4,
             FieldTypeName = 8,
             FieldObject = 10,
-            FieldLateReferenceObject = 11;
+            FieldLateReferenceObject = 11,
+            FieldSkippedObject = 12;
     }
 }

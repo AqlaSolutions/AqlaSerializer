@@ -382,8 +382,7 @@ namespace AqlaSerializer.Meta
         
         void SetForAllLevels(Func<MemberLevelSettingsValue, MemberLevelSettingsValue> setter)
         {
-            ThrowIfFrozen();
-            _vsByClient.SetForAllLevels(setter);
+            _vsByClient.SetForAllLevels(setter, _serializer != null);
         }
 
 #endregion

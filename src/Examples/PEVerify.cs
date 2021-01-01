@@ -19,7 +19,7 @@ namespace Examples
 #if NET5_0
             var references = Assembly.LoadFile(Path.GetFullPath(path)).GetReferencedAssemblies().Select(x => x.CodeBase).Where(x => x != null).ToArray();
             var errors = new ILVerify.ILVerify(path, references).Run().ToList();
-            Assert.IsEmpty(errors);
+            Assert.IsEmpty(errors, "Checking "+ path);
             return;
 #endif
             // note; PEVerify can be found %ProgramFiles%\Microsoft SDKs\Windows\v6.0A\bin

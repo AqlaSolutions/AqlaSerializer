@@ -27,6 +27,11 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool SuppressNullWireType;
 
+        /// <summary>
+        /// Groups are deprecated in the format but AqlaSerializer uses them because using length prefix instead causes several buffer rewrites which is slow on long data
+        /// </summary>
+        public bool UseLengthPrefixedNestingAsDefault;
+
         public static readonly ProtoCompatibilitySettingsValue Default = new ProtoCompatibilitySettingsValue();
 
         public static readonly ProtoCompatibilitySettingsValue Incompatible = new ProtoCompatibilitySettingsValue();
@@ -36,7 +41,8 @@ namespace AqlaSerializer.Meta
             SuppressOwnRootFormat = true,
             SuppressCollectionEnhancedFormat = true,
             SuppressValueEnhancedFormat = true,
-            SuppressNullWireType = true
+            SuppressNullWireType = true,
+            UseLengthPrefixedNestingAsDefault = true
         };
 
         object ICloneable.Clone()

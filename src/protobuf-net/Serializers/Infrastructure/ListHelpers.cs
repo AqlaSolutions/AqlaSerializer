@@ -25,34 +25,40 @@ namespace AqlaSerializer.Serializers
         public const int FieldItem = 1;
         public const int FieldSubtype = 2;
         public const int FieldLength = 3;
-
+        public const int FieldContent = 4;
 #if !NO_RUNTIME
-        readonly WireType _packedWireTypeForRead = WireType.None;
+        readonly WireType _expectedTailWireType = WireType.None;
         readonly IProtoSerializerWithWireType _tail;
         readonly bool _protoCompatibility;
-        readonly bool _writePacked;
+        readonly bool _writeProtoPacked;
         readonly Type _itemType;
         readonly bool _skipIList;
         readonly bool _canUsePackedPrefix;
-        public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
+        
+        public ListHelpers(bool writeProtoPacked, WireType expectedTailWireType, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
         {
             if (protoCompatibility)
             {
-                if (ListDecorator.CanPack(packedWireTypeForRead))
-                    _packedWireTypeForRead = packedWireTypeForRead;
-                else if (writePacked)
-                    throw new ArgumentException("For writePacked wire type for read should be specified");
+                if (ListDecorator.CanPackProtoCompatible(expectedTailWireType))
+                    _expectedTailWireType = expectedTailWireType;
+                else
+                {
+                    expectedTailWireType = WireType.None;
+                    if (writeProtoPacked)
+                        throw new ArgumentException("For writePacked wire type for read should be specified");
+                }
 
-                _writePacked = writePacked;
+                _writeProtoPacked = writeProtoPacked;
             }
+            else _expectedTailWireType = expectedTailWireType;
             _tail = tail;
             _skipIList = skipIList;
             _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;
-            _canUsePackedPrefix = writePacked && CanUsePackedPrefix(packedWireTypeForRead, _itemType);
+            _canUsePackedPrefix = (!_protoCompatibility || writeProtoPacked) && CanUsePackedPrefix(expectedTailWireType, _itemType);
         }
-
-        public bool UsesPackedPrefix => _canUsePackedPrefix;
+        
+        public bool CanCancelWriting => _protoCompatibility && !_writeProtoPacked;
 
         internal static bool CanUsePackedPrefix(WireType packedWireType, Type itemType)
         {
@@ -70,57 +76,139 @@ namespace AqlaSerializer.Serializers
         }
 
 #if FEAT_COMPILER
-        public void EmitWrite(SerializerCodeGen g, Local value, Action<Action<Operand>, Action> protoCompatibleDoWithCountOrElse, Action protoIncompatibleMetaWriter, Action prepareInstance)
+        public void EmitWrite(SerializerCodeGen g, Local value, Func<ContextualOperand> countNullable, Action protoIncompatibleMetaWriter, Action prepareInstance)
         {
             using (g.ctx.StartDebugBlockAuto(this))
             {
-                using (var token = g.ctx.Local(typeof(SubItemToken)))
-                using (var fieldNumber = _protoCompatibility ? g.ctx.Local(typeof(int)) : null)
+
+                bool wtStability = _protoCompatibility || _tail.DemandWireTypeStabilityStatus();
+
+                // note for debugging:
+                // often mistake is in non-zeroing locals
+                // try to zero them one by one and check
+
+                using (var innerToken = g.ctx.Local(typeof(SubItemToken?), true))
+                using (var fieldNumber = g.ctx.Local(typeof(int)))
+                using (var expectedLength = wtStability && _canUsePackedPrefix && countNullable != null ? g.ctx.Local(typeof(ulong?)) : null)
+                using (var startPos = g.ctx.Local(typeof(long)))
                 {
-                    if (!fieldNumber.IsNullRef())
-                        g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
-                    
-                    bool writePacked = _writePacked;
+                    g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
+
+                    if (!expectedLength.IsNullRef())
+                    {
+                        g.If(countNullable() != null);
+                        g.Assign(expectedLength, g.WriterFunc.MakePackedPrefix_ulong_nullable(countNullable().ValueFromNullable(), _expectedTailWireType));
+                        g.Else();
+                        g.Assign(expectedLength, null);
+                        g.End();
+                    }
+
+                    void WritePackedPrefix()
+                    {
+                        g.Writer.WriteFieldHeaderComplete(WireType.String);
+                        g.Writer.WriteLengthPrefix(expectedLength.AsOperand.ValueFromNullable());
+                    }
+
                     if (_protoCompatibility)
                     {
                         // empty arrays are nulls, no subitem or field
 
-                        if (writePacked)
+                        if (_writeProtoPacked)
                         {
-                            if (_canUsePackedPrefix && protoCompatibleDoWithCountOrElse != null)
-                                protoCompatibleDoWithCountOrElse(count => g.Writer.WritePackedPrefix(count, _packedWireTypeForRead), GenStartSubItem);
-                            else 
-                                GenStartSubItem();
-
-                            void GenStartSubItem() => g.Assign(token, g.WriterFunc.StartSubItem(null, true));
+                            if (!expectedLength.IsNullRef())
+                            {
+                                g.If(expectedLength.AsOperand != null);
+                                WritePackedPrefix();
+                                g.Else();
+                                g.Assign(innerToken, g.WriterFunc.StartSubItem(null, true));
+                                g.End();
+                            }
+                            else g.Assign(innerToken, g.WriterFunc.StartSubItem(null, true));
                         }
-                        else // each element will begin its own header
+                        else  // each element will begin its own header
                             g.Writer.WriteFieldHeaderCancelBegin();
+
+                        g.Assign(startPos, g.WriterFunc.GetLongPosition());
 
                         EmitWriteContent(
                             g,
                             value,
                             fieldNumber.AsOperand,
-                            _writePacked,
+                            _writeProtoPacked,
                             first: prepareInstance);
-
-                        if (writePacked)
-                        {
-                            // last element - end subitem
-                            g.Writer.EndSubItem(token);
-                        }
+                        ContentEnd();
                     }
-                    else
+                    else using (var outerToken = g.ctx.Local(typeof(SubItemToken?), true))
                     {
-                        bool pack = _tail.DemandWireTypeStabilityStatus();
-                        g.Assign(token, g.WriterFunc.StartSubItem(null, pack));
+                        bool pack = wtStability;
+                        //if (!pack) expectedLength = null; -- done at start
 
-                        protoIncompatibleMetaWriter?.Invoke();
+                        if (!expectedLength.IsNullRef())
+                        {
+                            g.If(expectedLength.AsOperand != null);
+                            {
+                                g.If(countNullable() > 0);
+                                g.Increment(expectedLength);
+                                g.End();
+                                if (protoIncompatibleMetaWriter != null)
+                                {
+                                    // start in outer Group (reader - check String/Group)
+                                    // this is needed because we predicted content length but can't predict length of metadata
+                                    g.Assign(outerToken, g.WriterFunc.StartSubItem(null, false));
+                                    protoIncompatibleMetaWriter.Invoke();
+                                    g.If(countNullable() != 0);
+                                    {
+                                        g.Writer.WriteFieldHeaderBegin(FieldContent);
+                                        WritePackedPrefix();
+                                    }
+                                    g.End();
+                                }
+                                else WritePackedPrefix();
+                            }
+                            g.Else();
+                            NoExpectedLength();
+                            g.End();
+                        }
+                        else NoExpectedLength();
+
+                        void NoExpectedLength()
+                        {
+                            g.Assign(innerToken, g.WriterFunc.StartSubItem(null, pack));
+                            protoIncompatibleMetaWriter?.Invoke();
+                        }
 
                         prepareInstance?.Invoke();
 
+                        g.Assign(startPos, g.WriterFunc.GetLongPosition());
+                        if (countNullable != null) g.If(countNullable() != 0);
                         EmitWriteContent(g, value, FieldItem, pack);
-                        g.Writer.EndSubItem(token);
+                        if (countNullable != null) g.End();
+
+                        ContentEnd();
+
+                        g.If(outerToken.AsOperand != null);
+                        g.Writer.EndSubItem(outerToken.AsOperand.ValueFromNullable());
+                        g.End();
+                    }
+                    
+                    void ContentEnd()
+                    {
+                        if (!expectedLength.IsNullRef())
+                        {
+                            g.If(expectedLength.AsOperand != null && g.WriterFunc.GetLongPosition().Cast(g.ctx.MapType(typeof(ulong)))
+                                != (startPos.AsOperand.Cast(g.ctx.MapType(typeof(ulong))) + expectedLength.AsOperand.ValueFromNullable()));
+                            {
+                                g.ThrowProtoException(
+                                    $"Written packed prefix for wiretype {_expectedTailWireType} and " + countNullable().ValueFromNullable()
+                                    + $" elements, expected length was " + expectedLength.AsOperand.ValueFromNullable() + " but actual is "
+                                    + (g.WriterFunc.GetLongPosition().Cast(g.ctx.MapType(typeof(ulong))) - startPos.AsOperand.Cast(g.ctx.MapType(typeof(ulong)))));
+                            }
+                            g.End();
+                        }
+
+                        g.If(innerToken.AsOperand != null);
+                        g.Writer.EndSubItem(innerToken.AsOperand.ValueFromNullable());
+                        g.End();
                     }
                 }
             }
@@ -212,19 +300,19 @@ namespace AqlaSerializer.Serializers
             _tail.EmitWrite(g.ctx, null);
         }
 
-        public delegate void EmitReadMetaDelegate(Action onSuccess, Action onFail);
+        public delegate void EmitReadMetaDelegate(Operand fieldNumber, Action onSuccess, Action onFail);
 
         public void EmitRead(SerializerCodeGen g, EmitReadMetaDelegate readNextMeta, Action prepareInstance, Action<Local> add)
         {
-            if (readNextMeta == null) readNextMeta = (s, f) => f();
+            if (readNextMeta == null) readNextMeta = (n, s, f) => f();
+            var ctx = g.ctx;
             using (g.ctx.StartDebugBlockAuto(this))
             {
-                WireType packedWireType = _packedWireTypeForRead;
-                bool packedAllowedStatic = (!_protoCompatibility || packedWireType != WireType.None);
+                bool packedAllowedStatic = (!_protoCompatibility || _expectedTailWireType != WireType.None);
                 using (var packed = packedAllowedStatic ? g.ctx.Local(typeof(bool)) : null)
-                using (var token = g.ctx.Local(typeof(SubItemToken)))
-                using (var fieldNumber = _protoCompatibility ? g.ctx.Local(typeof(int)):null)
-                using (var loop = g.ctx.Local(typeof(bool)))
+                using (var outerToken = g.ctx.Local(typeof(SubItemToken)))
+                using (var innerToken = g.ctx.Local(typeof(SubItemToken?)))
+                using (var fieldNumber = g.ctx.Local(typeof(int)))
                 {
                     if (!fieldNumber.IsNullRef())
                         g.Assign(fieldNumber, g.ReaderFunc.FieldNumber());
@@ -236,7 +324,7 @@ namespace AqlaSerializer.Serializers
                     if (subItemNeededStatic || packedAllowedStatic)
                     {
                         if (!subItemNeededStatic) g.If(packed);
-                        g.Assign(token, g.ReaderFunc.StartSubItem());
+                        g.Assign(outerToken, g.ReaderFunc.StartSubItem());
                         if (!subItemNeededStatic) g.End();
                     }
                     
@@ -252,7 +340,7 @@ namespace AqlaSerializer.Serializers
                         {
                             g.If(packed);
                             {
-                                g.While(g.ReaderFunc.HasSubValue_bool(packedWireType));
+                                g.While(g.ReaderFunc.HasSubValue_bool(_expectedTailWireType));
                                 {
                                     EmitReadElementContent(g, add);
                                 }
@@ -271,46 +359,52 @@ namespace AqlaSerializer.Serializers
                     }
                     else
                     {
-                        var breakLabel = g.DefineLabel();
-
-                        g.DoWhile();
+                        var onEmptyLabel = g.DefineLabel();
+                        var loopStart = g.DefineLabel();
+                        var loopEnd = g.DefineLabel();
+                        g.MarkLabel(loopStart);
                         {
-                            g.Assign(loop, false);
-
+                            g.Assign(fieldNumber, g.ReaderFunc.ReadFieldHeader_int());
                             readNextMeta(
-                                () =>
+                                fieldNumber,
+                                () => {
+                                    using (g.ctx.StartDebugBlockAuto(this, "readNextMeta.OnSuccess"))
                                     {
-                                        using (g.ctx.StartDebugBlockAuto(this, "readNextMeta.OnSuccess"))
-                                        {
-                                            g.Assign(loop, true);
-                                        }
-                                    },
-                                () =>
+                                        g.Goto(loopStart);
+                                    }
+                                },
+                                () => {
+                                    using (g.ctx.StartDebugBlockAuto(this, "readNextMeta.OnFail"))
                                     {
-                                        using (g.ctx.StartDebugBlockAuto(this, "readNextMeta.OnFail"))
-                                        {
-                                            g.If(!g.ReaderFunc.TryReadFieldHeader_bool(FieldItem));
-                                            {
-                                                g.If(g.ReaderFunc.ReadFieldHeader_int() == 0);
-                                                {
-                                                    g.Goto(breakLabel);
-                                                }
-                                                g.End();
+                                        g.If(fieldNumber.AsOperand == FieldItem || fieldNumber.AsOperand == FieldContent);
+                                        g.Goto(loopEnd);
+                                        g.End();
 
-                                                g.Reader.SkipField();
-                                                g.Assign(loop, true);
-                                            }
-                                            g.End();
-                                        }
-                                    });
+                                        g.If(fieldNumber.AsOperand == 0);
+                                        prepareInstance?.Invoke();
+                                        g.Goto(onEmptyLabel);
+                                        g.End();
+
+                                        g.Reader.SkipField();
+                                        g.Goto(loopStart);
+                                    }
+                                });
                         }
-                        g.EndDoWhile(loop);
-
-                        g.MarkLabel(breakLabel);
+                        g.MarkLabel(loopEnd);
 
                         prepareInstance?.Invoke();
                         
-                        g.If(g.ReaderFunc.FieldNumber() == FieldItem);
+                        g.If(fieldNumber.AsOperand == FieldContent);
+                        {
+                            g.Assign(innerToken, g.ReaderFunc.StartSubItem());
+                            g.Assign(packed, g.ReaderFunc.WireType() == WireType.String);
+                            g.Assign(fieldNumber, g.ReaderFunc.ReadFieldHeader_int());
+                        }
+                        g.Else();
+                        g.Assign(innerToken, null);
+                        g.End();
+
+                        g.If(fieldNumber.AsOperand == FieldItem);
                         {
                             g.If(packed);
                             {
@@ -335,12 +429,18 @@ namespace AqlaSerializer.Serializers
                             g.End();
                         }
                         g.End();
+                        
+                        g.If(innerToken.AsOperand != null);
+                        g.Reader.EndSubItem(innerToken.AsOperand.ValueFromNullable());
+                        g.End();
+                        
+                        g.MarkLabel(onEmptyLabel);
                     }
 
                     if (subItemNeededStatic || packedAllowedStatic)
                     {
                         if (!subItemNeededStatic) g.If(packed);
-                        g.Reader.EndSubItem(token);
+                        g.Reader.EndSubItem(outerToken);
                         if (!subItemNeededStatic) g.End();
                     }
                 }
@@ -362,66 +462,100 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if !FEAT_IKVM
-        public void Write(object value, int? count, Action metaWriter, Action prepareInstance, ProtoWriter dest)
+        public void Write(object value, int? count, Action metaWriter, ProtoWriter dest)
         {
-            SubItemToken token = new SubItemToken();
+            SubItemToken? innerToken = null;
             int fieldNumber = dest.FieldNumber;
-            
-            bool writePacked = _writePacked;
-            
+
+            // early length write
+            ulong? expectedLength = _canUsePackedPrefix && count != null ? ProtoWriter.MakePackedPrefix(count.Value, _expectedTailWireType) : (ulong?)null;
+            long startPos;
+
+            void WritePackedPrefix()
+            {
+                ProtoWriter.WriteFieldHeaderComplete(WireType.String, dest);
+                dest.WriteLengthPrefix(expectedLength.Value);
+            }
+
+
             if (_protoCompatibility)
             {
                 // empty arrays are nulls, no subitem or field
-
-                if (writePacked)
+                
+                if (_writeProtoPacked)
                 {
-                    if (_canUsePackedPrefix && count != null)
-                        ProtoWriter.WritePackedPrefix(count.Value, _packedWireTypeForRead, dest);
-                    else
-                        token = ProtoWriter.StartSubItem(null, true, dest);
+                    if (expectedLength != null)
+                        WritePackedPrefix();
+                    else 
+                        innerToken = ProtoWriter.StartSubItem(null, true, dest);
                 }
                 else // each element will begin its own header
                     ProtoWriter.WriteFieldHeaderCancelBegin(dest);
 
-                WriteContent(
-                    value,
-                    fieldNumber,
-                    _writePacked,
-                    dest,
-                    first: prepareInstance);
-
-                if (writePacked)
-                {
-                    // last element - end subitem
-                    ProtoWriter.EndSubItem(token, dest);
-                }
+                startPos = ProtoWriter.GetLongPosition(dest);
+                WriteContent(value, fieldNumber, _writeProtoPacked, dest);
+                ContentEnd();
             }
             else
             {
                 bool pack = _tail.DemandWireTypeStabilityStatus();
-                token = ProtoWriter.StartSubItem(null, pack, dest);
+                if (!pack) expectedLength = null;
 
-                metaWriter?.Invoke();
+                SubItemToken? outerToken = null;
+                
+                if (expectedLength != null)
+                {
+                    if (count > 0) expectedLength += 1; // first element writes field header, it should be 1 byte
+                    if (metaWriter != null)
+                    {
+                        // start in outer Group (reader - check String/Group)
+                        // this is needed because we predicted content length but can't predict length of metadata
+                        outerToken = ProtoWriter.StartSubItem(null, false, dest);
+                        metaWriter.Invoke();
+                        if (count != 0)
+                        {
+                            ProtoWriter.WriteFieldHeaderBegin(FieldContent, dest);
+                            WritePackedPrefix();
+                        }
+                    }
+                    else WritePackedPrefix();
+                }
+                else
+                {
+                    innerToken = ProtoWriter.StartSubItem(null, pack, dest);
+                    metaWriter?.Invoke();
+                }
 
-                prepareInstance?.Invoke();
+                startPos = ProtoWriter.GetLongPosition(dest);
+                if (count != 0)
+                    WriteContent(value, FieldItem, pack, dest);
 
-                WriteContent(value, FieldItem, pack, dest);
-                ProtoWriter.EndSubItem(token, dest);
+                ContentEnd();
+                if (outerToken != null) ProtoWriter.EndSubItem(outerToken.Value, dest);
+            }
+
+            void ContentEnd()
+            {
+                if (expectedLength != null && (ulong)ProtoWriter.GetLongPosition(dest) != (ulong)startPos + expectedLength.Value)
+                {
+                    throw new ProtoException(
+                        $"Written packed prefix for wiretype {_expectedTailWireType} and {count.Value} elements, expected length was {expectedLength.Value} but actual is {(ulong)ProtoWriter.GetLongPosition(dest) - (ulong)startPos}");
+                }
+                if (innerToken != null) ProtoWriter.EndSubItem(innerToken.Value, dest);
             }
         }
 
-        void WriteContent(object value, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
+        void WriteContent(object value, int fieldNumber, bool pack, ProtoWriter dest)
         {
             var list = !_skipIList ? value as IList : null;
             if (list == null)
             {
-                WriteContent((IEnumerable)value, fieldNumber, pack, dest, first);
+                WriteContent((IEnumerable)value, fieldNumber, pack, dest);
                 return;
             }
             int len = list.Count;
             if (len > 0)
             {
-                first?.Invoke();
                 for (int i = 0; i < len; i++)
                 {
                     WriteElement(list[i], fieldNumber, pack, dest, i == 0);
@@ -429,14 +563,11 @@ namespace AqlaSerializer.Serializers
             }
         }
 
-        void WriteContent(IEnumerable enumerable, int fieldNumber, bool pack, ProtoWriter dest, Action first = null)
+        void WriteContent(IEnumerable enumerable, int fieldNumber, bool pack, ProtoWriter dest)
         {
             bool isFirst = true;
             foreach (var obj in enumerable)
             {
-                if (isFirst)
-                    first?.Invoke();
-                
                 WriteElement(obj, fieldNumber, pack, dest, isFirst);
 
                 isFirst = false;
@@ -468,15 +599,15 @@ namespace AqlaSerializer.Serializers
         }
 
         public delegate bool TryReadMetaDelegate();
+        
 
         public void Read(TryReadMetaDelegate readNextMeta, Action prepareInstance, Action<object> add, ProtoReader source)
         {
-            WireType packedWireType = _packedWireTypeForRead;
+            WireType packedWireType = _expectedTailWireType;
             bool packed = (!_protoCompatibility || packedWireType != WireType.None) && source.WireType == WireType.String;
             int fieldNumber = source.FieldNumber;
             
             bool subItemNeeded = packed || !_protoCompatibility;
-
             SubItemToken token = subItemNeeded ? ProtoReader.StartSubItem(source) : new SubItemToken();
             
             if (_protoCompatibility)
@@ -502,42 +633,70 @@ namespace AqlaSerializer.Serializers
             else
             {
                 bool loop;
-
+                bool empty = false;
+                int field;
                 do
                 {
                     loop = false;
-
-                    if (readNextMeta?.Invoke() ?? false)
+                    field = source.ReadFieldHeader();
+                    if (field != 0 && (readNextMeta?.Invoke() ?? false))
                     {
                         loop = true;
                     }
-                    else if (!source.TryReadFieldHeader(FieldItem))
+                    else
                     {
-                        if (source.ReadFieldHeader() == 0) break; // empty
-                        source.SkipField();
-                        loop = true;
+                        switch (field)
+                        {
+                            case FieldItem: // can be packed or not
+                            case FieldContent: // length-prefixed subgroup with items
+                                break;
+                            default:
+                                if (field == 0)
+                                {
+                                    empty = true;
+                                    break;
+                                }
+                                
+                                source.SkipField();
+                                loop = true;
+                                break;
+                        }
                     }
                 } while (loop);
 
                 prepareInstance?.Invoke();
 
-                if (source.FieldNumber == FieldItem)
+                if (!empty)
                 {
-                    if (packed)
+                    SubItemToken? innerToken = null;
+
+                    if (field == FieldContent)
                     {
-                        packedWireType = source.WireType;
-                        do
-                        {
-                            ReadElementContent(add, source);
-                        } while (ProtoReader.HasSubValue(packedWireType, source));
+                        innerToken = ProtoReader.StartSubItem(source);
+                        packed = source.WireType == WireType.String;
+                        field = source.ReadFieldHeader();
                     }
-                    else
+
+                    if (field == FieldItem)
                     {
-                        do
+                        if (packed)
                         {
-                            ReadElementContent(add, source);
-                        } while (source.TryReadFieldHeader(FieldItem));
+                            packedWireType = source.WireType;
+                            do
+                            {
+                                ReadElementContent(add, source);
+                            } while (ProtoReader.HasSubValue(packedWireType, source));
+                        }
+                        else
+                        {
+                            do
+                            {
+                                ReadElementContent(add, source);
+                            } while (source.TryReadFieldHeader(FieldItem));
+                        }
                     }
+
+                    if (innerToken != null) ProtoReader.EndSubItem(innerToken.Value, source);
                 }
             }
 
@@ -559,17 +718,17 @@ namespace AqlaSerializer.Serializers
             else if (_tail.DemandWireTypeStabilityStatus())
                 desc += "NewPacked";
 
-            if (_writePacked)
+            if (_writeProtoPacked)
             {
                 if (desc.Length != 0)
                     desc += ", ";
                 desc += "WritePacked";
             }
-            if (_packedWireTypeForRead != WireType.None)
+            if (_expectedTailWireType != WireType.None && _protoCompatibility)
             {
                 if (desc.Length != 0)
                     desc += ", ";
-                desc += "PackedRead = " + _packedWireTypeForRead;
+                desc += "PackedRead = " + _expectedTailWireType;
             }
             if (append)
             {

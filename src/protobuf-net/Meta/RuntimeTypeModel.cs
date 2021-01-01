@@ -951,7 +951,7 @@ namespace AqlaSerializer.Meta
             ser.Write(value, dest);
 
 #if CHECK_COMPILED_VS_NOT
-            if (!SkipCompiledVsNotCheck && (value.GetType().IsPublic || value.GetType().IsNestedPublic) && isRoot)
+            if (ProtoWriter.GetLongPosition(dest) < int.MaxValue / 10 && !SkipCompiledVsNotCheck && (value.GetType().IsPublic || value.GetType().IsNestedPublic) && isRoot)
             {
                 RuntimeTypeModel rtm = GetInvertedVersionForCheckCompiledVsNot(key, metaType);
 
@@ -1049,7 +1049,7 @@ namespace AqlaSerializer.Meta
 
             var ser = isRoot ? metaType.RootSerializer : metaType.Serializer;
 #if CHECK_COMPILED_VS_NOT
-            int initialSourcePosition = source.Position;
+            long initialSourcePosition = source.LongPosition;
             long initialStreamPosition = initialSourcePosition + source.InitialUnderlyingStreamPosition;
             var refState = (!SkipCompiledVsNotCheck && isRoot) ? source.StoreReferenceState() : null;
             var initialWireType = source.WireType;
@@ -1096,7 +1096,7 @@ namespace AqlaSerializer.Meta
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, types " + copy.GetType() + ", " + result.GetType());
                         else if (copy.GetType().IsPrimitive && !result.Equals(copy))
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, values " + copy + ", " + result);
-                        else if (source.Position != pr.Position)
+                        else if (source.LongPosition != pr.LongPosition)
                             throw new InvalidOperationException("CHECK_COMPILED_VS_NOT failed, wrong position after read");
                     }
                     if (1.Equals(2)) // for debug

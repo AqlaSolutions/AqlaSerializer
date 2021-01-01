@@ -33,10 +33,13 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.WriteString((string)value, dest);
         }
         bool IProtoSerializer.RequiresOldValue => false;
+        
+        public bool CanCancelWriting { get; }
 
         public object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // since replaces
+            
             return source.ReadString();
         }
 #if FEAT_COMPILER

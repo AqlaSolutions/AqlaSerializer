@@ -549,9 +549,9 @@ namespace AqlaSerializer.unittest.Meta
 
 
         [Test]
-        public void TestEmptyRoundTrip()
+        public void TestEmptyRoundTrip([Values(false, true)] bool comp)
         {
-            var model = CreateModelCompatible();
+            var model = comp ? CreateModelCompatible() : CreateModel();
 
             var orig = new PackedData { ArrayInt32 = new int[0], ArraySingle = new float[0], ArrayDouble = new double[0] };
             int len;
@@ -576,9 +576,9 @@ namespace AqlaSerializer.unittest.Meta
             Assert.AreEqual(0, clone.ArraySingle.Length);
         }
         [Test]
-        public void TestNullRoundTrip()
+        public void TestNullRoundTrip([Values(false, true)] bool comp)
         {
-            var model = CreateModelCompatible();
+            var model = comp ? CreateModelCompatible() : CreateModel();
 
             var orig = new PackedData { ArrayInt32 = null, ArraySingle = null, ArrayDouble = null };
             int len;
@@ -651,7 +651,7 @@ namespace AqlaSerializer.unittest.Meta
         {
             try
             {
-                TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(orig);
+                //TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(orig);
                 using (MemoryStream ms = new MemoryStream())
                 {
                     model.Serialize(ms, orig);
@@ -668,13 +668,20 @@ namespace AqlaSerializer.unittest.Meta
         static RuntimeTypeModel CreateModel()
         {
             var model = TypeModel.Create();
-            model.Add(typeof(PackedData), true);
+            var t = model.Add(typeof(PackedData), true);
+            t.ForceCompactFormatForRoot = true;
+            for (int i = 1; i <= 3; i++)
+            {
+                t[i].SetSettings(s => s.V.Format = ValueFormat.Compact);
+                t[i].SetSettings(s => s.V.Collection.Format = CollectionFormat.Enhanced);
+            }
+
             return model;
         }
         static RuntimeTypeModel CreateModelCompatible()
         {
             var model = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
-            model.Add(typeof(PackedData), true);
+            var t = model.Add(typeof(PackedData), true);
             return model;
         }
         [ProtoBuf.ProtoContract]

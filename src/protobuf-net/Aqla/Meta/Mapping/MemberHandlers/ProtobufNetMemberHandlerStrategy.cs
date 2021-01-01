@@ -114,6 +114,14 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
                 s.SerializationSettings.DefaultLevel = dl;
                 s.SerializationSettings.SetSettings(level, 0);
 
+                if (false && isPacked) // TODO (errors on int)
+                {
+                    var nested = s.SerializationSettings.GetSettingsCopy(1).Basic;
+                    nested.ContentBinaryFormatHint = BinaryDataFormat.FixedSize;
+                    s.SerializationSettings.SetSettings(level, 1);
+                }
+
+
                 return s.TagIsPinned ? MemberHandlerResult.Done : MemberHandlerResult.Partial; // note minAcceptFieldNumber only applies to non-proto
             }
             finally

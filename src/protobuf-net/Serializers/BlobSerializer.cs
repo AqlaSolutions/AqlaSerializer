@@ -48,6 +48,9 @@ namespace AqlaSerializer.Serializers
         }
 #endif
         bool IProtoSerializer.RequiresOldValue => !_overwriteList;
+        
+        public bool CanCancelWriting { get; }
+
 
 #if FEAT_COMPILER
         bool IProtoSerializer.EmitReadReturnsValue => true;

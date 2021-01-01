@@ -79,6 +79,14 @@ namespace AqlaSerializer.Compiler
         {
             return Arg(ctx.ArgIndexReadWriter);
         }
+
+        public void Execute(ContextualOperand op)
+        {
+            Type r = op.GetReturnType();
+            op._ManualEmitGet(this);
+            //EmitGetHelper(op, r, false);
+            if (r.FullName != typeof(void).FullName) IL.Emit(OpCodes.Pop);
+        }
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -149,10 +157,9 @@ namespace AqlaSerializer.Compiler
             g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.WriteFieldHeader), intField, wireType, g.ArgReaderWriter());
         }
 
-        
-        public void WritePackedPrefix(Operand elementCount, Operand wireType)
+        public void WriteLengthPrefix(Operand ulongLength)
         {
-            g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.WritePackedPrefix), elementCount, wireType, g.ArgReaderWriter());
+            g.Invoke(g.ArgReaderWriter(), nameof(ProtoWriter.WriteLengthPrefix), ulongLength);
         }
 
         public void EndSubItem(Operand subItemToken)
@@ -173,6 +180,11 @@ namespace AqlaSerializer.Compiler
         public void ExpectRoot()
         {
             g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.ExpectRoot), g.ArgReaderWriter());
+        }
+
+        public void ExpectRootType()
+        {
+            g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.ExpectRootType), g.ArgReaderWriter());
         }
 
         public void WriteRecursionSafeObject(Operand objValue, Operand intTypeKey)
@@ -196,6 +208,11 @@ namespace AqlaSerializer.Compiler
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.TryGetNextLateReference), outIntTypeKey, outObjValue, outIntReferenceKey, g.ArgReaderWriter());
         }
 
+        public ContextualOperand GetLongPosition()
+        {
+            return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.GetLongPosition), g.ArgReaderWriter());
+        }
+
         public ContextualOperand CheckIsOnHalfToRecursionDepthLimit_bool()
         {
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.CheckIsOnHalfToRecursionDepthLimit), g.ArgReaderWriter());
@@ -212,6 +229,11 @@ namespace AqlaSerializer.Compiler
             return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.StartSubItem), objInstance, boolPrefixLength, g.ArgReaderWriter());
         }
 
+        public ContextualOperand TakeIsExpectingRootType_bool()
+        {
+            return g.ArgReaderWriter().Invoke(nameof(ProtoWriter.TakeIsExpectingRootType));
+        }
+
         public ContextualOperand WireType()
         {
             return g.ArgReaderWriter().Property(nameof(ProtoWriter.WireType));
@@ -220,6 +242,11 @@ namespace AqlaSerializer.Compiler
         public ContextualOperand FieldNumber()
         {
             return g.ArgReaderWriter().Property(nameof(ProtoWriter.FieldNumber));
+        }
+
+        public ContextualOperand MakePackedPrefix_ulong_nullable(Operand elementCount, Operand wireType)
+        {
+            return g.StaticFactory.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.MakePackedPrefix), elementCount, wireType);
         }
 
         public WriterFuncFactory(SerializerCodeGen g)
@@ -319,6 +346,11 @@ namespace AqlaSerializer.Compiler
         public ContextualOperand TryReadFieldHeader_bool(Operand intField)
         {
             return g.ArgReaderWriter().Invoke(nameof(ProtoReader.TryReadFieldHeader), intField);
+        }
+
+        public ContextualOperand TryPeekFieldHeader_int_nullable()
+        {
+            return g.ArgReaderWriter().Invoke(nameof(ProtoReader.TryPeekFieldHeader));
         }
 
         public ContextualOperand HasSubValue_bool(Operand wireType)

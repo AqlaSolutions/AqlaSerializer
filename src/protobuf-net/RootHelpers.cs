@@ -4,7 +4,8 @@ namespace AqlaSerializer
 {
     public class RootHelpers
     {
-        public const int CurrentFormatVersion = 4;
+        public const int CurrentFormatVersion = 5;
+        public const int AqlaV2ReleaseVersion = 4;
         public const int Rc1FormatVersion = 3;
         public const int FieldLateReferenceObjects = 2;
         public const int FieldNetObjectPositions = 3;
@@ -16,6 +17,7 @@ namespace AqlaSerializer
 
         public static void WriteOwnFooter(ProtoWriter dest)
         {
+            if (ProtoWriter.GetLongPosition(dest) == 0) return; // if root field was cancelled
             int typeKey;
             object obj;
             int refKey;
@@ -34,7 +36,7 @@ namespace AqlaSerializer
 
             if (lateRefFieldToken != null) ProtoWriter.EndSubItem(lateRefFieldToken.Value, dest);
 
-            int[] arr = dest.NetCacheKeyPositionsList.ExportNew();
+            long[] arr = dest.NetCacheKeyPositionsList.ExportNew();
             
             // always write it
             // and no need to believe in detection
@@ -42,7 +44,10 @@ namespace AqlaSerializer
             if (arr.Length > 0)
             {
                 ProtoWriter.WriteFieldHeaderBegin(RootHelpers.FieldNetObjectPositions, dest);
-                ProtoWriter.WriteArrayContent(arr, WireType.Variant, ProtoWriter.WriteInt32, dest);
+                if (CurrentFormatVersion > AqlaV2ReleaseVersion)
+                    ProtoWriter.WriteArrayContent(arr, WireType.Variant, (x, w) => ProtoWriter.WriteInt32((int)x, w), dest);
+                else
+                    ProtoWriter.WriteArrayContent(arr, WireType.Variant, ProtoWriter.WriteInt64, dest);
             }
         }
 
@@ -56,11 +61,12 @@ namespace AqlaSerializer
             int formatVersion = source.ReadFieldHeader();
             switch (formatVersion)
             {
-                case RootHelpers.CurrentFormatVersion:
+                case RootHelpers.AqlaV2ReleaseVersion:
                 case RootHelpers.Rc1FormatVersion:
+                case RootHelpers.CurrentFormatVersion:
                     break;
                 default:
-                    throw new ProtoException("Wrong format version, required " + RootHelpers.CurrentFormatVersion + " but actual " + formatVersion);
+                    throw new ProtoException("Wrong format version, required " + RootHelpers.AqlaV2ReleaseVersion + " but actual " + formatVersion);
             }
 
             if (formatVersion > RootHelpers.Rc1FormatVersion && seeking && source.AllowReferenceVersioningSeeking)
@@ -71,7 +77,10 @@ namespace AqlaSerializer
                     source.SkipField();
                 if (source.FieldNumber == RootHelpers.FieldNetObjectPositions)
                 {
-                    ImportReferencePositions(source);
+                    if (formatVersion <= RootHelpers.AqlaV2ReleaseVersion)
+                        ImportReferencePositions32(source);
+                    else
+                        ImportReferencePositions64(source);
                 }
                 
                 source.SeekAndExchangeBlockEnd(pos, blockEnd);
@@ -81,9 +90,14 @@ namespace AqlaSerializer
             return formatVersion;
         }
 
-        static void ImportReferencePositions(ProtoReader source)
+        static void ImportReferencePositions64(ProtoReader source)
         {
-            source.NetCacheKeyPositionsList.ImportNext(source.ReadArrayContentIterating(source.ReadInt32));
+            source.NetCacheKeyPositionsList.ImportNext(source.ReadArrayContentIterating(source.ReadInt64));
+        }
+
+        static void ImportReferencePositions32(ProtoReader source)
+        {
+            source.NetCacheKeyPositionsList.ImportNext(source.ReadArrayContentIterating(()=>(long)source.ReadInt32()));
         }
 
         public static void ReadOwnFooter(bool seeking, int formatVersion, ProtoReader source)
@@ -108,7 +122,10 @@ namespace AqlaSerializer
                         else
                         {
                             // for versioning we should read it now if didn't read before, may affect aux lists where multiple roots reuse same net object list
-                            ImportReferencePositions(source);
+                            if (formatVersion <= RootHelpers.AqlaV2ReleaseVersion)
+                                ImportReferencePositions32(source);
+                            else
+                                ImportReferencePositions64(source);
                         }
                     }
                 }

@@ -38,12 +38,12 @@ namespace AqlaSerializer.Meta
 
         bool GetRootNetObjectMode()
         {
-            return !IsSimpleValue && IsNetObjectValueDecoratorNecessary(_model, ValueFormat.Reference);
+            return !IsSimpleValue && IsNetObjectValueDecoratorNecessary(_model, ValueFormat.Reference) && !ForceCompactFormatForRoot;
         }
 
         bool GetRootLateReferenceMode()
         {
-            return !IsSimpleValue && !_model.ProtoCompatibility.SuppressOwnRootFormat;
+            return !IsSimpleValue && !_model.ProtoCompatibility.SuppressOwnRootFormat && !ForceCompactFormatForRoot;
         }
 
         bool IsSimpleValue => Helpers.IsEnum(Type);

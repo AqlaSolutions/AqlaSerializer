@@ -29,10 +29,13 @@ namespace AqlaSerializer.Serializers
 #endif
         }
         bool IProtoSerializer.RequiresOldValue => false;
+        
+        public bool CanCancelWriting { get; }
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // since replaces
+            
             return source.ReadSingle();
         }
         public void Write(object value, ProtoWriter dest)

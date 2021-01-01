@@ -201,7 +201,7 @@ namespace AqlaSerializer.Meta
                         }
                     }
                     if (s.Collection.IsCollection && s.Collection.Format == CollectionFormat.Protobuf &&
-                        ListDecorator.CanPack(HelpersInternal.GetWireType(Helpers.GetTypeCode(member.MemberType), s.ContentBinaryFormatHint.GetValueOrDefault())))
+                        ListDecorator.CanPackProtoCompatible(HelpersInternal.GetWireType(Helpers.GetTypeCode(member.MemberType), s.ContentBinaryFormatHint.GetValueOrDefault())))
                     {
                         builder.Append(" [packed=true]");
                     }

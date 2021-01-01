@@ -21,8 +21,10 @@ namespace AqlaSerializer.Serializers
     {
         readonly int _readLengthLimit;
 
+        public override bool CanCancelWriting => _listHelpers.CanCancelWriting;
+
         // will be always group or string and won't change between group and string in same session
-        public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || _writePacked;
+        public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || _writeProtoPacked;
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
@@ -36,7 +38,7 @@ namespace AqlaSerializer.Serializers
                                            ProtoWriter.WriteFieldHeader(ListHelpers.FieldLength, WireType.Variant, dest);
                                            ProtoWriter.WriteInt32(length, dest);
                                        }
-                                   }, null, dest);
+                                   }, dest);
         }
 
         public static void ThrowExceededLengthLimit(int length, int limit)
@@ -56,7 +58,7 @@ namespace AqlaSerializer.Serializers
             _listHelpers.Read(
                 () =>
                     {
-                        if (source.TryReadFieldHeader(ListHelpers.FieldLength))
+                        if (source.FieldNumber == ListHelpers.FieldLength)
                         {
                             // we write length to construct an array before deserializing
                             // so we can handle references to array from inside it
@@ -116,7 +118,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
         readonly ListHelpers _listHelpers;
-        readonly bool _writePacked;
+        readonly bool _writeProtoPacked;
         readonly Type _arrayType; // this is, for example, typeof(int[])
         readonly bool _overwriteList;
         readonly Type _itemType; // this is, for example, typeof(int[])
@@ -125,7 +127,7 @@ namespace AqlaSerializer.Serializers
 
         bool AppendToCollection => !_overwriteList;
         
-        public ArrayDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireTypeForRead, Type arrayType, bool overwriteList, int readLengthLimit, bool protoCompatibility)
+        public ArrayDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool writeProtoPacked, WireType expectedTailWireType, Type arrayType, bool overwriteList, int readLengthLimit, bool protoCompatibility)
             : base(tail)
         {
             Helpers.DebugAssert(arrayType != null, "arrayType should be non-null");
@@ -133,12 +135,12 @@ namespace AqlaSerializer.Serializers
             _itemType = tail.ExpectedType;
             if (_itemType != arrayType.GetElementType() && !Helpers.IsAssignableFrom(Tail.ExpectedType, arrayType.GetElementType())) throw new ArgumentException("Expected array type is " + arrayType.GetElementType() + " but tail type is " + _itemType);
             Helpers.DebugAssert(Tail.ExpectedType != model.MapType(typeof(byte)), "Should have used BlobSerializer");
-            _writePacked = writePacked;
+            _writeProtoPacked = writeProtoPacked;
             _arrayType = arrayType;
             _overwriteList = overwriteList;
             _protoCompatibility = protoCompatibility;
             _readLengthLimit = readLengthLimit;
-            _listHelpers = new ListHelpers(_writePacked, packedWireTypeForRead, _protoCompatibility, tail, false);
+            _listHelpers = new ListHelpers(_writeProtoPacked, expectedTailWireType, _protoCompatibility, tail, false);
         }
 
         public override Type ExpectedType => _arrayType;
@@ -154,7 +156,7 @@ namespace AqlaSerializer.Serializers
             using (Compiler.Local value = ctx.GetLocalWithValue(_arrayType, valueFrom))
             {
                 _listHelpers.EmitWrite(ctx.G, value,
-                                       (withCount, _) => value.AsOperand.Property("Length"),
+                                       () => value.AsOperand.Property("Length"),
                                        () =>
                                            {
                                                var length = value.AsOperand.Property("Length");
@@ -183,11 +185,11 @@ namespace AqlaSerializer.Serializers
                 g.Assign(reservedTrap, -1);
                 _listHelpers.EmitRead(
                     ctx.G,
-                    (onSuccess, onFail) =>
+                    (fieldNumber, onSuccess, onFail) =>
                     {
                         using (ctx.StartDebugBlockAuto(this, "meta"))
                         {
-                            g.If(g.ReaderFunc.TryReadFieldHeader_bool(ListHelpers.FieldLength));
+                            g.If(fieldNumber == ListHelpers.FieldLength);
                             {
                                 g.Assign(length, g.ReaderFunc.ReadInt32());
                                 onSuccess();

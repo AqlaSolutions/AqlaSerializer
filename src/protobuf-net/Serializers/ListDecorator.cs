@@ -23,6 +23,8 @@ namespace AqlaSerializer.Serializers
 {
     internal class ListDecorator : ProtoDecoratorBase, IProtoTypeSerializer
     {
+        public override bool CanCancelWriting => ListHelpers.CanCancelWriting;
+
         // will be always group or string and won't change between group and string in same session
         public bool DemandWireTypeStabilityStatus() => !_protoCompatibility || WritePacked;
 #if !FEAT_IKVM
@@ -49,7 +51,7 @@ namespace AqlaSerializer.Serializers
                             }
                         }
                     };
-            ListHelpers.Write(value, count, metaWriter, null, dest);
+            ListHelpers.Write(value, count, metaWriter, dest);
         }
 
         public override object Read(object value, ProtoReader source)
@@ -65,7 +67,7 @@ namespace AqlaSerializer.Serializers
             ListHelpers.Read(
                 () =>
                     {
-                        if (_metaType != null && source.TryReadFieldHeader(ListHelpers.FieldSubtype))
+                        if (_metaType != null && source.FieldNumber == ListHelpers.FieldSubtype)
                         {
                             MetaType mt = _subTypeHelpers.TryRead(_metaType, forceNewInstance ? null : value?.GetType(), source);
                             if (mt != null)
@@ -124,7 +126,7 @@ namespace AqlaSerializer.Serializers
 
 #endif
 
-        internal static bool CanPack(WireType wireType)
+        internal static bool CanPackProtoCompatible(WireType wireType)
         {
             switch (wireType)
             {
@@ -151,7 +153,7 @@ namespace AqlaSerializer.Serializers
         bool IsList => (_options & OPTIONS_IsList) != 0;
         bool SuppressIList => (_options & OPTIONS_SuppressIList) != 0;
         protected bool WritePacked => (_options & OPTIONS_WritePacked) != 0;
-        protected readonly WireType PackedWireTypeForRead;
+        protected readonly WireType ExpectedTailWireType;
         
         readonly bool _protoCompatibility;
         readonly bool _writeSubType;
@@ -161,7 +163,7 @@ namespace AqlaSerializer.Serializers
         readonly MetaType _metaType;
 
         internal static ListDecorator Create(
-            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType,
+            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writeProtoPacked, WireType expectedTailWireType,
             bool overwriteList, bool protoCompatibility, bool writeSubType)
         {
 #if !NO_GENERICS
@@ -173,8 +175,8 @@ namespace AqlaSerializer.Serializers
                     declaredType,
                     concreteTypeDefault,
                     tail,
-                    writePacked,
-                    packedWireType,
+                    writeProtoPacked,
+                    expectedTailWireType,
                     overwriteList,
                     builderFactory,
                     add,
@@ -183,17 +185,17 @@ namespace AqlaSerializer.Serializers
                     protoCompatibility);
             }
 #endif
-            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writePacked, packedWireType, overwriteList, protoCompatibility, writeSubType);
+            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writeProtoPacked, expectedTailWireType, overwriteList, protoCompatibility, writeSubType);
         }
 
         protected ListDecorator(
-            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType packedWireType,
+            RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType expectedTailWireType,
             bool overwriteList, bool protoCompatibility, bool writeSubType)
             : base(tail)
         {
             if (overwriteList) _options |= OPTIONS_OverwriteList;
 
-            PackedWireTypeForRead = packedWireType;
+            ExpectedTailWireType = expectedTailWireType;
             _protoCompatibility = protoCompatibility;
             _writeSubType = writeSubType && !protoCompatibility;
 
@@ -220,7 +222,7 @@ namespace AqlaSerializer.Serializers
                 if (_add == null) throw new InvalidOperationException("Unable to resolve a suitable Add method for " + declaredType.FullName);
             }
 
-            ListHelpers = new ListHelpers(WritePacked, PackedWireTypeForRead, _protoCompatibility, tail, false);
+            ListHelpers = new ListHelpers(WritePacked, ExpectedTailWireType, _protoCompatibility, tail, false);
 
             if (!protoCompatibility)
             {
@@ -258,13 +260,13 @@ namespace AqlaSerializer.Serializers
                 
                 ListHelpers.EmitRead(
                     ctx.G,
-                    (onSuccess, onFail) =>
+                    (fieldNumber, onSuccess, onFail) =>
                         {
                             using (ctx.StartDebugBlockAuto(this, "readNextMeta"))
                             {
                                 if (_metaType != null)
                                 {
-                                    g.If(g.ReaderFunc.TryReadFieldHeader_bool(ListHelpers.FieldSubtype));
+                                    g.If(fieldNumber == ListHelpers.FieldSubtype);
                                     {
                                         using (ctx.StartDebugBlockAuto(this, "subtype handler"))
                                         {
@@ -384,29 +386,33 @@ namespace AqlaSerializer.Serializers
             using (Compiler.Local value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             using (Compiler.Local t = ctx.Local(typeof(System.Type)))
             using (Compiler.Local length = ctx.Local(typeof(int)))
+            using (Compiler.Local countNullable = ctx.Local(typeof(int?), false))
             {
+                bool countSet = false;
+
+                ContextualOperand GetCachedCountNullable()
+                {
+                    if (countSet) return countNullable.AsOperand;
+                    countSet = true;
+                    icol = ctx.Local(typeof(ICollection));
+                    g.Assign(icol, value.AsOperand.As(icol.Type));
+                    g.If(icol.AsOperand != null);
+                    {
+                        g.Assign(countNullable, (icol.AsOperand.Property("Count")));
+                    }
+                    g.Else();
+                    g.Assign(countNullable, null);
+                    g.End();
+                    return countNullable.AsOperand;
+                }
+
+
                 try
                 {
-
-                    bool lengthSet = false;
-
-
                     ListHelpers.EmitWrite(
                         ctx.G,
                         value,
-                        (withCount, orElse) => {
-                            icol = ctx.Local(typeof(ICollection));
-                            g.Assign(icol, value.AsOperand.As(icol.Type));
-                            g.If(icol.AsOperand != null);
-                            {
-                                withCount(icol.AsOperand.Property("Count"));
-                            }
-                            g.Else();
-                            {
-                                orElse();
-                            }
-                            g.End();
-                        },
+                        GetCachedCountNullable,
                         () => {
 
                             icol = ctx.Local(typeof(ICollection));

@@ -49,6 +49,8 @@ namespace AqlaSerializer.Serializers
 
         public Type ExpectedType { get; }
         bool IProtoSerializer.RequiresOldValue => true;
+        
+        public bool CanCancelWriting { get; }
 
 #if !FEAT_IKVM
         void IProtoSerializer.Write(object value, ProtoWriter dest)

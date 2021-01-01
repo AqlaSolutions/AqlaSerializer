@@ -82,6 +82,9 @@ namespace AqlaSerializer.Serializers
         public const string NotSupportedMessage = "Late references are not supported on surrogate serializers and tuples.";
 
         public bool RequiresOldValue => true;
+        
+        public bool CanCancelWriting { get; }
+
 #if FEAT_COMPILER
         public bool EmitReadReturnsValue => true;
 

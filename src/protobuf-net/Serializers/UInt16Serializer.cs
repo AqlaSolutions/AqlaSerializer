@@ -28,10 +28,14 @@ namespace AqlaSerializer.Serializers
         public virtual Type ExpectedType => expectedType;
 
         bool IProtoSerializer.RequiresOldValue => false;
+        
+        public bool CanCancelWriting { get; }
+
 #if !FEAT_IKVM
         public virtual object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // since replaces
+            
             return source.ReadUInt16();
         }
         public virtual void Write(object value, ProtoWriter dest)
@@ -41,7 +45,7 @@ namespace AqlaSerializer.Serializers
 #endif
 #if FEAT_COMPILER
         bool IProtoSerializer.EmitReadReturnsValue => true;
-
+        
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {
             using (ctx.StartDebugBlockAuto(this))

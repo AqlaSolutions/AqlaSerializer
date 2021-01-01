@@ -132,8 +132,8 @@ namespace AqlaSerializer.Meta
 
                 m.Collection.ConcreteType = _settingsValueFinal.ConstructType;
 
-                if (_settingsValueFinal.PrefixLength == null && !IsSimpleValue)
-                    _settingsValueFinal.PrefixLength = true;
+                if (_settingsValueFinal.PrefixLength == null)
+                    _settingsValueFinal.PrefixLength = _model.ProtoCompatibility.UseLengthPrefixedNestingAsDefault;
 
                 _settingsValueFinal.Member = m;
 
@@ -262,6 +262,23 @@ namespace AqlaSerializer.Meta
                     {
                         // will set also member.Collection.ConcreteType in InitSerializers
                         sv.ConstructType = value;
+                        return sv;
+                    });
+            }
+        }
+
+        /// <summary>
+        /// If true, when used as root object will not support root null checking or references to root
+        /// </summary>
+        public bool ForceCompactFormatForRoot
+        {
+            get { return _settingsValueByClient.ForceCompactFormatForRoot; }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.ForceCompactFormatForRoot = value;
                         return sv;
                     });
             }
@@ -396,23 +413,7 @@ namespace AqlaSerializer.Meta
                         });
             }
         }
-
-        /// <summary>
-        /// Indicates whether this type should always be treated as a "group" (rather than a string-prefixed sub-message)
-        /// </summary>
-        public bool IsGroup
-        {
-            get { return _settingsValueByClient.IsGroup; }
-            set
-            {
-                ChangeSettings(
-                    sv => {
-                        sv.IsGroup = value;
-                        return sv;
-                    });
-            }
-        }
-
+        
         void ChangeSettings(Func<TypeSettingsValue, TypeSettingsValue> setter)
         {
             ThrowIfFrozen();

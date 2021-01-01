@@ -39,6 +39,7 @@ namespace AqlaSerializer.Serializers
 
         public Type ExpectedType => _serializer.ExpectedType;
         public bool RequiresOldValue => _serializer.RequiresOldValue;
+        public bool CanCancelWriting { get; }
 
 #if !FEAT_IKVM
         public void Write(object value, ProtoWriter dest)
@@ -46,12 +47,16 @@ namespace AqlaSerializer.Serializers
             ProtoWriter.ExpectRoot(dest);
             if (_protoCompatibility)
             {
+                // doesn't have effect because it's cancelled by ExpectRoot anyway
+                // but we don't need it because no need to skip entire object in compatibility mode
+                //ProtoWriter.ExpectRootType(dest);
                 _serializer.Write(value, dest);
                 return;
             }
             
             var rootToken = ProtoWriter.StartSubItem(null, false, dest);
             RootHelpers.WriteOwnHeader(dest);
+            ProtoWriter.ExpectRootType(dest);
             _serializer.Write(value, dest);
             RootHelpers.WriteOwnFooter(dest);
 
@@ -93,6 +98,7 @@ namespace AqlaSerializer.Serializers
                 {
                     g.Assign(rootToken, g.WriterFunc.StartSubItem(null, false));
                     g.Invoke(typeof(RootHelpers), nameof(RootHelpers.WriteOwnHeader), g.ArgReaderWriter());
+                    g.Writer.ExpectRootType();
                     _serializer.EmitWrite(ctx, valueFrom);
                     g.Invoke(typeof(RootHelpers), nameof(RootHelpers.WriteOwnFooter), g.ArgReaderWriter());
                     g.Writer.EndSubItem(rootToken);

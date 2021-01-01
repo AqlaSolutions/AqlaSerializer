@@ -501,12 +501,12 @@ namespace Examples
             model.Add(typeof(UriDataWithDefault), true);
             UriDataWithDefault test = new UriDataWithDefault { Foo = new Uri("http://test.example.com/demo") },
                 defaulted = new UriDataWithDefault { Foo = new Uri("http://abc") };
-
-            UriDataWithDefault clone = (UriDataWithDefault)model.DeepClone(test);
-            Assert.AreEqual(test.Foo, clone.Foo, "Runtime");
+            UriDataWithDefault clone;
             clone = (UriDataWithDefault)model.DeepClone(defaulted);
             Assert.AreEqual(defaulted.Foo, clone.Foo, "Runtime");
-
+            clone = (UriDataWithDefault)model.DeepClone(test);
+            Assert.AreEqual(test.Foo, clone.Foo, "Runtime");
+            
             var compiled = model.Compile("TestNonEmptyUriWithDefaultAllCompilationModes", "TestNonEmptyUriWithDefaultAllCompilationModes.dll");
             PEVerify.AssertValid("TestNonEmptyUriWithDefaultAllCompilationModes.dll");
             model.CompileInPlace();

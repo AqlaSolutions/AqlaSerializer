@@ -24,6 +24,7 @@ namespace AqlaSerializer.Serializers
         public bool DemandWireTypeStabilityStatus()
         {
             _allowNullWireType = false;
+            _allowCancelField = false;
             return true; // always subitem
         }
 
@@ -38,6 +39,7 @@ namespace AqlaSerializer.Serializers
         readonly BinaryDataFormat _dataFormatForDynamicBuiltins;
 
         bool _allowNullWireType;
+        bool _allowCancelField = true;
 
         // no need for special handling of !Nullable.HasValue - when boxing they will be applied
 
@@ -86,7 +88,9 @@ namespace AqlaSerializer.Serializers
             : this(type: MakeReturnNullable(tail.ExpectedType, returnNullable, model), asReference: asReference, asLateReference: asLateReference, allowNullWireType: allowNullWireType, model: model)
         {
             _tail = tail;
-            RequiresOldValue = _tail.RequiresOldValue || (_lateReferenceTail?.RequiresOldValue ?? false);
+            bool reallyNeedOldValue = _tail.RequiresOldValue || (_lateReferenceTail?.RequiresOldValue ?? false);
+            RequiresOldValue = reallyNeedOldValue || _tail.CanCancelWriting;
+            if (!reallyNeedOldValue && RequiresOldValue) _oldValueIsOnlyForCancelledObjects = true;
         }
 
         static Type MakeReturnNullable(Type type, bool make, TypeModel model)
@@ -136,7 +140,13 @@ namespace AqlaSerializer.Serializers
 
         public Type ExpectedType { get; }
 
+        private bool _oldValueIsOnlyForCancelledObjects;
+
         public bool RequiresOldValue { get; } = true;
+        
+        // Optimization inside NetObjectHelpers can cancel whole thing if it's not reference
+        public bool CanCancelWriting => (_options & (BclHelpers.NetObjectOptions.AsReference | BclHelpers.NetObjectOptions.DynamicType)) == 0 && _tail.CanCancelWriting;
+
 
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
@@ -154,7 +164,8 @@ namespace AqlaSerializer.Serializers
                 ref type,
                 options,
                 ref typeKey,
-                true);
+                true,
+                _oldValueIsOnlyForCancelledObjects);
 
             object oldValue = value;
             if (r.ShouldRead)
@@ -234,7 +245,7 @@ namespace AqlaSerializer.Serializers
             if ((options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 && !ProtoWriter.CheckIsOnHalfToRecursionDepthLimit(dest))
                 options &= ~BclHelpers.NetObjectOptions.WriteAsLateReference;
 
-            SubItemToken token = NetObjectHelpers.WriteNetObject_Start(value, dest, options, out dynamicTypeKey, out write);
+            SubItemToken token = NetObjectHelpers.WriteNetObject_Start(value, dest, options, _allowCancelField, out dynamicTypeKey, out write);
 
             if (write)
             {
@@ -290,7 +301,7 @@ namespace AqlaSerializer.Serializers
 
             Type nullableUnderlying = Helpers.GetNullableUnderlyingType(ExpectedType);
             using (ctx.StartDebugBlockAuto(this))
-            using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(ExpectedType))
+            using (Local nullableValue = RequiresOldValue ? ctx.GetLocalWithValueForEmitRead(this, valueFrom) : ctx.Local(ExpectedType, true))
             {
                 g.If(g.ReaderFunc.WireType() == WireType.Null);
                 {
@@ -310,6 +321,7 @@ namespace AqlaSerializer.Serializers
                 using (Local inputValueBoxed = ctx.Local(typeof(object)))
                 {
                     var shouldRead = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.ShouldRead)).SetNotLeaked();
+                    var isSkipped = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.ShouldRead)).SetNotLeaked();
                     var isLateReference = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.IsLateReference)).SetNotLeaked();
                     var isDynamic = readReturnValue.AsOperand.Field(nameof(NetObjectHelpers.ReadReturnValue.IsDynamic)).SetNotLeaked();
                     
@@ -331,7 +343,8 @@ namespace AqlaSerializer.Serializers
                             type,
                             options,
                             typeKey,
-                            true));
+                            true,
+                            _oldValueIsOnlyForCancelledObjects));
 
                     g.Assign(oldValueBoxed, inputValueBoxed);
 
@@ -546,6 +559,7 @@ namespace AqlaSerializer.Serializers
                                 inputValue,
                                 g.ArgReaderWriter(),
                                 options,
+                                _allowCancelField,
                                 dynamicTypeKey,
                                 write));
                         g.If(write);

@@ -38,10 +38,14 @@ namespace AqlaSerializer.Serializers
         public object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // since replaces
+            
             return source.ReadBoolean();
         }
 #endif
         bool IProtoSerializer.RequiresOldValue => false;
+        
+        public bool CanCancelWriting { get; }
+
 #if FEAT_COMPILER
         bool IProtoSerializer.EmitReadReturnsValue => true;
 

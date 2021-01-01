@@ -24,6 +24,7 @@ namespace AqlaSerializer.Serializers
         protected readonly IProtoSerializer Tail;
         protected ProtoDecoratorBase(IProtoSerializer tail) { this.Tail = tail; }
         public abstract bool RequiresOldValue { get; }
+        public virtual bool CanCancelWriting => Tail.CanCancelWriting;
 #if !FEAT_IKVM
         public abstract void Write(object value, ProtoWriter dest);
         public abstract object Read(object value, ProtoReader source);

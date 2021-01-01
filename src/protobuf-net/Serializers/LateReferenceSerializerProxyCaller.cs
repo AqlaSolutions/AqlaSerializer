@@ -35,7 +35,8 @@ namespace AqlaSerializer.Serializers
         readonly int _typeKey;
         
         public Type ExpectedType { get; }
-        
+        public bool CanCancelWriting { get; }
+
         public LateReferenceSerializerProxyCaller(ILateReferenceSerializerProxy proxy, Type type, int typeKey)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));

@@ -21,6 +21,8 @@ namespace AqlaSerializer.Serializers
         public Type ExpectedType => expectedType;
 
         bool IProtoSerializer.RequiresOldValue => false;
+        
+        public bool CanCancelWriting { get; }
 
 
         private readonly bool _includeKind;

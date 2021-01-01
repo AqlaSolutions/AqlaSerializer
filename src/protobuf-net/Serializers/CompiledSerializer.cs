@@ -58,6 +58,9 @@ namespace AqlaSerializer.Serializers
             _deserializer = Compiler.CompilerContext.BuildDeserializer(head, model);
         }
         bool IProtoSerializer.RequiresOldValue => _head.RequiresOldValue;
+        
+        public bool CanCancelWriting { get; }
+
         bool IProtoSerializer.EmitReadReturnsValue => _head.EmitReadReturnsValue;
 
         Type IProtoSerializer.ExpectedType => _head.ExpectedType;

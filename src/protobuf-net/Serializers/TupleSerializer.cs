@@ -139,6 +139,8 @@ namespace AqlaSerializer.Serializers
         }
 #endif
         public bool RequiresOldValue => true;
+        
+        public bool CanCancelWriting { get; }
 
         Type GetMemberType(int index)
         {

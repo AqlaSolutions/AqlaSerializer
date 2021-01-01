@@ -54,7 +54,7 @@ namespace AqlaSerializer.Meta
             
             bool itemTypeCanBeNull = CanTypeBeNull(itemType);
 
-            bool isPacked = CanBePackedCollection(l);
+            bool protoPacked = CanBePackedCollection(l);
             
             IProtoSerializerWithWireType ser = null;
 
@@ -133,7 +133,7 @@ namespace AqlaSerializer.Meta
                         out wt,
                         levelNumber + 1);
 
-                    isPacked = false;
+                    protoPacked = false;
                 }
             }
             else
@@ -141,8 +141,8 @@ namespace AqlaSerializer.Meta
                 // handled outside and not wrapped with collection
                 if (!isMemberOrNested) l.Format = ValueFormat.Compact;
 
-                isPacked = false; // it's not even a collection
-                ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref l.Format, l.WriteAsDynamicType.Value, l.Collection.Append.Value, isPacked, true, ref defaultValue);
+                protoPacked = false; // it's not even a collection
+                ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, itemType, out wireType, ref l.Format, l.WriteAsDynamicType.Value, l.Collection.Append.Value, protoPacked, true, ref defaultValue);
                 if (ser != null)
                     ThrowIfHasMoreLevels(settings, levelNumber, l, ", no more nested type detected");
             }
@@ -175,18 +175,26 @@ namespace AqlaSerializer.Meta
             {
                 bool protoCompatibility = l.Collection.Format == CollectionFormat.Protobuf || l.Collection.Format == CollectionFormat.ProtobufNotPacked;
 
-                WireType packedReadWt;
+                WireType expectedTailWireType;
                 if (!protoCompatibility)
                 {
-                    packedReadWt = WireType.None;
-                    Debug.Assert(!isPacked); // should be determinated before passing to TryGetCoreSerializer
-                    isPacked = false;
+                    expectedTailWireType = l.Collection.PackedWireTypeForRead ?? wireType;
+                    if (expectedTailWireType == WireType.None) expectedTailWireType = wireType;
+                    Debug.Assert(!protoPacked); // should be determinated before passing to TryGetCoreSerializer
+                    protoPacked = false;
                 }
                 else
                 {
-                    packedReadWt = CanPack(l.Collection.ItemType, l.ContentBinaryFormatHint)
-                                       ? l.Collection.PackedWireTypeForRead.GetValueOrDefault(wireType)
-                                       : WireType.None;
+                    if (CanPackProtoCompatible(l.Collection.ItemType, l.ContentBinaryFormatHint))
+                    {
+                        expectedTailWireType = l.Collection.PackedWireTypeForRead ?? wireType;
+                        if (expectedTailWireType == WireType.None) expectedTailWireType = wireType;
+                    }
+                    else
+                    {
+                        expectedTailWireType = WireType.None;
+                        protoPacked = false;
+                    }
                 }
 
                 if (l.EffectiveType.IsArray)
@@ -196,8 +204,8 @@ namespace AqlaSerializer.Meta
                         ser = new ArrayDecorator(
                             _model,
                             ser,
-                            isPacked,
-                            packedReadWt,
+                            protoPacked,
+                            expectedTailWireType,
                             l.EffectiveType,
                             !l.Collection.Append.Value,
                             l.Collection.ArrayLengthReadLimit.Value,
@@ -223,8 +231,8 @@ namespace AqlaSerializer.Meta
                         l.EffectiveType,
                         l.Collection.ConcreteType,
                         ser,
-                        isPacked,
-                        packedReadWt,
+                        protoPacked,
+                        expectedTailWireType,
                         !l.Collection.Append.Value,
                         protoCompatibility,
                         true);
@@ -262,16 +270,16 @@ namespace AqlaSerializer.Meta
         public bool CanBePackedCollection(MemberLevelSettingsValue level)
         {
             return level.Collection.IsCollection
-                   && CanPack(level.Collection.ItemType, level.ContentBinaryFormatHint)
+                   && CanPackProtoCompatible(level.Collection.ItemType, level.ContentBinaryFormatHint)
                    && level.Collection.Format == CollectionFormat.Protobuf;
         }
 
-        public bool CanPack(Type type, BinaryDataFormat? contentBinaryFormatHint)
+        public bool CanPackProtoCompatible(Type type, BinaryDataFormat? contentBinaryFormatHint)
         {
             return type != _model.MapType(typeof(string))
                 && !CanTypeBeNull(type)
                 && !RuntimeTypeModel.CheckTypeIsCollection(_model, type)
-                && ListDecorator.CanPack(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(type), contentBinaryFormatHint.GetValueOrDefault()));
+                && ListDecorator.CanPackProtoCompatible(HelpersInternal.GetWireType(HelpersInternal.GetTypeCode(type), contentBinaryFormatHint.GetValueOrDefault()));
         }
 
         internal static void EnsureCorrectFormatSpecified(RuntimeTypeModel model, ref ValueFormat format, Type type, ref bool? dynamicType, bool finalStage)
@@ -421,42 +429,47 @@ namespace AqlaSerializer.Meta
             }
 
             if (ser != null)
-                return (isPackedCollection || !allowComplexTypes) ? ser : DecorateValueSerializer(originalType, dynamicType ? dataFormat : (BinaryDataFormat?)null, ref format, ser);
+                return (isPackedCollection || !allowComplexTypes) ? ser : DecorateValueSerializer(originalType, dynamicType ? dataFormat : (BinaryDataFormat?)null, ref format, ser, ref defaultWireType);
 
             if (allowComplexTypes)
             {
                 int baseKey = _model.GetKey(type, false, true);
-                MetaType meta = null;
-                if (baseKey >= 0)
-                {
-                    meta = _model[type];
-                    if (dataFormat == BinaryDataFormat.Default && meta.IsGroup)
-                    {
-                        dataFormat = BinaryDataFormat.Group;
-                    }
-                }
 
-                defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
-
-                if (meta != null || dynamicType)
+                defaultWireType = WireType.StartGroup; // NetObjectHelpers always use Group
+                
+                if (baseKey >= 0 || dynamicType)
                 {
                     if (dynamicType)
                         return new NetObjectValueDecorator(originalType, format == ValueFormat.Reference || format == ValueFormat.LateReference, dataFormat, !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(baseKey, _model))
                     {
-                        return new NetObjectValueDecorator(originalType, baseKey, true, true, meta, !_model.ProtoCompatibility.SuppressNullWireType, _model);
+                        return new NetObjectValueDecorator(originalType, baseKey, true, true, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
-                        return new NetObjectValueDecorator(originalType, baseKey, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, meta, !_model.ProtoCompatibility.SuppressNullWireType, _model);
+                        return new NetObjectValueDecorator(originalType, baseKey, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else
-                        return new ModelTypeSerializer(type, baseKey, meta, _model);
+                    {
+                        defaultWireType = (_model[type].PrefixLength ?? _model.ProtoCompatibility.UseLengthPrefixedNestingAsDefault) ? WireType.String : WireType.EndGroup;
+                        return new ModelTypeSerializer(type, baseKey, _model[type], _model);
+                    }
+                }
+                else
+                {
+                    if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(baseKey, _model))
+                    { }
+                    else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
+                    { }    
+                    else
+                    {
+                        defaultWireType = _model.ProtoCompatibility.UseLengthPrefixedNestingAsDefault ? WireType.String : WireType.StartGroup;
+                    }
                 }
             }
             defaultWireType = WireType.None;
             return null;
         }
 
-        IProtoSerializerWithWireType DecorateValueSerializer(Type type, BinaryDataFormat? dynamicTypeDataFormat, ref ValueFormat format, IProtoSerializerWithWireType ser)
+        IProtoSerializerWithWireType DecorateValueSerializer(Type type, BinaryDataFormat? dynamicTypeDataFormat, ref ValueFormat format, IProtoSerializerWithWireType ser, ref WireType defaultWireType)
         {
             // Uri decorator is applied after default value
             // because default value for Uri is treated as string
@@ -474,10 +487,12 @@ namespace AqlaSerializer.Meta
 #endif
             if (dynamicTypeDataFormat != null)
             {
+                defaultWireType = WireType.StartGroup;
                 ser = new NetObjectValueDecorator(type, format == ValueFormat.Reference || format == ValueFormat.LateReference, dynamicTypeDataFormat.Value, !_model.ProtoCompatibility.SuppressNullWireType, _model);
             }
             else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
             {
+                defaultWireType = WireType.StartGroup;
                 ser = new NetObjectValueDecorator(
                     ser,
                     Helpers.GetNullableUnderlyingType(type) != null,
@@ -775,12 +790,14 @@ namespace AqlaSerializer.Meta
                                 throw new ProtoException("The property is not writable but AppendCollection was set to false");
                         }
 
-                        if (!CanPack(level.Collection.ItemType, level.ContentBinaryFormatHint))
+                        if (level.Collection.PackedWireTypeForRead == null)
+                            level.Collection.PackedWireTypeForRead = WireType.None;
+                        else if (level.Collection.PackedWireTypeForRead != WireType.None 
+                            && (level.Collection.Format == CollectionFormat.ProtobufNotPacked 
+                                || (level.Collection.Format == CollectionFormat.Protobuf && !CanPackProtoCompatible(level.Collection.ItemType, level.ContentBinaryFormatHint))))
                         {
-                            if (level.Collection.PackedWireTypeForRead != null && level.Collection.PackedWireTypeForRead != WireType.None)
                                 throw new ProtoException("PackedWireTypeForRead " + level.Collection.PackedWireTypeForRead + " specified but type can't be packed");
 
-                            level.Collection.PackedWireTypeForRead = WireType.None;
                         }
 
                         if (level.Collection.Format == CollectionFormat.NotSpecified)

@@ -37,6 +37,8 @@ namespace AqlaSerializer.Serializers
 
         public Type ExpectedType => _serializer.ExpectedType;
 
+        
+        public bool CanCancelWriting { get; } // cannot because it doesn't need to be inside field so nothing to cancel
         public bool RequiresOldValue => _serializer.RequiresOldValue;
 #if !FEAT_IKVM
         public object Read(object value, ProtoReader source)
