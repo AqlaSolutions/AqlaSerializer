@@ -397,6 +397,22 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        /// <summary>
+        /// Indicates whether this type should always be treated as a "group" (rather than a string-prefixed sub-message)
+        /// </summary>
+        public bool IsGroup
+        {
+            get { return _settingsValueByClient.IsGroup; }
+            set
+            {
+                ChangeSettings(
+                    sv => {
+                        sv.IsGroup = value;
+                        return sv;
+                    });
+            }
+        }
+
         void ChangeSettings(Func<TypeSettingsValue, TypeSettingsValue> setter)
         {
             ThrowIfFrozen();

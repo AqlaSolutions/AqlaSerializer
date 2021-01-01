@@ -41,9 +41,7 @@ namespace AqlaSerializer.Meta
 
         private RuntimeTypeModel _model;
         internal TypeModel Model => _model;
-
-        private MethodInfo _factory;
-
+        
         internal bool IsList
         {
             get
@@ -55,13 +53,13 @@ namespace AqlaSerializer.Meta
 
         bool _isDefaultBehaviourApplied;
 
-#if WINRT
-        private readonly TypeInfo _typeInfo;
-#endif
-        /// <summary>
-        /// The runtime type that the meta-type represents
-        /// </summary>
-        public Type Type { get; }
+        #if WINRT
+                private readonly TypeInfo _typeInfo;
+        #endif
+                /// <summary>
+                /// The runtime type that the meta-type represents
+                /// </summary>
+                public Type Type { get; }
 
         bool _isFrozen;
 #if !WINRT && !PORTABLE && !SILVERLIGHT
@@ -84,7 +82,7 @@ namespace AqlaSerializer.Meta
         }
 
         bool _isPending;
-
+        
         internal bool IsPending
         {
             get { return _isPending; }
@@ -156,6 +154,8 @@ namespace AqlaSerializer.Meta
         }
 
 
+        private MethodInfo _factory;
+        
         /// <summary>
         /// Designate a factory-method to use to create instances of this type
         /// </summary>
@@ -166,7 +166,7 @@ namespace AqlaSerializer.Meta
             this._factory = factory;
             return this;
         }
-
+         
 
         /// <summary>
         /// Designate a factory-method to use to create instances of this type
@@ -175,7 +175,7 @@ namespace AqlaSerializer.Meta
         {
             return SetFactory(ResolveMethod(factory, false));
         }
-         
+
         /// <summary>
         /// Derived types are not cloned!
         /// </summary>
@@ -204,15 +204,15 @@ namespace AqlaSerializer.Meta
                 mt.AddTupleField(vm);
             return mt;
         }
-        
-        /// <summary>
-        /// Throws an exception if the type has been made immutable
-        /// </summary>
-        protected internal void ThrowIfFrozen()
-        {
-            if (IsFrozen) ThrowFrozen();
-        }
 
+		/// <summary>
+		/// Throws an exception if the type has been made immutable
+		/// </summary>
+		protected internal void ThrowIfFrozen()
+		{
+		    if (IsFrozen) ThrowFrozen();
+		}
+		
         void ThrowFrozen()
         {
 #if DEBUG && !WINRT && !PORTABLE && !SILVERLIGHT
@@ -221,7 +221,7 @@ namespace AqlaSerializer.Meta
             throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + Type.FullName + " or once its settings were used for generating member serializer");
         }
 
-
+        
         /// <summary>
         /// Get the name of the type being represented
         /// </summary>

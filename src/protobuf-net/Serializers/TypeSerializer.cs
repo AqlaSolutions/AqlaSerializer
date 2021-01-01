@@ -501,7 +501,7 @@ namespace AqlaSerializer.Serializers
 
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    Type parameterType = parameters[0].ParameterType;
+                    Type parameterType = parameters[i].ParameterType;
                     if (parameterType == ctx.MapType(typeof(SerializationContext)))
                     {
                         ctx.LoadSerializationContext();

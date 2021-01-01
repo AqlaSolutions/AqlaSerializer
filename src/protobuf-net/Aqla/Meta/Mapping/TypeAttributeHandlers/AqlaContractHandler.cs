@@ -43,7 +43,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                 if (attr.ImplicitFirstTag != 0) s.ImplicitFirstTag = attr.ImplicitFirstTag;
 
                 if (s.ImplicitFields != ImplicitFieldsMode.None) s.ImplicitAqla = true;
-
+                
                 return TypeAttributeHandlerResult.Done;
             }
             return TypeAttributeHandlerResult.Continue;

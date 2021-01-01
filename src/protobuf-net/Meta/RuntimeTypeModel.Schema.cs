@@ -78,7 +78,6 @@ namespace AqlaSerializer.Meta
                 case ProtoTypeCode.Boolean: return "bool";
                 case ProtoTypeCode.Single: return "float";
                 case ProtoTypeCode.Double: return "double";
-                case ProtoTypeCode.Type:
                 case ProtoTypeCode.String:
                     if (asReference) requiresBclImport = true;
                     return asReference ? "bcl.NetObjectProxy" : "string";
@@ -117,6 +116,7 @@ namespace AqlaSerializer.Meta
                 case ProtoTypeCode.TimeSpan: requiresBclImport = true; return "bcl.TimeSpan";
                 case ProtoTypeCode.Decimal: requiresBclImport = true; return "bcl.Decimal";
                 case ProtoTypeCode.Guid: requiresBclImport = true; return "bcl.Guid";
+                case ProtoTypeCode.Type: requiresBclImport = false; return "string";
                 default: throw new NotSupportedException("No .proto map found for: " + effectiveType.FullName);
             }
 

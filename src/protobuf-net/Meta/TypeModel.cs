@@ -70,10 +70,10 @@ namespace AqlaSerializer.Meta
             ExtensibleUtil = new ExtensibleUtil(this);
         }
 
-        /// <summary>
-        /// Should the <c>Kind</c> be included on date/time values?
-        /// </summary>
-        protected internal virtual bool SerializeDateTimeKind() { return false; }
+/// <summary>
+/// Should the <c>Kind</c> be included on date/time values?
+/// </summary>
+protected internal virtual bool SerializeDateTimeKind() { return false; }
 
         /// <summary>
         /// Resolve a System.Type to the compiler-specific type
@@ -293,31 +293,7 @@ namespace AqlaSerializer.Meta
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
         public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int fieldNumber)
-        {
-            int bytesRead;
-            return DeserializeWithLengthPrefix(source, value, type, style, fieldNumber, null, out bytesRead);
-        }
-
-        /// <summary>
-        /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
-        /// data - useful with network IO.
-        /// </summary>
-        /// <param name="type">The type being merged.</param>
-        /// <param name="value">The existing instance to be modified (can be null).</param>
-        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
-        /// <param name="style">How to encode the length prefix.</param>
-        /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
-        /// <param name="context"></param>
-        /// <returns>The updated instance; this may be different to the instance argument if
-        /// either the original instance was null, or the stream defines a known sub-type of the
-        /// original instance.</returns>
-        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int fieldNumber, SerializationContext context)
-        {
-            int dummy;
-            bool dummy2;
-            return DeserializeWithLengthPrefix(source, value, type, style, fieldNumber, null, out dummy, out dummy2, context);
-        }
-
+            => DeserializeWithLengthPrefix(source, value, type, style, fieldNumber, null, out long bytesRead);
 
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
@@ -333,10 +309,23 @@ namespace AqlaSerializer.Meta
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
         public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver)
-        {
-            int bytesRead;
-            return DeserializeWithLengthPrefix(source, value, type, style, expectedField, resolver, out bytesRead);
-        }
+            => DeserializeWithLengthPrefix(source, value, type, style, expectedField, resolver, out long bytesRead);
+
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
+        /// data - useful with network IO.
+        /// </summary>
+        /// <param name="type">The type being merged.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="style">How to encode the length prefix.</param>
+        /// <param name="fieldNumber">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        /// <param name="context"></param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int fieldNumber, SerializationContext context) => DeserializeWithLengthPrefix(source, value, type, style, fieldNumber, null, out _, out _, context);
+
 
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
@@ -354,9 +343,25 @@ namespace AqlaSerializer.Meta
         /// original instance.</returns>
         public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, out int bytesRead)
         {
-            bool haveObject;
-            return DeserializeWithLengthPrefix(source, value, type, style, expectedField, resolver, out bytesRead, out haveObject, null);
+            object result = DeserializeWithLengthPrefix(source, value, type, style, expectedField, resolver, out long bytesRead64, out bool haveObject, null);
+            bytesRead = checked((int)bytesRead64);
+            return result;
         }
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
+        /// data - useful with network IO.
+        /// </summary>
+        /// <param name="type">The type being merged.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="style">How to encode the length prefix.</param>
+        /// <param name="expectedField">The tag used as a prefix to each record (only used with base-128 style prefixes).</param>
+        /// <param name="resolver">Used to resolve types on a per-field basis.</param>
+        /// <param name="bytesRead">Returns the number of bytes consumed by this operation (includes length-prefix overheads and any skipped data).</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, out long bytesRead) => DeserializeWithLengthPrefix(source, value, type, style, expectedField, resolver, out bytesRead, out bool haveObject, null);
 
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (or null), using length-prefixed
@@ -374,14 +379,15 @@ namespace AqlaSerializer.Meta
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
-        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, out int bytesRead, out bool haveObject, SerializationContext context)
+        public object DeserializeWithLengthPrefix(Stream source, object value, Type type, PrefixStyle style, int expectedField, Serializer.TypeResolver resolver, out long bytesRead, out bool haveObject, SerializationContext context)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
 #else
             haveObject = false;
             bool skip;
-            int len;
+            long len;
+            int actualField;
             bytesRead = 0;
             if (type == null && (style != PrefixStyle.Base128 || resolver == null))
             {
@@ -389,11 +395,9 @@ namespace AqlaSerializer.Meta
             }
             do
             {
-
+                
                 bool expectPrefix = expectedField > 0 || resolver != null;
-                int tmpBytesRead;
-                int actualField;
-                len = ProtoReader.ReadLengthPrefix(source, expectPrefix, style, out actualField, out tmpBytesRead);
+                len = ProtoReader.ReadLongLengthPrefix(source, expectPrefix, style, out actualField, out int tmpBytesRead);
                 if (tmpBytesRead == 0) return value;
                 bytesRead += tmpBytesRead;
                 if (len < 0) return value;
@@ -415,7 +419,7 @@ namespace AqlaSerializer.Meta
 
                 if (skip)
                 {
-                    if (len == int.MaxValue) throw new InvalidOperationException();
+                    if (len == long.MaxValue) throw new InvalidOperationException();
                     ProtoReader.Seek(source, len, null);
                     bytesRead += len;
                 }
@@ -437,7 +441,7 @@ namespace AqlaSerializer.Meta
                         TypeModel.ThrowUnexpectedType(type); // throws
                     }
                 }
-                bytesRead += reader.Position;
+                bytesRead += reader.LongPosition;
                 haveObject = true;
                 return value;
             }
@@ -538,8 +542,7 @@ namespace AqlaSerializer.Meta
             public new T Current => (T)base.Current;
             void IDisposable.Dispose() { }
             public DeserializeItemsIterator(TypeModel model, Stream source, PrefixStyle style, int expectedField, SerializationContext context)
-                : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context)
-            { }
+                : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context) { }
         }
 #endif
         private class DeserializeItemsIterator : IEnumerator, IEnumerable
@@ -551,8 +554,7 @@ namespace AqlaSerializer.Meta
             {
                 if (_haveObject)
                 {
-                    int bytesRead;
-                    Current = _model.DeserializeWithLengthPrefix(_source, null, _type, _style, _expectedField, _resolver, out bytesRead, out _haveObject, _context);
+                    Current = _model.DeserializeWithLengthPrefix(_source, null, _type, _style, _expectedField, _resolver, out long bytesRead, out _haveObject, _context);
                 }
                 return _haveObject;
             }
@@ -672,7 +674,7 @@ namespace AqlaSerializer.Meta
         {
             return (T)Deserialize(source, value, typeof(T));
         }
-#endif
+        #endif        
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -685,7 +687,7 @@ namespace AqlaSerializer.Meta
         public object Deserialize(Stream source, object value, System.Type type)
         {
             return Deserialize(source, value, type, null);
-        }
+        }        
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -700,7 +702,7 @@ namespace AqlaSerializer.Meta
         {
             return Deserialize(source, value, type, ProtoReader.TO_EOF, context);
         }
-
+        
         private bool PrepareDeserialize(object value, ref Type type)
         {
             if (type == null)
@@ -737,9 +739,21 @@ namespace AqlaSerializer.Meta
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
         public object Deserialize(Stream source, object value, System.Type type, int length)
-        {
-            return Deserialize(source, value, type, length, null);
-        }
+            => Deserialize(source, value, type, length, null);
+        
+        /// <summary>
+        /// Applies a protocol-buffer stream to an existing instance (which may be null).
+        /// </summary>
+        /// <param name="type">The type (including inheritance) to consider.</param>
+        /// <param name="value">The existing instance to be modified (can be null).</param>
+        /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
+        /// <param name="length">The number of bytes to consume.</param>
+        /// <returns>The updated instance; this may be different to the instance argument if
+        /// either the original instance was null, or the stream defines a known sub-type of the
+        /// original instance.</returns>
+        public object Deserialize(Stream source, object value, System.Type type, long length)
+            => Deserialize(source, value, type, length, null);
+            
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -751,7 +765,7 @@ namespace AqlaSerializer.Meta
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
         /// <param name="context">Additional information about this serialization operation.</param>
-        public object Deserialize(Stream source, object value, System.Type type, int length, SerializationContext context)
+        public object Deserialize(Stream source, object value, System.Type type, long length, SerializationContext context)
         {
 #if FEAT_IKVM
             throw new NotSupportedException();
@@ -794,7 +808,7 @@ namespace AqlaSerializer.Meta
             return obj;
 #endif
         }
-
+        
         internal const int EnumRootTag = 1;
 #if !FEAT_IKVM
         private object DeserializeCore(ProtoReader reader, Type type, object value, bool noAutoCreate, bool isRoot)
@@ -1043,7 +1057,7 @@ namespace AqlaSerializer.Meta
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
         protected internal abstract object Deserialize(int key, object value, ProtoReader source, bool isRoot);
-
+        
         //internal ProtoSerializer Create(IProtoSerializer head)
         //{
         //    return new RuntimeSerializer(head, this);
@@ -1083,102 +1097,102 @@ namespace AqlaSerializer.Meta
         {
             return (T)DeepClone(value: (object)genericValue);
         }
-#endif
+        #endif
 
-        /// <summary>
-        /// Create a deep clone of the supplied instance; any sub-items are also cloned.
-        /// </summary>
-        public object DeepClone(object value)
-        {
-#if FEAT_IKVM
-            throw new NotSupportedException();
-#else
-            if (value == null) return null;
+                /// <summary>
+                /// Create a deep clone of the supplied instance; any sub-items are also cloned.
+                /// </summary>
+                public object DeepClone(object value)
+                {
+        #if FEAT_IKVM
+                    throw new NotSupportedException();
+        #else
+                    if (value == null) return null;
 
-            Type type = value.GetType();
+                    Type type = value.GetType();
 
-            if (ForceSerializationDuringClone)
-            {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    using (ProtoWriter writer = new ProtoWriter(ms, this, null))
+                    if (ForceSerializationDuringClone)
                     {
-                        Serialize(writer, value);
-                        writer.Close();
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            using (ProtoWriter writer = new ProtoWriter(ms, this, null))
+                            {
+                                Serialize(writer, value);
+                                writer.Close();
+                            }
+                            ms.Position = 0;
+                            ProtoReader reader = null;
+                            try
+                            {
+                                reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
+                                return Deserialize(reader, null, type);
+                            }
+                            finally
+                            {
+                                ProtoReader.Recycle(reader);
+                            }
+                        }
                     }
-                    ms.Position = 0;
-                    ProtoReader reader = null;
-                    try
-                    {
-                        reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
-                        return Deserialize(reader, null, type);
-                    }
-                    finally
-                    {
-                        ProtoReader.Recycle(reader);
-                    }
-                }
-            }
-            int key = GetKey(ref type);
+                    int key = GetKey(ref type);
 
-            if (key >= 0 && !Helpers.IsEnum(type))
-            {
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    using (ProtoWriter writer = new ProtoWriter(ms, this, null))
+                    if (key >= 0 && !Helpers.IsEnum(type))
                     {
-                        writer.SetRootObject(value);
-                        Serialize(key, value, writer, true);
-                        writer.Close();
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            using (ProtoWriter writer = new ProtoWriter(ms, this, null))
+                            {
+                                writer.SetRootObject(value);
+                                Serialize(key, value, writer, true);
+                                writer.Close();
+                            }
+                            ms.Position = 0;
+                            ProtoReader reader = null;
+                            try
+                            {
+                                reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
+                                return Deserialize(key, null, reader, true);
+                            }
+                            finally
+                            {
+                                ProtoReader.Recycle(reader);
+                            }
+                        }
                     }
-                    ms.Position = 0;
-                    ProtoReader reader = null;
-                    try
+                    int modelKey;
+                    if (type == typeof(byte[]))
                     {
-                        reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
-                        return Deserialize(key, null, reader, true);
+                        byte[] orig = (byte[])value, clone = new byte[orig.Length];
+                        Helpers.BlockCopy(orig, 0, clone, 0, orig.Length);
+                        return clone;
                     }
-                    finally
+                    else if (GetWireType(Helpers.GetTypeCode(type), BinaryDataFormat.Default, ref type, out modelKey) != WireType.None && modelKey < 0)
+                    {   // immutable; just return the original value
+                        return value;
+                    }
+                    using (MemoryStream ms = new MemoryStream())
                     {
-                        ProtoReader.Recycle(reader);
+                        using (ProtoWriter writer = new ProtoWriter(ms, this, null))
+                        {
+                            if (!TrySerializeAuxiliaryType(writer, type, BinaryDataFormat.Default, Serializer.ListItemTag, value, false, true)) ThrowUnexpectedType(type);
+                            writer.Close();
+                        }
+                        ms.Position = 0;
+                        ProtoReader reader = null;
+                        try
+                        {
+                            reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
+                            value = null; // start from scratch!
+                            TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, true);
+                            return value;
+                        }
+                        finally
+                        {
+                            ProtoReader.Recycle(reader);
+                        }
                     }
-                }
-            }
-            int modelKey;
-            if (type == typeof(byte[]))
-            {
-                byte[] orig = (byte[])value, clone = new byte[orig.Length];
-                Helpers.BlockCopy(orig, 0, clone, 0, orig.Length);
-                return clone;
-            }
-            else if (GetWireType(Helpers.GetTypeCode(type), BinaryDataFormat.Default, ref type, out modelKey) != WireType.None && modelKey < 0)
-            {   // immutable; just return the original value
-                return value;
-            }
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (ProtoWriter writer = new ProtoWriter(ms, this, null))
-                {
-                    if (!TrySerializeAuxiliaryType(writer, type, BinaryDataFormat.Default, Serializer.ListItemTag, value, false, true)) ThrowUnexpectedType(type);
-                    writer.Close();
-                }
-                ms.Position = 0;
-                ProtoReader reader = null;
-                try
-                {
-                    reader = ProtoReader.Create(ms, this, null, ProtoReader.TO_EOF);
-                    value = null; // start from scratch!
-                    TryDeserializeAuxiliaryType(reader, BinaryDataFormat.Default, Serializer.ListItemTag, type, ref value, true, false, true, false, true);
-                    return value;
-                }
-                finally
-                {
-                    ProtoReader.Recycle(reader);
-                }
-            }
-#endif
+        #endif
 
-        }
+                }
 
         /// <summary>
         /// Indicates that while an inheritance tree exists, the exact type encountered was not
@@ -1362,7 +1376,7 @@ namespace AqlaSerializer.Meta
 #if FEAT_IKVM
                 throw new NotSupportedException();
 #else
-                return _model.Deserialize(source, null, _type, -1, Context);
+                return _model.Deserialize(source, null, _type, (long)-1, Context);
 #endif
             }
 
@@ -1372,7 +1386,7 @@ namespace AqlaSerializer.Meta
             }
 
             public System.Runtime.Serialization.ISurrogateSelector SurrogateSelector { get; set; }
-        }
+            }
 #endif
 
 #if DEBUG // this is used by some unit tests only, to ensure no buffering when buffering is disabled

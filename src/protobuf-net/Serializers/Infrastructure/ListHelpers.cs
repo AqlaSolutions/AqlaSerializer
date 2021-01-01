@@ -33,6 +33,7 @@ namespace AqlaSerializer.Serializers
         readonly bool _writePacked;
         readonly Type _itemType;
         readonly bool _skipIList;
+        readonly bool _canUsePackedPrefix;
         public ListHelpers(bool writePacked, WireType packedWireTypeForRead, bool protoCompatibility, IProtoSerializerWithWireType tail, bool skipIList)
         {
             if (protoCompatibility)
@@ -48,9 +49,28 @@ namespace AqlaSerializer.Serializers
             _skipIList = skipIList;
             _itemType = tail.ExpectedType;
             _protoCompatibility = protoCompatibility;
+            _canUsePackedPrefix = writePacked && CanUsePackedPrefix(packedWireTypeForRead, _itemType);
         }
+
+        public bool UsesPackedPrefix => _canUsePackedPrefix;
+
+        internal static bool CanUsePackedPrefix(WireType packedWireType, Type itemType)
+        {
+            // needs to be a suitably simple type *and* be definitely not nullable
+            switch (packedWireType)
+            {
+                case WireType.Fixed32:
+                case WireType.Fixed64:
+                    break;
+                default:
+                    return false; // nope
+            }
+            if (!Helpers.IsValueType(itemType)) return false;
+            return Helpers.GetNullableUnderlyingType(itemType) == null;
+        }
+
 #if FEAT_COMPILER
-        public void EmitWrite(SerializerCodeGen g, Local value, Action metaWriter, Action prepareInstance)
+        public void EmitWrite(SerializerCodeGen g, Local value, Action<Action<Operand>, Action> protoCompatibleDoWithCountOrElse, Action protoIncompatibleMetaWriter, Action prepareInstance)
         {
             using (g.ctx.StartDebugBlockAuto(this))
             {
@@ -66,7 +86,14 @@ namespace AqlaSerializer.Serializers
                         // empty arrays are nulls, no subitem or field
 
                         if (writePacked)
-                            g.Assign(token, g.WriterFunc.StartSubItem(null, true));
+                        {
+                            if (_canUsePackedPrefix && protoCompatibleDoWithCountOrElse != null)
+                                protoCompatibleDoWithCountOrElse(count => g.Writer.WritePackedPrefix(count, _packedWireTypeForRead), GenStartSubItem);
+                            else 
+                                GenStartSubItem();
+
+                            void GenStartSubItem() => g.Assign(token, g.WriterFunc.StartSubItem(null, true));
+                        }
                         else // each element will begin its own header
                             g.Writer.WriteFieldHeaderCancelBegin();
 
@@ -88,7 +115,7 @@ namespace AqlaSerializer.Serializers
                         bool pack = _tail.DemandWireTypeStabilityStatus();
                         g.Assign(token, g.WriterFunc.StartSubItem(null, pack));
 
-                        metaWriter?.Invoke();
+                        protoIncompatibleMetaWriter?.Invoke();
 
                         prepareInstance?.Invoke();
 
@@ -335,18 +362,24 @@ namespace AqlaSerializer.Serializers
         }
 #endif
 #if !FEAT_IKVM
-        public void Write(object value, Action metaWriter, Action prepareInstance, ProtoWriter dest)
+        public void Write(object value, int? count, Action metaWriter, Action prepareInstance, ProtoWriter dest)
         {
             SubItemToken token = new SubItemToken();
             int fieldNumber = dest.FieldNumber;
             
             bool writePacked = _writePacked;
+            
             if (_protoCompatibility)
             {
                 // empty arrays are nulls, no subitem or field
 
                 if (writePacked)
-                    token = ProtoWriter.StartSubItem(null, true, dest);
+                {
+                    if (_canUsePackedPrefix && count != null)
+                        ProtoWriter.WritePackedPrefix(count.Value, _packedWireTypeForRead, dest);
+                    else
+                        token = ProtoWriter.StartSubItem(null, true, dest);
+                }
                 else // each element will begin its own header
                     ProtoWriter.WriteFieldHeaderCancelBegin(dest);
 

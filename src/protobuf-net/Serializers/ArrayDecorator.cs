@@ -27,6 +27,7 @@ namespace AqlaSerializer.Serializers
         public override void Write(object value, ProtoWriter dest)
         {
             _listHelpers.Write(value,
+                               ((Array)value).Length,
                                () =>
                                    {
                                        int length = ((Array)value).Length;
@@ -153,6 +154,7 @@ namespace AqlaSerializer.Serializers
             using (Compiler.Local value = ctx.GetLocalWithValue(_arrayType, valueFrom))
             {
                 _listHelpers.EmitWrite(ctx.G, value,
+                                       (withCount, _) => value.AsOperand.Property("Length"),
                                        () =>
                                            {
                                                var length = value.AsOperand.Property("Length");

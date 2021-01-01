@@ -143,7 +143,7 @@ namespace AqlaSerializer
         /// Implicit public property is added only when both get and set accessors are present and public; implicit private property is added only when both get and set accessors are present.
         /// </summary>
         public bool ImplicitOnlyWriteable { get; set; } = true;
-
+        
         /// <summary>
         /// Enables/disables automatic tag generation based on the existing name / order
         /// of the defined members. This option is not used for members marked
@@ -194,5 +194,10 @@ namespace AqlaSerializer
             OPTIONS_InferTagFromName = 1,
             OPTIONS_InferTagFromNameHasValue = 2,
             OPTIONS_UseAqlaMembersOnly = 4;
+
+        /// <summary>
+        /// Forces <see cref="BinaryDataFormat.Group"/>
+        /// </summary>
+        public bool IsGroup { get { return TypeSettings.IsGroup; } set { TypeSettings.IsGroup = value; } }
     }
 }

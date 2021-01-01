@@ -97,13 +97,17 @@ namespace AqlaSerializer.Meta
 
             MemberInfo[] fieldsPropsUnfiltered = Helpers.GetInstanceFieldsAndProperties(type, true);
             BasicList memberList = new BasicList();
+            // for most types we'll enforce that you need readonly, because that is what protobuf-net
+            // always did historically; but: if you smell so much like a Tuple that it is *in your name*,
+            // we'll let you past that
+            bool demandReadOnly = type.Name.IndexOf("Tuple", StringComparison.OrdinalIgnoreCase) < 0;
             for (int i = 0; i < fieldsPropsUnfiltered.Length; i++)
             {
                 PropertyInfo prop = fieldsPropsUnfiltered[i] as PropertyInfo;
                 if (prop != null)
                 {
                     if (!prop.CanRead) return null; // no use if can't read
-                    if (prop.CanWrite && Helpers.GetSetMethod(prop, false, false) != null) return null; // don't allow a public set (need to allow non-public to handle Mono's KeyValuePair<,>)
+                    if (demandReadOnly && prop.CanWrite && Helpers.GetSetMethod(prop, false, false) != null) return null; // don't allow a public set (need to allow non-public to handle Mono's KeyValuePair<,>)
                     memberList.Add(prop);
                 }
                 else

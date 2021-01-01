@@ -51,8 +51,8 @@ namespace AqlaSerializer
             // it's not expected that any root decorator may import new objects inside this
             source.NetCacheKeyPositionsList.EnterImportingLock();
 
-            int pos = source.Position;
-            int blockEnd = source.BlockEndPosition;
+            long pos = source.LongPosition;
+            long blockEnd = source.BlockEndPosition;
             int formatVersion = source.ReadFieldHeader();
             switch (formatVersion)
             {

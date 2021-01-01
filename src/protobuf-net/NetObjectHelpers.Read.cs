@@ -70,8 +70,8 @@ namespace AqlaSerializer
 
         public struct SeekToken
         {
-            public int Position;
-            public int BlockEnd;
+            public long Position;
+            public long BlockEnd;
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace AqlaSerializer
                             // so we skipped it
                             // have to seek
                             var pos = source.Position;
-                            int blockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp));
+                            long blockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp));
                             if (!ProtoReader.HasSubValue(WireType.String, source)) throw new ProtoException("New type could not be found on specified position, net key: " + tmp);
                             ReadNewType(source, out type, out typeKey);
                             source.SeekAndExchangeBlockEnd(pos, blockEnd);

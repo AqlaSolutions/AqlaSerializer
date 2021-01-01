@@ -149,6 +149,12 @@ namespace AqlaSerializer.Compiler
             g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.WriteFieldHeader), intField, wireType, g.ArgReaderWriter());
         }
 
+        
+        public void WritePackedPrefix(Operand elementCount, Operand wireType)
+        {
+            g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.WritePackedPrefix), elementCount, wireType, g.ArgReaderWriter());
+        }
+
         public void EndSubItem(Operand subItemToken)
         {
             g.Invoke(typeof(ProtoWriter), nameof(ProtoWriter.EndSubItem), subItemToken, g.ArgReaderWriter());

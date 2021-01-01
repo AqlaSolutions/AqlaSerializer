@@ -426,21 +426,30 @@ namespace AqlaSerializer.Meta
             if (allowComplexTypes)
             {
                 int baseKey = _model.GetKey(type, false, true);
+                MetaType meta = null;
+                if (baseKey >= 0)
+                {
+                    meta = _model[type];
+                    if (dataFormat == BinaryDataFormat.Default && meta.IsGroup)
+                    {
+                        dataFormat = BinaryDataFormat.Group;
+                    }
+                }
 
-                defaultWireType = WireType.StartGroup;
+                defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
 
-                if (baseKey >= 0 || dynamicType)
+                if (meta != null || dynamicType)
                 {
                     if (dynamicType)
                         return new NetObjectValueDecorator(originalType, format == ValueFormat.Reference || format == ValueFormat.LateReference, dataFormat, !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(baseKey, _model))
                     {
-                        return new NetObjectValueDecorator(originalType, baseKey, true, true, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
+                        return new NetObjectValueDecorator(originalType, baseKey, true, true, meta, !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
-                        return new NetObjectValueDecorator(originalType, baseKey, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, _model[type], !_model.ProtoCompatibility.SuppressNullWireType, _model);
+                        return new NetObjectValueDecorator(originalType, baseKey, format == ValueFormat.Reference || format == ValueFormat.LateReference, false, meta, !_model.ProtoCompatibility.SuppressNullWireType, _model);
                     else
-                        return new ModelTypeSerializer(type, baseKey, _model[type], _model);
+                        return new ModelTypeSerializer(type, baseKey, meta, _model);
                 }
             }
             defaultWireType = WireType.None;
@@ -554,7 +563,7 @@ namespace AqlaSerializer.Meta
                     defaultWireType = GetDateTimeWireType(dataFormat);
                     return new WireTypeDecorator(defaultWireType, new TimeSpanSerializer(_model));
                 case ProtoTypeCode.Guid:
-                    defaultWireType = WireType.String;
+                    defaultWireType = dataFormat == BinaryDataFormat.Group ? WireType.StartGroup : WireType.String;
                     return new WireTypeDecorator(defaultWireType, new GuidSerializer(_model));
                 case ProtoTypeCode.ByteArray:
                     defaultWireType = WireType.String;

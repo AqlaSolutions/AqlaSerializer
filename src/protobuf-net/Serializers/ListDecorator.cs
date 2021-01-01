@@ -28,11 +28,12 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
+            int? count = (value as ICollection)?.Count;
             Action metaWriter =
                 () =>
                     {
                         // we still write length in case it will be read as array
-                        int length = (value as ICollection)?.Count ?? 0;
+                        int length = count ?? 0;
                         if (length > 0)
                         {
                             ProtoWriter.WriteFieldHeader(ListHelpers.FieldLength, WireType.Variant, dest);
@@ -48,7 +49,7 @@ namespace AqlaSerializer.Serializers
                             }
                         }
                     };
-            ListHelpers.Write(value, metaWriter, null, dest);
+            ListHelpers.Write(value, count, metaWriter, null, dest);
         }
 
         public override object Read(object value, ProtoReader source)
@@ -378,17 +379,37 @@ namespace AqlaSerializer.Serializers
         protected override void EmitWrite(AqlaSerializer.Compiler.CompilerContext ctx, AqlaSerializer.Compiler.Local valueFrom)
         {
             var g = ctx.G;
+            Local icol = null;
             using (ctx.StartDebugBlockAuto(this))
             using (Compiler.Local value = ctx.GetLocalWithValue(ExpectedType, valueFrom))
             using (Compiler.Local t = ctx.Local(typeof(System.Type)))
             using (Compiler.Local length = ctx.Local(typeof(int)))
-            using (var icol = !_protoCompatibility ? ctx.Local(typeof(ICollection)) : null)
             {
-                ListHelpers.EmitWrite(
-                    ctx.G,
-                    value,
-                    () =>
-                        {
+                try
+                {
+
+                    bool lengthSet = false;
+
+
+                    ListHelpers.EmitWrite(
+                        ctx.G,
+                        value,
+                        (withCount, orElse) => {
+                            icol = ctx.Local(typeof(ICollection));
+                            g.Assign(icol, value.AsOperand.As(icol.Type));
+                            g.If(icol.AsOperand != null);
+                            {
+                                withCount(icol.AsOperand.Property("Count"));
+                            }
+                            g.Else();
+                            {
+                                orElse();
+                            }
+                            g.End();
+                        },
+                        () => {
+
+                            icol = ctx.Local(typeof(ICollection));
                             g.Assign(icol, value.AsOperand.As(icol.Type));
                             g.Assign(length, (icol.AsOperand != null).Conditional(icol.AsOperand.Property("Count"), -1));
                             g.If(length.AsOperand > 0);
@@ -409,7 +430,12 @@ namespace AqlaSerializer.Serializers
                                 g.End();
                             }
                         },
-                    null);
+                        null);
+                }
+                finally
+                {
+                    icol?.Dispose();
+                }
             }
         }
 

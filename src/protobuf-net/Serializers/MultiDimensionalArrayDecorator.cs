@@ -30,7 +30,7 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            _listHelpers.Write(value,
+            _listHelpers.Write(value, null,
                                () =>
                                    {
                                        var arr = (Array)value;
@@ -160,6 +160,7 @@ namespace AqlaSerializer.Serializers
             using (Compiler.Local value = ctx.GetLocalWithValue(_arrayType, valueFrom))
             {
                 _listHelpers.EmitWrite(ctx.G, value,
+                                       null,
                                        () =>
                                            {
                                                var arr = value;

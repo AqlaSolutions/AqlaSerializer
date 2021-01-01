@@ -74,6 +74,7 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                     }
                     if (item.TryGet("ImplicitFirstTag", out tmp) && (int)tmp > 0) s.ImplicitFirstTag = (int)tmp;
                     if (item.TryGet("ConstructType", out tmp)) main.ConstructType = (Type)tmp;
+                    if (item.TryGet("IsGroup", out tmp)) main.IsGroup = (bool)tmp;
                 }
 
                 s.SettingsValue = main;

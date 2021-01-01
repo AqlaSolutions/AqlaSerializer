@@ -52,7 +52,7 @@ namespace AqlaSerializer.Meta
     using TypeSet = System.Collections.Hashtable;
     using TypeList = System.Collections.ArrayList;
 #endif
-	
+    
     partial class RuntimeTypeModel
     {
         internal ITypeMapper RunSharpTypeMapper { get; }

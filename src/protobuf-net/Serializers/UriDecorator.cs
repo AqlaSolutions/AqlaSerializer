@@ -1,7 +1,6 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
-
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -13,7 +12,7 @@ namespace AqlaSerializer.Serializers
 {
     sealed class UriDecorator : ProtoDecoratorBase, IProtoSerializerWithWireType
     {
-        readonly IProtoSerializerWithWireType _tail;
+            readonly IProtoSerializerWithWireType _tail;
         public bool DemandWireTypeStabilityStatus() => _tail.DemandWireTypeStabilityStatus();
 #if FEAT_IKVM
         readonly Type expectedType;
@@ -31,38 +30,39 @@ namespace AqlaSerializer.Serializers
 
         public override Type ExpectedType => expectedType;
         public override bool RequiresOldValue => false;
-
+        
 
 #if !FEAT_IKVM
         public override void Write(object value, ProtoWriter dest)
         {
-            Tail.Write(((Uri)value).AbsoluteUri, dest);
+            Tail.Write(((Uri)value).OriginalString, dest);
         }
+
         public override object Read(object value, ProtoReader source)
         {
             Helpers.DebugAssert(value == null); // not expecting incoming
             string s = (string)Tail.Read(null, source);
-            return s.Length == 0 ? null : new Uri(s);
+            return s.Length == 0 ? null : new Uri(s, UriKind.RelativeOrAbsolute);
         }
-#endif
+    #endif
 
-#if FEAT_COMPILER
-        public override bool EmitReadReturnsValue => true;
+    #if FEAT_COMPILER
+            public override bool EmitReadReturnsValue => true;
 
-        protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
-        {
-            using (ctx.StartDebugBlockAuto(this))
+            protected override void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
             {
+                using (ctx.StartDebugBlockAuto(this))
+                {
                 ctx.LoadValue(valueFrom);
-                ctx.LoadValue(typeof(Uri).GetProperty("AbsoluteUri"));
+                ctx.LoadValue(typeof(Uri).GetProperty("OriginalString"));
                 Tail.EmitWrite(ctx, null);
             }
-        }
+            }
 
-        protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
-        {
-            using (ctx.StartDebugBlockAuto(this))
+            protected override void EmitRead(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
             {
+                using (ctx.StartDebugBlockAuto(this))
+                {
                 Tail.EmitRead(ctx, valueFrom);
                 ctx.CopyValue();
                 Compiler.CodeLabel @nonEmpty = ctx.DefineLabel(), @end = ctx.DefineLabel();
@@ -72,12 +72,12 @@ namespace AqlaSerializer.Serializers
                 ctx.LoadNullRef();
                 ctx.Branch(@end, true);
                 ctx.MarkLabel(@nonEmpty);
-                ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)));
+                ctx.LoadValue((int)UriKind.RelativeOrAbsolute);
+                ctx.EmitCtor(ctx.MapType(typeof(Uri)), ctx.MapType(typeof(string)), ctx.MapType(typeof(UriKind)));
                 ctx.MarkLabel(@end);
-
             }
+            }
+    #endif 
         }
-#endif
-    }
 }
 #endif

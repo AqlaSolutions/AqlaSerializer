@@ -23,6 +23,7 @@ namespace AqlaSerializer.Settings
         /// Also set Member.Collection.ConcreteType
         /// </summary>
         public Type ConstructType;
+        public bool IsGroup;
         public bool IsAutoTuple;
         public MemberLevelSettingsValue Member;
 

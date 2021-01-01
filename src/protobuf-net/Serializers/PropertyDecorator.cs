@@ -80,7 +80,7 @@ namespace AqlaSerializer.Serializers
         public override void Write(object value, ProtoWriter dest)
         {
             Helpers.DebugAssert(value != null);
-            Tail.Write(Helpers.GetPropertyValue(_property, value), dest);
+            Tail.Write(_accessors.Get != null ? _accessors.Get(value) : Helpers.GetPropertyValue(_property, value), dest);
         }
 
         public override object Read(object value, ProtoReader source)
