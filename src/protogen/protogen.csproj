@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <VersionPrefix>$(ProtoGenVersion)</VersionPrefix>
+    <!--<VersionSuffix></VersionSuffix>-->
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;netcoreapp2.0</TargetFrameworks>
+    <Configurations>Debug;Release;VS</Configurations>
+    <AssemblyName>protogen</AssemblyName>
+    <Title>protobuf-net command-line "global tool" for .NET code-generation from .proto schema files</Title>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../protobuf-net/aqlaserializer.csproj" />
+    <ProjectReference Include="../protobuf-net.Reflection/aqlaserializer.Reflection.csproj" />
+  </ItemGroup>
+</Project>

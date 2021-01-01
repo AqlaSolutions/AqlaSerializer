@@ -77,7 +77,7 @@ namespace AqlaSerializer.LongDataTests
             _output = output;
         }
 
-        [Fact]//(Skip="long running")]
+        [Fact(Skip = "long running")]
         public void CanSerializeLongData()
         {
             _output.WriteLine($"PID: {Process.GetCurrentProcess().Id}");
