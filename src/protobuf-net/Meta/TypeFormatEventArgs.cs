@@ -44,7 +44,7 @@ namespace AqlaSerializer.Meta
         }
         internal TypeFormatEventArgs(string formattedName)
         {
-            if (Helpers.IsNullOrEmpty(formattedName)) throw new ArgumentNullException(nameof(formattedName));
+            if (string.IsNullOrEmpty(formattedName)) throw new ArgumentNullException(nameof(formattedName));
             this._formattedName = formattedName;
             // typeFixed = false; <== implicit
         }

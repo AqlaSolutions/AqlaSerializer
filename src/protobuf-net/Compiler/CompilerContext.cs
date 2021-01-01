@@ -300,7 +300,7 @@ namespace AqlaSerializer.Compiler
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (methodPairs == null) throw new ArgumentNullException(nameof(methodPairs));
             if (model == null) throw new ArgumentNullException(nameof(model));
-            if (Helpers.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException(nameof(assemblyName));
+            if (string.IsNullOrEmpty(assemblyName)) throw new ArgumentNullException(nameof(assemblyName));
             this._assemblyName = assemblyName;
             this._isStatic = isStatic;
             this._methodPairs = methodPairs;
@@ -736,7 +736,7 @@ namespace AqlaSerializer.Compiler
         }
         internal void EmitBasicWrite(string methodName, Compiler.Local fromValue)
         {
-            if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException(nameof(methodName));
+            if (string.IsNullOrEmpty(methodName)) throw new ArgumentNullException(nameof(methodName));
 
             LoadValue(fromValue);
             LoadReaderWriter();
@@ -758,7 +758,7 @@ namespace AqlaSerializer.Compiler
 
         internal void EmitWrite(Type helperType, string methodName, Compiler.Local valueFrom)
         {
-            if (Helpers.IsNullOrEmpty(methodName)) throw new ArgumentNullException(nameof(methodName));
+            if (string.IsNullOrEmpty(methodName)) throw new ArgumentNullException(nameof(methodName));
             MethodInfo method = helperType.GetMethod(
                 methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
@@ -948,7 +948,7 @@ namespace AqlaSerializer.Compiler
 #if PHONE8 || SILVERLIGHT || FX11
             return false;
 #else
-            if (Helpers.IsNullOrEmpty(_assemblyName)) return false;
+            if (string.IsNullOrEmpty(_assemblyName)) return false;
             if (_knownTrustedAssemblies != null)
             {
                 if (_knownTrustedAssemblies.IndexOfReference(assembly) >= 0)

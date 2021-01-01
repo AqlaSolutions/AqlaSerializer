@@ -90,7 +90,7 @@ namespace AqlaSerializer
         void Init(string memberName)
         {
 
-            if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException(nameof(memberName));
+            if (string.IsNullOrEmpty(memberName)) throw new ArgumentNullException(nameof(memberName));
             this.MemberName = memberName;
         }
 

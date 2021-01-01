@@ -1237,7 +1237,7 @@ public static RuntimeTypeModel Create()
                     if (type == typeof(byte[]))
                     {
                         byte[] orig = (byte[])value, clone = new byte[orig.Length];
-                        Helpers.BlockCopy(orig, 0, clone, 0, orig.Length);
+                        Buffer.BlockCopy(orig, 0, clone, 0, orig.Length);
                         return clone;
                     }
                     else if (GetWireType(Helpers.GetTypeCode(type), BinaryDataFormat.Default, ref type, out modelKey) != WireType.None && modelKey < 0)
@@ -1508,7 +1508,7 @@ public static RuntimeTypeModel Create()
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         internal static Type ResolveKnownType(string name, TypeModel model, Assembly assembly)
         {
-            if (Helpers.IsNullOrEmpty(name)) return null;
+            if (string.IsNullOrEmpty(name)) return null;
             try
             {
 #if FEAT_IKVM

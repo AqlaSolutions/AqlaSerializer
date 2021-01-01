@@ -150,7 +150,7 @@ namespace AqlaSerializer.Meta
 
                 if (FieldNumber < 1 && !ParentType.IsEnum && !_isAccessHandledOutside) throw new ProtoException("FieldNumber < 1 for member " + Member);
 
-                if (Helpers.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
+                if (string.IsNullOrEmpty(_main.Name)) _main.Name = Member.Name;
 
                 _vsFinal = _vsByClient.Clone();
                 

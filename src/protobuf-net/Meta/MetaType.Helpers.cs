@@ -267,7 +267,7 @@ namespace AqlaSerializer.Meta
 
         private MethodInfo ResolveMethod(string name, bool instance)
         {
-            if (Helpers.IsNullOrEmpty(name)) return null;
+            if (string.IsNullOrEmpty(name)) return null;
 #if WINRT
             return instance ? Helpers.GetInstanceMethod(_typeInfo, name) : Helpers.GetStaticMethod(_typeInfo, name);
 #else

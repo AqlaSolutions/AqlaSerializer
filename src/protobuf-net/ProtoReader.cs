@@ -457,7 +457,7 @@ namespace AqlaSerializer
             else if (_ioIndex + count >= _ioBuffer.Length)
             {
                 // need to shift the buffer data to the left to make space
-                Helpers.BlockCopy(_ioBuffer, _ioIndex, _ioBuffer, 0, _available);
+                Buffer.BlockCopy(_ioBuffer, _ioIndex, _ioBuffer, 0, _available);
                 _ioIndex = 0;
             }
             count -= _available;
@@ -807,7 +807,7 @@ namespace AqlaSerializer
                     tmp = ioBuffer;
                 } else {
                     tmp = new byte[bytes];
-                    Helpers.BlockCopy(ioBuffer, ioIndex, tmp, 0, bytes);
+                    Buffer.BlockCopy(ioBuffer, ioIndex, tmp, 0, bytes);
                 }
                 string s = new string(encoding.GetChars(tmp));
 #else
@@ -1466,7 +1466,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                     {
                         offset = value.Length;
                         byte[] tmp = new byte[value.Length + len];
-                        Helpers.BlockCopy(value, 0, tmp, 0, value.Length);
+                        Buffer.BlockCopy(value, 0, tmp, 0, value.Length);
                         value = tmp;
                     }
                     // value is now sized with the final length, and (if necessary)
@@ -1477,7 +1477,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                         if (reader._available > 0)
                         {
                             // copy what we *do* have
-                            Helpers.BlockCopy(reader._ioBuffer, reader._ioIndex, value, offset, reader._available);
+                            Buffer.BlockCopy(reader._ioBuffer, reader._ioIndex, value, offset, reader._available);
                             len -= reader._available;
                             offset += reader._available;
                             reader._ioIndex = reader._available = 0; // we've drained the buffer
@@ -1489,7 +1489,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                     // at this point, we know that len <= available
                     if (len > 0)
                     {   // still need data, but we have enough buffered
-                        Helpers.BlockCopy(reader._ioBuffer, reader._ioIndex, value, offset, len);
+                        Buffer.BlockCopy(reader._ioBuffer, reader._ioIndex, value, offset, len);
                         reader._ioIndex += len;
                         reader._available -= len;
                     }

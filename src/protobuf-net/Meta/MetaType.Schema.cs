@@ -35,7 +35,7 @@ namespace AqlaSerializer.Meta
             Serializer.GetHashCode();
             if (_surrogate != null) return _model[_surrogate].GetSchemaTypeName();
 
-            if (!Helpers.IsNullOrEmpty(_settingsValueFinal.Name)) return _settingsValueFinal.Name;
+            if (!string.IsNullOrEmpty(_settingsValueFinal.Name)) return _settingsValueFinal.Name;
 
             string typeName = Type.Name;
 #if !NO_GENERICS

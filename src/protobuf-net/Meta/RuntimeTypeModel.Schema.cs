@@ -187,7 +187,7 @@ namespace AqlaSerializer.Meta
                     meta.FinalizeSettingsValue();
                     if (meta.IsList) continue;
                     string tmp = meta.Type.Namespace;
-                    if (!Helpers.IsNullOrEmpty(tmp))
+                    if (!string.IsNullOrEmpty(tmp))
                     {
                         if (tmp.StartsWith("System.", StringComparison.Ordinal)) continue;
                         if (package == null)
@@ -206,7 +206,7 @@ namespace AqlaSerializer.Meta
                 }
             }
 
-            if (!Helpers.IsNullOrEmpty(package))
+            if (!string.IsNullOrEmpty(package))
             {
                 headerBuilder.Append("package ").Append(package).Append(';');
                 Helpers.AppendLine(headerBuilder);

@@ -449,8 +449,8 @@ namespace AqlaSerializer.Meta
             string path = options.OutputPath;
             string assemblyName, moduleName;
 
-            bool save = !Helpers.IsNullOrEmpty(path);
-            if (Helpers.IsNullOrEmpty(typeName))
+            bool save = !string.IsNullOrEmpty(path);
+            if (string.IsNullOrEmpty(typeName))
             {
                 if (save) throw new ArgumentNullException("typeName");
                 typeName = Guid.NewGuid().ToString();
@@ -585,7 +585,7 @@ namespace AqlaSerializer.Meta
             WriteConstructors(type, methodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
             
             Type finalType = type.CreateType();
-            if (!Helpers.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(path))
             {
 #if NETSTANDARD
                 new Lokad.ILPack.AssemblyGenerator().GenerateAssembly(asm, path);
@@ -1354,7 +1354,7 @@ namespace AqlaSerializer.Meta
 
         private void WriteAssemblyAttributes(CompilerOptions options, string assemblyName, AssemblyBuilder asm, CompiledAssemblyEqualityAttribute equalityAttr)
         {
-            if (!Helpers.IsNullOrEmpty(options.TargetFrameworkName))
+            if (!string.IsNullOrEmpty(options.TargetFrameworkName))
             {
                 // get [TargetFramework] from mscorlib/equivalent and burn into the new assembly
                 Type versionAttribType = null;
@@ -1367,7 +1367,7 @@ namespace AqlaSerializer.Meta
                 {
                     PropertyInfo[] props;
                     object[] propValues;
-                    if (Helpers.IsNullOrEmpty(options.TargetFrameworkDisplayName))
+                    if (string.IsNullOrEmpty(options.TargetFrameworkDisplayName))
                     {
                         props = new PropertyInfo[0];
                         propValues = new object[0];
@@ -1413,7 +1413,7 @@ namespace AqlaSerializer.Meta
                         object privelegedAssemblyObj;
                         assemblyAttribsMap[i].TryGet("AssemblyName", out privelegedAssemblyObj);
                         string privelegedAssemblyName = privelegedAssemblyObj as string;
-                        if (privelegedAssemblyName == assemblyName || Helpers.IsNullOrEmpty(privelegedAssemblyName)) continue; // ignore
+                        if (privelegedAssemblyName == assemblyName || string.IsNullOrEmpty(privelegedAssemblyName)) continue; // ignore
 
                         if (internalAssemblies.IndexOfString(privelegedAssemblyName) >= 0) continue; // seen it before
                         internalAssemblies.Add(privelegedAssemblyName);

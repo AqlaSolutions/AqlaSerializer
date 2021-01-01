@@ -33,7 +33,7 @@ namespace AqlaSerializer
         public PartialNonSerializableMemberAttribute(string memberName)
             : base()
         {
-            if (Helpers.IsNullOrEmpty(memberName)) throw new ArgumentNullException(nameof(memberName));
+            if (string.IsNullOrEmpty(memberName)) throw new ArgumentNullException(nameof(memberName));
             this.MemberName = memberName;
         }
         

@@ -111,7 +111,7 @@ namespace AqlaSerializer
             byte[] newBuffer = new byte[newLength];
             if (copyBytes > 0)
             {
-                Helpers.BlockCopy(buffer, copyFromIndex, newBuffer, 0, copyBytes);
+                Buffer.BlockCopy(buffer, copyFromIndex, newBuffer, 0, copyBytes);
             }
             if (buffer.Length == BufferPool.BufferLength)
             {

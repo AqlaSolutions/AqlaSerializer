@@ -36,7 +36,7 @@ namespace AqlaSerializer
         public SerializeDerivedTypeAttribute(int tag, string knownTypeName)
         {
             if (tag <= 0) throw new ArgumentOutOfRangeException(nameof(tag), "Tags must be positive integers");
-            if (Helpers.IsNullOrEmpty(knownTypeName)) throw new ArgumentNullException(nameof(knownTypeName), "Known type cannot be blank");
+            if (string.IsNullOrEmpty(knownTypeName)) throw new ArgumentNullException(nameof(knownTypeName), "Known type cannot be blank");
             this.Tag = tag;
             this.KnownTypeName = knownTypeName;
         }
