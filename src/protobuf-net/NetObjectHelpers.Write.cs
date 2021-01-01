@@ -82,7 +82,7 @@ namespace AqlaSerializer
                     if (!existing)
                     {
                         ProtoWriter.WriteFieldHeader(FieldTypeName, WireType.String, dest);
-                        dest.NetCacheKeyPositionsList.SetPosition(typeRefKey, ProtoWriter.GetPosition(dest));
+                        dest.NetCacheKeyPositionsList.SetPosition(typeRefKey, ProtoWriter.GetLongPosition(dest));
                         ProtoWriter.WriteString(dest.SerializeType(type), dest);
                     }
                 }
@@ -95,7 +95,7 @@ namespace AqlaSerializer
                 // but if writing is cancelled we use FieldSkippedObject field number otherwise reading will consider empty group as null value
                 ProtoWriter.WriteFieldHeaderBegin((options & BclHelpers.NetObjectOptions.WriteAsLateReference) != 0 ? FieldLateReferenceObject : FieldObject, dest);
                 // alternative to FieldSkippedObject - seek back
-                token.SeekOnEndOrMakeNullField = new SeekOnEndOrMakeNullFieldCondition { PositionShouldBeEqualTo = insideStartPos, ThenTrySeekToPosition = cancelPos, NullFieldNumber = FieldSkippedObject };
+                token = token.WithSeekOnEnd(new SeekOnEndOrMakeNullFieldCondition { PositionShouldBeEqualTo = insideStartPos, ThenTrySeekToPosition = cancelPos, NullFieldNumber = FieldSkippedObject });
             }
             return token;
 #endif

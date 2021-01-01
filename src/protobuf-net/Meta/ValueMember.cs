@@ -429,7 +429,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Specifies the data-format that should be used for the value, when IsMap is enabled
         /// </summary>
-        public DataFormat MapValueFormat
+        public BinaryDataFormat MapValueFormat
         {
             get { return mapValueFormat; }
             set
@@ -444,7 +444,7 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// Specifies the data-format that should be used for the key, when IsMap is enabled
         /// </summary>
-        public DataFormat MapKeyFormat
+        public BinaryDataFormat MapKeyFormat
         {
             get { return mapKeyFormat; }
             set
@@ -534,7 +534,7 @@ namespace AqlaSerializer.Meta
             }
         }
 
-        private DataFormat mapKeyFormat, mapValueFormat;
+        private BinaryDataFormat mapKeyFormat, mapValueFormat;
 
         /// <summary>
         /// Indicates that the member should be treated as a protobuf Map

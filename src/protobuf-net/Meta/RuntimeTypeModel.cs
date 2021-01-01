@@ -349,7 +349,7 @@ namespace AqlaSerializer.Meta
 
 	    private void TryGetCoreSerializer(BasicList list, Type itemType)
 	    {
-	        var coreSerializer = ValueMember.TryGetCoreSerializer(this, DataFormat.Default, itemType, out _, false, false, false, false);
+	        var coreSerializer = ValueMember.TryGetCoreSerializer(this, BinaryDataFormat.Default, itemType, out _, false, false, false, false);
 	        if (coreSerializer != null)
 	        {
 	            return;

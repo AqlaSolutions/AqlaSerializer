@@ -399,7 +399,7 @@ namespace AqlaSerializer
         {
             uint header = (((uint)fieldNumber) << 3)
                 | (((uint)wireType) & 7);
-            int bytes = writer.ImplWriteVarint64(ref state, header);
+            int bytes = writer.ImplWriteVarint32(ref state, header);
             writer.Advance(bytes);
         }
 

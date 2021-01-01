@@ -13,11 +13,11 @@ namespace AqlaSerializer
         /// <summary>
         /// Describes the data-format used to store the key
         /// </summary>
-        public DataFormat KeyFormat { get; set; }
+        public BinaryDataFormat KeyFormat { get; set; }
         /// <summary>
         /// Describes the data-format used to store the value
         /// </summary>
-        public DataFormat ValueFormat { get; set; }
+        public BinaryDataFormat ValueFormat { get; set; }
 
         /// <summary>
         /// Disables "map" handling; dictionaries will use ".Add(key,value)" instead of  "[key] = value",

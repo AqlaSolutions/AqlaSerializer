@@ -344,6 +344,11 @@ namespace AqlaSerializer
                 }
             }
 
+            public override long ImplSeekAndExchangeBlockEnd(ref State state, long anyPositionFromRootReaderStart, long newBlockEnd = long.MaxValue)
+            {
+                throw new NotSupportedException("Seeking is not supported for read only sequence");
+            }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private void Skip(ref State state, int bytes)
             {

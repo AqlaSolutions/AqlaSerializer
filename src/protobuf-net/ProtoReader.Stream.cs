@@ -118,6 +118,10 @@ namespace AqlaSerializer
             private bool _isFixedLength;
             private int _ioIndex, _available;
             private long _dataRemaining64;
+            internal long FixedLength { get; private set; }
+            internal long InitialUnderlyingStreamPosition { get; private set; }
+
+            public override bool CanSeek => _source.CanSeek;
 
             /// <summary>
             /// Creates a new reader against a stream
@@ -156,7 +160,7 @@ namespace AqlaSerializer
                 Init(model, context);
                 if (source == null) throw new ArgumentNullException(nameof(source));
                 if (!source.CanRead) throw new ArgumentException("Cannot read from stream", nameof(source));
-
+                this.InitialUnderlyingStreamPosition = source.Position;
                 if (TryConsumeSegmentRespectingPosition(source, out var segment, length))
                 {
                     _ioBuffer = segment.Array;
@@ -174,6 +178,7 @@ namespace AqlaSerializer
 
                     bool isFixedLength = length >= 0;
                     _isFixedLength = isFixedLength;
+                    FixedLength = length;
                     _dataRemaining64 = isFixedLength ? length : 0;
                 }
             }
@@ -446,6 +451,29 @@ namespace AqlaSerializer
                 }
 
                 ProtoReader.Seek(_source, count, _ioBuffer);
+            }
+
+
+            public override long ImplSeekAndExchangeBlockEnd(ref State state, long anyPositionFromRootReaderStart, long newBlockEnd = long.MaxValue);
+            {
+                if (newBlockEnd < anyPositionFromRootReaderStart)
+                {
+                    if (newBlockEnd == -1)
+                        newBlockEnd = long.MaxValue;
+                    else
+                        throw new ArgumentOutOfRangeException(nameof(newBlockEnd));
+                }
+                _longPosition = anyPositionFromRootReaderStart;
+                _source.Position = InitialUnderlyingStreamPosition + anyPositionFromRootReaderStart;
+
+                if (_isFixedLength) // for dataRemaining add back anything we've got to-hand
+                    _dataRemaining64 = FixedLength - anyPositionFromRootReaderStart;
+
+                _ioIndex = _available = 0; // everything remaining in the buffer is garbage
+
+                long end = _blockEnd64;
+                _blockEnd64 = newBlockEnd;
+                return end;
             }
         }
     }

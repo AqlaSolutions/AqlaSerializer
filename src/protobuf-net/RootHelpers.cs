@@ -83,7 +83,7 @@ namespace AqlaSerializer
                         ImportReferencePositions64(source);
                 }
                 
-                source.SeekAndExchangeBlockEnd(pos, blockEnd);
+                source.ImplSeekAndExchangeBlockEnd(pos, blockEnd);
                 var f = source.ReadFieldHeader();
                 if (f != formatVersion) throw new ProtoException("Couldn't correctly rewind to stream start after reading net object positions list");
             }

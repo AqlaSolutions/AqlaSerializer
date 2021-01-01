@@ -1045,7 +1045,7 @@ public static RuntimeTypeModel Create()
             return null;
         }
 
-        internal bool TryDeserializeAuxiliaryType(ProtoReader reader, ref ProtoReader.SolidState state, DataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, object parentListOrType)
+        internal bool TryDeserializeAuxiliaryType(ProtoReader reader, ref ProtoReader.SolidState state, BinaryDataFormat format, int tag, Type type, ref object value, bool skipOtherFields, bool asListItem, bool autoCreate, bool insideList, object parentListOrType)
         {
             var liquid = state.Liquify();
             var result = TryDeserializeAuxiliaryType(reader, ref liquid, format, tag, type, ref value,

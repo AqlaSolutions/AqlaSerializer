@@ -53,7 +53,7 @@ namespace AqlaSerializer
             if (r.SeekToReturn != null)
             {
                 var s = r.SeekToReturn.Value;
-                source.SeekAndExchangeBlockEnd(s.Position, s.BlockEnd);
+                source.ImplSeekAndExchangeBlockEnd(s.Position, s.BlockEnd);
             }
         }
 
@@ -115,12 +115,21 @@ namespace AqlaSerializer
                         value = source.NetCache.GetKeyedObject(tmp, handleMissingKeys);
                         if (value == null)
                         {
+                            if (!source.CanSeek)
+                            {
+                                throw new ProtoException($"Source can't seek, no way to retrieve referenced object of type {type} #{tmp}. "
+                                    + $"The referenced object was written at a different stream position because either "
+                                    + $"it's set to be LateReference or your object has too deep nesting, or reference-tracked field "
+                                    + $"was removed in reader but another field references an object from the removed field."
+                                    + $"To avoid this exception you can switch to a seekable stream like MemoryStream.");
+                            }
+
                             // skip to group end
                             ProtoReader.EndSubItem(r.Token, true, source);
                             var seekToken = new SeekToken
                             {
                                 Position = source.LongPosition, // store position on group end
-                                BlockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp))
+                                BlockEnd = source.ImplSeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp))
                             };
 
                             if (!ProtoReader.HasSubValue(WireType.StartGroup, source))
@@ -154,10 +163,10 @@ namespace AqlaSerializer
                             // so we skipped it
                             // have to seek
                             var pos = source.LongPosition;
-                            long blockEnd = source.SeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp));
+                            long blockEnd = source.ImplSeekAndExchangeBlockEnd(source.NetCacheKeyPositionsList.GetPosition(tmp));
                             if (!ProtoReader.HasSubValue(WireType.String, source)) throw new ProtoException("New type could not be found on specified position, net key: " + tmp);
                             ReadNewType(source, out type, out typeKey);
-                            source.SeekAndExchangeBlockEnd(pos, blockEnd);
+                            source.ImplSeekAndExchangeBlockEnd(pos, blockEnd);
                         }
                         r.IsDynamic = true;
                         break;
