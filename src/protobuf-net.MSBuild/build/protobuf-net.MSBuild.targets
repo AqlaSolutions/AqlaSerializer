@@ -17,31 +17,35 @@
 
   </PropertyGroup>
 
-  <Target 
+  <Target
     Name="GenerateProtoCode"
 		BeforeTargets="BeforeBuild"
 		Condition="'@(ProtoDef)' != ''"
   >
     <PropertyGroup>
       <ProtoCodeGenerationRoot>$(IntermediateOutputPath)</ProtoCodeGenerationRoot>
-    </PropertyGroup>    
-    
+    </PropertyGroup>
+
     <GenerateProtoBufCode
       ProtoDef="@(ProtoDef)"
       ImportPaths="@(ProtoImportPaths)"
       OutputPath="$(ProtoCodeGenerationRoot)"
       DefaultNamespace="$(RootNamespace)"
       Language="$(Language)"
+      Services="$(GrpcServices)"
+      Names="$(ProtoNames)"
+      OneOf="$(ProtoOneOf)"
+      ListSet="$(ProtoListSet)"
     >
-      <Output 
+      <Output
         TaskParameter="ProtoCodeFile"
 				ItemName="ProtoCodeFile"/>
     </GenerateProtoBufCode>
 
     <ItemGroup>
-      <Compile 
+      <Compile
         Include="@(ProtoCodeFile)"/>
     </ItemGroup>
-       
+
   </Target>
 </Project>

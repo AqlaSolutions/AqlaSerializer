@@ -1,8 +1,13 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿using ProtoBuf.Internal;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using AqlaSerializer.Meta;
 using System;
-using System.IO;
+using System.Buffers;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Runtime.Serialization;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -23,7 +28,7 @@ namespace AqlaSerializer
     /// extensible, allowing a type to be deserialized / merged even if some data is
     /// not recognised.
     /// </remarks>
-    public static class Serializer
+    public static partial class Serializer
     {
 #if !NO_RUNTIME
 #if FX11
@@ -79,6 +84,19 @@ namespace AqlaSerializer
         {
             return RuntimeTypeModel.Default.GetSchema(RuntimeTypeModel.Default.MapType(typeof(T)), syntax);
         }
+
+        /// <summary>
+        /// Suggest a .proto definition for the given type
+        /// </summary>
+        /// <returns>The .proto definition as a string</returns>
+        public static string GetProto(SchemaGenerationOptions options)
+            => RuntimeTypeModel.Default.GetSchema(options);
+
+        /// <summary>
+        /// Create a deep clone of the supplied instance; any sub-items are also cloned.
+        /// </summary>
+        public static T DeepClone<[DynamicallyAccessedMembers(DynamicAccess.ContractType)] T>(T instance, SerializationContext context)
+            => RuntimeTypeModel.Default.DeepClone<T>(instance, context);
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
@@ -86,6 +104,7 @@ namespace AqlaSerializer
         {
             return instance != null ? (T)RuntimeTypeModel.Default.DeepClone(instance) : instance;
         }
+
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance.
         /// </summary>
@@ -95,32 +114,17 @@ namespace AqlaSerializer
         /// <returns>The updated instance; this may be different to the instance argument if
         /// either the original instance was null, or the stream defines a known sub-type of the
         /// original instance.</returns>
-        public static T Merge<T>(Stream source, T instance)
+        public static T Merge<[DynamicallyAccessedMembers(DynamicAccess.ContractType)] T>(Stream source, T instance)
         {
-            return (T)RuntimeTypeModel.Default.Deserialize(source, instance, typeof(T));
-        }
-        /// <summary>
-        /// Creates a new instance from a protocol-buffer stream
-        /// </summary>
-        /// <typeparam name="T">The type to be created.</typeparam>
-        /// <param name="source">The binary stream to apply to the new instance (cannot be null).</param>
-        /// <returns>A new, initialized instance.</returns>
-        public static T Deserialize<T>(Stream source)
-        {
-            return (T) RuntimeTypeModel.Default.Deserialize(source, null, typeof(T));
+            using var state = ProtoReader.State.Create(source, RuntimeTypeModel.Default);
+            return state.DeserializeRootImpl<T>(instance);
         }
 
-#if !FEAT_IKVM
-		/// <summary>
-		/// Creates a new instance from a protocol-buffer stream
-		/// </summary>
-		/// <param name="type">The type to be created.</param>
-		/// <param name="source">The binary stream to apply to the new instance (cannot be null).</param>
-		/// <returns>A new, initialized instance.</returns>
-		public static object Deserialize(Type type, Stream source)
-		{
-		    return RuntimeTypeModel.Default.Deserialize(source, null, type);
-		}
+        /// <summary>
+        /// Calculates the length of a protocol-buffer payload for an item
+        /// </summary>
+        public static MeasureState<T> Measure<[DynamicallyAccessedMembers(DynamicAccess.ContractType)] T>(T value, object userState = null, long abortAfter = -1)
+            => RuntimeTypeModel.Default.Measure<T>(value, userState, abortAfter);
 #endif
 
         /// <summary>
@@ -381,25 +385,25 @@ namespace AqlaSerializer
 #endif
         }
 #endif
-        /// <summary>
-        /// Reads a sequence of consecutive length-prefixed items from a stream, using
-        /// either base-128 or fixed-length prefixes. Base-128 prefixes with a tag
-        /// are directly comparable to serializing multiple items in succession
-        /// (use the <see cref="ListItemTag"/> tag to emulate the implicit behavior
-        /// when serializing a list/array). When a tag is
-        /// specified, any records with different tags are silently omitted. The
-        /// tag is ignored. The tag is ignored for fixed-length prefixes.
-        /// </summary>
-        /// <typeparam name="T">The type of object to deserialize.</typeparam>
-        /// <param name="source">The binary stream containing the serialized records.</param>
-        /// <param name="style">The prefix style used in the data.</param>
-        /// <param name="fieldNumber">The tag of records to return (if non-positive, then no tag is
-        /// expected and all records are returned).</param>
-        /// <returns>The sequence of deserialized objects.</returns>
-        public static IEnumerable<T> DeserializeItems<T>(Stream source, PrefixStyle style, int fieldNumber)
-        {
-            return RuntimeTypeModel.Default.DeserializeItems<T>(source, style, fieldNumber);
-        }
+/// <summary>
+/// Reads a sequence of consecutive length-prefixed items from a stream, using
+/// either base-128 or fixed-length prefixes. Base-128 prefixes with a tag
+/// are directly comparable to serializing multiple items in succession
+/// (use the <see cref="ListItemTag"/> tag to emulate the implicit behavior
+/// when serializing a list/array). When a tag is
+/// specified, any records with different tags are silently omitted. The
+/// tag is ignored. The tag is ignored for fixed-length prefixes.
+/// </summary>
+/// <typeparam name="T">The type of object to deserialize.</typeparam>
+/// <param name="source">The binary stream containing the serialized records.</param>
+/// <param name="style">The prefix style used in the data.</param>
+/// <param name="fieldNumber">The tag of records to return (if non-positive, then no tag is
+/// expected and all records are returned).</param>
+/// <returns>The sequence of deserialized objects.</returns>
+public static IEnumerable<T> DeserializeItems<[DynamicallyAccessedMembers(DynamicAccess.ContractType)] T>(Stream source, PrefixStyle style, int fieldNumber)
+{
+    return RuntimeTypeModel.Default.DeserializeItems<T>(source, style, fieldNumber);
+}
 
         /// <summary>
         /// Creates a new instance from a protocol-buffer stream that has a length-prefix
@@ -409,7 +413,7 @@ namespace AqlaSerializer
         /// <param name="source">The binary stream to apply to the new instance (cannot be null).</param>
         /// <param name="style">How to encode the length prefix.</param>
         /// <returns>A new, initialized instance.</returns>
-        public static T DeserializeWithLengthPrefix<T>(Stream source, PrefixStyle style)
+        public static T DeserializeWithLengthPrefix<[DynamicallyAccessedMembers(DynamicAccess.ContractType)] T>(Stream source, PrefixStyle style)
         {
             return DeserializeWithLengthPrefix<T>(source, style, 0);
         }
@@ -477,18 +481,25 @@ namespace AqlaSerializer
             RuntimeTypeModel model = RuntimeTypeModel.Default;
             model.SerializeWithLengthPrefix(destination, instance, model.MapType(typeof(T)), style, fieldNumber);
         }
+
+
+/// <summary>
+/// Maps a field-number to a type
+/// </summary>
+[Obsolete("Please use ProtoBuf.TypeResolver", true)]
+public delegate Type TypeResolver(int fieldNumber);
 #endif
 
-		/// <summary>Indicates the number of bytes expected for the next message.</summary>
-		/// <param name="source">The stream containing the data to investigate for a length.</param>
-		/// <param name="style">The algorithm used to encode the length.</param>
-		/// <param name="length">The length of the message, if it could be identified.</param>
-		/// <returns>True if a length could be obtained, false otherwise.</returns>
-		public static bool TryReadLengthPrefix(Stream source, PrefixStyle style, out int length)
-		{
-		    length = ProtoReader.ReadLengthPrefix(source, false, style, out int fieldNumber, out int bytesRead);
-		    return bytesRead > 0;
-		}
+/// <summary>Indicates the number of bytes expected for the next message.</summary>
+/// <param name="source">The stream containing the data to investigate for a length.</param>
+/// <param name="style">The algorithm used to encode the length.</param>
+/// <param name="length">The length of the message, if it could be identified.</param>
+/// <returns>True if a length could be obtained, false otherwise.</returns>
+public static bool TryReadLengthPrefix(Stream source, PrefixStyle style, out int length)
+{
+    length = ProtoReader.ReadLengthPrefix(source, false, style, out int _, out int bytesRead);
+    return bytesRead > 0;
+}
 
         /// <summary>Indicates the number of bytes expected for the next message.</summary>
         /// <param name="buffer">The buffer containing the data to investigate for a length.</param>
@@ -499,31 +510,28 @@ namespace AqlaSerializer
         /// <returns>True if a length could be obtained, false otherwise.</returns>
         public static bool TryReadLengthPrefix(byte[] buffer, int index, int count, PrefixStyle style, out int length)
         {
-            using (Stream source = new MemoryStream(buffer, index, count))
-            {
-                return TryReadLengthPrefix(source, style, out length);
-            }
+            using Stream source = new MemoryStream(buffer, index, count);
+            return TryReadLengthPrefix(source, style, out length);
         }
-#endif
-        /// <summary>
-        /// The field number that is used as a default when serializing/deserializing a list of objects.
-        /// The data is treated as repeated message with field number 1.
-        /// </summary>
-        public const int ListItemTag = 1;
 
-#if !NO_RUNTIME
-        /// <summary>
-        /// Provides non-generic access to the default serializer.
-        /// </summary>
-        public static class NonGeneric
-        {
-			/// <summary>
-			/// Create a deep clone of the supplied instance; any sub-items are also cloned.
-			/// </summary>
-			public static object DeepClone(object instance)
-			{
-			    return instance == null ? null : RuntimeTypeModel.Default.DeepClone(instance);
-			}
+/// <summary>
+/// The field number that is used as a default when serializing/deserializing a list of objects.
+/// The data is treated as repeated message with field number 1.
+/// </summary>
+public const int ListItemTag = TypeModel.ListItemTag;
+
+/// <summary>
+/// Provides non-generic access to the default serializer.
+/// </summary>
+public static class NonGeneric
+{
+            /// <summary>
+            /// Create a deep clone of the supplied instance; any sub-items are also cloned.
+            /// </summary>
+            public static object DeepClone(object instance)
+            {
+                return instance is null ? null : RuntimeTypeModel.Default.DeepClone(instance);
+            }
 
             /// <summary>
             /// Writes a protocol-buffer representation of the given instance to the supplied stream.
@@ -532,9 +540,17 @@ namespace AqlaSerializer
             /// <param name="dest">The destination stream to write to.</param>
             public static void Serialize(Stream dest, object instance)
             {
-                if (instance != null)
+                if (instance is object)
                 {
-                    RuntimeTypeModel.Default.Serialize(dest, instance);
+                    var state = ProtoWriter.State.Create(dest, RuntimeTypeModel.Default);
+                    try
+                    {
+                        state.Model.SerializeRootFallback(ref state, instance);
+                    }
+                    finally
+                    {
+                        state.Dispose();
+                    }
                 }
             }
 
@@ -544,19 +560,44 @@ namespace AqlaSerializer
             /// <param name="type">The type to be created.</param>
             /// <param name="source">The binary stream to apply to the new instance (cannot be null).</param>
             /// <returns>A new, initialized instance.</returns>
-            public static object Deserialize(Type type, Stream source)
-            {
-                return RuntimeTypeModel.Default.Deserialize(source, null, type);
-            }
+            public static object Deserialize([DynamicallyAccessedMembers(DynamicAccess.ContractType)] Type type, Stream source)
+                => RuntimeTypeModel.Default.Deserialize(type, source);
+
+    /// <summary>
+    /// Creates a new instance from a protocol-buffer stream
+    /// </summary>
+    public static object Deserialize([DynamicallyAccessedMembers(DynamicAccess.ContractType)] Type type, Stream source, object instance = null, object userState = null, long length = ProtoReader.TO_EOF)
+        => RuntimeTypeModel.Default.Deserialize(type, source, instance, userState, length);
+
+    /// <summary>
+    /// Creates a new instance from a protocol-buffer stream
+    /// </summary>
+    public static object Deserialize([DynamicallyAccessedMembers(DynamicAccess.ContractType)] Type type, ReadOnlyMemory<byte> source, object instance = null, object userState = null)
+        => RuntimeTypeModel.Default.Deserialize(type, source, instance, userState);
+
+    /// <summary>
+    /// Creates a new instance from a protocol-buffer stream
+    /// </summary>
+    public static object Deserialize([DynamicallyAccessedMembers(DynamicAccess.ContractType)] Type type, ReadOnlySequence<byte> source, object instance = null, object userState = null)
+        => RuntimeTypeModel.Default.Deserialize(type, source, instance, userState);
+
+#if !FEAT_IKVM
+/// <summary>
+/// Creates a new instance from a protocol-buffer stream
+/// </summary>
+public static object Deserialize([DynamicallyAccessedMembers(DynamicAccess.ContractType)] Type type, ReadOnlySpan<byte> source, object instance = null, object userState = null)
+=> RuntimeTypeModel.Default.Deserialize(type, source, instance, userState);
 
             /// <summary>Applies a protocol-buffer stream to an existing instance.</summary>
             /// <param name="instance">The existing instance to be modified (cannot be null).</param>
             /// <param name="source">The binary stream to apply to the instance (cannot be null).</param>
             /// <returns>The updated instance</returns>
+            [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
             public static object Merge(Stream source, object instance)
             {
-                if (instance == null) throw new ArgumentNullException(nameof(instance));
-                return RuntimeTypeModel.Default.Deserialize(source, instance, instance.GetType(), null);
+                if (instance is null) throw new ArgumentNullException(nameof(instance));
+                using var state = ProtoReader.State.Create(source, RuntimeTypeModel.Default);
+                return state.DeserializeRootFallback(instance, instance.GetType());
             }
 
             /// <summary>
@@ -586,10 +627,10 @@ namespace AqlaSerializer
             /// <returns>The updated instance; this may be different to the instance argument if
             /// either the original instance was null, or the stream defines a known sub-type of the
             /// original instance.</returns>
-            public static bool TryDeserializeWithLengthPrefix(Stream source, PrefixStyle style, TypeResolver resolver, out object value)
+            public static bool TryDeserializeWithLengthPrefix(Stream source, PrefixStyle style, ProtoBuf.TypeResolver resolver, out object value)
             {
                 value = RuntimeTypeModel.Default.DeserializeWithLengthPrefix(source, null, null, style, 0, resolver);
-                return value != null;
+                return value is object;
             }
             /// <summary>
             /// Indicates whether the supplied type is explicitly modelled by the model
@@ -599,16 +640,11 @@ namespace AqlaSerializer
             /// <summary>
             /// Precompiles the serializer for a given type.
             /// </summary>
-#pragma warning disable RCS1163
-            public static void PrepareSerializer(Type type)
-#pragma warning restore RCS1163
+            public static void PrepareSerializer([DynamicallyAccessedMembers(DynamicAccess.ContractType)] Type type)
             {
-#if FEAT_COMPILER
-                RuntimeTypeModel model = RuntimeTypeModel.Default;
-                model[type].CompileInPlace();
-#endif
+                RuntimeTypeModel.Default[type].CompileInPlace();
             }
-        }
+}
 
         /// <summary>
         /// Global switches that change the behavior of protobuf-net
@@ -624,21 +660,45 @@ namespace AqlaSerializer
                 get { return RuntimeTypeModel.Default.InferTagFromNameDefault; }
                 set { RuntimeTypeModel.Default.InferTagFromNameDefault = value; }
             }
+
+            private static ProtoSyntax _defaultSyntax = ProtoSyntax.Proto3;
+
+            /// <summary>
+            /// Gets or sets the default .proto syntax to be used
+            /// </summary>
+            public static ProtoSyntax DefaultSyntax
+            {
+                get => _defaultSyntax;
+                set
+                {
+                    switch (value)
+                    {
+                        case ProtoSyntax.Proto2:
+                        case ProtoSyntax.Proto3:
+                            _defaultSyntax = value;
+                            break;
+                        default:
+                            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(DefaultSyntax));
+                            break;
+                    }
+                }
+            }
+
+            internal static ProtoSyntax Normalize(ProtoSyntax syntax) => syntax switch
+            {
+                ProtoSyntax.Proto2 => syntax,
+                ProtoSyntax.Proto3 => syntax,
+                _ => DefaultSyntax,
+            };
 		}
-#endif
-        /// <summary>
-        /// Maps a field-number to a type
-        /// </summary>
-        public delegate Type TypeResolver(int fieldNumber);
 
         /// <summary>
         /// Releases any internal buffers that have been reserved for efficiency; this does not affect any serialization
         /// operations; simply: it can be used (optionally) to release the buffers for garbage collection (at the expense
         /// of having to re-allocate a new buffer for the next operation, rather than re-use prior buffers).
         /// </summary>
-        public static void FlushPool()
-        {
-            BufferPool.Flush();
-        }
+        [Obsolete("This API is no longer required and may be removed in a future release")]
+        [Browsable(false), EditorBrowsable(EditorBrowsableState.Never)]
+        public static void FlushPool() { }
     }
 }

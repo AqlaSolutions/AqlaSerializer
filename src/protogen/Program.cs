@@ -1,16 +1,17 @@
 ﻿using Google.Protobuf.Reflection;
-using AqlaSerializer;
-using AqlaSerializer.Reflection;
+using ProtoBuf;
+using ProtoBuf.Reflection;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace protogen
 {
     internal static class Program
     {
-        private static int Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             try
             {
@@ -21,11 +22,13 @@ namespace protogen
                 var inputFiles = new List<string>(); // {PROTO_FILES} (everything not `-`)
                 bool exec = false;
                 string package = null; // --package=foo
+                string grpcMode = null, grpcUrl = null, grpcService = null;
                 CodeGenerator codegen = null;
 
                 Dictionary<string, string> options = null;
-                foreach (string arg in args)
+                for (int i = 0; i < args.Length; i++)
                 {
+                    var arg = args[i];
                     string lhs = arg, rhs = "";
                     int index = arg.IndexOf('=');
                     if (index > 0)
@@ -44,9 +47,9 @@ namespace protogen
                         rhs = arg.Substring(2);
                     }
 
-                    if(lhs.StartsWith("+"))
+                    if (lhs.StartsWith("+"))
                     {
-                        if(options == null) options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        if (options == null) options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                         options[lhs.Substring(1)] = rhs;
                         continue;
                     }
@@ -72,9 +75,7 @@ namespace protogen
                             break;
                         case "--vb_out":
                             outPath = rhs;
-#pragma warning disable CS0618
                             codegen = VBCodeGenerator.Default;
-#pragma warning restore CS0618
                             exec = true;
                             break;
                         case "--descriptor_set_out":
@@ -87,10 +88,23 @@ namespace protogen
                             break;
                         case "--pwd":
                             Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
-#if NETCOREAPP2_1 || NETSTANDARD2_0
                             Console.WriteLine($"Program: {typeof(Program).Assembly.Location}");
                             Console.WriteLine($"CodeGenerator: {typeof(CodeGenerator).Assembly.Location}");
-#endif
+                            break;
+                        case "--grpc":
+                            if (++i < args.Length)
+                            {
+                                grpcMode = args[i];
+                                if (++i < args.Length)
+                                {
+                                    grpcUrl = args[i];
+
+                                    if (string.Equals(grpcMode, "get", StringComparison.OrdinalIgnoreCase) && ++i < args.Length)
+                                    {
+                                        grpcService = args[i];
+                                    }
+                                }
+                            }
                             break;
                         default:
                             if (lhs.StartsWith("-") || !string.IsNullOrWhiteSpace(rhs))
@@ -120,6 +134,16 @@ namespace protogen
                     tmp = GetVersion<FileDescriptorSet>();
                     if (tmp != ver) Console.WriteLine($"protobuf-net.Reflection {tmp}");
                     return 0;
+                }
+                else if (grpcMode is object)
+                {
+#if GRPC_TOOLS
+                    return await GrpcTools.ExecuteAsync(grpcMode, grpcUrl, grpcService, codegen, outPath, options);
+#else
+                    Console.Error.Write("gRPC tools are not available on this platform");
+                    await Task.Yield(); // this is just to make the compiler happy, and doesn't really matter
+                    return 1;
+#endif
                 }
                 else if (inputFiles.Count == 0)
                 {
@@ -161,7 +185,7 @@ namespace protogen
                     // add the library area for auto-imports (library inbuilts)
                     set.AddImportPath(Path.GetDirectoryName(typeof(Program).Assembly.Location));
 
-                    if(inputFiles.Count == 1 && importPaths.Count == 1)
+                    if (inputFiles.Count == 1 && importPaths.Count == 1)
                     {
                         SearchOption? searchOption = null;
                         if (inputFiles[0] == "**/*.proto"
@@ -175,7 +199,7 @@ namespace protogen
                             searchOption = SearchOption.TopDirectoryOnly;
                         }
 
-                        if(searchOption != null)
+                        if (searchOption != null)
                         {
                             inputFiles.Clear();
                             var searchRoot = importPaths[0];
@@ -195,10 +219,10 @@ namespace protogen
                         }
                     }
 
-                    if(exitCode != 0) return exitCode;
+                    if (exitCode != 0) return exitCode;
                     set.Process();
                     var errors = set.GetErrors();
-                    foreach(var err in errors)
+                    foreach (var err in errors)
                     {
                         if (err.IsError) exitCode++;
                         Console.Error.WriteLine(err.ToString());
@@ -211,25 +235,12 @@ namespace protogen
                         {
                             Serializer.Serialize(fds, set);
                         }
-                        
+
                         return 0;
                     }
 
                     var files = codegen.Generate(set, options: options);
-                    foreach (var file in files)
-                    {
-                        var path = Path.Combine(outPath, file.Name);
-
-                        var dir = Path.GetDirectoryName(path);
-                        if(!Directory.Exists(dir))
-                        {
-                            Console.Error.WriteLine($"Output directory does not exist, creating... {dir}");
-                            Directory.CreateDirectory(dir);
-                        }
-
-                        File.WriteAllText(path, file.Text);
-                        Console.WriteLine($"generated: {path}");
-                    }
+                    WriteFiles(files, outPath);
 
                     return 0;
                 }
@@ -242,14 +253,36 @@ namespace protogen
             }
         }
 
+        internal static void WriteFiles(IEnumerable<CodeFile> files, string outPath)
+        {
+            foreach (var file in files)
+            {
+                var path = Path.Combine(outPath, file.Name);
+
+                var dir = Path.GetDirectoryName(path);
+                if (!Directory.Exists(dir))
+                {
+                    Console.Error.WriteLine($"Output directory does not exist, creating... {dir}");
+                    Directory.CreateDirectory(dir);
+                }
+
+                File.WriteAllText(path, file.Text);
+                Console.WriteLine($"generated: {path}");
+            }
+        }
+
         // with thanks to "Dave": https://stackoverflow.com/a/340454/23354
         public static string MakeRelativePath(string fromPath, string toPath)
         {
-#if NETCOREAPP2_0 || NETCOREAPP2_1
+#if !NETFRAMEWORK
             return Path.GetRelativePath(fromPath, toPath);
 #else
             if (String.IsNullOrEmpty(fromPath)) throw new ArgumentNullException(nameof(fromPath));
             if (String.IsNullOrEmpty(toPath)) throw new ArgumentNullException(nameof(toPath));
+            // make sure there is a trailing '/', else Uri.MakeRelativeUri won't work as expected
+            char lastChar = fromPath[fromPath.Length - 1];
+            if (lastChar != Path.DirectorySeparatorChar && lastChar != Path.AltDirectorySeparatorChar)
+                fromPath += Path.DirectorySeparatorChar;
 
             Uri fromUri = new Uri(fromPath, UriKind.RelativeOrAbsolute);
             if (!fromUri.IsAbsoluteUri)
@@ -279,12 +312,9 @@ namespace protogen
         private static string GetVersion<T>() => GetVersion(typeof(T));
         private static string GetVersion(Type type)
         {
-#if NETCOREAPP1_1
-            var attrib = type.GetTypeInfo().Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-#else
             var attribs = type.Assembly.GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), false);
             var attrib = attribs.Length == 0 ? null : attribs[0] as AssemblyInformationalVersionAttribute;
-#endif
+
             return attrib?.InformationalVersion ?? "(unknown)";
         }
 
@@ -309,11 +339,18 @@ Parse PROTO_FILES and generate output based on the options given:
                               Specify naming convention rules.
   +oneof={default|enum}       Specify whether 'oneof' should generate enums.
   +listset={yes|no}           Specify whether lists should emit setters
+  +services={grpc;wcf}        Semi-colon list of service metadata to support.
   +OPTION=VALUE               Specify a custom OPTION/VALUE pair for the
                               selected code generator.
   --package=PACKAGE           Add a default package (when no package is
-                              specified); can use #FILE# and #DIR# tokens.
+                              specified); can use #FILE# and #DIR# tokens." +
+#if GRPC_TOOLS
+@"
+  --grpc list URL             List all gRPC service available from URL
+  --grpc get URL SERVICE      Generate code for the given gRPC service" +
+#endif
 
+@"
 Note that PROTO_FILES can be *.proto or **/*.proto (recursive) when a single
 import location is used, to process all schema files found. In recursive mode,
 imports from the current directory can also be specified by name-only.");

@@ -1,7 +1,10 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿
+using ProtoBuf;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using ProtoBuf.Meta;
 using System.Runtime.CompilerServices;
 
 // General Information about an assembly is controlled through the following 
@@ -46,3 +49,55 @@ using System.Runtime.CompilerServices;
 #endif
 
 [assembly: CLSCompliant(false)]
+[assembly: TypeForwardedTo(typeof(TypeModel))]
+[assembly: TypeForwardedTo(typeof(ProtoReader))]
+[assembly: TypeForwardedTo(typeof(ProtoWriter))]
+[assembly: TypeForwardedTo(typeof(SerializationContext))]
+[assembly: TypeForwardedTo(typeof(SubItemToken))]
+[assembly: TypeForwardedTo(typeof(WireType))]
+[assembly: TypeForwardedTo(typeof(PrefixStyle))]
+[assembly: TypeForwardedTo(typeof(IExtensible))]
+[assembly: TypeForwardedTo(typeof(IExtension))]
+[assembly: TypeForwardedTo(typeof(IExtensionResettable))]
+[assembly: TypeForwardedTo(typeof(TypeFormatEventArgs))]
+[assembly: TypeForwardedTo(typeof(TypeFormatEventHandler))]
+[assembly: TypeForwardedTo(typeof(ProtoTypeCode))]
+[assembly: TypeForwardedTo(typeof(DataFormat))]
+[assembly: TypeForwardedTo(typeof(ProtoException))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnion128))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnion128Object))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnion32))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnion32Object))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnion64))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnion64Object))]
+[assembly: TypeForwardedTo(typeof(DiscriminatedUnionObject))]
+[assembly: TypeForwardedTo(typeof(BclHelpers))]
+[assembly: TypeForwardedTo(typeof(TimeSpanScale))]
+[assembly: TypeForwardedTo(typeof(BufferExtension))]
+[assembly: TypeForwardedTo(typeof(Extensible))]
+
+[assembly: TypeForwardedTo(typeof(ProtoBeforeDeserializationAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoBeforeSerializationAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoAfterDeserializationAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoAfterSerializationAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoContractAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoEnumAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoConverterAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoIncludeAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoIgnoreAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoMapAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoMemberAttribute))]
+[assembly: TypeForwardedTo(typeof(MemberSerializationOptions))]
+[assembly: TypeForwardedTo(typeof(ProtoPartialMemberAttribute))]
+[assembly: TypeForwardedTo(typeof(ProtoPartialIgnoreAttribute))]
+[assembly: TypeForwardedTo(typeof(ImplicitFields))]
+[assembly: TypeForwardedTo(typeof(IProtoInput<>))]
+[assembly: TypeForwardedTo(typeof(IProtoOutput<>))]
+[assembly: TypeForwardedTo(typeof(IMeasuredProtoOutput<>))]
+[assembly: TypeForwardedTo(typeof(MeasureState<>))]
+[assembly: TypeForwardedTo(typeof(CompatibilityLevel))]
+[assembly: TypeForwardedTo(typeof(CompatibilityLevelAttribute))]
+
+#if PLAT_SKIP_LOCALS_INIT
+[module: SkipLocalsInit]
+#endif

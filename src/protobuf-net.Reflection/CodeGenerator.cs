@@ -1,8 +1,10 @@
 ﻿using Google.Protobuf.Reflection;
+using ProtoBuf.Reflection.Internal;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 
 namespace AqlaSerializer.Reflection
 {
@@ -42,15 +44,14 @@ namespace AqlaSerializer.Reflection
             var set = new FileDescriptorSet();
             foreach (var file in files)
             {
-                using (var reader = new StringReader(file.Text))
-                {
-                    Console.WriteLine($"Parsing {file.Name}...");
-                    set.Add(file.Name, true, reader);
-                }
+                using var reader = new StringReader(file.Text);
+#if DEBUG_COMPILE
+                Console.WriteLine($"Parsing {file.Name}...");
+#endif
+                set.Add(file.Name, true, reader);
             }
             set.Process();
             var results = new List<CodeFile>();
-            var newErrors = new List<Error>();
 
             try
             {
@@ -167,6 +168,17 @@ namespace AqlaSerializer.Reflection
             }
         }
 
+        static string GetNamespace(DescriptorProto message, string defaultNamespace)
+        {
+            var ns = message.Options?.GetOptions()?.Namespace;
+            return string.IsNullOrWhiteSpace(ns) ? defaultNamespace : ns;
+        }
+        static string GetNamespace(EnumDescriptorProto @enum, string defaultNamespace)
+        {
+            var ns = @enum.Options?.GetOptions()?.Namespace;
+            return string.IsNullOrWhiteSpace(ns) ? defaultNamespace : ns;
+        }
+
         /// <summary>
         /// Emits the code for a file in a descriptor-set
         /// </summary>
@@ -175,14 +187,29 @@ namespace AqlaSerializer.Reflection
             object state = null;
             WriteFileHeader(ctx, file, ref state);
 
-            foreach (var inner in file.MessageTypes)
+            var @namespace = ctx.NameNormalizer.GetName(file) ?? "";
+
+            if (!string.IsNullOrWhiteSpace(@namespace))
+                WriteNamespaceHeader(ctx, @namespace);
+
+            var messagesByNamespace = file.MessageTypes.ToLookup(x => GetNamespace(x, @namespace));
+            var enumsByNamespace = file.EnumTypes.ToLookup(x => GetNamespace(x, @namespace));
+            var namespaces = messagesByNamespace.Select(x => x.Key).Union(enumsByNamespace.Select(x => x.Key));
+
+            void WriteMessagesAndEnums(string grp)
             {
-                WriteMessage(ctx, inner);
+                foreach (var inner in messagesByNamespace[grp])
+                {
+                    WriteMessage(ctx, inner);
+                }
+                foreach (var inner in enumsByNamespace[grp])
+                {
+                    WriteEnum(ctx, inner);
+                }
             }
-            foreach (var inner in file.EnumTypes)
-            {
-                WriteEnum(ctx, inner);
-            }
+
+            WriteMessagesAndEnums(@namespace);
+
             foreach (var inner in file.Services)
             {
                 WriteService(ctx, inner);
@@ -197,8 +224,30 @@ namespace AqlaSerializer.Reflection
                 }
                 WriteExtensionsFooter(ctx, file, ref extState);
             }
+
+            if (!string.IsNullOrWhiteSpace(@namespace))
+                WriteNamespaceFooter(ctx, @namespace);
+
+
+            foreach (var altNs in namespaces)
+            {
+                if (altNs == @namespace) continue;
+                WriteNamespaceHeader(ctx, altNs);
+                WriteMessagesAndEnums(altNs);
+                WriteNamespaceFooter(ctx, altNs);
+            }
+
             WriteFileFooter(ctx, file, ref state);
         }
+
+        /// <summary>
+        /// Opens the stated namespace
+        /// </summary>
+        protected abstract void WriteNamespaceHeader(GeneratorContext ctx, string @namespace);
+        /// <summary>
+        /// Closes the stated namespace
+        /// </summary>
+        protected abstract void WriteNamespaceFooter(GeneratorContext ctx, string @namespace);
         /// <summary>
         /// Emit code representing an extension field
         /// </summary>
@@ -329,6 +378,26 @@ namespace AqlaSerializer.Reflection
         protected abstract void WriteField(GeneratorContext ctx, FieldDescriptorProto field, ref object state, OneOfStub[] oneOfs);
 
         /// <summary>
+        /// Indicates whether field presence tracking is suggested for this field
+        /// </summary>
+        protected bool TrackFieldPresence(GeneratorContext ctx, FieldDescriptorProto field, OneOfStub[] oneOfs, out OneOfStub oneOf)
+        {
+            // get the oneof, ignoring 'synthetic' oneofs from proto3-optional
+            // (the CountTotal check would *also* work for this, but: let's be explicit and intentional)
+            oneOf = (field.ShouldSerializeOneofIndex() && !field.Proto3Optional) ? oneOfs[field.OneofIndex] : null;
+            if (oneOf is object && !ctx.OneOfEnums && oneOf.CountTotal == 1)
+            {
+                oneOf = null; // not really a one-of, then!
+            }
+
+            return field.label == FieldDescriptorProto.Label.LabelOptional // must be optional
+                && oneOf is null // exclude "oneof" - tracked via the discriminator
+                && field.type != FieldDescriptorProto.Type.TypeMessage // handled via obj-ref
+                && field.type != FieldDescriptorProto.Type.TypeGroup // handled via obj-ref
+                && (ctx.Syntax == FileDescriptorProto.SyntaxProto2 || field.Proto3Optional);
+        }
+
+        /// <summary>
         /// Emit code following a set of message fields
         /// </summary>
         protected abstract void WriteMessageFooter(GeneratorContext ctx, DescriptorProto message, ref object state);
@@ -433,6 +502,26 @@ namespace AqlaSerializer.Reflection
         protected const string OneOfEnumSuffixDiscriminator = "Case";
 
         /// <summary>
+        /// Indicates the kinds of service metadata that should be included
+        /// </summary>
+        [Flags]
+        protected enum ServiceKinds
+        {
+            /// <summary>
+            /// No serivices should be included
+            /// </summary>
+            None = 0,
+            /// <summary>
+            /// Indicates service metadata defined by WCF (System.ServiceModel) should be included
+            /// </summary>
+            Wcf = 1 << 0,
+            /// <summary>
+            /// Indicates service metadata defined by protobuf-net.Grpc should be included
+            /// </summary>
+            Grpc = 1 << 1,
+        }
+
+        /// <summary>
         /// Represents the state of a code-generation invocation
         /// </summary>
         protected class GeneratorContext
@@ -506,8 +595,33 @@ namespace AqlaSerializer.Reflection
                 OneOfEnums = (File.Options?.GetOptions()?.EmitOneOfEnum ?? false) || (_options != null && _options.TryGetValue("oneof", out var oneof) && string.Equals(oneof, "enum", StringComparison.OrdinalIgnoreCase));
 
                 EmitListSetters = IsEnabled("listset");
-                EmitServices = IsEnabled("services");
+
+                var s = GetCustomOption("services");
+                void AddServices(string value)
+                {
+                    value = value?.Trim();
+                    if (string.IsNullOrWhiteSpace(value)) return;
+
+                    if (!Enum.TryParse(value, true, out ServiceKinds parsed))
+                    {   // for backwards-compatibility of what "services" meant in the past
+                        parsed = IsEnabledValue(value) ? ServiceKinds.Wcf : ServiceKinds.None;
+                    }
+                    _serviceKinds |= parsed;
+                }
+                if (s is not null && s.IndexOf(';') >= 0)
+                {
+                    foreach (var part in s.Split(';'))
+                    {
+                        AddServices(part);
+                    }
+                }
+                else
+                {
+                    AddServices(s);
+                }
             }
+
+            private ServiceKinds _serviceKinds;
 
             /// <summary>
             /// Whether lists should be written with getters
@@ -517,14 +631,23 @@ namespace AqlaSerializer.Reflection
             /// <summary>
             /// Whether services should be emitted
             /// </summary>
-            public bool EmitServices { get; }
+            public bool EmitServices => _serviceKinds != ServiceKinds.None;
+
+
+            /// <summary>
+            /// What kinds of services should be emitted
+            /// </summary>
+            public bool EmitServicesFor(ServiceKinds anyOf)
+                => (_serviceKinds & anyOf) != 0;
 
             /// <summary>
             /// Whether a custom option is enabled
             /// </summary>
             internal bool IsEnabled(string key)
+                => IsEnabledValue(GetCustomOption(key));
+
+            internal bool IsEnabledValue(string option)
             {
-                var option = GetCustomOption(key);
                 if (string.IsNullOrWhiteSpace(option)) return false;
                 option = option.Trim();
                 if (option == "1") return true;

@@ -99,4 +99,3 @@ namespace AqlaSerializer.Meta
                                   || _afterSerialize != null || _afterDeserialize != null;
     }
 }
-#endif

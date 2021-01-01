@@ -1,32 +1,28 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if (PLAT_XMLSERIALIZER) || (SILVERLIGHT && !PHONE7)
+﻿using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
-using AqlaSerializer.Meta;
-using System;
+using ProtoBuf.Meta;
 
-namespace AqlaSerializer.ServiceModel
+namespace ProtoBuf.ServiceModel
 {
     /// <summary>
     /// An xml object serializer that can embed protobuf data in a base-64 hunk (looking like a byte[])
     /// </summary>
     public sealed class XmlProtoSerializer : XmlObjectSerializer
     {
-        private readonly TypeModel _model;
-        private readonly int _key;
-        private readonly bool _isList, _isEnum;
-        private readonly Type _type;
+        private readonly TypeModel model;
+        private readonly int key;
+        private readonly bool isList, isEnum;
+        private readonly Type type;
         internal XmlProtoSerializer(TypeModel model, int key, Type type, bool isList)
         {
-            if (model == null) throw new ArgumentNullException(nameof(model));
             if (key < 0) throw new ArgumentOutOfRangeException(nameof(key));
-            if (type == null) throw new ArgumentOutOfRangeException(nameof(type));
-            this._model = model;
-            this._key = key;
-            this._isList = isList;
-            this._type = type;
-            this._isEnum = type.IsEnum;
+            this.model = model ?? throw new ArgumentNullException(nameof(model));
+            this.key = key;
+            this.isList = isList;
+            this.type = type ?? throw new ArgumentOutOfRangeException(nameof(type));
+            this.isEnum = Helpers.IsEnum(type);
         }
         /// <summary>
         /// Attempt to create a new serializer for the given model and type
@@ -37,14 +33,14 @@ namespace AqlaSerializer.ServiceModel
             if (model == null) throw new ArgumentNullException(nameof(model));
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            bool isList;
-            int key = GetKey(model, ref type, out isList);
+            int key = GetKey(model, ref type, out bool isList);
             if (key >= 0)
             {
                 return new XmlProtoSerializer(model, key, type, isList);
             }
             return null;
         }
+
         /// <summary>
         /// Creates a new serializer for the given model and type
         /// </summary>
@@ -53,13 +49,14 @@ namespace AqlaSerializer.ServiceModel
             if (model == null) throw new ArgumentNullException(nameof(model));
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            _key = GetKey(model, ref type, out _isList);
-            this._model = model;
-            this._type = type;
-            this._isEnum = type.IsEnum;
-            if (_key < 0) throw new ArgumentOutOfRangeException(nameof(type), "Type not recognised by the model: " + type.FullName);
+            key = GetKey(model, ref type, out isList);
+            this.model = model;
+            this.type = type;
+            this.isEnum = Helpers.IsEnum(type);
+            if (key < 0) throw new ArgumentOutOfRangeException(nameof(type), "Type not recognised by the model: " + type.FullName);
         }
-        static int GetKey(TypeModel model, ref Type type, out bool isList)
+
+        private static int GetKey(TypeModel model, ref Type type, out bool isList)
         {
             if (model != null && type != null)
             {
@@ -69,7 +66,7 @@ namespace AqlaSerializer.ServiceModel
                     isList = false;
                     return key;
                 }
-                Type itemType = TypeModel.GetListItemType(model, type);
+                Type itemType = TypeModel.GetListItemType(type);
                 if (itemType != null)
                 {
                     key = model.GetKey(ref itemType);
@@ -83,29 +80,32 @@ namespace AqlaSerializer.ServiceModel
 
             isList = false;
             return -1;
-            
         }
+
         /// <summary>
         /// Ends an object in the output
         /// </summary>
-        public override void WriteEndObject(System.Xml.XmlDictionaryWriter writer)
+        public override void WriteEndObject(XmlDictionaryWriter writer)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
             writer.WriteEndElement();
         }
+
         /// <summary>
         /// Begins an object in the output
         /// </summary>
-        public override void WriteStartObject(System.Xml.XmlDictionaryWriter writer, object graph)
+        public override void WriteStartObject(XmlDictionaryWriter writer, object graph)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
             writer.WriteStartElement(PROTO_ELEMENT);
         }
+
         private const string PROTO_ELEMENT = "proto";
+
         /// <summary>
         /// Writes the body of an object in the output
         /// </summary>
-        public override void WriteObjectContent(System.Xml.XmlDictionaryWriter writer, object graph)
+        public override void WriteObjectContent(XmlDictionaryWriter writer, object graph)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
             if (graph == null)
@@ -116,15 +116,16 @@ namespace AqlaSerializer.ServiceModel
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    if (_isList)
+                    if (isList)
                     {
-                        _model.Serialize(ms, graph, null);
+                        model.Serialize(ms, graph, null);
                     }
                     else
                     {
-                        using (ProtoWriter protoWriter = new ProtoWriter(ms, _model, null))
+                        using (ProtoWriter protoWriter = ProtoWriter.Create(out var state, ms, model, null))
                         {
-                            _model.Serialize(_key, graph, protoWriter, true);
+                            model.Serialize(protoWriter, ref state, key, graph);
+                            protoWriter.Close(ref state);
                         }
                     }
                     byte[] buffer = ms.GetBuffer();
@@ -136,17 +137,17 @@ namespace AqlaSerializer.ServiceModel
         /// <summary>
         /// Indicates whether this is the start of an object we are prepared to handle
         /// </summary>
-        public override bool IsStartObject(System.Xml.XmlDictionaryReader reader)
+        public override bool IsStartObject(XmlDictionaryReader reader)
         {
             if (reader == null) throw new ArgumentNullException(nameof(reader));
             reader.MoveToContent();
-            return reader.NodeType == System.Xml.XmlNodeType.Element && reader.Name == PROTO_ELEMENT;
+            return reader.NodeType == XmlNodeType.Element && reader.Name == PROTO_ELEMENT;
         }
 
         /// <summary>
         /// Reads the body of an object
         /// </summary>
-        public override object ReadObject(System.Xml.XmlDictionaryReader reader, bool verifyObjectName)
+        public override object ReadObject(XmlDictionaryReader reader, bool verifyObjectName)
         {
             if (reader == null) throw new ArgumentNullException(nameof(reader));
             reader.MoveToContent();
@@ -156,24 +157,24 @@ namespace AqlaSerializer.ServiceModel
             // explicitly null
             if (isNil)
             {
-                if(!isSelfClosed) reader.ReadEndElement();
+                if (!isSelfClosed) reader.ReadEndElement();
                 return null;
             }
-            if(isSelfClosed) // no real content
+            if (isSelfClosed) // no real content
             {
-                if (_isList || _isEnum)
+                if (isList || isEnum)
                 {
-                    return _model.Deserialize(Stream.Null, null, _type, null);
+                    return model.Deserialize(Stream.Null, null, type, null);
                 }
                 ProtoReader protoReader = null;
                 try
                 {
-                    protoReader = ProtoReader.Create(Stream.Null, _model, null, ProtoReader.TO_EOF);
-                    return _model.Deserialize(_key, null, protoReader, true);
+                    protoReader = ProtoReader.Create(out var state, Stream.Null, model, null, ProtoReader.TO_EOF);
+                    return model.DeserializeCore(protoReader, ref state, key, null);
                 }
                 finally
                 {
-                    ProtoReader.Recycle(protoReader);
+                    protoReader?.Recycle();
                 }
             }
 
@@ -181,21 +182,21 @@ namespace AqlaSerializer.ServiceModel
             Helpers.DebugAssert(reader.CanReadBinaryContent, "CanReadBinaryContent");
             using (MemoryStream ms = new MemoryStream(reader.ReadContentAsBase64()))
             {
-                if (_isList || _isEnum)
+                if (isList || isEnum)
                 {
-                    result = _model.Deserialize(ms, null, _type, null);
+                    result = model.Deserialize(ms, null, type, null);
                 }
                 else
                 {
                     ProtoReader protoReader = null;
                     try
                     {
-                        protoReader = ProtoReader.Create(ms, _model, null, ProtoReader.TO_EOF);
-                        result = _model.Deserialize(_key, null, protoReader, true);
+                        protoReader = ProtoReader.Create(out var state, ms, model, null, ProtoReader.TO_EOF);
+                        result = model.DeserializeCore(protoReader, ref state, key, null);
                     }
                     finally
                     {
-                        ProtoReader.Recycle(protoReader);
+                        protoReader?.Recycle();
                     }
                 }
             }
@@ -204,4 +205,3 @@ namespace AqlaSerializer.ServiceModel
         }
     }
 }
-#endif

@@ -1,14 +1,13 @@
 ﻿using Google.Protobuf.Reflection;
+using ProtoBuf.Reflection.Internal;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace AqlaSerializer.Reflection
 {
-#pragma warning disable RCS1194 // Implement exception constructors.
-    internal class ParserException : Exception
-#pragma warning restore RCS1194 // Implement exception constructors.
-    {
+internal class ParserException : Exception
+{
         public int ColumnNumber { get; }
         public int LineNumber { get; }
         public string File { get; }
@@ -27,7 +26,7 @@ namespace AqlaSerializer.Reflection
             IsError = isError;
             ErrorCode = errorCode;
         }
-    }
+}
     /// <summary>
     /// Provides general purpose name suggestions
     /// </summary>

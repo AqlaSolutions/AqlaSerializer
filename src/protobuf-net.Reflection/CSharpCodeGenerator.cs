@@ -31,6 +31,7 @@ namespace AqlaSerializer.Reflection
         /// <summary>
         /// Escapes language keywords
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Readability")]
         protected override string Escape(string identifier)
         {
             switch (identifier)
@@ -124,7 +125,7 @@ namespace AqlaSerializer.Reflection
         protected override string GetLanguageVersion(FileDescriptorProto obj)
             => obj?.Options?.GetOptions()?.CSharpLanguageVersion;
 
-        private const string AdditionalSuppressionCodes = ", IDE1006, RCS1036, RCS1057, RCS1085, RCS1192";
+        private const string AdditionalSuppressionCodes = ", IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192";
 
         /// <summary>
         /// Start a file
@@ -138,21 +139,26 @@ namespace AqlaSerializer.Reflection
                .WriteLine($"//   Input: {Path.GetFileName(ctx.File.Name)}")
                .WriteLine("// </auto-generated>")
                .WriteLine()
-               .Write($"#pragma warning disable {prefix}0612, {prefix}1591, {prefix}3021");
+               .WriteLine("#region Designer generated code")
+               .Write($"#pragma warning disable {prefix}0612, {prefix}0618, {prefix}1591, {prefix}3021");
             if (ctx.Supports(CSharp6))
             {
                 tw.Write(AdditionalSuppressionCodes);
             }
             tw.WriteLine();
+        }
 
-            var @namespace = ctx.NameNormalizer.GetName(file);
+        /// <inheritdoc/>
+        protected override void WriteNamespaceHeader(GeneratorContext ctx, string @namespace)
+        {
+            ctx.WriteLine($"namespace {@namespace}");
+            ctx.WriteLine("{").Indent().WriteLine();
+        }
 
-            if (!string.IsNullOrWhiteSpace(@namespace))
-            {
-                state = @namespace;
-                ctx.WriteLine($"namespace {@namespace}");
-                ctx.WriteLine("{").Indent().WriteLine();
-            }
+        /// <inheritdoc/>
+        protected override void WriteNamespaceFooter(GeneratorContext ctx, string @namespace)
+        {
+            ctx.Outdent().WriteLine("}").WriteLine();
         }
 
         /// <summary>
@@ -160,18 +166,14 @@ namespace AqlaSerializer.Reflection
         /// </summary>
         protected override void WriteFileFooter(GeneratorContext ctx, FileDescriptorProto file, ref object state)
         {
-            var @namespace = (string)state;
             var prefix = ctx.Supports(CSharp6) ? "CS" : "";
-            if (!string.IsNullOrWhiteSpace(@namespace))
-            {
-                ctx.Outdent().WriteLine("}").WriteLine();
-            }
-            var tw = ctx.Write($"#pragma warning restore {prefix}0612, {prefix}1591, {prefix}3021");
+            var tw = ctx.Write($"#pragma warning restore {prefix}0612, {prefix}0618, {prefix}1591, {prefix}3021");
             if (ctx.Supports(CSharp6))
             {
                 tw.Write(AdditionalSuppressionCodes);
             }
             tw.WriteLine();
+            tw.WriteLine("#endregion");
         }
         /// <summary>
         /// Start an enum
@@ -265,13 +267,13 @@ namespace AqlaSerializer.Reflection
         /// </summary>
         public override string GetAccess(Access access)
         {
-            switch (access)
+            return access switch
             {
-                case Access.Internal: return "internal";
-                case Access.Public: return "public";
-                case Access.Private: return "private";
-                default: return base.GetAccess(access);
-            }
+                Access.Internal => "internal",
+                Access.Public => "public",
+                Access.Private => "private",
+                _ => base.GetAccess(access),
+            };
         }
 
         /// <summary>
@@ -315,10 +317,7 @@ namespace AqlaSerializer.Reflection
             bool isOptional = field.label == FieldDescriptorProto.Label.LabelOptional;
             bool isRepeated = field.label == FieldDescriptorProto.Label.LabelRepeated;
             var typeName = GetTypeName(ctx, field, out var dataFormat, out var isMap);
-            OneOfStub oneOf = field.ShouldSerializeOneofIndex() ? oneOfs?[field.OneofIndex] : null;
-            bool explicitValues = isOptional && oneOf == null && ctx.Syntax == FileDescriptorProto.SyntaxProto2
-                    && field.type != FieldDescriptorProto.Type.TypeMessage
-                    && field.type != FieldDescriptorProto.Type.TypeGroup;
+            bool trackPresence = TrackFieldPresence(ctx, field, oneOfs, out _);
 
             string defaultValue = GetDefaultValue(ctx, field, typeName);
 
@@ -338,7 +337,7 @@ namespace AqlaSerializer.Reflection
                     ctx.WriteLine($"{Escape(name)} = new global::System.Collections.Generic.List<{typeName}>();");
                 }
             }
-            else if (oneOf == null && !explicitValues)
+            else if (!trackPresence)
             {
                 if (!string.IsNullOrWhiteSpace(defaultValue))
                 {
@@ -438,14 +437,7 @@ namespace AqlaSerializer.Reflection
             bool isOptional = field.label == FieldDescriptorProto.Label.LabelOptional;
             bool isRepeated = field.label == FieldDescriptorProto.Label.LabelRepeated;
 
-            OneOfStub oneOf = field.ShouldSerializeOneofIndex() ? oneOfs?[field.OneofIndex] : null;
-            if (oneOf != null && !ctx.OneOfEnums && oneOf.CountTotal == 1)
-            {
-                oneOf = null; // not really a one-of, then!
-            }
-            bool explicitValues = isOptional && oneOf == null && ctx.Syntax == FileDescriptorProto.SyntaxProto2
-                && field.type != FieldDescriptorProto.Type.TypeMessage
-                && field.type != FieldDescriptorProto.Type.TypeGroup;
+            bool trackPresence = TrackFieldPresence(ctx, field, oneOfs, out var oneOf);
 
             bool suppressDefaultAttribute = !isOptional;
             var typeName = GetTypeName(ctx, field, out var dataFormat, out var isMap);
@@ -455,7 +447,7 @@ namespace AqlaSerializer.Reflection
             {
                 tw.Write($", DataFormat = global::ProtoBuf.DataFormat.{dataFormat}");
             }
-            if (field.IsPacked(ctx.Syntax))
+            if (field.IsPackedField(ctx.Syntax))
             {
                 tw.Write($", IsPacked = true");
             }
@@ -525,7 +517,7 @@ namespace AqlaSerializer.Reflection
                     ctx.WriteLine($"{GetAccess(GetAccess(field))} global::System.Collections.Generic.List<{typeName}> {Escape(name)} {{ get; {(allowSet ? "" : "private ")}set; }}");
                 }
             }
-            else if (oneOf != null)
+            else if (oneOf is object)
             {
                 var defValue = string.IsNullOrWhiteSpace(defaultValue) ? (ctx.Supports(CSharp7_1) ? "default" : $"default({typeName})") : defaultValue;
                 var fieldName = GetOneOfFieldName(oneOf.OneOf);
@@ -539,15 +531,15 @@ namespace AqlaSerializer.Reflection
                     case FieldDescriptorProto.Type.TypeEnum:
                     case FieldDescriptorProto.Type.TypeBytes:
                     case FieldDescriptorProto.Type.TypeString:
-                        ctx.WriteLine($"get {{ return {fieldName}.Is({field.Number}) ? (({typeName}){fieldName}.{storage}) : {defValue}; }}");
+                        ctx.WriteLine($"{PropGetPrefix()}{fieldName}.Is({field.Number}) ? (({typeName}){fieldName}.{storage}) : {defValue};{PropSuffix()}");
                         break;
                     default:
-                        ctx.WriteLine($"get {{ return {fieldName}.Is({field.Number}) ? {fieldName}.{storage} : {defValue}; }}");
+                        ctx.WriteLine($"{PropGetPrefix()}{fieldName}.Is({field.Number}) ? {fieldName}.{storage} : {defValue};{PropSuffix()}");
                         break;
                 }
                 var unionType = oneOf.GetUnionType();
                 var cast = field.type == FieldDescriptorProto.Type.TypeEnum ? "(int)" : "";
-                ctx.WriteLine($"set {{ {fieldName} = new global::ProtoBuf.{unionType}({field.Number}, {cast}value); }}")
+                ctx.WriteLine($"{PropSetPrefix()}{fieldName} = new global::ProtoBuf.{unionType}({field.Number}, {cast}value);{PropSuffix()}")
                     .Outdent().WriteLine("}");
 
                 if (ctx.Supports(CSharp6))
@@ -568,7 +560,7 @@ namespace AqlaSerializer.Reflection
                     ctx.WriteLine().WriteLine($"private global::ProtoBuf.{unionType} {fieldName};");
                 }
             }
-            else if (explicitValues)
+            else if (trackPresence)
             {
                 string fieldName = FieldPrefix + name, fieldType;
                 bool isRef = false;
@@ -584,7 +576,8 @@ namespace AqlaSerializer.Reflection
                         break;
                 }
                 ctx.WriteLine($"{GetAccess(GetAccess(field))} {typeName} {Escape(name)}").WriteLine("{").Indent();
-                tw = ctx.Write($"get {{ return {fieldName}");
+                tw = ctx.Write(PropGetPrefix());
+                tw.Write(fieldName);
                 if (!string.IsNullOrWhiteSpace(defaultValue))
                 {
                     tw.Write(" ?? ");
@@ -594,8 +587,10 @@ namespace AqlaSerializer.Reflection
                 {
                     tw.Write(".GetValueOrDefault()");
                 }
-                tw.WriteLine("; }");
-                ctx.WriteLine($"set {{ {fieldName} = value; }}")
+                tw.Write(";");
+                tw.WriteLine(PropSuffix());
+
+                ctx.WriteLine($"{PropSetPrefix()}{fieldName} = value;{PropSuffix()}")
                     .Outdent().WriteLine("}");
                 if (ctx.Supports(CSharp6))
                 {
@@ -618,24 +613,29 @@ namespace AqlaSerializer.Reflection
                 tw.WriteLine();
             }
             ctx.WriteLine();
+
+            string PropGetPrefix() => ctx.Supports(CSharp7) ? "get => " : "get { return ";
+            string PropSetPrefix() => ctx.Supports(CSharp7) ? "set => " : "set { ";
+            string PropSuffix() => ctx.Supports(CSharp7) ? "" : " }";
         }
 
         private static string GetOneOfFieldName(OneofDescriptorProto obj) => FieldPrefix + obj.Name;
 
-        private static readonly Version
-            CSharp3 = new Version(3, 0),
-            CSharp4 = new Version(4, 0),
-            CSharp6 = new Version(6, 0),
-            CSharp7_1 = new Version(7, 1);
+        private static readonly Version // note: only mentioning features we use
+            CSharp3 = new Version(3, 0), // partial methods
+            CSharp4 = new Version(4, 0), // optional parameters
+            CSharp6 = new Version(6, 0), // pragma prefixes, method expressions, property initializers
+            CSharp7 = new Version(7, 0), // property expressions
+            CSharp7_1 = new Version(7, 1); // default literals
 
         /// <summary>
-        /// Starts an extgensions block
+        /// Starts an extensions block
         /// </summary>
         protected override void WriteExtensionsHeader(GeneratorContext ctx, FileDescriptorProto file, ref object state)
         {
             var name = file?.Options?.GetOptions()?.ExtensionTypeName;
             if (string.IsNullOrWhiteSpace(name)) name = "Extensions";
-            ctx.WriteLine($"{GetAccess(GetAccess(file))} static class {Escape(name)}").WriteLine("{").Indent();
+            ctx.WriteLine($"{GetAccess(GetAccess(file))} static partial class {Escape(name)}").WriteLine("{").Indent();
         }
         /// <summary>
         /// Ends an extgensions block
@@ -651,7 +651,7 @@ namespace AqlaSerializer.Reflection
         {
             var name = message?.Options?.GetOptions()?.ExtensionTypeName;
             if (string.IsNullOrWhiteSpace(name)) name = "Extensions";
-            ctx.WriteLine($"{GetAccess(GetAccess(message))} static class {Escape(name)}").WriteLine("{").Indent();
+            ctx.WriteLine($"{GetAccess(GetAccess(message))} static partial class {Escape(name)}").WriteLine("{").Indent();
         }
         /// <summary>
         /// Ends an extensions block
@@ -771,6 +771,7 @@ namespace AqlaSerializer.Reflection
         /// <summary>
         /// Indicate which types will commonly use arrays
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Readability")]
         protected virtual bool UseArray(FieldDescriptorProto field)
         {
             switch (field.type)
@@ -910,9 +911,24 @@ namespace AqlaSerializer.Reflection
             }
         }
 
+
         private string MakeRelativeName(FieldDescriptorProto field, IType target, NameNormalizer normalizer)
         {
             if (target == null) return Escape(field.TypeName); // the only thing we know
+
+            switch(target)
+            {
+                case DescriptorProto message:
+                    var overrideNs = message.Options?.GetOptions()?.Namespace;
+                    if (!string.IsNullOrWhiteSpace(overrideNs))
+                        return "global::" + overrideNs + "." + Escape(normalizer.GetName(message));
+                    break;
+                case EnumDescriptorProto @enum:
+                    overrideNs = @enum.Options?.GetOptions()?.Namespace;
+                    if (!string.IsNullOrWhiteSpace(overrideNs))
+                        return "global::" + overrideNs + "." + Escape(normalizer.GetName(@enum));
+                    break;
+            };
 
             var declaringType = field.Parent;
 
@@ -973,8 +989,8 @@ namespace AqlaSerializer.Reflection
                 if (!ReferenceEquals(target, declaring))
                 {
                     // special-case: if both are the package (file), and they have the same namespace: we're OK
-                    if (target is FileDescriptorProto && declaring is FileDescriptorProto
-                        && normalizer.GetName((FileDescriptorProto)declaring) == normalizer.GetName((FileDescriptorProto)target))
+                    if (target is FileDescriptorProto targetFDP && declaring is FileDescriptorProto declaringFDP
+                        && normalizer.GetName(declaringFDP) == normalizer.GetName(targetFDP))
                     {
                         // that's fine, keep going
                     }
@@ -1028,9 +1044,18 @@ namespace AqlaSerializer.Reflection
         protected override void WriteServiceHeader(GeneratorContext ctx, ServiceDescriptorProto service, ref object state)
         {
             var name = ctx.NameNormalizer.GetName(service);
-            var tw = ctx.Write("[global::System.ServiceModel.ServiceContract(");
-            if (name != service.Name) tw.Write($@"Name = @""{service.Name}""");
-            tw.WriteLine(")]");
+            if (ctx.EmitServicesFor(ServiceKinds.Grpc))
+            {
+                var tw = ctx.Write("[global::ProtoBuf.Grpc.Configuration.Service(@\"");
+                tw.Write(service.FullyQualifiedName.TrimStart(ParserContext.Period));
+                tw.WriteLine("\")]");
+            }
+            if (ctx.EmitServicesFor(ServiceKinds.Wcf))
+            {
+                var tw = ctx.Write("[global::System.ServiceModel.ServiceContract(Name = @\"");
+                tw.Write(service.FullyQualifiedName.TrimStart(ParserContext.Period));
+                tw.WriteLine("\")]");
+            }
             WriteOptions(ctx, service.Options);
             ctx.WriteLine($"{GetAccess(GetAccess(service))} interface {Escape(name)}").WriteLine("{").Indent();
         }
@@ -1051,14 +1076,21 @@ namespace AqlaSerializer.Reflection
             var name = ctx.NameNormalizer.GetName(method);
             if (name != method.Name)
             {
-                ctx.WriteLine($@"[global::System.ServiceModel.OperationContract(Name = @""{method.Name}"")]");
+                if (ctx.EmitServicesFor(ServiceKinds.Grpc))
+                {
+                    ctx.WriteLine($@"[global::ProtoBuf.Grpc.Configuration.Operation(@""{method.Name}"")]");
+                }
+                if (ctx.EmitServicesFor(ServiceKinds.Wcf))
+                {
+                    ctx.WriteLine($@"[global::System.ServiceModel.OperationContract(Name = @""{method.Name}"")]");
+                }
             }
             WriteOptions(ctx, method.Options);
 
             string returnType, inputType;
             if (method.ServerStreaming)
             {
-                returnType = "global::System.Collection.Generics.IAsyncEnumerable<" + GetTypeName(ctx, method.OutputType) + ">";
+                returnType = "global::System.Collections.Generic.IAsyncEnumerable<" + GetTypeName(ctx, method.OutputType) + ">";
             }
             else
             {
@@ -1073,7 +1105,7 @@ namespace AqlaSerializer.Reflection
             }
             if (method.ClientStreaming)
             {
-                inputType = "global::System.Collection.Generics.IAsyncEnumerable<" + GetTypeName(ctx, method.InputType) + ">"; 
+                inputType = "global::System.Collections.Generic.IAsyncEnumerable<" + GetTypeName(ctx, method.InputType) + ">"; 
             }
             else
             {

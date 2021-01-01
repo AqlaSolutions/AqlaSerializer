@@ -1,0 +1,592 @@
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+#if !NO_RUNTIME
+using System;
+using System.Collections.Generic;
+using AltLinq; using System.Linq;
+#if FEAT_COMPILER
+using AqlaSerializer.Compiler;
+#endif
+using AqlaSerializer.Meta;
+using AqlaSerializer.Settings;
+#if FEAT_IKVM
+using Type = IKVM.Reflection.Type;
+using IKVM.Reflection;
+#else
+using System.Reflection;
+using ProtoBuf.Serializers;
+#endif
+
+namespace AqlaSerializer.Serializers
+{
+    sealed class TupleSerializer : IProtoTypeSerializer
+    {
+        public SerializerFeatures Features { get; private set; } = SerializerFeatures.WireTypeString | SerializerFeatures.CategoryMessage;
+        public void WriteDebugSchema(IDebugSchemaBuilder builder)
+        {
+            using (builder.GroupSerializer(this))
+            {
+                for (int i = 0; i < _tails.Length; i++)
+                {
+                    using (builder.Field(i + 1, "Field"))
+                        _tails[i].WriteDebugSchema(builder);
+                }
+            }
+        }
+        
+        public bool DemandWireTypeStabilityStatus() => true;
+        readonly ValueMember[] _members;
+        readonly bool _prefixLength;
+        readonly ConstructorInfo _ctor;
+
+        bool IProtoTypeSerializer.IsSubType => false;
+        readonly IProtoSerializerWithWireType[] _tails;
+        public TupleSerializer(RuntimeTypeModel model, ConstructorInfo ctor, ValueMember[] members, bool prefixLength)
+        {
+            if (ctor == null) throw new ArgumentNullException(nameof(ctor));
+            if (members == null) throw new ArgumentNullException(nameof(members));
+            this._ctor = ctor;
+            this._members = members;
+            _prefixLength = prefixLength;
+            this._tails = members.Select(x => x.Serializer).ToArray();
+        }
+        public bool HasCallbacks(Meta.TypeModel.CallbackType callbackType)
+        {
+            return false;
+        }
+
+        public void EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, Meta.TypeModel.CallbackType callbackType) { }
+
+#if FEAT_COMPILER
+        public void EmitCallback(Compiler.CompilerContext ctx, Compiler.Local valueFrom, Meta.TypeModel.CallbackType callbackType){}
+#endif
+        public Type ExpectedType => _ctor.DeclaringType;
+        Type IProtoTypeSerializer.BaseType => typeof(T);
+
+
+#if !FEAT_IKVM
+        void IProtoTypeSerializer.Callback(object value, Meta.TypeModel.CallbackType callbackType, SerializationContext context) { }
+        object IProtoTypeSerializer.CreateInstance(ISerializationContext source) { throw new NotSupportedException(); }
+        private object GetValue(object obj, int index)
+        {
+            PropertyInfo prop;
+            FieldInfo field;
+            
+            if ((prop = _members[index].Member as PropertyInfo) != null)
+            {
+                if (obj == null)
+                    return prop.PropertyType.IsValueType ? Activator.CreateInstance(prop.PropertyType) : null;
+                return Helpers.GetPropertyValue(prop, obj);
+            }
+            else if ((field = _members[index].Member as FieldInfo) != null)
+            {
+                if (obj == null)
+                    return field.FieldType.IsValueType ? Activator.CreateInstance(field.FieldType) : null;
+                return field.GetValue(obj);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }          
+        }
+        public object Read(ProtoReader source, ref ProtoReader.State state, object value)
+        {
+            object[] values = new object[_members.Length];
+            bool invokeCtor = false;
+            int reservedTrap = -1;
+            if (value == null)
+            {
+                reservedTrap = ProtoReader.ReserveNoteObject(source);
+                invokeCtor = true;
+            }
+            var token = ProtoReader.StartSubItem(source);
+            for (int i = 0; i < values.Length; i++)
+                    values[i] = GetValue(value, i);
+            int field;
+            while((field = source.ReadFieldHeader()) > 0)
+            {
+                invokeCtor = true;
+                if(field <= _tails.Length)
+                {
+                    IProtoSerializer tail = _tails[field - 1];
+                    values[field - 1] = _tails[field - 1].Read(tail.RequiresOldValue ? values[field - 1] : null, source);
+                }
+                else
+                {
+                    source.SkipField();
+                }
+            }
+            ProtoReader.EndSubItem(token, source);
+            if (invokeCtor)
+            {
+                var r = _ctor.Invoke(values);
+                // inside references won't work, but from outside will
+                // this is a common problem when deserializing immutable types
+                ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
+                return r;
+            }
+            return value;
+        }
+
+        T ISerializer<T>.Read(ref ProtoReader.State state, T value)
+            => (T)Read(ref state, value);
+
+        void ISerializer<T>.Write(ref ProtoWriter.State state, T value)
+            => Write(ref state, value);
+        public void Write(ProtoWriter dest, ref ProtoWriter.State state, object value)
+        {
+            var token = ProtoWriter.StartSubItem(value, _prefixLength, dest);
+            for (int i = 0; i < _tails.Length; i++)
+            {
+                object val = GetValue(value, i);
+                // this is the only place where we don't use null check from NetObjectValueDecorator
+                // members of Tuple can't have default values so we don't mix up default value and null
+                // (default value simply don't write the field while NetObjectValueDecorator explicitely writes empty group)
+                // so this simple check will be more size-efficient
+                if (val != null)
+                {
+                    ProtoWriter.WriteFieldHeaderBegin(i + 1, dest);
+                    _tails[i].Write(val, dest);
+                }
+            }
+            ProtoWriter.EndSubItem(token, dest);
+        }
+#endif
+        public bool RequiresOldValue => true;
+        
+        public bool CanCancelWriting { get; }
+
+        Type GetMemberType(int index)
+        {
+            Type result = _members[index].MemberType;
+            if (result == null) throw new InvalidOperationException();
+            return result;
+        }
+        bool IProtoTypeSerializer.CanCreateInstance() { return false; }
+        public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
+        {
+            using Compiler.Local loc = ctx.GetLocalWithValue(ctor.DeclaringType, valueFrom);
+            for (int i = 0; i < tails.Length; i++)
+            {
+                Type type = GetMemberType(i);
+                ctx.LoadAddress(loc, ExpectedType);
+                if (members[i] is FieldInfo fieldInfo)
+                {
+                    ctx.LoadValue(fieldInfo);
+                }
+                else if (members[i] is PropertyInfo propertyInfo)
+                {
+                    ctx.LoadValue(propertyInfo);
+                }
+                ctx.WriteNullCheckedTail(type, tails[i], null);
+            }
+        }
+
+        bool IProtoTypeSerializer.ShouldEmitCreateInstance => false;
+        void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx, bool callNoteObject) { throw new NotSupportedException(); }
+
+        void IProtoTypeSerializer.EmitReadRoot(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
+            => EmitRead(ctx, valueFrom);
+
+        void IProtoTypeSerializer.EmitWriteRoot(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
+            => EmitWrite(ctx, valueFrom);
+
+        bool IProtoTypeSerializer.HasInheritance => false;
+
+        public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local incoming)
+        {
+            using Compiler.Local objValue = ctx.GetLocalWithValue(ExpectedType, incoming);
+            Compiler.Local[] locals = new Compiler.Local[members.Length];
+            try
+            {
+                for (int i = 0; i < locals.Length; i++)
+                {
+                    Type type = GetMemberType(i);
+                    bool store = true;
+                    locals[i] = new Compiler.Local(ctx, type);
+                    if (!ExpectedType.IsValueType)
+                    {
+                        // value-types always read the old value
+                        if (type.IsValueType)
+                        {
+                            switch (Helpers.GetTypeCode(type))
+                            {
+                                case ProtoTypeCode.Boolean:
+                                case ProtoTypeCode.Byte:
+                                case ProtoTypeCode.Int16:
+                                case ProtoTypeCode.Int32:
+                                case ProtoTypeCode.SByte:
+                                case ProtoTypeCode.UInt16:
+                                case ProtoTypeCode.UInt32:
+                                    ctx.LoadValue(0);
+                                    break;
+                                case ProtoTypeCode.Int64:
+                                case ProtoTypeCode.UInt64:
+                                    ctx.LoadValue(0L);
+                                    break;
+                                case ProtoTypeCode.Single:
+                                    ctx.LoadValue(0.0F);
+                                    break;
+                                case ProtoTypeCode.Double:
+                                    ctx.LoadValue(0.0D);
+                                    break;
+                                case ProtoTypeCode.Decimal:
+                                    ctx.LoadValue(0M);
+                                    break;
+                                case ProtoTypeCode.Guid:
+                                    ctx.LoadValue(Guid.Empty);
+                                    break;
+                                default:
+                                    ctx.LoadAddress(locals[i], type);
+                                    ctx.EmitCtor(type);
+                                    store = false;
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            ctx.LoadNullRef();
+                        }
+                        if (store)
+                        {
+                            ctx.StoreValue(locals[i]);
+                        }
+                    }
+                }
+
+                Compiler.CodeLabel skipOld = ExpectedType.IsValueType
+                                                    ? new Compiler.CodeLabel()
+                                                    : ctx.DefineLabel();
+                if (!ExpectedType.IsValueType)
+                {
+                    ctx.LoadAddress(objValue, ExpectedType);
+                    ctx.BranchIfFalse(skipOld, false);
+                }
+                for (int i = 0; i < members.Length; i++)
+                {
+                    ctx.LoadAddress(objValue, ExpectedType);
+                    if (members[i] is FieldInfo fieldInfo)
+                    {
+                        ctx.LoadValue(fieldInfo);
+                    }
+                    else if (members[i] is PropertyInfo propertyInfo)
+                    {
+                        ctx.LoadValue(propertyInfo);
+                    }
+                    ctx.StoreValue(locals[i]);
+                }
+
+                if (!ExpectedType.IsValueType) ctx.MarkLabel(skipOld);
+
+                using (Compiler.Local fieldNumber = new Compiler.Local(ctx, typeof(int)))
+                {
+                    Compiler.CodeLabel @continue = ctx.DefineLabel(),
+                                       processField = ctx.DefineLabel(),
+                                       notRecognised = ctx.DefineLabel();
+                    ctx.Branch(@continue, false);
+
+                    Compiler.CodeLabel[] handlers = new Compiler.CodeLabel[members.Length];
+                    for (int i = 0; i < members.Length; i++)
+                    {
+                        handlers[i] = ctx.DefineLabel();
+                    }
+
+                    ctx.MarkLabel(processField);
+
+                    ctx.LoadValue(fieldNumber);
+                    ctx.LoadValue(1);
+                    ctx.Subtract(); // jump-table is zero-based
+                    ctx.Switch(handlers);
+
+                    // and the default:
+                    ctx.Branch(notRecognised, false);
+                    for (int i = 0; i < handlers.Length; i++)
+                    {
+                        ctx.MarkLabel(handlers[i]);
+                        IRuntimeProtoSerializerNode tail = tails[i];
+                        Compiler.Local oldValIfNeeded = tail.RequiresOldValue ? locals[i] : null;
+                        ctx.ReadNullCheckedTail(locals[i].Type, tail, oldValIfNeeded);
+                        if (tail.ReturnsValue)
+                        {
+                            if (locals[i].Type.IsValueType)
+                            {
+                                ctx.StoreValue(locals[i]);
+                            }
+                            else
+                            {
+                                Compiler.CodeLabel hasValue = ctx.DefineLabel(), allDone = ctx.DefineLabel();
+
+                                ctx.CopyValue();
+                                ctx.BranchIfTrue(hasValue, true); // interpret null as "don't assign"
+                                ctx.DiscardValue();
+                                ctx.Branch(allDone, true);
+                                ctx.MarkLabel(hasValue);
+                                ctx.StoreValue(locals[i]);
+                                ctx.MarkLabel(allDone);
+                            }
+                        }
+                        ctx.Branch(@continue, false);
+                    }
+
+                    ctx.MarkLabel(notRecognised);
+                    ctx.LoadState();
+                    ctx.EmitCall(typeof(ProtoReader.State).GetMethod(nameof(ProtoReader.State.SkipField), Type.EmptyTypes));
+
+                    ctx.MarkLabel(@continue);
+                    ctx.EmitStateBasedRead(nameof(ProtoReader.State.ReadFieldHeader), typeof(int));
+                    ctx.CopyValue();
+                    ctx.StoreValue(fieldNumber);
+                    ctx.LoadValue(0);
+                    ctx.BranchIfGreater(processField, false);
+                }
+                for (int i = 0; i < locals.Length; i++)
+                {
+                    ctx.LoadValue(locals[i]);
+                }
+
+                ctx.EmitCtor(ctor);
+                ctx.StoreValue(objValue);
+            }
+            finally
+            {
+                for (int i = 0; i < locals.Length; i++)
+                {
+                    if (locals[i] is object)
+                        locals[i].Dispose(); // release for re-use
+                }
+            }
+        }
+
+#if FEAT_COMPILER
+
+        public bool EmitReadReturnsValue => false;
+
+        public void EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
+        {
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                var g = ctx.G;
+                using (Compiler.Local value = ctx.GetLocalWithValue(_ctor.DeclaringType, valueFrom))
+                using (Compiler.Local token = ctx.Local(typeof(SubItemToken)))
+                {
+                    g.Assign(token, g.WriterFunc.StartSubItem(value, _prefixLength));
+                    for (int i = 0; i < _tails.Length; i++)
+                    {
+                        Type type = GetMemberType(i);
+                        ctx.LoadAddress(value, ExpectedType);
+
+                        if (_members[i].Member is FieldInfo fi)
+                        {
+                            ctx.LoadValue(fi);
+                        }
+                        else if (_members[i].Member is PropertyInfo pi)
+                        {
+                            ctx.LoadValue(pi);
+                        }
+
+                        ctx.LoadValue(i + 1);
+                        ctx.LoadReaderWriter();
+                        ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderBegin)));
+                        ctx.WriteNullCheckedTail(type, _tails[i], null, true);
+                    }
+                    g.Writer.EndSubItem(token);
+                }
+            }
+        }
+
+        void IProtoTypeSerializer.EmitCreateInstance(Compiler.CompilerContext ctx) { throw new NotSupportedException(); }
+
+        public void EmitRead(Compiler.CompilerContext ctx, Compiler.Local incoming)
+        {
+            using (ctx.StartDebugBlockAuto(this))
+            {
+                var g = ctx.G;
+
+                using (Compiler.Local objValue = ctx.GetLocalWithValueForEmitRead(this, incoming))
+                using (Compiler.Local reservedTrap = new Local(ctx, ctx.MapType(typeof(int))))
+                using (Compiler.Local token = new Local(ctx, ctx.MapType(typeof(SubItemToken))))
+                using (Compiler.Local refLocalToNoteObject = new Local(ctx, ctx.MapType(typeof(object))))
+                {
+                    ctx.EmitCallReserveNoteObject();
+                    ctx.StoreValue(reservedTrap);
+
+                    Compiler.Local[] locals = new Compiler.Local[_members.Length];
+                    try
+                    {
+                        g.Assign(token, g.ReaderFunc.StartSubItem());
+
+                        for (int i = 0; i < locals.Length; i++)
+                        {
+                            Type type = GetMemberType(i);
+                            bool store = true;
+                            locals[i] = new Compiler.Local(ctx, type);
+                            if (!ExpectedType.IsValueType)
+                            {
+                                // value-types always read the old value
+                                if (type.IsValueType)
+                                {
+                                    switch (Helpers.GetTypeCode(type))
+                                    {
+                                        case ProtoTypeCode.Boolean:
+                                        case ProtoTypeCode.Byte:
+                                        case ProtoTypeCode.Int16:
+                                        case ProtoTypeCode.Int32:
+                                        case ProtoTypeCode.SByte:
+                                        case ProtoTypeCode.UInt16:
+                                        case ProtoTypeCode.UInt32:
+                                            ctx.LoadValue(0);
+                                            break;
+                                        case ProtoTypeCode.Int64:
+                                        case ProtoTypeCode.UInt64:
+                                            ctx.LoadValue(0L);
+                                            break;
+                                        case ProtoTypeCode.Single:
+                                            ctx.LoadValue(0.0F);
+                                            break;
+                                        case ProtoTypeCode.Double:
+                                            ctx.LoadValue(0.0D);
+                                            break;
+                                        case ProtoTypeCode.Decimal:
+                                            ctx.LoadValue(0M);
+                                            break;
+                                        case ProtoTypeCode.Guid:
+                                            ctx.LoadValue(Guid.Empty);
+                                            break;
+                                        default:
+                                            ctx.LoadAddress(locals[i], type);
+                                            ctx.EmitCtor(type);
+                                            store = false;
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    ctx.LoadNullRef();
+                                }
+                                if (store)
+                                {
+                                    ctx.StoreValue(locals[i]);
+                                }
+                            }
+                        }
+
+                        Compiler.CodeLabel skipOld = ExpectedType.IsValueType
+                                                         ? new Compiler.CodeLabel()
+                                                         : ctx.DefineLabel();
+                        if (!ExpectedType.IsValueType)
+                        {
+                            ctx.LoadAddress(objValue, ExpectedType);
+                            ctx.BranchIfFalse(skipOld, false);
+                        }
+                        for (int i = 0; i < _members.Length; i++)
+                        {
+                            ctx.LoadAddress(objValue, ExpectedType);
+
+                            if (_members[i].Member is FieldInfo fi)
+                            {
+                                ctx.LoadValue(fi);
+                            }
+                            else if (_members[i].Member is PropertyInfo pi)
+                            {
+                                ctx.LoadValue(pi);
+                            }
+                            ctx.StoreValue(locals[i]);
+                        }
+
+                        if (!ExpectedType.IsValueType) ctx.MarkLabel(skipOld);
+
+                        using (Compiler.Local fieldNumber = new Compiler.Local(ctx, ctx.MapType(typeof(int))))
+                        {
+                            Compiler.CodeLabel @continue = ctx.DefineLabel(),
+                                               processField = ctx.DefineLabel(),
+                                               notRecognised = ctx.DefineLabel();
+                            ctx.Branch(@continue, false);
+
+                            Compiler.CodeLabel[] handlers = new Compiler.CodeLabel[_members.Length];
+                            for (int i = 0; i < _members.Length; i++)
+                            {
+                                handlers[i] = ctx.DefineLabel();
+                            }
+
+                            ctx.MarkLabel(processField);
+
+                            ctx.LoadValue(fieldNumber);
+                            ctx.LoadValue(1);
+                            ctx.Subtract(); // jump-table is zero-based
+                            ctx.Switch(handlers);
+
+                            // and the default:
+                            ctx.Branch(notRecognised, false);
+                            for (int i = 0; i < handlers.Length; i++)
+                            {
+                                ctx.MarkLabel(handlers[i]);
+                                IProtoSerializer tail = _tails[i];
+                                Compiler.Local oldValIfNeeded = tail.RequiresOldValue ? locals[i] : null;
+                                ctx.ReadNullCheckedTail(locals[i].Type, tail, oldValIfNeeded);
+                                if (tail.EmitReadReturnsValue)
+                                {
+                                    if (locals[i].Type.IsValueType)
+                                    {
+                                        ctx.StoreValue(locals[i]);
+                                    }
+                                    else
+                                    {
+                                        Compiler.CodeLabel hasValue = ctx.DefineLabel(), allDone = ctx.DefineLabel();
+
+                                        ctx.CopyValue();
+                                        ctx.BranchIfTrue(hasValue, true); // interpret null as "don't assign"
+                                        ctx.DiscardValue();
+                                        ctx.Branch(allDone, true);
+                                        ctx.MarkLabel(hasValue);
+                                        ctx.StoreValue(locals[i]);
+                                        ctx.MarkLabel(allDone);
+                                    }
+                                }
+                                ctx.Branch(@continue, false);
+                            }
+
+                            ctx.MarkLabel(notRecognised);
+                            ctx.LoadReaderWriter();
+                            ctx.EmitCall(ctx.MapType(typeof(ProtoReader)).GetMethod("SkipField"));
+
+                            ctx.MarkLabel(@continue);
+                            ctx.EmitBasicRead("ReadFieldHeader", ctx.MapType(typeof(int)));
+                            ctx.CopyValue();
+                            ctx.StoreValue(fieldNumber);
+                            ctx.LoadValue(0);
+                            ctx.BranchIfGreater(processField, false);
+                        }
+
+                        g.Reader.EndSubItem(token);
+
+                        for (int i = 0; i < locals.Length; i++)
+                        {
+                            ctx.LoadValue(locals[i]);
+                        }
+                        ctx.EmitCtor(_ctor);
+                        ctx.StoreValue(objValue);
+
+                        ctx.LoadValue(objValue);
+                        ctx.CastToObject(ctx.MapType(_ctor.DeclaringType));
+                        ctx.StoreValue(refLocalToNoteObject);
+
+                        ctx.LoadValue(reservedTrap);
+                        ctx.LoadAddress(refLocalToNoteObject, refLocalToNoteObject.Type);
+                        ctx.EmitCallNoteReservedTrappedObject();
+
+                        if (EmitReadReturnsValue)
+                            ctx.LoadValue(objValue);
+                    }
+                    finally
+                    {
+                        for (int i = 0; i < locals.Length; i++)
+                        {
+                            if (!locals[i].IsNullRef())
+                                locals[i].Dispose(); // release for re-use
+                        }
+                    }
+                }
+            }
+        }
+#endif
+    }
+}

@@ -2,6 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections.Generic;
+using ProtoBuf.Internal.Serializers;
 using AqlaSerializer.Serializers;
 
 namespace AqlaSerializer.Meta
@@ -18,14 +19,22 @@ namespace AqlaSerializer.Meta
             {
                 return Compare(x as SubType, y as SubType);
             }
+
             public int Compare(SubType x, SubType y)
             {
                 if (ReferenceEquals(x, y)) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
+                if (x is null) return -1;
+                if (y is null) return 1;
 
                 return x.FieldNumber.CompareTo(y.FieldNumber);
             }
+        }
+
+        private int _fieldNumber;
+
+        private void ThrowIfFrozen()
+        {
+            if (serializer is object) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
         }
 
         /// <summary>
@@ -52,6 +61,8 @@ namespace AqlaSerializer.Meta
             this.FieldNumber = fieldNumber;
             this.DerivedType = derivedType;
         }
+
+        internal IRuntimeProtoSerializerNode GetSerializer(Type parentType) => serializer ??= BuildSerializer(parentType);
         
         private IProtoSerializerWithWireType _serializer;
         internal IProtoSerializerWithWireType GetSerializer(RuntimeTypeModel model) => _serializer ?? (_serializer = BuildSerializer(model));
@@ -63,4 +74,3 @@ namespace AqlaSerializer.Meta
         }
     }
 }
-#endif

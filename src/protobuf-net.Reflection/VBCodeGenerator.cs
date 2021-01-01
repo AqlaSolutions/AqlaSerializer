@@ -230,14 +230,18 @@ namespace AqlaSerializer
             {
                 ctx.WriteLine($"#Disable Warning BC40008, BC40055, IDE1006").WriteLine();
             }
+        }
 
-            var @namespace = ctx.NameNormalizer.GetName(file);
+        /// <inheritdoc/>
+        protected override void WriteNamespaceHeader(GeneratorContext ctx, string @namespace)
+        {
+            ctx.WriteLine($"Namespace {@namespace}").Indent();
+        }
 
-            if (!string.IsNullOrWhiteSpace(@namespace))
-            {
-                state = @namespace;
-                ctx.WriteLine($"Namespace {@namespace}").Indent();
-            }
+        /// <inheritdoc/>
+        protected override void WriteNamespaceFooter(GeneratorContext ctx, string @namespace)
+        {
+            ctx.Outdent().WriteLine("End Namespace").WriteLine();
         }
 
         /// <summary>
@@ -245,11 +249,6 @@ namespace AqlaSerializer
         /// </summary>
         protected override void WriteFileFooter(GeneratorContext ctx, FileDescriptorProto file, ref object state)
         {
-            var @namespace = (string)state;
-            if (!string.IsNullOrWhiteSpace(@namespace))
-            {
-                ctx.Outdent().WriteLine("End Namespace").WriteLine();
-            }
             if (ctx.Supports(VB14))
             {
                 ctx.WriteLine($"#Enable Warning BC40008, BC40055, IDE1006").WriteLine();
@@ -379,13 +378,13 @@ namespace AqlaSerializer
         /// </summary>
         public override string GetAccess(Access access)
         {
-            switch (access)
+            return access switch
             {
-                case Access.Internal: return "Friend";
-                case Access.Public: return "Public";
-                case Access.Private: return "Private";
-                default: return base.GetAccess(access);
-            }
+                Access.Internal => "Friend",
+                Access.Public => "Public",
+                Access.Private => "Private",
+                _ => base.GetAccess(access),
+            };
         }
 
         private string GetDefaultValue(GeneratorContext ctx, FieldDescriptorProto obj, string typeName)
@@ -488,14 +487,7 @@ namespace AqlaSerializer
             bool isOptional = field.label == FieldDescriptorProto.Label.LabelOptional;
             bool isRepeated = field.label == FieldDescriptorProto.Label.LabelRepeated;
 
-            OneOfStub oneOf = field.ShouldSerializeOneofIndex() ? oneOfs?[field.OneofIndex] : null;
-            if (oneOf != null && !ctx.OneOfEnums && oneOf.CountTotal == 1)
-            {
-                oneOf = null; // not really a one-of, then!
-            }
-            bool explicitValues = isOptional && oneOf == null && ctx.Syntax == FileDescriptorProto.SyntaxProto2
-                && field.type != FieldDescriptorProto.Type.TypeMessage
-                && field.type != FieldDescriptorProto.Type.TypeGroup;
+            bool trackPresence = TrackFieldPresence(ctx, field, oneOfs, out var oneOf);
 
             bool suppressDefaultAttribute = !isOptional;
             var typeName = GetTypeName(ctx, field, out var dataFormat, out var isMap);
@@ -506,7 +498,7 @@ namespace AqlaSerializer
             {
                 tw.Write($", DataFormat := Global.ProtoBuf.DataFormat.{dataFormat}");
             }
-            if (field.IsPacked(ctx.Syntax))
+            if (field.IsPackedField(ctx.Syntax))
             {
                 tw.Write($", IsPacked := True");
             }
@@ -591,7 +583,7 @@ namespace AqlaSerializer
                     }
                 }
             }
-            else if (oneOf != null)
+            else if (oneOf is object)
             {
                 var defValue = string.IsNullOrWhiteSpace(defaultValue) ? $"CType(Nothing, {typeName})" : defaultValue;
                 var fieldName = GetOneOfFieldName(oneOf.OneOf);
@@ -631,7 +623,7 @@ namespace AqlaSerializer
                     ctx.WriteLine().WriteLine($"Private {fieldName} As Global.ProtoBuf.{unionType}");
                 }
             }
-            else if (explicitValues)
+            else if (trackPresence)
             {
                 string fieldName = FieldPrefix + name, fieldType;
                 bool isRef = false;
@@ -720,8 +712,8 @@ namespace AqlaSerializer
         /// </summary>
         protected override void WriteExtensionsHeader(GeneratorContext ctx, DescriptorProto message, ref object state)
         {
-            var name = message?.Options?.GetOptions()?.ExtensionTypeName;
-            if (string.IsNullOrWhiteSpace(name)) name = "Extensions";
+            //var name = message?.Options?.GetOptions()?.ExtensionTypeName;
+            //if (string.IsNullOrWhiteSpace(name)) name = "Extensions";
             //ctx.WriteLine($"{GetAccess(GetAccess(obj))} Module {Escape(name)}").Indent();
         }
         /// <summary>
@@ -773,6 +765,7 @@ namespace AqlaSerializer
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Readability")]
         private static bool UseArray(FieldDescriptorProto field)
         {
             switch (field.type)
@@ -942,8 +935,8 @@ namespace AqlaSerializer
                 if (!ReferenceEquals(target, declaring))
                 {
                     // special-case: if both are the package (file), and they have the same namespace: we're OK
-                    if (target is FileDescriptorProto && declaring is FileDescriptorProto
-                        && normalizer.GetName((FileDescriptorProto)declaring) == normalizer.GetName((FileDescriptorProto)target))
+                    if (target is FileDescriptorProto targetProto && declaring is FileDescriptorProto declaringProto
+                        && normalizer.GetName(declaringProto) == normalizer.GetName(targetProto))
                     {
                         // that's fine, keep going
                     }

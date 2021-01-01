@@ -21,6 +21,14 @@ namespace AqlaSerializer.MSBuild
 
         public string Language { get; set; }
 
+        public string Services { get; set; }
+
+        public string Names { get; set; }
+
+        public string OneOf { get; set; }
+
+        public string ListSet { get; set; }
+
         [Output]
         public ITaskItem[] ProtoCodeFile { get; set; }
 
@@ -29,15 +37,12 @@ namespace AqlaSerializer.MSBuild
             if(lang == null)
                 return CSharpCodeGenerator.Default;
 
-            switch (lang)
+            return lang switch
             {
-                case "C#":
-                    return CSharpCodeGenerator.Default;
-                case "VB":
-                    return VBCodeGenerator.Default;
-                default:
-                    throw new NotSupportedException("protobuf code generation is not supported for language " + lang);
-            }
+                "C#" => CSharpCodeGenerator.Default,
+                "VB" => VBCodeGenerator.Default,
+                _ => throw new NotSupportedException("protobuf code generation is not supported for language " + lang),
+            };
         }
 
         public override bool Execute()
@@ -104,7 +109,14 @@ namespace AqlaSerializer.MSBuild
                 return false;
             }
 
-            var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["services"] = Services
+            };
+
+            SetIfNotAssigned("names", Names);
+            SetIfNotAssigned("oneof", OneOf);
+            SetIfNotAssigned("listset", ListSet);
 
             var codeFiles = new List<ITaskItem>();
             var files = codegen.Generate(set, options: options);
@@ -120,6 +132,15 @@ namespace AqlaSerializer.MSBuild
             this.ProtoCodeFile = codeFiles.Cast<ITaskItem>().ToArray();
 
             return true;
+
+            void SetIfNotAssigned(string key, string value)
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    options[key] = value;
+                }
+            }
+
         }
     }
 }

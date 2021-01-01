@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>ProtoBuf.AspNetCore</RootNamespace>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <AssemblyName>protobuf-net.AspNetCore</AssemblyName>
+    <Title>protobuf-net.AspNetCore</Title>
+    <Description>Provides ASP.NET Core specific utilities for protobuf-net</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="System.IO.Pipelines" Version="5.0.0" />
+    <ProjectReference Include="..\protobuf-net\protobuf-net.csproj" />
+  </ItemGroup>
+</Project>

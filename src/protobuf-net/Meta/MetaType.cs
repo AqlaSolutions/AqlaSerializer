@@ -1,10 +1,11 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿using ProtoBuf.Internal;
+using ProtoBuf.Internal.Serializers;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using AltLinq; using System.Linq;
 using AqlaSerializer;
@@ -12,6 +13,7 @@ using AqlaSerializer.Internal;
 using AqlaSerializer.Meta.Mapping;
 using AqlaSerializer.Serializers;
 using AqlaSerializer.Settings;
+using System.Text;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -134,18 +136,39 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        private CompatibilityLevel _compatibilityLevel;
+
         void AddTupleField(ValueMember vm)
         {
             vm.FinalizingSettings += (s, a) => FinalizingMemberSettings?.Invoke(this, a);
             _tupleFields.Add(vm);
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="MetaType.CompatibilityLevel"/> for this instance
+        /// </summary>
+        public CompatibilityLevel CompatibilityLevel
+        {
+            get => _compatibilityLevel;
+            set
+            {
+                if (value != _compatibilityLevel)
+                {
+                    if (HasFields) ThrowHelper.ThrowInvalidOperationException($"{CompatibilityLevel} cannot be set once fields have been defined");
+                    CompatibilityLevelAttribute.AssertValid(value);
+                    _compatibilityLevel = value;
+                }
+            }
+        }
+
+        private List<SubType> _subTypes;
+
         internal int GetKey(bool demand, bool getBaseKey)
         {
             return _model.GetKey(Type, demand, getBaseKey);
         }
 
-        public void ApplyDefaultBehaviour()
+        public void ApplyDefaultBehaviourImpl()
         {
             // AddSubType is not thread safe too, so what?
             if (_isDefaultBehaviourApplied) return;
@@ -165,6 +188,222 @@ namespace AqlaSerializer.Meta
             ThrowIfFrozen();
             this._factory = factory;
             return this;
+        }
+
+        private static void ThrowTupleTypeWithInheritance(Type type)
+        {
+            ThrowHelper.ThrowInvalidOperationException(
+                $"Tuple-based types cannot be used in inheritance hierarchies: {type.NormalizeName()}");
+        }
+        
+        /// <summary>
+        /// Returns the public Type name of this Type used in serialization
+        /// </summary>
+        public string GetSchemaTypeName() => GetSchemaTypeName(null);
+
+        internal string GuessPackage()
+        {   // very speculative; turns .Foo.Bar.Blap into Foo.Bar
+            var s = Name;
+            if (string.IsNullOrWhiteSpace(s)) return null;
+            if (s[0] != '.') return null; // not fully qualified
+            var idx = s.LastIndexOf('.');
+            return s.Substring(0, idx).Trim('.').Trim();
+        }
+
+        /// <summary>
+        /// Gets or sets the file that defines this type (as used with <c>import</c> in .proto)
+        /// </summary>
+        public string Origin
+        {
+            get => origin;
+            set
+            {
+                ThrowIfFrozen();
+                origin = value;
+            }
+        }
+
+        private static void ThrowSubTypeWithSurrogate(Type type)
+        {
+            ThrowHelper.ThrowInvalidOperationException(
+                $"Types with surrogates cannot be used in inheritance hierarchies: {type.NormalizeName()}");
+        }
+
+        /// <summary>
+        /// Performs serialization of this type via a surrogate; all
+        /// other serialization options are ignored and handled
+        /// by the surrogate's configuration.
+        /// </summary>
+        public void SetSurrogate(Type surrogateType)
+            => SetSurrogate(surrogateType, null, null, DataFormat.Default);
+
+        internal static bool IsValidEnum(IList<EnumMember> values)
+        {
+            if (values is null || values.Count == 0) return false;
+            foreach(var val in values)
+            {
+                if (!val.TryGetInt32().HasValue) return false;
+            }
+            return true;
+        }
+
+        internal bool IsValidEnum() => IsValidEnum(_enums);
+
+        /// <summary>
+        /// Add a new defined name/value pair for an enum
+        /// </summary>
+        public void SetEnumValues(EnumMember[] values)
+        {
+            if (!Type.IsEnum) ThrowHelper.ThrowInvalidOperationException($"Only enums should use {nameof(SetEnumValues)}");
+
+            if (values is null) ThrowHelper.ThrowArgumentNullException(nameof(values));
+
+            var typedClone = Array.ConvertAll(values, val => val.Normalize(Type));
+
+            foreach (var val in values)
+                val.Validate();
+
+            int opaqueToken = 0;
+            try
+            {
+                model.TakeLock(ref opaqueToken);
+                ThrowIfFrozen();
+                Enums.Clear();
+                Enums.AddRange(typedClone);
+            }
+            finally
+            {
+                model.ReleaseLock(opaqueToken);
+            }
+        }
+
+        /// <summary>
+        /// Returns the EnumMember instances associated with this type
+        /// </summary>
+        public EnumMember[] GetEnumValues()
+        {
+            if (!HasEnums) return Array.Empty<EnumMember>();
+            return Enums.ToArray();
+        }
+
+        /// <summary>
+        /// Compiles the serializer for this type; this is *not* a full
+        /// standalone compile, but can significantly boost performance
+        /// while allowing additional types to be added.
+        /// </summary>
+        /// <remarks>An in-place compile can access non-public types / members</remarks>
+        public void CompileInPlace()
+        {
+            var original = Serializer; // might lazily create
+            if (original is ICompiledSerializer || original.ExpectedType.IsEnum || model.TryGetRepeatedProvider(Type) is object)
+                return; // nothing to do
+            
+            var wrapped = CompiledSerializer.Wrap(original, model);
+            if (!ReferenceEquals(original, wrapped))
+            {
+                _serializer = (IProtoTypeSerializer) wrapped;
+                Model.ResetServiceCache(Type);
+            }
+            
+        }
+        internal bool HasEnums => _enums is object && _enums.Count != 0;
+        internal List<EnumMember> Enums => _enums ??= new List<EnumMember>();
+
+        private List<EnumMember> _enums = new List<EnumMember>();
+
+        /// <summary>
+        /// Gets or sets a value indicating whether unknown sub-types should cause serialization failure
+        /// </summary>
+        public bool IgnoreUnknownSubTypes
+        {
+            get => HasFlag(TypeOptions.IgnoreUnknownSubTypes);
+            set => SetFlag(TypeOptions.IgnoreUnknownSubTypes, value, true);
+        }
+        internal bool HasFields => _fields is object && _fields.Count != 0;
+
+        private enum TypeOptions : ushort
+        {
+            None = 0,
+            Pending = 1,
+            // EnumPassThru = 2,
+            Frozen = 4,
+            PrivateOnApi = 8,
+            SkipConstructor = 16,
+#if FEAT_DYNAMIC_REF
+            AsReferenceDefault = 32,
+#endif
+            AutoTuple = 64,
+            IgnoreListHandling = 128,
+            IsGroup = 256,
+            IgnoreUnknownSubTypes = 512,
+        }
+
+        private List<ValueMember> _fields = null;
+        private MethodInfo underlyingToSurrogate, surrogateToUnderlying;
+        internal DataFormat surrogateDataFormat;
+
+        internal Type surrogateType;
+
+        /// <summary>
+        /// Specify a custom serializer for this type
+        /// </summary>
+        public Type SerializerType
+        {
+            get => _serializerType;
+            set
+            {
+                if (value != _serializerType)
+                {
+                    if (!value.IsClass)
+                        ThrowHelper.ThrowArgumentException("Custom serializer providers must be classes", nameof(SerializerType));
+                    ThrowIfFrozen();
+                    _serializerType = value;
+                }
+            }
+        }
+
+        internal void Assert(CompatibilityLevel expected)
+        {
+            var actual = CompatibilityLevel;
+            if (actual == expected) return;
+
+            ThrowHelper.ThrowInvalidOperationException($"The expected ('{expected}') and actual ('{actual}') compatibility level of '{Type.NormalizeName()}' did not match; the same type cannot be used with different compatibility levels in the same model; this is most commonly an issue with tuple-like types in different contexts");
+        }
+
+        internal void ApplyDefaultBehaviour(CompatibilityLevel ambient)
+        {
+            TypeAddedEventArgs args = null; // allows us to share the event-args between events
+            RuntimeTypeModel.OnBeforeApplyDefaultBehaviour(this, ref args);
+            if (args is null || args.ApplyDefaultBehaviour) ApplyDefaultBehaviourImpl(ambient);
+            RuntimeTypeModel.OnAfterApplyDefaultBehaviour(this, ref args);
+        }
+
+        private bool HasRealInheritance()
+            => (baseType is object && baseType != this) || (_subTypes?.Count ?? 0) > 0;
+
+        private SerializerFeatures GetFeatures()
+        {
+            if (Type.IsEnum) return SerializerFeatures.WireTypeVarint | SerializerFeatures.CategoryScalar;
+
+            if (!Type.IsValueType)
+            {
+                var bt = GetRootType(this);
+                if (!ReferenceEquals(bt, this)) return bt.GetFeatures();
+            }
+            var features = SerializerFeatures.CategoryMessage;
+            features |= IsGroup ? SerializerFeatures.WireTypeStartGroup : SerializerFeatures.WireTypeString;
+            return features;
+        }
+
+        internal Type GetInheritanceRoot()
+        {
+            if (Type.IsValueType) return null;
+
+            var root = GetRootType(this);
+            if (!ReferenceEquals(root, this)) return root.Type;
+            if (_subTypes is object && _subTypes.Count != 0) return root.Type;
+
+            return null;
         }
          
 
@@ -230,6 +469,184 @@ namespace AqlaSerializer.Meta
             return Type.ToString();
         }
 
+        /// <summary>
+        /// Apply a shift to all fields (and sub-types) on this type
+        /// </summary>
+        /// <param name="offset">The change in field number to apply</param>
+        /// <remarks>The resultant field numbers must still all be considered valid</remarks>
+        [System.ComponentModel.Browsable(false)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Advanced)]
+        public void ApplyFieldOffset(int offset)
+        {
+            if (Type.IsEnum) throw new InvalidOperationException("Cannot apply field-offset to an enum");
+            if (offset == 0) return; // nothing to do
+            int opaqueToken = 0;
+            try
+            {
+                model.TakeLock(ref opaqueToken);
+                ThrowIfFrozen();
+
+                var fields = _fields;
+                var subTypes = _subTypes;
+                if (fields is object)
+                {
+                    foreach (ValueMember field in fields)
+                        AssertValidFieldNumber(field.FieldNumber + offset);
+                }
+                if (subTypes is object)
+                {
+                    foreach (SubType subType in subTypes)
+                        AssertValidFieldNumber(subType.FieldNumber + offset);
+                }
+
+                // we've checked the ranges are all OK; since we're moving everything, we can't overlap ourselves
+                // so: we can just move
+                if (fields is object)
+                {
+                    foreach (ValueMember field in fields)
+                        field.FieldNumber += offset;
+                }
+                if (subTypes is object)
+                {
+                    foreach (SubType subType in subTypes)
+                        subType.FieldNumber += offset;
+                }
+            }
+            finally
+            {
+                model.ReleaseLock(opaqueToken);
+            }
+        }
+
+        internal static void AssertValidFieldNumber(int fieldNumber)
+        {
+            if (fieldNumber < 1) throw new ArgumentOutOfRangeException(nameof(fieldNumber));
+        }
+
+        /// <summary>
+        /// Adds a single number field reservation
+        /// </summary>
+        public MetaType AddReservation(int field, string comment = null)
+            => AddReservation(new ProtoReservedAttribute(field, comment));
+        /// <summary>
+        /// Adds range number field reservation
+        /// </summary>
+        public MetaType AddReservation(int from, int to, string comment = null)
+            => AddReservation(new ProtoReservedAttribute(from, to, comment));
+        /// <summary>
+        /// Adds a named field reservation
+        /// </summary>
+        public MetaType AddReservation(string field, string comment = null)
+            => AddReservation(new ProtoReservedAttribute(field, comment));
+        private MetaType AddReservation(ProtoReservedAttribute reservation)
+        {
+            reservation.Verify();
+            int opaqueToken = default;
+            try
+            {
+                model.TakeLock(ref opaqueToken);
+                ThrowIfFrozen();
+                _reservations ??= new List<ProtoReservedAttribute>();
+                _reservations.Add(reservation);
+            }
+            finally
+            {
+                model.ReleaseLock(opaqueToken);
+            }
+            return this;
+        }
+
+        private List<ProtoReservedAttribute> _reservations;
+
+        internal bool HasReservations => (_reservations?.Count ?? 0) != 0;
+
+        internal void Validate() => ValidateReservations(); // just this for now, but: in case we need more later
+
+        internal void ValidateReservations()
+        {
+            if (!(HasReservations && (HasFields || HasSubtypes || HasEnums))) return;
+
+            foreach (var reservation in _reservations)
+            {
+                if (reservation.From != 0)
+                {
+                    if (_fields is object)
+                    {
+                        foreach (var field in _fields)
+                        {
+                            if (field.FieldNumber >= reservation.From && field.FieldNumber <= reservation.To)
+                            {
+                                throw new InvalidOperationException($"Field {field.FieldNumber} is reserved and cannot be used for data member '{field.Name}'{CommentSuffix(reservation)}.");
+                            }
+                        }
+                    }
+                    if (_enums is object)
+                    {
+                        foreach (var @enum in _enums)
+                        {
+                            var val = @enum.TryGetInt32();
+                            if (val.HasValue && val.Value >= reservation.From && val.Value <= reservation.To)
+                            {
+                                throw new InvalidOperationException($"Field {val.Value} is reserved and cannot be used for enum value '{@enum.Name}'{CommentSuffix(reservation)}.");
+                            }
+                        }
+                    }
+                    if (_subTypes is object)
+                    {
+                        foreach (var subType in _subTypes)
+                        {
+                            if (subType.FieldNumber >= reservation.From && subType.FieldNumber <= reservation.To)
+                            {
+                                throw new InvalidOperationException($"Field {subType.FieldNumber} is reserved and cannot be used for sub-type '{subType.DerivedType.Type.NormalizeName()}'{CommentSuffix(reservation)}.");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (_fields is object)
+                    {
+                        foreach (var field in _fields)
+                        {
+                            if (field.Name == reservation.Name)
+                            {
+                                throw new InvalidOperationException($"Field '{field.Name}' is reserved and cannot be used for data member {field.FieldNumber}{CommentSuffix(reservation)}.");
+                            }
+                        }
+                    }
+                    if (_enums is object)
+                    {
+                        foreach (var @enum in _enums)
+                        {
+                            if (@enum.Name == reservation.Name)
+                            {
+                                throw new InvalidOperationException($"Field '{@enum.Name}' is reserved and cannot be used for enum value {@enum.Value}{CommentSuffix(reservation)}.");
+                            }
+                        }
+                    }
+                    if (_subTypes is object)
+                    {
+                        foreach (var subType in _subTypes)
+                        {
+                            var name = subType.DerivedType.Name;
+                            if (string.IsNullOrWhiteSpace(name)) name = subType.DerivedType.Type.Name;
+                            if (name == reservation.Name)
+                            {
+                                throw new InvalidOperationException($"Field '{name}' is reserved and cannot be used for sub-type {subType.FieldNumber}{CommentSuffix(reservation)}.");
+                            }
+                        }
+                    }
+                }
+            }
+
+            static string CommentSuffix(ProtoReservedAttribute reservation)
+            {
+                var comment = reservation.Comment;
+                if (string.IsNullOrWhiteSpace(comment)) return "";
+                return " (" + comment.Trim() + ")";
+            }
+        }
+
         [Flags]
         public enum AttributeFamily
         {
@@ -268,7 +685,7 @@ namespace AqlaSerializer.Meta
             if (hasOption)
             {
                 hasOption = false;
-                return builder.Append("]");
+                return builder.Append(']');
             }
             return builder;
         }
@@ -277,7 +694,7 @@ namespace AqlaSerializer.Meta
         {
             try
             {
-                if (value == null) return false;
+                if (value is null) return false;
                 switch (Helpers.GetTypeCode(value.GetType()))
                 {
                     case ProtoTypeCode.Boolean: return !(bool)value;
@@ -291,7 +708,7 @@ namespace AqlaSerializer.Meta
                     case ProtoTypeCode.Int64: return ((long)value) == 0;
                     case ProtoTypeCode.SByte: return ((sbyte)value) == 0;
                     case ProtoTypeCode.Single: return ((float)value) == 0;
-                    case ProtoTypeCode.String: return value != null && ((string)value).Length == 0;
+                    case ProtoTypeCode.String: return value is object && ((string)value).Length == 0;
                     case ProtoTypeCode.TimeSpan: return ((TimeSpan)value) == TimeSpan.Zero;
                     case ProtoTypeCode.UInt16: return ((ushort)value) == 0;
                     case ProtoTypeCode.UInt32: return ((uint)value) == 0;
@@ -302,9 +719,10 @@ namespace AqlaSerializer.Meta
             return false;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0066:Convert switch statement to expression", Justification = "Readability")]
         private static bool CanPack(Type type)
         {
-            if (type == null) return false;
+            if (type is null) return false;
             switch (Helpers.GetTypeCode(type))
             {
                 case ProtoTypeCode.Boolean:
@@ -328,11 +746,10 @@ namespace AqlaSerializer.Meta
         {
             get
             {
-                return surrogate != null;
+                return surrogateType is object;
             }
         }
 
 
     }
 }
-#endif

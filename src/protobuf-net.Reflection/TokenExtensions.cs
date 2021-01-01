@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProtoBuf.Reflection.Internal;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -117,7 +118,7 @@ namespace AqlaSerializer.Reflection
             var token = tokens.Read();
             var value = tokens.ConsumeString();
 
-            if (!EnumCache<T>.TryGet(token.Value, out T val))
+            if (!EnumCache<T>.TryGet(value, out T val))
                 token.Throw(ErrorCode.InvalidEnum, "Unable to parse " + typeof(T).Name);
             return val;
         }
@@ -220,20 +221,13 @@ namespace AqlaSerializer.Reflection
 
                     if (!asBytes)
                     {
-#if NETSTANDARD1_3
-                        string s = ms.TryGetBuffer(out var segment)
-                            ? Encoding.UTF8.GetString(segment.Array, segment.Offset, segment.Count)
-                            : Encoding.UTF8.GetString(ms.ToArray());
-
-#else
                         string s = Encoding.UTF8.GetString(ms.GetBuffer(), 0, (int)ms.Length);
-#endif
-                        return s.Replace("\\", @"\\")
-                            .Replace("\'", @"\'")
-                            .Replace("\"", @"\""")
-                            .Replace("\r", @"\r")
-                            .Replace("\n", @"\n")
-                            .Replace("\t", @"\t");
+                        return s.Replace(@"\\", "\\")
+                            .Replace(@"\'", "\'")
+                            .Replace(@"\""", "\"")
+                            .Replace(@"\r", "\r")
+                            .Replace(@"\n", "\n")
+                            .Replace(@"\t", "\t");
                     }
 
                     var sb = new StringBuilder((int)ms.Length);
@@ -278,12 +272,12 @@ namespace AqlaSerializer.Reflection
         // it is the job of codegen to change this normalized form to the target language form
         internal static void ReadStringBytes(ref MemoryStream ms, string value)
         {
-            void AppendAscii(MemoryStream target, string ascii)
+            static void AppendAscii(MemoryStream target, string ascii)
             {
                 foreach (char c in ascii)
                     target.WriteByte(checked((byte)c));
             }
-            void AppendByte(MemoryStream target, ref uint codePoint, ref int len)
+            static void AppendByte(MemoryStream target, ref uint codePoint, ref int len)
             {
                 if (len != 0)
                 {
@@ -292,7 +286,7 @@ namespace AqlaSerializer.Reflection
                 codePoint = 0;
                 len = 0;
             }
-            unsafe void AppendNormalized(MemoryStream target, ref uint codePoint, ref int len)
+            unsafe static void AppendNormalized(MemoryStream target, ref uint codePoint, ref int len)
             {
                 if (len == 0)
                 {
@@ -307,34 +301,24 @@ namespace AqlaSerializer.Reflection
                     target.WriteByte(b[i]);
                 }
             }
-            void AppendEscaped(MemoryStream target, char c)
+            static void AppendEscaped(MemoryStream target, char c)
             {
-                uint codePoint;
-                switch (c)
+                uint codePoint = c switch
                 {
-                    // encoded as octal
-                    case 'a': codePoint = '\a'; break;
-                    case 'b': codePoint = '\b'; break;
-                    case 'f': codePoint = '\f'; break;
-                    case 'v': codePoint = '\v'; break;
-                    case 't': codePoint = '\t'; break;
-                    case 'n': codePoint = '\n'; break;
-                    case 'r': codePoint = '\r'; break;
-
-                    case '\\':
-                    case '?':
-                    case '\'':
-                    case '\"':
-                        codePoint = c;
-                        break;
-                    default:
-                        codePoint = '?';
-                        break;
-                }
+                    'a' => '\a',
+                    'b' => '\b',
+                    'f' => '\f',
+                    'v' => '\v',
+                    't' => '\t',
+                    'n' => '\n',
+                    'r' => '\r',
+                    '\\' or '?' or '\'' or '\"' => c,
+                    _ => '?',
+                };
                 int len = 1;
                 AppendNormalized(target, ref codePoint, ref len);
             }
-            bool GetHexValue(char c, out uint val, ref int len)
+            static bool GetHexValue(char c, out uint val, ref int len)
             {
                 len++;
                 if (c >= '0' && c <= '9')
@@ -470,14 +454,11 @@ namespace AqlaSerializer.Reflection
             if (c == '"' || c == '\'') return TokenType.StringLiteral;
             if (char.IsWhiteSpace(c)) return TokenType.Whitespace;
             if (char.IsLetterOrDigit(c)) return TokenType.AlphaNumeric;
-            switch (c)
+            return c switch
             {
-                case '_':
-                case '.':
-                case '-':
-                    return TokenType.AlphaNumeric;
-            }
-            return TokenType.Symbol;
+                '_' or '.' or '-' => TokenType.AlphaNumeric,
+                _ => TokenType.Symbol,
+            };
         }
 
         public static IEnumerable<Token> RemoveCommentsAndWhitespace(this IEnumerable<Token> tokens)
@@ -526,7 +507,7 @@ namespace AqlaSerializer.Reflection
 
             int lineNumber = 0, offset = 0;
             string line;
-            string lastLine = null;
+            string lastLine;
             while ((line = reader.ReadLine()) != null)
             {
                 lastLine = line;

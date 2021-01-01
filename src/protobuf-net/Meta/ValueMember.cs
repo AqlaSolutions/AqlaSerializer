@@ -1,8 +1,10 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if !NO_RUNTIME
-using System;
+﻿using ProtoBuf.Internal;
+using ProtoBuf.Internal.Serializers;
 using System.Collections.Generic;
 using System.Diagnostics;
+// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+#if !NO_RUNTIME
+using System;
 using AqlaSerializer.Serializers;
 using System.Globalization;
 using AltLinq; using System.Linq;
@@ -23,6 +25,8 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public class ValueMember
     {
+
+        private int _fieldNumber;
         MemberMainSettingsValue _main;
         readonly bool _isAccessHandledOutside;
         readonly bool _canHaveDefaultValue;
@@ -99,6 +103,8 @@ namespace AqlaSerializer.Meta
         /// The type the defines the member
         /// </summary>
         public Type ParentType { get; }
+
+        private CompatibilityLevel _compatibilityLevel;
         
         /// <summary>
         /// Creates a new ValueMember instance
@@ -129,6 +135,40 @@ namespace AqlaSerializer.Meta
             {
                 Member = member;
             }
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="CompatibilityLevel"/> of this member; by default this is inherited from
+        /// the type; when <see cref="CompatibilityLevel.Level200"/> is used with <see cref="DataFormat.WellKnown"/>,
+        /// the member is considered <see cref="CompatibilityLevel.Level240"/>.
+        /// </summary>
+        public CompatibilityLevel CompatibilityLevel
+        {
+            get => _compatibilityLevel;
+            set
+            {
+                if (_compatibilityLevel != value)
+                {
+                    ThrowIfFrozen();
+                    CompatibilityLevelAttribute.AssertValid(value);
+                    _compatibilityLevel = value;
+                }
+            }
+        }
+
+        internal static CompatibilityLevel GetEffectiveCompatibilityLevel(CompatibilityLevel compatibilityLevel, DataFormat dataFormat)
+        {
+            if (compatibilityLevel <= CompatibilityLevel.Level200)
+            {
+                return dataFormat switch
+                {
+#pragma warning disable CS0618
+                    DataFormat.WellKnown => CompatibilityLevel.Level240,
+#pragma warning restore CS0618
+                    _ => CompatibilityLevel.Level200,
+                };
+            }
+            return compatibilityLevel;
         }
 
         internal event EventHandler<FinalizingSettingsArgs> FinalizingSettings;
@@ -545,6 +585,33 @@ namespace AqlaSerializer.Meta
             set { SetFlag(OPTIONS_IsMap, value, true); }
         }
 
+        internal static IRuntimeProtoSerializerNode CreateMap(RepeatedSerializerStub repeated, RuntimeTypeModel model, DataFormat dataFormat,
+            CompatibilityLevel compatibilityLevel,
+            DataFormat keyFormat, DataFormat valueFormat, bool asReference, bool dynamicType, bool isMap, bool overwriteList, int fieldNumber)
+        {
+            static Type FlattenRepeated(RuntimeTypeModel model, Type type)
+            {   // for the purposes of choosing features, we want to look inside things like arrays/lists/etc
+                if (type is null) return type;
+                var repeated = model is null ? RepeatedSerializers.TryGetRepeatedProvider(type) : model.TryGetRepeatedProvider(type);
+                return repeated is null ? type : repeated.ItemType;
+            }
+
+            var keyCompatibilityLevel = GetEffectiveCompatibilityLevel(compatibilityLevel, keyFormat);
+            var valueCompatibilityLevel = GetEffectiveCompatibilityLevel(compatibilityLevel, valueFormat);
+
+            repeated.ResolveMapTypes(out var keyType, out var valueType);
+            _ = TryGetCoreSerializer(model, keyFormat, keyCompatibilityLevel, FlattenRepeated(model, keyType), out var keyWireType, false, false, false, true);
+            _ = TryGetCoreSerializer(model, valueFormat, valueCompatibilityLevel, FlattenRepeated(model, valueType), out var valueWireType, asReference, dynamicType, false, true);
+
+            WireType rootWireType = dataFormat == DataFormat.Group ? WireType.StartGroup : WireType.String;
+            SerializerFeatures features = rootWireType.AsFeatures(); // | SerializerFeatures.OptionReturnNothingWhenUnchanged;
+            if (!isMap) features |= SerializerFeatures.OptionFailOnDuplicateKey;
+            if (overwriteList) features |= SerializerFeatures.OptionClearCollection;
+
+            return MapDecorator.Create(repeated, keyType, valueType, fieldNumber, features,
+                keyWireType.AsFeatures(), keyCompatibilityLevel, keyFormat, valueWireType.AsFeatures(), valueCompatibilityLevel, valueFormat);
+        }
+
         /// <summary>
         /// Specifies methods for working with optional data members.
         /// </summary>
@@ -557,21 +624,21 @@ namespace AqlaSerializer.Meta
         public void SetSpecified(MethodInfo getSpecified, MethodInfo setSpecified)
         {
             if (_isAccessHandledOutside) throw new InvalidOperationException("Member access is handled from outside");
-            if (getSpecified != null)
+            if (getSpecified is object)
             {
                 if (getSpecified.ReturnType != _model.MapType(typeof(bool))
-                    || getSpecified.IsStatic
-                    || getSpecified.GetParameters().Length != 0)
+                        || getSpecified.IsStatic
+                        || getSpecified.GetParameters().Length != 0)
                 {
                     throw new ArgumentException("Invalid pattern for checking member-specified", nameof(getSpecified));
                 }
             }
-            if (setSpecified != null)
+            if (setSpecified is object)
             {
                 ParameterInfo[] args;
                 if (setSpecified.ReturnType != _model.MapType(typeof(void))
-                    || setSpecified.IsStatic
-                    || (args = setSpecified.GetParameters()).Length != 1
+                        || setSpecified.IsStatic
+                        || (args = setSpecified.GetParameters()).Length != 1
                     || args[0].ParameterType != _model.MapType(typeof(bool)))
                 {
                     throw new ArgumentException("Invalid pattern for setting member-specified", nameof(setSpecified));
@@ -587,6 +654,9 @@ namespace AqlaSerializer.Meta
         {
             if (_serializer != null) throw new InvalidOperationException("The type cannot be changed once a serializer has been generated");
         }
+
+#if !FEAT_NULL_LIST_ITEMS
+        internal const string SupportNullNotImplemented = "Nullable list elements are not currently implemented";
         
         public override string ToString()
         {
@@ -625,15 +695,15 @@ namespace AqlaSerializer.Meta
             {
                 return Compare(x as ValueMember, y as ValueMember);
             }
+
             public int Compare(ValueMember x, ValueMember y)
             {
                 if (ReferenceEquals(x, y)) return 0;
-                if (x == null) return -1;
-                if (y == null) return 1;
+                if (x is null) return -1;
+                if (y is null) return 1;
 
                 return x.FieldNumber.CompareTo(y.FieldNumber);
             }
         }
     }
 }
-#endif

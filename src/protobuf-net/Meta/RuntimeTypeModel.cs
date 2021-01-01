@@ -1,3 +1,6 @@
+using ProtoBuf.Compiler;
+using ProtoBuf.Internal;
+using ProtoBuf.Internal.Serializers;
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
@@ -7,18 +10,6 @@ using System.Collections.Generic;
 #endif
 #if !PORTABLE
 using System.Runtime.Serialization;
-#endif
-using System.Text;
-
-#if FEAT_IKVM
-using Type = IKVM.Reflection.Type;
-using IKVM.Reflection;
-#if FEAT_COMPILER
-using IKVM.Reflection.Emit;
-using TriAxis.RunSharp;
-#endif
-#else
-using System.Reflection;
 #if FEAT_COMPILER
 using System.Reflection.Emit;
 using TriAxis.RunSharp;
@@ -29,15 +20,31 @@ using AqlaSerializer.Compiler;
 #endif
 #if !FEAT_IKVM
 using AqlaSerializer.Meta.Data;
+using ProtoBuf.WellKnownTypes;
 #endif
 using AqlaSerializer;
 using AqlaSerializer.Serializers;
-using System.Threading;
 using System.IO;
 using AltLinq; using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Globalization;
 using System.Diagnostics;
+using System.Reflection.Emit;
 
+#if FEAT_IKVM
+using Type = IKVM.Reflection.Type;
+using IKVM.Reflection;
+#if FEAT_COMPILER
+using IKVM.Reflection.Emit;
+using TriAxis.RunSharp;
+#endif
+#else
+using System.Reflection;
+#endif
+using System.Text;
+using System.Threading;
+
+#pragma warning disable IDE0079 // sorry IDE, you're wrong
 
 namespace AqlaSerializer.Meta
 {
@@ -54,6 +61,10 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed partial class RuntimeTypeModel : TypeModel
     {
+    /// <summary>
+    /// Ensures that RuntimeTypeModel has been initialized, in advance of using methods on <see cref="Serializer"/>.
+    /// </summary>
+    public static void Initialize() => _ = Default;
         public ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
         
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
@@ -134,7 +145,35 @@ namespace AqlaSerializer.Meta
             OPTIONS_UseImplicitZeroDefaults = 32,
             OPTIONS_AllowParseableTypes = 64,
             OPTIONS_IncludeDateTimeKind = 256;
+
+    private enum RuntimeTypeModelOptions
+    {
+        None = 0,
+        InternStrings = TypeModelOptions.InternStrings,
+        IncludeDateTimeKind = TypeModelOptions.IncludeDateTimeKind,
+        SkipZeroLengthPackedArrays = TypeModelOptions.SkipZeroLengthPackedArrays,
+        AllowPackedEncodingAtRoot = TypeModelOptions.AllowPackedEncodingAtRoot,
+
+        TypeModelMask = InternStrings | IncludeDateTimeKind | SkipZeroLengthPackedArrays | AllowPackedEncodingAtRoot,
+
+        // stuff specific to RuntimeTypeModel
+        InferTagFromNameDefault = 1 << 10,
+        IsDefaultModel = 1 << 11,
+        Frozen = 1 << 12,
+        AutoAddMissingTypes = 1 << 13,
+        AutoCompile = 1 << 14,
+        UseImplicitZeroDefaults = 1 << 15,
+        AllowParseableTypes = 1 << 16,
+        AutoAddProtoContractTypesOnly = 1 << 17,
+    }
+
+    /// <summary>
+    /// Specifies optional behaviors associated with this model
+    /// </summary>
+    public override TypeModelOptions Options => (TypeModelOptions)(_options & RuntimeTypeModelOptions.TypeModelMask);
            OPTIONS_InternStrings = 512;
+
+    internal CompilerContextScope Scope { get; } = CompilerContextScope.CreateInProcess();
 
         private bool GetOption(short option)
         {
@@ -155,8 +194,8 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool InferTagFromNameDefault
         {
-            get { return GetOption(OPTIONS_InferTagFromNameDefault); }
-            set { SetOption(OPTIONS_InferTagFromNameDefault, value); }
+            get { return GetOption(RuntimeTypeModelOptions.InferTagFromNameDefault); }
+            set { SetOption(RuntimeTypeModelOptions.InferTagFromNameDefault, value); }
         }
 
         /// <summary>
@@ -170,14 +209,12 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool UseImplicitZeroDefaults
         {
-            get { return GetOption(OPTIONS_UseImplicitZeroDefaults); }
+            get { return GetOption(RuntimeTypeModelOptions.UseImplicitZeroDefaults); }
             set
             {
-                if (!value && GetOption(OPTIONS_IsDefaultModel))
-                {
-                    throw new InvalidOperationException("UseImplicitZeroDefaults cannot be disabled on the default model");
-                }
-                SetOption(OPTIONS_UseImplicitZeroDefaults, value);
+                if (!value && GetOption(RuntimeTypeModelOptions.IsDefaultModel))
+                    ThrowDefaultUseImplicitZeroDefaults();
+                SetOption(RuntimeTypeModelOptions.UseImplicitZeroDefaults, value);
             }
         }
 
@@ -187,8 +224,8 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool AllowParseableTypes
         {
-            get { return GetOption(OPTIONS_AllowParseableTypes); }
-            set { SetOption(OPTIONS_AllowParseableTypes, value); }
+            get { return GetOption(RuntimeTypeModelOptions.AllowParseableTypes); }
+            set { SetOption(RuntimeTypeModelOptions.AllowParseableTypes, value); }
         }
 
         /// <summary>
@@ -220,32 +257,19 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public bool IncludeDateTimeKind
         {
-            get { return GetOption(OPTIONS_IncludeDateTimeKind); }
-            set { SetOption(OPTIONS_IncludeDateTimeKind, value); }
+            get { return GetOption(RuntimeTypeModelOptions.IncludeDateTimeKind); }
+            set { SetOption(RuntimeTypeModelOptions.IncludeDateTimeKind, value); }
         }
 
     /// <summary>
     /// Global switch that determines whether a single instance of the same string should be used during deserialization.
     /// </summary>
     /// <remarks>Note this does not use the global .NET string interner</remarks>
-    public new bool InternStrings
+    public bool InternStrings
     {
-        get { return GetOption(OPTIONS_InternStrings); }
-        set { SetOption(OPTIONS_InternStrings, value); }
+        get { return GetOption(RuntimeTypeModelOptions.InternStrings); }
+        set { SetOption(RuntimeTypeModelOptions.InternStrings, value); }
     }
-
-    /// <summary>
-    /// Global switch that determines whether a single instance of the same string should be used during deserialization.
-    /// </summary>
-    protected internal override bool GetInternStrings() => InternStrings;
-
-        /// <summary>
-        /// Should the <c>Kind</c> be included on date/time values?
-        /// </summary>
-        protected internal override bool SerializeDateTimeKind()
-        {
-            return GetOption(OPTIONS_IncludeDateTimeKind);
-        }
         
 
         private sealed class Singleton
@@ -256,7 +280,8 @@ namespace AqlaSerializer.Meta
         /// <summary>
         /// The default model, used to support AqlaSerializer.Serializer
         /// </summary>
-        public static RuntimeTypeModel Default => Singleton.Value;
+        public static RuntimeTypeModel Default
+            => (DefaultModel as RuntimeTypeModel) ?? CreateDefaultModelInstance();
 
         private sealed class SingletonCompatible
         {
@@ -269,6 +294,15 @@ namespace AqlaSerializer.Meta
         public static RuntimeTypeModel ProtoCompatible => SingletonCompatible.Value;
 
         public static AutoAddStrategy DefaultAutoAddStrategy => (AutoAddStrategy) Default.AutoAddStrategy;
+
+    /// <summary>
+    /// Should zero-length packed arrays be serialized? (this is the v2 behavior, but skipping them is more efficient)
+    /// </summary>
+    public bool SkipZeroLengthPackedArrays
+    {
+        get { return GetOption(RuntimeTypeModelOptions.SkipZeroLengthPackedArrays); }
+        set { SetOption(RuntimeTypeModelOptions.SkipZeroLengthPackedArrays, value); }
+    }
 
         /// <summary>
         /// Returns list of the MetaType instances that can be
@@ -283,6 +317,36 @@ namespace AqlaSerializer.Meta
                 return r;
             }
         }
+
+    /// <summary>
+    /// Should root-values allow "packed" encoding? (v2 does not support this)
+    /// </summary>
+    public bool AllowPackedEncodingAtRoot
+    {
+        get { return GetOption(RuntimeTypeModelOptions.AllowPackedEncodingAtRoot); }
+        set { SetOption(RuntimeTypeModelOptions.AllowPackedEncodingAtRoot, value); }
+    }
+
+    /// <summary>
+    /// Gets or sets the default <see cref="CompatibilityLevel"/> for this model.
+    /// </summary>
+    public CompatibilityLevel DefaultCompatibilityLevel
+    {
+        get => _defaultCompatibilityLevel;
+        set
+        {
+            if (value != _defaultCompatibilityLevel)
+            {
+                CompatibilityLevelAttribute.AssertValid(value);
+                ThrowIfFrozen();
+                if (GetOption(RuntimeTypeModelOptions.IsDefaultModel)) ThrowHelper.ThrowInvalidOperationException("The default compatibility level of the default model cannot be changed");
+                if (types.Any()) ThrowHelper.ThrowInvalidOperationException("The default compatibility level of cannot be changed once types have been added");
+                _defaultCompatibilityLevel = value;
+            }
+        }
+    }
+
+    private CompatibilityLevel _defaultCompatibilityLevel = CompatibilityLevel.Level200;
 
         /// <summary>
         /// Returns list of the Type instances that can be
@@ -329,6 +393,23 @@ namespace AqlaSerializer.Meta
         }
 
         internal bool IsInitialized { get; }
+
+    private void CascadeRepeated(List<MetaType> list, RepeatedSerializerStub provider, CompatibilityLevel ambient, DataFormat keyFormat, HashSet<string> imports, string origin)
+    {
+        if (provider.IsMap)
+        {
+            provider.ResolveMapTypes(out var key, out var value);
+            TryGetCoreSerializer(list, key, ambient, imports, origin);
+            TryGetCoreSerializer(list, value, ambient, imports, origin);
+
+            if (!provider.IsValidProtobufMap(this, ambient, keyFormat)) // add the KVP
+                TryGetCoreSerializer(list, provider.ItemType, ambient, imports, origin);
+        }
+        else
+        {
+            TryGetCoreSerializer(list, provider.ItemType, ambient, imports, origin);
+        }
+    }
 	    [Flags]
 	    internal enum CommonImports
 	    {
@@ -418,9 +499,10 @@ namespace AqlaSerializer.Meta
         sealed class BasicType
         {
             public Type Type { get; }
-            public IProtoSerializer Serializer { get; }
 
-            public BasicType(Type type, IProtoSerializer serializer)
+            public IRuntimeProtoSerializerNode Serializer { get; }
+
+            public BasicType(Type type, IRuntimeProtoSerializerNode serializer)
             {
                 this.Type = type;
                 this.Serializer = serializer;
@@ -589,6 +671,27 @@ namespace AqlaSerializer.Meta
             //}
         }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static bool EnableAutoCompile()
+    {
+        try
+        {
+            var dm = new DynamicMethod("CheckCompilerAvailable", typeof(bool), new Type[] { typeof(int) });
+            var il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4, 42);
+            il.Emit(OpCodes.Ceq);
+            il.Emit(OpCodes.Ret);
+            var func = (Predicate<int>)dm.CreateDelegate(typeof(Predicate<int>));
+            return func(42);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+            return false;
+        }
+    }
+
         OverridingManager _overridingManager = new OverridingManager();
 
         /// <summary>
@@ -610,6 +713,16 @@ namespace AqlaSerializer.Meta
             }
         }
 
+    internal MetaType FindWithAmbientCompatibility(Type type, CompatibilityLevel ambient)
+    {
+        var found = (MetaType)types[FindOrAddAuto(type, true, false, false, ambient)];
+        if (found is object && found.IsAutoTuple && found.CompatibilityLevel != ambient)
+        {
+            throw new InvalidOperationException($"The tuple-like type {type.NormalizeName()} must use a single compatiblity level, but '{ambient}' and '{found.CompatibilityLevel}' are both observed; this usually means it is being used in different contexts in the same model.");
+        }
+        return found;
+    }
+
         /// <summary>
         /// Member overrides are run before preparing member serializer
         /// </summary>
@@ -628,6 +741,9 @@ namespace AqlaSerializer.Meta
                 ReleaseLock(opaqueToken);
             }
         }
+
+    private static readonly BasicList.MatchPredicate MetaTypeFinder = (value, ctx)
+        => ((MetaType)value).Type == (Type)ctx;
         
         private MetaType RecogniseCommonTypes(Type type)
         {
@@ -942,22 +1058,42 @@ namespace AqlaSerializer.Meta
             if (GetOption(OPTIONS_Frozen)) throw new InvalidOperationException("The model cannot be changed once frozen");
             _compiledVersionCache = null;
         }
+
         /// <summary>
         /// Prevents further changes to this model
         /// </summary>
         public void Freeze()
         {
-            if (GetOption(OPTIONS_IsDefaultModel)) throw new InvalidOperationException("The default model cannot be frozen");
-            SetOption(OPTIONS_Frozen, true);
+            if (GetOption(RuntimeTypeModelOptions.IsDefaultModel)) ThrowDefaultFrozen();
+            SetOption(RuntimeTypeModelOptions.Frozen, true);
         }
 
-        /// <summary>
-        /// Provides the key that represents a given type in the current model.
-        /// </summary>
-        protected override int GetKeyImpl(Type type)
-        {
-            return GetKey(type, false, true);
-        }
+    /// <summary>
+    /// Like the non-generic Add(Type); for convenience
+    /// </summary>
+    public MetaType Add<T>(bool applyDefaultBehaviour = true, CompatibilityLevel compatibilityLevel = default)
+        => Add(typeof(T), applyDefaultBehaviour, compatibilityLevel);
+
+    /// <summary>
+    /// Adds support for an additional type in this model, optionally
+    /// applying inbuilt patterns. If the type is already known to the
+    /// model, the existing type is returned **without** applying
+    /// any additional behaviour.
+    /// </summary>
+    /// <remarks>Inbuilt patterns include:
+    /// [ProtoContract]/[ProtoMember(n)]
+    /// [DataContract]/[DataMember(Order=n)]
+    /// [XmlType]/[XmlElement(Order=n)]
+    /// [On{Des|S}erializ{ing|ed}]
+    /// ShouldSerialize*/*Specified
+    /// </remarks>
+    /// <param name="type">The type to be supported</param>
+    /// <param name="applyDefaultBehaviour">Whether to apply the inbuilt configuration patterns (via attributes etc), or
+    /// just add the type with no additional configuration (the type must then be manually configured).</param>
+    /// <returns>The MetaType representing this type, allowing
+    /// further configuration.</returns>
+    public MetaType Add(Type type, bool applyDefaultBehaviour)
+        => Add(type, applyDefaultBehaviour, default);
 
         internal int GetKey(Type type, bool demand, bool getBaseKey)
         {
@@ -981,6 +1117,44 @@ namespace AqlaSerializer.Meta
         }
 
         internal static event Action<string> ValidateDll;
+
+    /// <summary>
+    /// Raised before a type is auto-configured; this allows the auto-configuration to be electively suppressed
+    /// </summary>
+    /// <remarks>This callback should be fast and not involve complex external calls, as it may block the model</remarks>
+    public event EventHandler<TypeAddedEventArgs> BeforeApplyDefaultBehaviour;
+
+    /// <summary>
+    /// Raised after a type is auto-configured; this allows additional external customizations
+    /// </summary>
+    /// <remarks>This callback should be fast and not involve complex external calls, as it may block the model</remarks>
+    public event EventHandler<TypeAddedEventArgs> AfterApplyDefaultBehaviour;
+
+    internal static void OnAfterApplyDefaultBehaviour(MetaType metaType, ref TypeAddedEventArgs args)
+        => OnApplyDefaultBehaviour(metaType?.Model?.AfterApplyDefaultBehaviour, metaType, ref args);
+
+    private static void OnApplyDefaultBehaviour(
+        EventHandler<TypeAddedEventArgs> handler, MetaType metaType, ref TypeAddedEventArgs args)
+    {
+        if (handler is object)
+        {
+            if (args is null) args = new TypeAddedEventArgs(metaType);
+            handler(metaType.Model, args);
+        }
+    }
+
+    /// <summary>
+    /// Should serializers be compiled on demand? It may be useful
+    /// to disable this for debugging purposes.
+    /// </summary>
+    public bool AutoCompile
+    {
+        get { return GetOption(RuntimeTypeModelOptions.AutoCompile); }
+        set { SetOption(RuntimeTypeModelOptions.AutoCompile, value); }
+    }
+
+    internal static void OnBeforeApplyDefaultBehaviour(MetaType metaType, ref TypeAddedEventArgs args)
+        => OnApplyDefaultBehaviour(metaType?.Model?.BeforeApplyDefaultBehaviour, metaType, ref args);
 
         /// <summary>
         /// Turn off this when each (de)serialization has side effects like changing static field
@@ -1048,6 +1222,745 @@ namespace AqlaSerializer.Meta
 #endif
 #endif
         }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private object GetServices<T>(CompatibilityLevel ambient)
+        => (_serviceCache[typeof(T)] ?? GetServicesSlow(typeof(T), ambient));
+
+    /// <summary>Indicates whether a type is known to the model</summary>
+    internal override bool IsKnownType<T>(CompatibilityLevel ambient) // the point of this override is to avoid loops
+                                                                      // when trying to *build* a model; we don't actually need the service (which may not exist yet);
+                                                                      // we just need to know whether we should *expect one*
+        => _serviceCache[typeof(T)] is object || FindOrAddAuto(typeof(T), false, true, false, ambient) >= 0;
+    internal void ResetServiceCache(Type type)
+    {
+        if (type is object)
+        {
+            lock (_serviceCache)
+            {
+                _serviceCache.Remove(type);
+            }
+        }
+    }
+
+    private object GetServicesSlow(Type type, CompatibilityLevel ambient)
+    {
+        if (type is null) return null; // GIGO
+        object service;
+        lock (_serviceCache)
+        {   // once more, with feeling
+            service = _serviceCache[type];
+            if (service is object) return service;
+        }
+        service = GetServicesImpl(this, type, ambient);
+        if (service is object)
+        {
+            try
+            {
+                _ = this[type]; // if possible, make sure that we've registered it, so we export a proxy if needed
+            }
+            catch { }
+            lock (_serviceCache)
+            {
+                _serviceCache[type] = service;
+            }
+        }
+        return service;
+
+        static object GetServicesImpl(RuntimeTypeModel model, Type type, CompatibilityLevel ambient)
+        {
+            if (type.IsEnum) return EnumSerializers.GetSerializer(type);
+
+            var nt = Nullable.GetUnderlyingType(type);
+            if (nt is object)
+            {
+                // rely on the fact that we always do double-duty with nullables
+                return model.GetServicesSlow(nt, ambient);
+            }
+
+            // rule out repeated (this has an internal cache etc)
+            var repeated = model.TryGetRepeatedProvider(type); // this handles ignores, etc
+            if (repeated is object) return repeated.Serializer;
+
+            int typeIndex = model.FindOrAddAuto(type, false, true, false, ambient);
+            if (typeIndex >= 0)
+            {
+                var mt = (MetaType)model.types[typeIndex];
+                var serializer = mt.Serializer;
+                if (serializer is IExternalSerializer external)
+                {
+                    return external.Service;
+                }
+                return serializer;
+            }
+
+            return null;
+        }
+
+    }
+
+    /// <summary>
+    /// See Object.ToString
+    /// </summary>
+    public override string ToString() => _name ?? base.ToString();
+
+    // this is used by some unit-tests; do not remove
+    internal Compiler.ProtoSerializer<TActual> GetSerializer<TActual>(IRuntimeProtoSerializerNode serializer, bool compiled)
+    {
+        if (serializer is null) throw new ArgumentNullException(nameof(serializer));
+
+        if (compiled) return Compiler.CompilerContext.BuildSerializer<TActual>(Scope, serializer, this);
+
+        return new Compiler.ProtoSerializer<TActual>(
+            (ref ProtoWriter.State state, TActual val) => serializer.Write(ref state, val));
+    }
+
+    /// <summary>
+    /// Compiles the serializers individually; this is *not* a full
+    /// standalone compile, but can significantly boost performance
+    /// while allowing additional types to be added.
+    /// </summary>
+    /// <remarks>An in-place compile can access non-public types / members</remarks>
+    public void CompileInPlace()
+    {
+        foreach (MetaType type in types)
+        {
+            type.CompileInPlace();
+        }
+    }
+
+    private void BuildAllSerializers()
+    {
+        // note that types.Count may increase during this operation, as some serializers
+        // bring other types into play
+        for (int i = 0; i < types.Count; i++)
+        {
+            // the primary purpose of this is to force the creation of the Serializer
+            MetaType mt = (MetaType)types[i];
+
+            if (GetServicesSlow(mt.Type, mt.CompatibilityLevel) is null) // respects enums, repeated, etc
+                throw new InvalidOperationException("No serializer available for " + mt.Type.NormalizeName());
+        }
+    }
+
+    internal sealed class SerializerPair : IComparable
+    {
+        int IComparable.CompareTo(object obj)
+        {
+            if (obj is null) throw new ArgumentNullException(nameof(obj));
+            SerializerPair other = (SerializerPair)obj;
+
+            // we want to bunch all the items with the same base-type together, but we need the items with a
+            // different base **first**.
+            if (this.BaseKey == this.MetaKey)
+            {
+                if (other.BaseKey == other.MetaKey)
+                { // neither is a subclass
+                    return this.MetaKey.CompareTo(other.MetaKey);
+                }
+                else
+                { // "other" (only) is involved in inheritance; "other" should be first
+                    return 1;
+                }
+            }
+            else
+            {
+                if (other.BaseKey == other.MetaKey)
+                { // "this" (only) is involved in inheritance; "this" should be first
+                    return -1;
+                }
+                else
+                { // both are involved in inheritance
+                    int result = this.BaseKey.CompareTo(other.BaseKey);
+                    if (result == 0) result = this.MetaKey.CompareTo(other.MetaKey);
+                    return result;
+                }
+            }
+        }
+        public readonly int MetaKey, BaseKey;
+        public readonly MetaType Type;
+        public readonly MethodBuilder Serialize, Deserialize;
+        public readonly ILGenerator SerializeBody, DeserializeBody;
+        public SerializerPair(int metaKey, int baseKey, MetaType type, MethodBuilder serialize, MethodBuilder deserialize,
+            ILGenerator serializeBody, ILGenerator deserializeBody)
+        {
+            this.MetaKey = metaKey;
+            this.BaseKey = baseKey;
+            this.Serialize = serialize;
+            this.Deserialize = deserialize;
+            this.SerializeBody = serializeBody;
+            this.DeserializeBody = deserializeBody;
+            this.Type = type;
+        }
+    }
+
+    internal static ILGenerator Override(TypeBuilder type, string name)
+        => Override(type, name, out _);
+    internal static ILGenerator Override(TypeBuilder type, string name, out Type[] genericArgs)
+    {
+        MethodInfo baseMethod;
+        try
+        {
+            baseMethod = type.BaseType.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (baseMethod is null)
+                throw new ArgumentException($"Unable to resolve '{name}'");
+        }
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"Unable to resolve '{name}': {ex.Message}", nameof(name), ex);
+        }
+
+        var parameters = baseMethod.GetParameters();
+        var paramTypes = new Type[parameters.Length];
+        for (int i = 0; i < paramTypes.Length; i++)
+        {
+            paramTypes[i] = parameters[i].ParameterType;
+        }
+        MethodBuilder newMethod = type.DefineMethod(baseMethod.Name,
+            (baseMethod.Attributes & ~MethodAttributes.Abstract) | MethodAttributes.Final, baseMethod.CallingConvention, baseMethod.ReturnType, paramTypes);
+        if (baseMethod.IsGenericMethodDefinition)
+        {
+            genericArgs = baseMethod.GetGenericArguments();
+            string[] names = Array.ConvertAll(genericArgs, x => x.Name);
+            newMethod.DefineGenericParameters(names);
+        }
+        else
+            genericArgs = Type.EmptyTypes;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            newMethod.DefineParameter(i + 1, parameters[i].Attributes, parameters[i].Name);
+        }
+        ILGenerator il = newMethod.GetILGenerator();
+        type.DefineMethodOverride(newMethod, baseMethod);
+        return il;
+    }
+
+    /// <summary>
+    /// Represents configuration options for compiling a model to 
+    /// a standalone assembly.
+    /// </summary>
+    public sealed class CompilerOptions
+    {
+        /// <summary>
+        /// Import framework options from an existing type
+        /// </summary>
+        public void SetFrameworkOptions(MetaType from)
+        {
+            if (from is null) throw new ArgumentNullException(nameof(from));
+            AttributeMap[] attribs = AttributeMap.Create(from.Type.Assembly);
+            foreach (AttributeMap attrib in attribs)
+            {
+                if (attrib.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute")
+                {
+                    if (attrib.TryGet("FrameworkName", out var tmp)) TargetFrameworkName = (string)tmp;
+                    if (attrib.TryGet("FrameworkDisplayName", out tmp)) TargetFrameworkDisplayName = (string)tmp;
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The TargetFrameworkAttribute FrameworkName value to burn into the generated assembly
+        /// </summary>
+        public string TargetFrameworkName { get; set; }
+
+        /// <summary>
+        /// The TargetFrameworkAttribute FrameworkDisplayName value to burn into the generated assembly
+        /// </summary>
+        public string TargetFrameworkDisplayName { get; set; }
+        /// <summary>
+        /// The name of the TypeModel class to create
+        /// </summary>
+        public string TypeName { get; set; }
+
+#if PLAT_NO_EMITDLL
+        internal const string NoPersistence = "Assembly persistence not supported on this runtime";
+#endif
+        /// <summary>
+        /// The path for the new dll
+        /// </summary>
+#if PLAT_NO_EMITDLL
+        [Obsolete(NoPersistence)]
+#endif
+        public string OutputPath { get; set; }
+        /// <summary>
+        /// The runtime version for the generated assembly
+        /// </summary>
+        public string ImageRuntimeVersion { get; set; }
+        /// <summary>
+        /// The runtime version for the generated assembly
+        /// </summary>
+        public int MetaDataVersion { get; set; }
+
+        /// <summary>
+        /// The acecssibility of the generated serializer
+        /// </summary>
+        public Accessibility Accessibility { get; set; }
+
+        /// <summary>
+        /// Implements a filter for use when generating models from assemblies
+        /// </summary>
+        public event Func<Type, bool> IncludeType;
+
+        internal bool OnIncludeType(Type type)
+        {
+            var evt = IncludeType;
+            return evt is null || evt(type);
+        }
+    }
+
+    /// <summary>
+    /// Type accessibility
+    /// </summary>
+    public enum Accessibility
+    {
+        /// <summary>
+        /// Available to all callers
+        /// </summary>
+        Public,
+        /// <summary>
+        /// Available to all callers in the same assembly, or assemblies specified via [InternalsVisibleTo(...)]
+        /// </summary>
+        Internal
+    }
+
+#if !PLAT_NO_EMITDLL
+    /// <summary>
+    /// Fully compiles the current model into a static-compiled serialization dll
+    /// (the serialization dll still requires protobuf-net for support services).
+    /// </summary>
+    /// <remarks>A full compilation is restricted to accessing public types / members</remarks>
+    /// <param name="name">The name of the TypeModel class to create</param>
+    /// <param name="path">The path for the new dll</param>
+    /// <returns>An instance of the newly created compiled type-model</returns>
+    public TypeModel Compile(string name, string path)
+    {
+        var options = new CompilerOptions()
+        {
+            TypeName = name,
+#pragma warning disable CS0618
+            OutputPath = path,
+#pragma warning restore CS0618
+        };
+        return Compile(options);
+    }
+#endif
+    /// <summary>
+    /// Fully compiles the current model into a static-compiled serialization dll
+    /// (the serialization dll still requires protobuf-net for support services).
+    /// </summary>
+    /// <remarks>A full compilation is restricted to accessing public types / members</remarks>
+    /// <returns>An instance of the newly created compiled type-model</returns>
+    public TypeModel Compile(CompilerOptions options = null)
+    {
+        options ??= new CompilerOptions();
+        string typeName = options.TypeName;
+#pragma warning disable 0618
+        string path = options.OutputPath;
+#pragma warning restore 0618
+        BuildAllSerializers();
+        Freeze();
+        bool save = !string.IsNullOrEmpty(path);
+        if (string.IsNullOrEmpty(typeName))
+        {
+#pragma warning disable CA2208 // param name - for clarity
+            if (save) throw new ArgumentNullException("typeName");
+#pragma warning restore CA2208 // param name - for clarity
+            typeName = "CompiledModel_" + Guid.NewGuid().ToString();
+        }
+
+        string assemblyName, moduleName;
+        if (path is null)
+        {
+            assemblyName = typeName;
+            moduleName = assemblyName + ".dll";
+        }
+        else
+        {
+            assemblyName = new System.IO.FileInfo(System.IO.Path.GetFileNameWithoutExtension(path)).Name;
+            moduleName = assemblyName + System.IO.Path.GetExtension(path);
+        }
+
+#if PLAT_NO_EMITDLL
+        AssemblyName an = new AssemblyName { Name = assemblyName };
+        AssemblyBuilder asm = AssemblyBuilder.DefineDynamicAssembly(an,
+            AssemblyBuilderAccess.Run);
+        ModuleBuilder module = asm.DefineDynamicModule(moduleName);
+#else
+        AssemblyName an = new AssemblyName { Name = assemblyName };
+        AssemblyBuilder asm = AppDomain.CurrentDomain.DefineDynamicAssembly(an,
+            save ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run);
+        ModuleBuilder module = save ? asm.DefineDynamicModule(moduleName, path)
+                                    : asm.DefineDynamicModule(moduleName);
+#endif
+        var scope = CompilerContextScope.CreateForModule(this, module, true, assemblyName);
+        WriteAssemblyAttributes(options, assemblyName, asm);
+
+
+        var serviceType = WriteBasicTypeModel("<Services>" + typeName, module, typeof(object), true);
+        // note: the service could benefit from [DynamicallyAccessedMembers(DynamicAccess.Serializer)], but: that only exists
+        // (on the public API) in net5+, and those platforms don't allow full dll emit (which is when the linker matters)
+        WriteSerializers(scope, serviceType);
+        WriteEnumsAndProxies(serviceType);
+
+#if PLAT_NO_EMITDLL
+        var finalServiceType = serviceType.CreateTypeInfo().AsType();
+#else
+        var finalServiceType = serviceType.CreateType();
+#endif
+
+        var modelType = WriteBasicTypeModel(typeName, module, typeof(TypeModel),
+            options.Accessibility == Accessibility.Internal);
+
+        WriteConstructorsAndOverrides(modelType, finalServiceType);
+
+#if PLAT_NO_EMITDLL
+        Type finalType = modelType.CreateTypeInfo().AsType();
+#else
+        Type finalType = modelType.CreateType();
+#endif
+        if (!string.IsNullOrEmpty(path))
+        {
+#if PLAT_NO_EMITDLL
+            throw new NotSupportedException(CompilerOptions.NoPersistence);
+#else
+            try
+            {
+                asm.Save(path);
+            }
+            catch (IOException ex)
+            {
+                // advertise the file info
+                throw new IOException(path + ", " + ex.Message, ex);
+            }
+            Debug.WriteLine("Wrote dll:" + path);
+#endif
+        }
+        return (TypeModel)Activator.CreateInstance(finalType, nonPublic: true);
+    }
+
+    private void WriteConstructorsAndOverrides(TypeBuilder type, Type serviceType)
+    {
+        ILGenerator il;
+        var options = Options;
+        if (options != TypeModel.DefaultOptions)
+        {
+            il = Override(type, "get_" + nameof(TypeModel.Options));
+            CompilerContext.LoadValue(il, (int)options);
+            il.Emit(OpCodes.Ret);
+        }
+
+        il = Override(type, nameof(TypeModel.GetSerializer), out var genericArgs);
+        var genericT = genericArgs.Single();
+        var method = typeof(SerializerCache).GetMethod(nameof(SerializerCache.Get)).MakeGenericMethod(serviceType, genericT);
+        il.EmitCall(OpCodes.Call, method, null);
+        il.Emit(OpCodes.Ret);
+
+        type.DefineDefaultConstructor(MethodAttributes.Public);
+    }
+
+    private void WriteEnumsAndProxies(TypeBuilder type)
+    {
+        for (int index = 0; index < types.Count; index++)
+        {
+            var metaType = (MetaType)types[index];
+            var runtimeType = metaType.Type;
+            RepeatedSerializerStub repeated;
+            if (runtimeType.IsEnum)
+            {
+                var member = EnumSerializers.GetProvider(runtimeType);
+                AddProxy(type, runtimeType, member, true);
+            }
+            else if (ShouldEmitCustomSerializerProxy(metaType.SerializerType))
+            {
+                AddProxy(type, runtimeType, metaType.SerializerType, false);
+            }
+            else if ((repeated = TryGetRepeatedProvider(runtimeType)) is object)
+            {
+                AddProxy(type, runtimeType, repeated.Provider, false);
+            }
+        }
+        static bool ShouldEmitCustomSerializerProxy(Type serializerType)
+        {
+            if (serializerType is null) return false; // nothing to do
+            if (IsFullyPublic(serializerType)) return true; // fine, just do it
+
+            // so: non-public; don't emit for anything inbuilt
+            return serializerType.Assembly != typeof(PrimaryTypeProvider).Assembly;
+        }
+    }
+
+    internal static MemberInfo GetUnderlyingProvider(MemberInfo provider, Type forType)
+    {
+        switch (provider)
+        {   // properties are really a special-case of methods, via the getter
+            case PropertyInfo property:
+                provider = property.GetGetMethod(true);
+                break;
+            // types are really a short-hand for the singleton API
+            case Type type when type.IsClass && !type.IsAbstract && type.GetConstructor(Type.EmptyTypes) is object:
+                provider = typeof(SerializerCache).GetMethod(nameof(SerializerCache.Get), BindingFlags.Public | BindingFlags.Static)
+                    .MakeGenericMethod(type, forType);
+                break;
+        }
+        return provider;
+    }
+
+    internal static void EmitProvider(MemberInfo provider, ILGenerator il)
+    {
+        // after GetUnderlyingProvider, all we *actually* need to implement is fields and methods
+        switch (provider)
+        {
+            case FieldInfo field when field.IsStatic:
+                il.Emit(OpCodes.Ldsfld, field);
+                break;
+            case MethodInfo method when method.IsStatic:
+                il.EmitCall(OpCodes.Call, method, null);
+                break;
+            default:
+                ThrowHelper.ThrowInvalidOperationException($"Invalid provider: {provider}");
+                break;
+        }
+    }
+
+    internal RepeatedSerializerStub TryGetRepeatedProvider(Type type, CompatibilityLevel ambient = default)
+    {
+        if (type is null) return null;
+        var repeated = RepeatedSerializers.TryGetRepeatedProvider(type);
+        // but take it back if it is explicitly excluded
+        if (repeated is object)
+        { // looks like a list, but double check for IgnoreListHandling
+            int idx = this.FindOrAddAuto(type, false, true, false, ambient);
+            if (idx >= 0 && ((MetaType)types[idx]).IgnoreListHandling)
+            {
+                return null;
+            }
+        }
+        return repeated;
+    }
+
+    private static void AddProxy(TypeBuilder building, Type proxying, MemberInfo provider, bool includeNullable)
+    {
+        provider = GetUnderlyingProvider(provider, proxying);
+        if (provider is object)
+        {
+            var iType = typeof(ISerializerProxy<>).MakeGenericType(proxying);
+            building.AddInterfaceImplementation(iType);
+            var il = CompilerContextScope.Implement(building, iType, "get_" + nameof(ISerializerProxy<string>.Serializer));
+            EmitProvider(provider, il);
+            il.Emit(OpCodes.Ret);
+
+            if (includeNullable)
+            {
+                iType = typeof(ISerializerProxy<>).MakeGenericType(typeof(Nullable<>).MakeGenericType(proxying));
+                building.AddInterfaceImplementation(iType);
+                il = CompilerContextScope.Implement(building, iType, "get_" + nameof(ISerializerProxy<string>.Serializer));
+                EmitProvider(provider, il);
+                il.Emit(OpCodes.Ret);
+            }
+        }
+    }
+
+    private void WriteSerializers(CompilerContextScope scope, TypeBuilder type)
+    {
+        // there are only a few permutations of "features" you want; share them between like-minded types
+        var featuresLookup = new Dictionary<SerializerFeatures, MethodInfo>();
+
+        MethodInfo GetFeaturesMethod(SerializerFeatures features)
+        {
+            if (!featuresLookup.TryGetValue(features, out var method))
+            {
+                var name = nameof(ISerializer<int>.Features) + "_" + ((int)features).ToString(CultureInfo.InvariantCulture);
+                var newMethod = type.DefineMethod(name, MethodAttributes.Private | MethodAttributes.Virtual,
+                    typeof(SerializerFeatures), Type.EmptyTypes);
+                ILGenerator il = newMethod.GetILGenerator();
+                CompilerContext.LoadValue(il, (int)features);
+                il.Emit(OpCodes.Ret);
+                method = featuresLookup[features] = newMethod;
+            }
+            return method;
+        }
+
+        for (int index = 0; index < types.Count; index++)
+        {
+            var metaType = (MetaType)types[index];
+            var serializer = metaType.Serializer;
+            var runtimeType = metaType.Type;
+
+            metaType.Validate();
+            if (runtimeType.IsEnum || metaType.SerializerType is object || TryGetRepeatedProvider(metaType.Type) is object)
+            {   // we don't implement these
+                continue;
+            }
+            if (!IsFullyPublic(runtimeType, out var problem))
+            {
+                ThrowHelper.ThrowInvalidOperationException("Non-public type cannot be used with full dll compilation: " + problem.NormalizeName());
+            }
+
+            Type inheritanceRoot = metaType.GetInheritanceRoot();
+
+            // we always emit the serializer API
+            var serType = typeof(ISerializer<>).MakeGenericType(runtimeType);
+            type.AddInterfaceImplementation(serType);
+
+            var il = CompilerContextScope.Implement(type, serType, nameof(ISerializer<string>.Read));
+            using (var ctx = new CompilerContext(scope, il, false, CompilerContext.SignatureType.ReaderScope_Input, this, runtimeType, nameof(ISerializer<string>.Read)))
+            {
+                if (serializer.HasInheritance)
+                {
+                    serializer.EmitReadRoot(ctx, ctx.InputValue);
+                }
+                else
+                {
+                    serializer.EmitRead(ctx, ctx.InputValue);
+                    ctx.LoadValue(ctx.InputValue);
+                }
+                ctx.Return();
+            }
+
+            il = CompilerContextScope.Implement(type, serType, nameof(ISerializer<string>.Write));
+            using (var ctx = new CompilerContext(scope, il, false, CompilerContext.SignatureType.WriterScope_Input, this, runtimeType, nameof(ISerializer<string>.Write)))
+            {
+                if (serializer.HasInheritance) serializer.EmitWriteRoot(ctx, ctx.InputValue);
+                else serializer.EmitWrite(ctx, ctx.InputValue);
+                ctx.Return();
+            }
+
+            var featuresGetter = serType.GetProperty(nameof(ISerializer<string>.Features)).GetGetMethod();
+            type.DefineMethodOverride(GetFeaturesMethod(serializer.Features), featuresGetter);
+
+            // and we emit the sub-type serializer whenever inheritance is involved
+            if (serializer.HasInheritance)
+            {
+                serType = typeof(ISubTypeSerializer<>).MakeGenericType(runtimeType);
+                type.AddInterfaceImplementation(serType);
+
+                il = CompilerContextScope.Implement(type, serType, nameof(ISubTypeSerializer<string>.WriteSubType));
+                using (var ctx = new CompilerContext(scope, il, false, CompilerContext.SignatureType.WriterScope_Input, this,
+                     runtimeType, nameof(ISubTypeSerializer<string>.WriteSubType)))
+                {
+                    serializer.EmitWrite(ctx, ctx.InputValue);
+                    ctx.Return();
+                }
+
+                il = CompilerContextScope.Implement(type, serType, nameof(ISubTypeSerializer<string>.ReadSubType));
+                using (var ctx = new CompilerContext(scope, il, false, CompilerContext.SignatureType.ReaderScope_Input, this,
+                    typeof(SubTypeState<>).MakeGenericType(runtimeType),
+                    nameof(ISubTypeSerializer<string>.ReadSubType)))
+                {
+                    serializer.EmitRead(ctx, ctx.InputValue);
+                    // note that EmitRead will unwrap the T for us on the stack
+                    ctx.Return();
+                }
+            }
+
+            // if we're constructor skipping, provide a factory for that
+            if (serializer.ShouldEmitCreateInstance)
+            {
+                serType = typeof(IFactory<>).MakeGenericType(runtimeType);
+                type.AddInterfaceImplementation(serType);
+
+                il = CompilerContextScope.Implement(type, serType, nameof(IFactory<string>.Create));
+                using var ctx = new CompilerContext(scope, il, false, CompilerContext.SignatureType.Context, this,
+                     typeof(ISerializationContext), nameof(IFactory<string>.Create));
+                serializer.EmitCreateInstance(ctx, false);
+                ctx.Return();
+            }
+        }
+    }
+
+    private static TypeBuilder WriteBasicTypeModel(string typeName, ModuleBuilder module,
+        Type baseType, bool @internal)
+    {
+        TypeAttributes typeAttributes = (baseType.Attributes & ~(TypeAttributes.Abstract | TypeAttributes.Serializable)) | TypeAttributes.Sealed;
+        if (@internal) typeAttributes &= ~TypeAttributes.Public;
+
+        return module.DefineType(typeName, typeAttributes, baseType);
+    }
+
+    private void WriteAssemblyAttributes(CompilerOptions options, string assemblyName, AssemblyBuilder asm)
+    {
+        if (!string.IsNullOrEmpty(options.TargetFrameworkName))
+        {
+            // get [TargetFramework] from mscorlib/equivalent and burn into the new assembly
+            Type versionAttribType = null;
+            try
+            { // this is best-endeavours only
+                versionAttribType = TypeModel.ResolveKnownType("System.Runtime.Versioning.TargetFrameworkAttribute", typeof(string).Assembly);
+            }
+            catch { /* don't stress */ }
+            if (versionAttribType is object)
+            {
+                PropertyInfo[] props;
+                object[] propValues;
+                if (string.IsNullOrEmpty(options.TargetFrameworkDisplayName))
+                {
+                    props = Array.Empty<PropertyInfo>();
+                    propValues = Array.Empty<object>();
+                }
+                else
+                {
+                    props = new PropertyInfo[1] { versionAttribType.GetProperty("FrameworkDisplayName") };
+                    propValues = new object[1] { options.TargetFrameworkDisplayName };
+                }
+                CustomAttributeBuilder builder = new CustomAttributeBuilder(
+                    versionAttribType.GetConstructor(new Type[] { typeof(string) }),
+                    new object[] { options.TargetFrameworkName },
+                    props,
+                    propValues);
+                asm.SetCustomAttribute(builder);
+            }
+        }
+
+        // copy assembly:InternalsVisibleTo
+        Type internalsVisibleToAttribType = null;
+
+        try
+        {
+            internalsVisibleToAttribType = typeof(System.Runtime.CompilerServices.InternalsVisibleToAttribute);
+        }
+        catch { /* best endeavors only */ }
+
+        if (internalsVisibleToAttribType is object)
+        {
+            List<string> internalAssemblies = new List<string>();
+            List<Assembly> consideredAssemblies = new List<Assembly>();
+            foreach (MetaType metaType in types)
+            {
+                Assembly assembly = metaType.Type.Assembly;
+                if (consideredAssemblies.IndexOf(assembly) >= 0) continue;
+                consideredAssemblies.Add(assembly);
+
+                AttributeMap[] assemblyAttribsMap = AttributeMap.Create(assembly);
+                for (int i = 0; i < assemblyAttribsMap.Length; i++)
+                {
+                    if (assemblyAttribsMap[i].AttributeType != internalsVisibleToAttribType) continue;
+
+                    assemblyAttribsMap[i].TryGet("AssemblyName", out var privelegedAssemblyObj);
+                    string privelegedAssemblyName = privelegedAssemblyObj as string;
+                    if (privelegedAssemblyName == assemblyName || string.IsNullOrEmpty(privelegedAssemblyName)) continue; // ignore
+
+                    if (internalAssemblies.IndexOf(privelegedAssemblyName) >= 0) continue; // seen it before
+                    internalAssemblies.Add(privelegedAssemblyName);
+
+                    CustomAttributeBuilder builder = new CustomAttributeBuilder(
+                        internalsVisibleToAttribType.GetConstructor(new Type[] { typeof(string) }),
+                        new object[] { privelegedAssemblyName });
+                    asm.SetCustomAttribute(builder);
+                }
+            }
+        }
+    }
+
+
+    private readonly Hashtable _serviceCache = new Hashtable();
+
+    internal override ISerializer<T> GetSerializerCore<T>(CompatibilityLevel ambient)
+        => GetServices<T>(ambient) as ISerializer<T>;
+
+    /// <summary>Resolve a service relative to T</summary>
+    protected override ISerializer<T> GetSerializer<T>()
+        => GetServices<T>(default) as ISerializer<T>;
 
 #if CHECK_COMPILED_VS_NOT
         RuntimeTypeModel GetInvertedVersionForCheckCompiledVsNot(int key, MetaType metaType)
@@ -1259,6 +2172,39 @@ namespace AqlaSerializer.Meta
         }
 
         private int _metadataTimeoutMilliseconds = 5000;
+#pragma warning restore RCS1159 // Use EventHandler<T>.
+
+    internal string GetSchemaTypeName(HashSet<Type> callstack, Type effectiveType, DataFormat dataFormat, CompatibilityLevel compatibilityLevel, bool asReference, bool dynamicType, HashSet<string> imports)
+        => GetSchemaTypeName(callstack, effectiveType, dataFormat, compatibilityLevel, asReference, dynamicType, imports, out _);
+
+    static bool IsWellKnownType(Type type, out string name, HashSet<string> imports)
+    {
+        if (type == typeof(byte[]))
+        {
+            name = "bytes";
+            return true;
+        }
+        else if (type == typeof(Timestamp))
+        {
+            imports.Add(CommonImports.Timestamp);
+            name = ".google.protobuf.Timestamp";
+            return true;
+        }
+        else if (type == typeof(Duration))
+        {
+            imports.Add(CommonImports.Duration);
+            name = ".google.protobuf.Duration";
+            return true;
+        }
+        else if (type == typeof(Empty))
+        {
+            imports.Add(CommonImports.Empty);
+            name = ".google.protobuf.Empty";
+            return true;
+        }
+        name = default;
+        return false;
+    }
         /// <summary>
         /// The amount of time to wait if there are concurrent metadata access operations
         /// </summary>
@@ -1334,6 +2280,179 @@ namespace AqlaSerializer.Meta
             return Interlocked.CompareExchange(ref _contentionCounter, 0, 0);
 #endif
         }
+
+    /// <summary>
+    /// Creates a new runtime model, to which the caller
+    /// can add support for a range of types. A model
+    /// can be used "as is", or can be compiled for
+    /// optimal performance.
+    /// </summary>
+    /// <param name="name">The logical name of this model</param>
+    public static RuntimeTypeModel Create([CallerMemberName] string name = null)
+    {
+        return new RuntimeTypeModel(false, name);
+    }
+
+    private readonly string _name;
+
+    internal static bool IsFullyPublic(Type type) => IsFullyPublic(type, out _);
+
+    internal static bool IsFullyPublic(Type type, out Type cause)
+    {
+        Type originalType = type;
+        while (type is object)
+        {
+            if (type.IsGenericType)
+            {
+                var args = type.GetGenericArguments();
+                foreach (var arg in args)
+                {
+                    if (!IsFullyPublic(arg))
+                    {
+                        cause = arg;
+                        return false;
+                    }
+                }
+            }
+            cause = type;
+            if (type.IsNestedPublic)
+            {
+                type = type.DeclaringType;
+            }
+            else
+            {
+                return type.IsPublic;
+            }
+        }
+        cause = originalType;
+        return false;
+    }
+
+    /// <summary>
+    /// Create a model that serializes all types from an
+    /// assembly specified by type
+    /// </summary>
+    public static new TypeModel CreateForAssembly<T>()
+        => AutoCompileTypeModel.CreateForAssembly<T>();
+
+    /// <summary>
+    /// Create a model that serializes all types from an
+    /// assembly specified by type
+    /// </summary>
+    public static new TypeModel CreateForAssembly(Type type)
+        => AutoCompileTypeModel.CreateForAssembly(type);
+
+    /// <summary>
+    /// Create a model that serializes all types from an assembly
+    /// </summary>
+    public static new TypeModel CreateForAssembly(Assembly assembly)
+        => AutoCompileTypeModel.CreateForAssembly(assembly);
+
+    /// <summary>
+    /// Promotes this model instance to be the default model; the default model is used by <see cref="Serializer"/> and <see cref="Serializer.NonGeneric"/>.
+    /// </summary>
+    public void MakeDefault()
+    {
+        lock (s_ModelSyncLock)
+        {
+            var oldModel = DefaultModel as RuntimeTypeModel;
+
+            if (ReferenceEquals(this, oldModel)) return; // we're already the default
+
+            try
+            {
+                // pre-emptively set the IsDefaultModel flag on the current model
+                SetOption(RuntimeTypeModelOptions.IsDefaultModel, true);
+
+                // check invariants (no race condition here, because of ^^^)
+                if (!UseImplicitZeroDefaults) ThrowDefaultUseImplicitZeroDefaults();
+                if (!AutoAddMissingTypes) ThrowDefaultAutoAddMissingTypes();
+                if (GetOption(RuntimeTypeModelOptions.Frozen)) ThrowDefaultFrozen();
+
+                // actually flip the reference
+                SetDefaultModel(this);
+            }
+            finally
+            {
+                // clear the IsDefaultModel flag on anything that is not, in fact, the default
+                var currentDefault = DefaultModel;
+                if (!ReferenceEquals(this, currentDefault))
+                    SetOption(RuntimeTypeModelOptions.IsDefaultModel, false);
+
+                if (oldModel is object && !ReferenceEquals(oldModel, currentDefault))
+                    oldModel.SetOption(RuntimeTypeModelOptions.IsDefaultModel, false);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowDefaultAutoAddMissingTypes()
+        => throw new InvalidOperationException("The default model must allow missing types");
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowDefaultUseImplicitZeroDefaults()
+        => throw new InvalidOperationException("UseImplicitZeroDefaults cannot be disabled on the default model");
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowDefaultFrozen()
+        => throw new InvalidOperationException("The default model cannot be frozen");
+
+    private static readonly object s_ModelSyncLock = new object();
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static RuntimeTypeModel CreateDefaultModelInstance()
+    {
+        lock (s_ModelSyncLock)
+        {
+            if (DefaultModel is not RuntimeTypeModel model)
+            {
+                model = new RuntimeTypeModel(true, "(default)");
+                SetDefaultModel(model);
+            }
+            return model;
+        }
+    }
+
+    /// <summary>
+    /// Treat all values of <typeparamref name="TUnderlying"/> (non-serializable)
+    /// as though they were the surrogate <typeparamref name="TSurrogate"/> (serializable);
+    /// if custom conversion operators are provided, they are used in place of implicit
+    /// or explicit conversion operators.
+    /// </summary>
+    /// <typeparam name="TUnderlying">The non-serializable type to provide custom support for</typeparam>
+    /// <typeparam name="TSurrogate">The serializable type that should be used instead</typeparam>
+    /// <param name="underlyingToSurrogate">Custom conversion operation</param>
+    /// <param name="surrogateToUnderlying">Custom conversion operation</param>
+    /// <param name="dataFormat">The <see cref="DataFormat"/> to use</param>
+    /// <param name="compatibilityLevel">The <see cref="CompatibilityLevel"/> to assume for this type</param>
+    /// <returns>The original model (for chaining).</returns>
+    public RuntimeTypeModel SetSurrogate<TUnderlying, TSurrogate>(
+        Func<TUnderlying, TSurrogate> underlyingToSurrogate = null, Func<TSurrogate, TUnderlying> surrogateToUnderlying = null,
+        DataFormat dataFormat = DataFormat.Default, CompatibilityLevel compatibilityLevel = CompatibilityLevel.NotSpecified)
+    {
+        Add<TUnderlying>(compatibilityLevel: compatibilityLevel).SetSurrogate(typeof(TSurrogate),
+            GetMethod(underlyingToSurrogate, nameof(underlyingToSurrogate)),
+            GetMethod(surrogateToUnderlying, nameof(surrogateToUnderlying)), dataFormat);
+        return this;
+
+        static MethodInfo GetMethod(Delegate value, string paramName)
+        {
+            if (value is null) return null;
+            var handlers = value.GetInvocationList();
+            if (handlers.Length != 1) ThrowHelper.ThrowArgumentException("A unicast delegate was expected.", paramName);
+            value = handlers[0];
+            if (value.Target is object target)
+            {
+                var msg = "A delegate to a static method was expected.";
+                if (target.GetType().IsDefined(typeof(CompilerGeneratedAttribute)))
+                {
+                    msg += $" The conversion '{target.GetType().NormalizeName()}.{value.Method.Name}' is compiler-generated (possibly a lambda); an explicit static method should be used instead.";
+                }
+                ThrowHelper.ThrowArgumentException(msg, paramName);
+            }
+            return value.Method;
+        }
+    }
         private void AddContention()
         {
 #if PLAT_NO_INTERLOCKED
@@ -1354,7 +2473,7 @@ namespace AqlaSerializer.Meta
                 if (opaqueToken != GetContention()) // contention-count changes since we looked!
                 {
                     LockContentedEventHandler handler = LockContended;
-                    if (handler != null)
+                    if (handler is object)
                     {
                         // not hugely elegant, but this is such a far-corner-case that it doesn't need to be slick - I'll settle for cross-platform
                         string stackTrace;
@@ -1535,4 +2654,3 @@ namespace AqlaSerializer.Meta
 
     public delegate bool AqlaPredicate<in T>(T x);
 }
-#endif

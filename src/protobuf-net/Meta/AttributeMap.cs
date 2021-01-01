@@ -13,6 +13,8 @@ namespace AqlaSerializer.Meta
 {
     public abstract class AttributeMap
     {
+        [Obsolete("Please use AttributeType instead")]
+        new public Type GetType() => AttributeType;
 #if DEBUG
         [Obsolete("Please use AttributeType instead", true)]
         public new Type GetType() { return AttributeType; }
@@ -44,31 +46,31 @@ namespace AqlaSerializer.Meta
             return TryGet(key, true, out value);
         }
         public abstract Type AttributeType { get; }
-        public static AttributeMap[] Create(TypeModel model, Type type, bool inherit)
+        public static AttributeMap[] Create(Type type, bool inherit)
         {
-#if FEAT_IKVM
-            Type attribType = model.MapType(typeof(System.Attribute));
-            System.Collections.Generic.IList<CustomAttributeData> all = type.__GetCustomAttributes(attribType, inherit);
-            AttributeMap[] result = new AttributeMap[all.Count];
-            int index = 0;
-            foreach (CustomAttributeData attrib in all)
-            {
-                result[index++] = new AttributeDataMap(attrib);
-            }
-            return result;
-#else
-#if WINRT
-            Attribute[] all = System.Linq.Enumerable.ToArray(type.GetTypeInfo().GetCustomAttributes(inherit));
-#else
+        #if FEAT_IKVM
+                    Type attribType = model.MapType(typeof(System.Attribute));
+                    System.Collections.Generic.IList<CustomAttributeData> all = type.__GetCustomAttributes(attribType, inherit);
+                    AttributeMap[] result = new AttributeMap[all.Count];
+                    int index = 0;
+                    foreach (CustomAttributeData attrib in all)
+                    {
+                        result[index++] = new AttributeDataMap(attrib);
+                    }
+                    return result;
+        #else
+        #if WINRT
+                    Attribute[] all = System.Linq.Enumerable.ToArray(type.GetTypeInfo().GetCustomAttributes(inherit));
+        #else
             object[] all = type.GetCustomAttributes(inherit);
-#endif
+        #endif
             AttributeMap[] result = new AttributeMap[all.Length];
-            for(int i = 0 ; i < all.Length ; i++)
+            for (int i = 0; i < all.Length; i++)
             {
                 result[i] = new ReflectionAttributeMap((Attribute)all[i]);
             }
             return result;
-#endif
+        #endif
         }
 
         public static AttributeMap GetAttribute(AttributeMap[] attribs, string fullName)
@@ -94,59 +96,59 @@ namespace AqlaSerializer.Meta
             return member.GetCustomAttributes(typeof(T), inherit).Select(attr => (T)(object)attr).ToArray();
 #endif
         }
-        
-        public static AttributeMap[] Create(TypeModel model, MemberInfo member, bool inherit)
+
+        public static AttributeMap[] Create(MemberInfo member, bool inherit)
         {
-#if FEAT_IKVM
-            System.Collections.Generic.IList<CustomAttributeData> all = member.__GetCustomAttributes(model.MapType(typeof(Attribute)), inherit);
-            AttributeMap[] result = new AttributeMap[all.Count];
-            int index = 0;
-            foreach (CustomAttributeData attrib in all)
-            {
-                result[index++] = new AttributeDataMap(attrib);
-            }
-            return result;
-#else
-#if WINRT
-            Attribute[] all = System.Linq.Enumerable.ToArray(member.GetCustomAttributes(inherit));
-#else
+        #if FEAT_IKVM
+                    System.Collections.Generic.IList<CustomAttributeData> all = member.__GetCustomAttributes(model.MapType(typeof(Attribute)), inherit);
+                    AttributeMap[] result = new AttributeMap[all.Count];
+                    int index = 0;
+                    foreach (CustomAttributeData attrib in all)
+                    {
+                        result[index++] = new AttributeDataMap(attrib);
+                    }
+                    return result;
+        #else
+        #if WINRT
+                    Attribute[] all = System.Linq.Enumerable.ToArray(member.GetCustomAttributes(inherit));
+        #else
             object[] all = member.GetCustomAttributes(inherit);
-#endif
+        #endif
             AttributeMap[] result = new AttributeMap[all.Length];
-            for(int i = 0 ; i < all.Length ; i++)
+            for (int i = 0; i < all.Length; i++)
             {
                 result[i] = new ReflectionAttributeMap((Attribute)all[i]);
             }
             return result;
-#endif
+        #endif
         }
-        public static AttributeMap[] Create(TypeModel model, Assembly assembly)
+        public static AttributeMap[] Create(Assembly assembly)
         {
-            
-#if FEAT_IKVM
-            const bool inherit = false;
-            System.Collections.Generic.IList<CustomAttributeData> all = assembly.__GetCustomAttributes(model.MapType(typeof(Attribute)), inherit);
-            AttributeMap[] result = new AttributeMap[all.Count];
-            int index = 0;
-            foreach (CustomAttributeData attrib in all)
-            {
-                result[index++] = new AttributeDataMap(attrib);
-            }
-            return result;
-#else
-#if WINRT
-            Attribute[] all = System.Linq.Enumerable.ToArray(assembly.GetCustomAttributes());
-#else
+
+        #if FEAT_IKVM
+                    const bool inherit = false;
+                    System.Collections.Generic.IList<CustomAttributeData> all = assembly.__GetCustomAttributes(model.MapType(typeof(Attribute)), inherit);
+                    AttributeMap[] result = new AttributeMap[all.Count];
+                    int index = 0;
+                    foreach (CustomAttributeData attrib in all)
+                    {
+                        result[index++] = new AttributeDataMap(attrib);
+                    }
+                    return result;
+        #else
+        #if WINRT
+                    Attribute[] all = System.Linq.Enumerable.ToArray(assembly.GetCustomAttributes());
+        #else
             const bool inherit = false;
             object[] all = assembly.GetCustomAttributes(inherit);
-#endif
+        #endif
             AttributeMap[] result = new AttributeMap[all.Length];
-            for(int i = 0 ; i < all.Length ; i++)
+            for (int i = 0; i < all.Length; i++)
             {
                 result[i] = new ReflectionAttributeMap((Attribute)all[i]);
             }
             return result;
-#endif
+        #endif
         }
 
         public abstract T GetRuntimeAttribute<T>(TypeModel model);
@@ -224,4 +226,3 @@ namespace AqlaSerializer.Meta
 #endif
     }
 }
-#endif
