@@ -31,7 +31,7 @@ namespace AqlaSerializer
 
             private protected override void ImplEndLengthPrefixedSubItem(ref State state, SubItemToken token, PrefixStyle style)
             {
-                var len = _position64 - token.value64;
+                var len = _position64 - token.Value64;
                 int bytes;
                 switch(style)
                 {
