@@ -3,3 +3,5 @@ When you open solution Visual Studio will ask you to install some extra sdks.
 Find PEVerify.exe in your SDK folder and copy to src/Tools
 
 buildpack.cmd makes a package. To use buildpack.cmd install MSBuild Community Tasks https://github.com/loresoft/msbuildtasks/releases and MSBuild Extension Pack http://msbuildextensionpack.com
+
+Mind that the SNK in the repository is different than the one used by official releases.
