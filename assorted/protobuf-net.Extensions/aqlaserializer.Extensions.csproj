@@ -76,8 +76,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Caching\ByteSegmentComparer.cs" />
-    <Compile Include="Caching\Enyim\ProtoTranscoder.cs" />
     <Compile Include="Expressions\Expression.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceModel\Client\ProtoClientExtensions.cs" />

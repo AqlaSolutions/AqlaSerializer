@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <Reference Include="NHibernate">
       <HintPath>..\Tools\NHibernate.dll</HintPath>
@@ -66,7 +67,7 @@
   <ItemGroup Condition="'$(TargetFramework)'=='net5.0'">
     <PackageReference Include="Microsoft.ILVerification" Version="5.0.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
-    <PackageReference Include="Mindbox.Data.Linq" Version="3.0.0"/>
+    <PackageReference Include="Mindbox.Data.Linq" Version="3.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\protobuf-net\aqlaserializer.csproj">

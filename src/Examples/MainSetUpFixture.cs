@@ -7,6 +7,8 @@ using Examples;
 using NUnit.Framework;
 using System.Text;
 using System.Threading;
+using System.IO;
+using System.Reflection;
 
 [SetUpFixture]
 public class MainSetUpFixture
@@ -17,6 +19,12 @@ public class MainSetUpFixture
     public Action<IList<object>> UnhandledExceptionCheck { get; set; }
 
     static bool _validateInitialized;
+
+    [OneTimeSetUp]
+    public void SetupCurrentDirectory()
+    {
+        Environment.CurrentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    }
 
 #if NET5_0
     static int _inited;

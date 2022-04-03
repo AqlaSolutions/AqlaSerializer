@@ -59,8 +59,8 @@ namespace precompile.tests
 #if DEBUG
             configuration = "Debug";
 #endif
-            Assert.That(rtm.Universe.LoadFile($@"..\..\..\..\src\protobuf-net.Test\bin\{configuration}\aqlaserializer.dll"), Is.Not.Null);
-            var asm = rtm.Load($@"..\..\..\..\src\protobuf-net.Test\bin\{configuration}\aqlaserializer.unittest.exe");
+            Assert.That(rtm.Universe.LoadFile($@"..\..\..\..\src\protobuf-net.Test\bin\{configuration}\net45\aqlaserializer.dll"), Is.Not.Null);
+            var asm = rtm.Load($@"..\..\..\..\src\protobuf-net.Test\bin\{configuration}\net45\aqlaserializer.unittest.dll");
             var t = asm.GetType("AqlaSerializer.unittest.Aqla.ClassWithMembersForIKVM", true);
             return t;
         }

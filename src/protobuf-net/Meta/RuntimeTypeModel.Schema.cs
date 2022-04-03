@@ -241,7 +241,7 @@ namespace AqlaSerializer.Meta
                 headerBuilder.Append("import \"bcl.proto\"; // schema for protobuf-net's handling of core .NET types");
                 Helpers.AppendLine(headerBuilder);
             }
-            return Helpers.AppendLine(headerBuilder.Append(bodyBuilder)).ToString();
+            return Helpers.AppendLine(headerBuilder.Append(bodyBuilder)).ToString().Replace("\r\n","\n");
         }
         private void CascadeDependents(BasicList list, MetaType metaType)
         {

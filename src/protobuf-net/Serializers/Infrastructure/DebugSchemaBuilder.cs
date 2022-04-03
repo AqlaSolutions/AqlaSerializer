@@ -63,7 +63,7 @@ namespace AqlaSerializer.Serializers
         }
 
         LevelState State => _nesting.Peek();
-        
+
         public void Reset()
         {
             _sb.Reset();
@@ -127,7 +127,7 @@ namespace AqlaSerializer.Serializers
             _contracts.Add(id, b);
             return b;
         }
-        
+
         IDisposable Item()
         {
             if (!State.IsGroup && State.AnyElementWritten) throw new InvalidOperationException("Can't write multiple elements when not in a group");
@@ -166,7 +166,7 @@ namespace AqlaSerializer.Serializers
                     sb.AppendLine(b.Key + ":");
                     sb.AppendLine(b.Value.ToString());
                 }
-            return sb.ToString();
+            return sb.ToString().Replace("\r\n", "\n");
         }
 
 
