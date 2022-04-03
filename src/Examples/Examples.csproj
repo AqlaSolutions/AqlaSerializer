@@ -53,16 +53,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="aqla.runsharp" Version="1.0.23" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <Reference Include="NHibernate">
       <HintPath>..\Tools\NHibernate.dll</HintPath>
     </Reference>
-    <ProjectReference Include="..\..\..\..\RunSharp\src\RunSharp\RunSharp.csproj">
-      <SetTargetFramework Condition="'$(TargetFramework)'=='net45'">TargetFramework=net35</SetTargetFramework>
-      <SetTargetFramework Condition="'$(TargetFramework)'=='net5.0'">TargetFramework=netstandard2.1</SetTargetFramework>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net5.0'">
     <PackageReference Include="Microsoft.ILVerification" Version="5.0.0" />

@@ -58,6 +58,10 @@
     <Reference Include="IKVM.Reflection">
       <HintPath>..\Tools\IKVM.Reflection.dll</HintPath>
     </Reference>
+    <Reference Include="RunSharp, Version=1.0.23.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Tools\RunSharp.IKVM\RunSharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Runtime.Serialization" />
@@ -72,12 +76,6 @@
       <Link>IKVM-LICENSE</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\RunSharp\src\RunSharpIKVM\RunSharp_IKVM.csproj">
-      <Project>{c835bb75-7955-4315-b52c-fa59e25219f4}</Project>
-      <Name>RunSharp_IKVM</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
