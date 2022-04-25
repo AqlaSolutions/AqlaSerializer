@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SqlClr</RootNamespace>
     <AssemblyName>SqlClr</AssemblyName>
-    <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AssemblyOriginatorKeyFile>..\..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
     <FileUpgradeFlags>
@@ -53,13 +53,17 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
+   <PackageReference Include="microsoft.netframework.referenceassemblies.net35"
+                     Version="1.0.2" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\protobuf-net\aqlaserializer.csproj">
       <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
       <Name>aqlaserializer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

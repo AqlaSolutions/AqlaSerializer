@@ -34,7 +34,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AqlaSerializer.Precompile</RootNamespace>
     <AssemblyName>precompile</AssemblyName>
-    <TargetFrameworkVersion>v3.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -58,6 +58,10 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\precompile.XML</DocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+   <PackageReference Include="microsoft.netframework.referenceassemblies.net35"
+                     Version="1.0.2" PrivateAssets="All" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="IKVM.Reflection">
       <HintPath>..\..\src\Tools\IKVM.Reflection.dll</HintPath>

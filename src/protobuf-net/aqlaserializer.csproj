@@ -8,10 +8,10 @@
     <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly;Silverlight2CoreOnly;UnityCoreOnly</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='Silverlight2' AND '$(Configuration)'!='iOS' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
-    <TargetFrameworks>netstandard2.1;net20;net30;net35;net40;net45;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net20;net35;net40;net45;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='CoreOnly'">
-    <TargetFrameworks>netstandard2.1;net30;net35;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net35;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'portable-net4+sl50+win8+wpa81+wp8+android+ios+uap'">
      <TargetFrameworkIdentifier>.NETPortable</TargetFrameworkIdentifier>
@@ -20,7 +20,7 @@
    </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <DefineConstants>TRACE;DEBUG;FEAT_COMPILER PLAT_BINARYFORMATTER PLAT_XMLSERIALIZER FORCE_ADVANCED_VERSIONING TESTS CHECK_COMPILED_VS_NOT</DefineConstants>
-    <TargetFrameworks>netstandard2.1;net30;net35</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net35</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -37,7 +37,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Profile' ">
-    <TargetFramework>net30</TargetFramework>
+    <TargetFramework>net35</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release' OR '$(Configuration)' == 'Safe' OR '$(Configuration)' == 'Profile' OR '$(Configuration)' == 'CoreOnly'">
     <DefineConstants>TRACE</DefineConstants>
@@ -59,17 +59,17 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Silverlight2' ">
     <DefineConstants>TRACE;SILVERLIGHT FEAT_SAFE</DefineConstants>
-    <TargetFramework>net30</TargetFramework>
+    <TargetFramework>net35</TargetFramework>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Silverlight2CoreOnly' ">
     <DefineConstants>TRACE;NO_RUNTIME SILVERLIGHT FEAT_SAFE</DefineConstants>
-    <TargetFramework>net30</TargetFramework>
+    <TargetFramework>net35</TargetFramework>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'iOS' ">
     <DefineConstants>TRACE; NO_RUNTIME FEAT_SAFE IOS PLAT_NO_INTERLOCKED</DefineConstants>
-    <TargetFramework>net30</TargetFramework>
+    <TargetFramework>net35</TargetFramework>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Unity' ">
@@ -94,6 +94,10 @@
   <PropertyGroup>    
     <DocumentationFile>$(TargetDir)\aqlaserializer.xml</DocumentationFile>
   </PropertyGroup> 
+  <ItemGroup Condition="'$(TargetFramework)'=='net35'">
+   <PackageReference Include="microsoft.netframework.referenceassemblies.net35"
+                     Version="1.0.2" PrivateAssets="All" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1'">
     <Reference Include="System">
       <Aliases>global</Aliases>
@@ -108,10 +112,10 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net20' AND '$(TargetFramework)' != 'netstandard2.1' AND '$(Configuration)' != 'Unity'">
     <Reference Include="System.Runtime.Serialization">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Condition="!$(DefineConstants.Contains('PORTABLE'))" Include="System.ServiceModel">
-      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('PORTABLE'))">
