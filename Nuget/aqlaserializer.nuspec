@@ -27,6 +27,11 @@ Some build configurations may be not available through nuget, you can download t
     <language>en-US</language>
     <releaseNotes>
 
+* 2.0.1.1031:
+- interfaces without subtypes and System.Object use dynamic type by default
+- ISet fixes
+- arrays can be deserialized into IList fields
+
 * 2.0.1.968:
 - added support for IReadOnlyDictionary, IReadOnlySet, ISet
 
