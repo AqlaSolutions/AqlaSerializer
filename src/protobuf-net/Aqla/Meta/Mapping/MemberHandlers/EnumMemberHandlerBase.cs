@@ -60,11 +60,7 @@ namespace AqlaSerializer.Meta.Mapping.MemberHandlers
 
 #if !FEAT_IKVM // IKVM can't access HasValue, but conveniently, Value will only be returned if set via ctor or property
             if ((bool)Helpers.GetInstanceMethod(
-                attrib.AttributeType
-#if WINRT
-                             .GetTypeInfo()
-#endif
-                ,
+                attrib.AttributeType,
                 "HasValue").Invoke(attrib.Target, null))
 #endif
             {

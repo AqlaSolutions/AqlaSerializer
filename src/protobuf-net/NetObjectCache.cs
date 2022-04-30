@@ -109,39 +109,9 @@ namespace AqlaSerializer
             BasicList list = List;
             int index;
 
-#if NO_GENERICS
-            
             if(s == null)
             {
-                if (objectKeys == null)
-                {
-                    objectKeys = new ReferenceHashtable();
-                    index = -1;
-                }
-                else
-                {
-                    object tmp = objectKeys[value];
-                    index = tmp == null ? -1 : (int) tmp;
-                }
-            }
-            else
-            {
-                if (stringKeys == null)
-                {
-                    stringKeys = new Hashtable();
-                    index = -1;
-                }
-                else
-                {
-                    object tmp = stringKeys[s];
-                    index = tmp == null ? -1 : (int) tmp;
-                }
-            }
-#else
-
-            if(s == null)
-            {
-#if CF || PORTABLE // CF has very limited proper object ref-tracking; so instead, we'll search it the hard way
+#if PORTABLE // CF has very limited proper object ref-tracking; so instead, we'll search it the hard way
                 index = list.IndexOfReference(value);
 #else
                 if (_objectKeys == null) 
@@ -167,7 +137,6 @@ namespace AqlaSerializer
                     if (!_stringKeys.TryGetValue(s, out index)) index = -1;
                 }
             }
-#endif
 
             if (!(existing = index >= 0))
             {
@@ -175,7 +144,7 @@ namespace AqlaSerializer
 
                 if (s == null)
                 {
-#if !CF && !PORTABLE // CF can't handle the object keys very well
+#if !PORTABLE // CF can't handle the object keys very well
                     _objectKeys.Add(value, index);
 #endif
                 }
@@ -243,7 +212,7 @@ namespace AqlaSerializer
 
         private System.Collections.Generic.Dictionary<string, int> _stringKeys;
 
-#if !CF && !PORTABLE // CF lacks the ability to get a robust reference-based hash-code, so we'll do it the harder way instead
+#if !PORTABLE // CF lacks the ability to get a robust reference-based hash-code, so we'll do it the harder way instead
         private System.Collections.Generic.Dictionary<object, int> _objectKeys;
         private sealed class ReferenceComparer : System.Collections.Generic.IEqualityComparer<object>
         {
@@ -270,7 +239,7 @@ namespace AqlaSerializer
             _rootObject = null;
             _underlyingList?.Clear();
             _stringKeys?.Clear();
-#if !CF && !PORTABLE
+#if !PORTABLE
             _objectKeys?.Clear();
 #endif
         }
@@ -280,7 +249,7 @@ namespace AqlaSerializer
             var c = (NetObjectCache)MemberwiseClone();
             if (_stringKeys != null)
                 c._stringKeys = new Dictionary<string, int>(_stringKeys);
-#if !CF && !PORTABLE
+#if !PORTABLE
             if (_objectKeys != null)
                 c._objectKeys = new Dictionary<object, int>(_objectKeys);
 #endif

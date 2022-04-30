@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-#if !NET_4_5 && !WINRT
+#if !NET_4_5
 
 namespace System.Runtime.CompilerServices
 {

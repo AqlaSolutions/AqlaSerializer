@@ -2,9 +2,7 @@
 using AqlaSerializer.Meta;
 using System;
 using System.IO;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -25,18 +23,9 @@ namespace AqlaSerializer
     /// extensible, allowing a type to be deserialized / merged even if some data is
     /// not recognised.
     /// </remarks>
-    public 
-#if FX11
-    sealed
-#else
-    static
-#endif
-        class Serializer
+    public static class Serializer
     {
-#if FX11
-        private Serializer() { } // not a static class for C# 1.2 reasons
-#endif
-#if !NO_RUNTIME && !NO_GENERICS
+#if !NO_RUNTIME
 
 #if !FEAT_IKVM
         /// <summary>
@@ -44,13 +33,7 @@ namespace AqlaSerializer
         /// </summary>
         public static void AddContracts(bool nonPublic)
         {
-#if !WINRT
             Assembly assembly = Assembly.GetCallingAssembly();
-#else
-            Assembly assembly = (Assembly)typeof(Assembly).GetTypeInfo()
-                .GetDeclaredMethod("GetCallingAssembly")
-                .Invoke(null, new object[0]);
-#endif
             AddContracts(assembly, nonPublic);
         }
 #endif
@@ -150,7 +133,7 @@ namespace AqlaSerializer
         {
             return RuntimeTypeModel.Default.ChangeType<TFrom, TTo>(instance);
         }
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied SerializationInfo.
         /// </summary>
@@ -234,7 +217,7 @@ namespace AqlaSerializer
 #endif
 
         private const string ProtoBinaryField = "proto";
-#if PLAT_BINARYFORMATTER && !NO_GENERICS && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>
         /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
         /// </summary>
@@ -271,19 +254,18 @@ namespace AqlaSerializer
         }
 #endif
 
-#if !NO_GENERICS
         /// <summary>
         /// Precompiles the serializer for a given type.
         /// </summary>
         public static void PrepareSerializer<T>()
-        { 
+        {
 #if FEAT_COMPILER
             RuntimeTypeModel model = RuntimeTypeModel.Default;
             model.PrepareSerializer<T>();
 #endif
         }
 
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>
         /// Creates a new IFormatter that uses protocol-buffer [de]serialization.
         /// </summary>
@@ -421,7 +403,7 @@ namespace AqlaSerializer
                 return TryReadLengthPrefix(source, style, out length);
             }
         }
-#endif
+
         /// <summary>
         /// The field number that is used as a default when serializing/deserializing a list of objects.
         /// The data is treated as repeated message with field number 1.
@@ -434,17 +416,8 @@ namespace AqlaSerializer
         /// <summary>
         /// Provides non-generic access to the default serializer.
         /// </summary>
-        public
-#if FX11
-    sealed
-#else
-    static
-#endif
-            class NonGeneric
+        public static class NonGeneric
         {
-#if FX11
-            private NonGeneric() { } // not a static class for C# 1.2 reasons
-#endif
             /// <summary>
             /// Create a deep clone of the supplied instance; any sub-items are also cloned.
             /// </summary>
@@ -500,7 +473,7 @@ namespace AqlaSerializer
             public static void SerializeWithLengthPrefix(Stream destination, object instance, PrefixStyle style, int fieldNumber)
             {
                 if (instance == null) throw new ArgumentNullException(nameof(instance));
-                RuntimeTypeModel model = RuntimeTypeModel.Default;                
+                RuntimeTypeModel model = RuntimeTypeModel.Default;
                 model.SerializeWithLengthPrefix(destination, instance, model.MapType(instance.GetType()), style, fieldNumber);
             }
             /// <summary>
@@ -533,17 +506,8 @@ namespace AqlaSerializer
         /// <summary>
         /// Global switches that change the behavior of protobuf-net
         /// </summary>
-        public
-#if FX11
-    sealed
-#else
-    static
-#endif
-            class GlobalOptions
+        public static class GlobalOptions
         {
-#if FX11
-            private GlobalOptions() { } // not a static class for C# 1.2 reasons
-#endif
             /// <summary>
             /// <see cref="RuntimeTypeModel.InferTagFromNameDefault"/>
             /// </summary>

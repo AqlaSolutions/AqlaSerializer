@@ -39,11 +39,7 @@ namespace AqlaSerializer.Meta
 
         public Type GetBaseType()
         {
-#if WINRT
-            return _typeInfo.BaseType;
-#else
             return Type.BaseType;
-#endif
         }
 
         /// <summary>
@@ -60,37 +56,14 @@ namespace AqlaSerializer.Meta
 
         public bool IsValidSubType(Type subType)
         {
-#if WINRT
-            if (!CanHaveSubType(_typeInfo)) return false;
-#else
             if (!CanHaveSubType(Type)) return false;
-#endif
-#if WINRT
-            return _typeInfo.IsAssignableFrom(subType.GetTypeInfo());
-#else
             return Type.IsAssignableFrom(subType);
-#endif
         }
-#if WINRT
         public static bool CanHaveSubType(Type type)
         {
-            return CanHaveSubType(type.GetTypeInfo());
-        }
-
-        public static bool CanHaveSubType(TypeInfo type)
-#else
-        public static bool CanHaveSubType(Type type)
-#endif
-        {
-#if WINRT
-            if ((type.IsClass || type.IsInterface) && !type.IsSealed)
-            {
-#else
             if ((type.IsClass || type.IsInterface) && !type.IsSealed)
             {
                 return true;
-#endif
-
             }
             return false;
         }
@@ -106,12 +79,8 @@ namespace AqlaSerializer.Meta
             if (Type.IsArray)
                 throw new ArgumentException("An array has inbuilt behaviour and cannot be subclassed");
 
-#if WINRT
-            if (!CanHaveSubType(_typeInfo)) {
-#else
             if (!CanHaveSubType(Type))
             {
-#endif
                 throw new InvalidOperationException("Sub-types can only be added to non-sealed classes");
             }
             if (!IsValidSubType(derivedType))

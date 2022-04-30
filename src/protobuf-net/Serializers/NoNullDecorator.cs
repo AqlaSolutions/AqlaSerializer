@@ -33,11 +33,7 @@ namespace AqlaSerializer.Serializers
             Type tailType = tail.ExpectedType;
             if (Helpers.IsValueType(tailType))
             {
-#if NO_GENERICS
-                throw new NotSupportedException("NullDecorator cannot be used with a struct without generics support");
-#else
                 _expectedType = model.MapType(typeof(Nullable<>)).MakeGenericType(tailType);
-#endif
             }
             else
             {

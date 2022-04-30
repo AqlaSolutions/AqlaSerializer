@@ -33,15 +33,11 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public partial class MetaType : ISerializerProxy
     {
-#if WINRT
-        internal static readonly TypeInfo ienumerable = typeof(IEnumerable).GetTypeInfo();
-#else
         internal static readonly System.Type ienumerable = typeof(IEnumerable);
-#endif
 
         private RuntimeTypeModel _model;
         internal TypeModel Model => _model;
-        
+
         internal bool IsList
         {
             get
@@ -53,16 +49,13 @@ namespace AqlaSerializer.Meta
 
         bool _isDefaultBehaviourApplied;
 
-        #if WINRT
-                private readonly TypeInfo _typeInfo;
-        #endif
-                /// <summary>
-                /// The runtime type that the meta-type represents
-                /// </summary>
-                public Type Type { get; }
+        /// <summary>
+        /// The runtime type that the meta-type represents
+        /// </summary>
+        public Type Type { get; }
 
         bool _isFrozen;
-#if !WINRT && !PORTABLE && !SILVERLIGHT
+#if !PORTABLE
         StackTrace _freezeStackTrace;
 #endif
         internal bool IsFrozen
@@ -73,7 +66,7 @@ namespace AqlaSerializer.Meta
             }
             private set
             {
-#if DEBUG && !WINRT && !PORTABLE && !SILVERLIGHT
+#if DEBUG && !PORTABLE
                 if (value && !_isFrozen)
                     _freezeStackTrace = new StackTrace(false);
 #endif
@@ -82,7 +75,7 @@ namespace AqlaSerializer.Meta
         }
 
         bool _isPending;
-        
+
         internal bool IsPending
         {
             get { return _isPending; }
@@ -111,10 +104,6 @@ namespace AqlaSerializer.Meta
             }
 
             this.Type = type;
-
-#if WINRT
-            this._typeInfo = type.GetTypeInfo();
-#endif
 
             MemberInfo[] members;
 
@@ -155,7 +144,7 @@ namespace AqlaSerializer.Meta
 
 
         private MethodInfo _factory;
-        
+
         /// <summary>
         /// Designate a factory-method to use to create instances of this type
         /// </summary>
@@ -166,7 +155,7 @@ namespace AqlaSerializer.Meta
             this._factory = factory;
             return this;
         }
-         
+
 
         /// <summary>
         /// Designate a factory-method to use to create instances of this type
@@ -212,16 +201,16 @@ namespace AqlaSerializer.Meta
 		{
 		    if (IsFrozen) ThrowFrozen();
 		}
-		
+
         void ThrowFrozen()
         {
-#if DEBUG && !WINRT && !PORTABLE && !SILVERLIGHT
+#if DEBUG && !PORTABLE
             Debug.WriteLine("Frozen at " + _freezeStackTrace);
 #endif
             throw new InvalidOperationException("The type cannot be changed once a serializer has been generated for " + Type.FullName + " or once its settings were used for generating member serializer");
         }
 
-        
+
         /// <summary>
         /// Get the name of the type being represented
         /// </summary>

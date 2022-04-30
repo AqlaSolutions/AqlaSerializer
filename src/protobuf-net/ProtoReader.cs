@@ -3,9 +3,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Linq; using AltLinq;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 using System.IO;
 using System.Text;
 using AqlaSerializer.Meta;
@@ -13,11 +11,6 @@ using AqlaSerializer.Serializers;
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
-#endif
-
-#if MF
-using EndOfStreamException = System.ApplicationException;
-using OverflowException = System.ApplicationException;
 #endif
 
 namespace AqlaSerializer
@@ -646,28 +639,6 @@ namespace AqlaSerializer
             throw EoF(this);
         }
 
-#if NO_GENERICS
-        private System.Collections.Hashtable stringInterner;
-        private string Intern(string value)
-        {
-            if (value == null) return null;
-            if (value.Length == 0) return "";
-            if (stringInterner == null)
-            {
-                stringInterner = new System.Collections.Hashtable();
-                stringInterner.Add(value, value);      
-            }
-            else if (stringInterner.ContainsKey(value))
-            {
-                value = (string)stringInterner[value];
-            }
-            else
-            {
-                stringInterner.Add(value, value);
-            }
-            return value;
-        }
-#else
         private System.Collections.Generic.Dictionary<string,string> _stringInterner;
         private string Intern(string value)
         {
@@ -689,7 +660,6 @@ namespace AqlaSerializer
             }
             return value;
         }
-#endif
 
         static readonly UTF8Encoding Encoding = new UTF8Encoding();
         /// <summary>
@@ -702,19 +672,7 @@ namespace AqlaSerializer
                 int bytes = (int)ReadUInt32Variant(false);
                 if (bytes == 0) return "";
                 if (_available < bytes) Ensure(bytes, true);
-#if MF
-                byte[] tmp;
-                if(ioIndex == 0 && bytes == ioBuffer.Length) {
-                    // unlikely, but...
-                    tmp = ioBuffer;
-                } else {
-                    tmp = new byte[bytes];
-                    Helpers.BlockCopy(ioBuffer, ioIndex, tmp, 0, bytes);
-                }
-                string s = new string(encoding.GetChars(tmp));
-#else
                 string s = Encoding.GetString(_ioBuffer, _ioIndex, bytes);
-#endif
                 if (_internStrings) { s = Intern(s); }
                 _available -= bytes;
                 _position64 += bytes;
@@ -1509,7 +1467,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
         }
         internal static Exception AddErrorData(Exception exception, ProtoReader source)
         {
-#if !CF && !FX11 && !PORTABLE
+#if !PORTABLE
             if (exception != null && source != null && !exception.Data.Contains("protoSource"))
             {
                 exception.Data.Add("protoSource", string.Format("tag={0}; wire-type={1}; offset={2}; depth={3}",
@@ -1724,11 +1682,8 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             return false;
         }
 
-#if NO_GENERICS
-        readonly Stack _trapNoteReserved = new Stack();
-#else
         readonly Stack<int> _trapNoteReserved = new Stack<int>();
-#endif
+
         int _trappedKey;
 
         public static int ReserveNoteObject(ProtoReader reader)

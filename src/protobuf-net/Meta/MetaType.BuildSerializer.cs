@@ -117,7 +117,7 @@ namespace AqlaSerializer.Meta
             {
                 _model.ReleaseLock(opaqueToken);
             }
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
             if (_model.AutoCompile) CompileInPlace();
 #endif
         }
@@ -241,11 +241,7 @@ namespace AqlaSerializer.Meta
                 Debug.Assert(_subTypes != null, "_subTypes != null");
                 foreach (SubType subType in _subTypes)
                 {
-#if WINRT
-                    if (!subType.DerivedType.IgnoreListHandling && ienumerable.IsAssignableFrom(subType.DerivedType.Type.GetTypeInfo()))
-#else
                     if (!subType.DerivedType.IgnoreListHandling && _model.MapType(ienumerable).IsAssignableFrom(subType.DerivedType.Type))
-#endif
                     {
                         throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a subclass");
                     }
@@ -348,7 +344,7 @@ namespace AqlaSerializer.Meta
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IProtoSerializerWithWireType ILateReferenceSerializerProxy.LateReferenceSerializer => LateReferenceSerializer;
 
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
 
         /// <summary>
         /// Compiles the serializer for this type; this is *not* a full
@@ -376,7 +372,7 @@ namespace AqlaSerializer.Meta
 
         internal bool IsPrepared()
         {
-#if FEAT_COMPILER && !FEAT_IKVM && !FX11
+#if FEAT_COMPILER && !FEAT_IKVM
             return _serializer is CompiledSerializer;
 #else
             return false;

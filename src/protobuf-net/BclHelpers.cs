@@ -23,13 +23,7 @@ namespace AqlaSerializer
     /// Provides support for common .NET types that do not have a direct representation
     /// in protobuf, using the definitions from bcl.proto
     /// </summary>
-    public
-#if FX11
-    sealed
-#else
-    static
-#endif
-        class BclHelpers
+    public static class BclHelpers
     {
         /// <summary>
         /// Creates a new instance of the specified type, bypassing the constructor.
@@ -43,7 +37,7 @@ namespace AqlaSerializer
             object obj = TryGetUninitializedObjectWithFormatterServices(type);
             if (obj != null) return obj;
 #endif
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
 #else
             if (_getUninitializedObject == null)
@@ -69,32 +63,27 @@ namespace AqlaSerializer
         }
 
 #if NETSTANDARD // this is inspired by DCS: https://github.com/dotnet/corefx/blob/c02d33b18398199f6acc17d375dab154e9a1df66/src/System.Private.DataContractSerialization/src/System/Runtime/Serialization/XmlFormatReaderGenerator.cs#L854-L894
-        static volatile Func<Type, object> getUninitializedObject;
         static internal object TryGetUninitializedObjectWithFormatterServices(Type type)
         {
-            if (getUninitializedObject == null)
+            if (_getUninitializedObject == null)
             {
                 try {
                     var formatterServiceType = typeof(string).GetTypeInfo().Assembly.GetType("System.Runtime.Serialization.FormatterServices");
                     MethodInfo method = formatterServiceType?.GetMethod("GetUninitializedObject", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
                     if (method != null)
                     {
-                        getUninitializedObject = (Func<Type, object>)method.CreateDelegate(typeof(Func<Type, object>));
+                        _getUninitializedObject = (Func<Type, object>)method.CreateDelegate(typeof(Func<Type, object>));
                     }
                 }
                 catch  { /* best efforts only */ }
-                if(getUninitializedObject == null) getUninitializedObject = x => null;
+                if(_getUninitializedObject == null) _getUninitializedObject = x => null;
             }
-            return getUninitializedObject(type);
+            return _getUninitializedObject(type);
         }
 #endif
 
+        static volatile Func<Type, object> _getUninitializedObject;
 
-        static Func<Type, object> _getUninitializedObject;
-
-#if FX11
-        private BclHelpers() { } // not a static class for C# 1.2 reasons
-#endif
         const int FieldTimeSpanValue = 0x01, FieldTimeSpanScale = 0x02, FieldTimeSpanKind = 0x03;
 
         internal static readonly DateTime[] EpochOrigin = {
@@ -104,7 +93,7 @@ namespace AqlaSerializer
         };
 
 
-        
+
         /// <summary>
         /// Writes a TimeSpan to a protobuf stream
         /// </summary>
@@ -163,7 +152,7 @@ namespace AqlaSerializer
                     }
 
                     SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, dest);
-            
+
                     if(value != 0) {
                         ProtoWriter.WriteFieldHeader(FieldTimeSpanValue, WireType.SignedVariant, dest);
                         ProtoWriter.WriteInt64(value, dest);
@@ -188,7 +177,7 @@ namespace AqlaSerializer
         }
         /// <summary>
         /// Parses a TimeSpan from a protobuf stream
-        /// </summary>        
+        /// </summary>
         public static TimeSpan ReadTimeSpan(ProtoReader source)
         {
             DateTimeKind kind;
@@ -346,7 +335,7 @@ namespace AqlaSerializer
                     case FieldDecimalSignScale: signScale = reader.ReadUInt32(); break;
                     default: reader.SkipField(); break;
                 }
-                
+
             }
             ProtoReader.EndSubItem(token, reader);
 
@@ -391,7 +380,7 @@ namespace AqlaSerializer
         const int FieldGuidLow = 1, FieldGuidHigh = 2;
         /// <summary>
         /// Writes a Guid to a protobuf stream
-        /// </summary>        
+        /// </summary>
         public static void WriteGuid(Guid value, ProtoWriter dest)
         {
             byte[] blob = value.ToByteArray();
@@ -426,10 +415,10 @@ namespace AqlaSerializer
             ProtoReader.EndSubItem(token, source);
             if(low == 0 && high == 0) return Guid.Empty;
             uint a = (uint)(low >> 32), b = (uint)low, c = (uint)(high >> 32), d= (uint)high;
-            return new Guid((int)b, (short)a, (short)(a >> 16), 
+            return new Guid((int)b, (short)a, (short)(a >> 16),
                 (byte)d, (byte)(d >> 8), (byte)(d >> 16), (byte)(d >> 24),
                 (byte)c, (byte)(c >> 8), (byte)(c >> 16), (byte)(c >> 24));
-            
+
         }
 
 
@@ -457,7 +446,7 @@ namespace AqlaSerializer
             /// </summary>
             UseConstructor = 4,
             /// <summary>
-            /// Should not expect serializer to call NoteObject: usable for serializers of primitive immutable reference types (e.g. String, System.Type) 
+            /// Should not expect serializer to call NoteObject: usable for serializers of primitive immutable reference types (e.g. String, System.Type)
             /// </summary>
             LateSet = 8,
             /// <summary>

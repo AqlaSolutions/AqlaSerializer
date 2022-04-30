@@ -27,14 +27,8 @@ namespace DynamicCompilationSpike
                 throw new ArgumentException(string.Format("The type {0} must declare an empty constructor (the constructor may be private, internal, protected, protected internal, or public).", type));
             }
 
-            DynamicMethod dynamicMethod = new DynamicMethod("InstantiateObject",
-#if !SILVERLIGHT
-                MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard,
-#endif
-                typeof(object), null
-#if !SILVERLIGHT
-                , type, true
-#endif
+            DynamicMethod dynamicMethod = new DynamicMethod("InstantiateObject", MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard,
+                typeof(object), null, type, true
                 );
             ILGenerator generator = dynamicMethod.GetILGenerator();
             generator.Emit(OpCodes.Newobj, constructorInfo);
@@ -267,21 +261,13 @@ namespace DynamicCompilationSpike
         // CreateGetDynamicMethod
         private static DynamicMethod CreateGetDynamicMethod(Type type, bool skipVisibility)
         {
-            return new DynamicMethod("DynamicGet", typeof(object), new Type[] { typeof(object) }
-#if !SILVERLIGHT
-            , type, skipVisibility
-#endif
-            );
+            return new DynamicMethod("DynamicGet", typeof(object), new Type[] { typeof(object) }, type, skipVisibility);
         }
 
         // CreateSetDynamicMethod
         private static DynamicMethod CreateSetDynamicMethod(Type type, bool skipVisibility)
         {
-            return new DynamicMethod("DynamicSet", typeof(void), new Type[] { typeof(object), typeof(object) }
-#if !SILVERLIGHT
-            , type, skipVisibility
-#endif
-            );
+            return new DynamicMethod("DynamicSet", typeof(void), new Type[] { typeof(object), typeof(object) }, type, skipVisibility);
         }
 
         // BoxIfNeeded

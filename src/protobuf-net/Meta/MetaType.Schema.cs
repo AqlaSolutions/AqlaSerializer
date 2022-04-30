@@ -38,23 +38,12 @@ namespace AqlaSerializer.Meta
             if (!Helpers.IsNullOrEmpty(_settingsValueFinal.Name)) return _settingsValueFinal.Name;
 
             string typeName = Type.Name;
-#if !NO_GENERICS
-            if (Type
-#if WINRT
-                .GetTypeInfo()
-#endif
-                .IsGenericType)
+            if (Type.IsGenericType)
             {
                 StringBuilder sb = new StringBuilder(typeName);
                 int split = typeName.IndexOf('`');
                 if (split >= 0) sb.Length = split;
-                foreach (Type arg in Type
-#if WINRT
-                    .GetTypeInfo().GenericTypeArguments
-#else
-                    .GetGenericArguments()
-#endif
-                    )
+                foreach (Type arg in Type.GetGenericArguments())
                 {
                     sb.Append('_');
                     Type tmp = arg;
@@ -72,7 +61,6 @@ namespace AqlaSerializer.Meta
                 }
                 return sb.ToString();
             }
-#endif
             return typeName;
         }
 
@@ -127,11 +115,7 @@ namespace AqlaSerializer.Meta
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
                 if (_settingsValueFinal.EnumPassthru.GetValueOrDefault())
                 {
-                    if (Type
-#if WINRT
-                    .GetTypeInfo()
-#endif
-                        .IsDefined(_model.MapType(typeof(FlagsAttribute)), false))
+                    if (Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false))
                     {
                         NewLine(builder, indent + 1).Append("// this is a composite/flags enumeration");
                     }
@@ -139,19 +123,13 @@ namespace AqlaSerializer.Meta
                     {
                         NewLine(builder, indent + 1).Append("// this enumeration will be passed as a raw value");
                     }
-                    foreach (FieldInfo field in
-#if WINRT
-                        Type.GetRuntimeFields()
-#else
-                        Type.GetFields()
-#endif
-                        )
+                    foreach (FieldInfo field in Type.GetFields())
                     {
                         if (field.IsStatic && field.IsLiteral)
                         {
                             object enumVal;
 
-#if WINRT || PORTABLE || CF || FX11 || NETSTANDARD
+#if PORTABLE || NETSTANDARD
                             enumVal = Convert.ChangeType(field.GetValue(null), Enum.GetUnderlyingType(field.FieldType), System.Globalization.CultureInfo.InvariantCulture);
 #else
                             enumVal = field.GetRawConstantValue();

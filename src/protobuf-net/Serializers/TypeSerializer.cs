@@ -44,7 +44,7 @@ namespace AqlaSerializer.Serializers
                 }
             }
         }
-        
+
         public bool DemandWireTypeStabilityStatus() => true;
 
         public bool HasCallbacks(TypeModel.CallbackType callbackType)
@@ -57,9 +57,6 @@ namespace AqlaSerializer.Serializers
             return false;
         }
         private readonly Type _constructType;
-#if WINRT
-        private readonly TypeInfo typeInfo;
-#endif
         public Type ExpectedType { get; }
 
         public IProtoTypeSerializer GetSubTypeSerializer(int number)
@@ -83,7 +80,7 @@ namespace AqlaSerializer.Serializers
             Helpers.DebugAssert(fieldNumbers != null);
             Helpers.DebugAssert(serializers != null);
             Helpers.DebugAssert(fieldNumbers.Length == serializers.Length);
-            
+
             Helpers.Sort(fieldNumbers, serializers);
             bool hasSubTypes = false;
             for (int i = 1; i < fieldNumbers.Length; i++)
@@ -98,20 +95,13 @@ namespace AqlaSerializer.Serializers
             this.ExpectedType = forType;
             this._factory = factory;
             _prefixLength = prefixLength;
-#if WINRT
-            this.typeInfo = forType.GetTypeInfo();
-#endif
             if (constructType == null)
             {
                 constructType = forType;
             }
             else
             {
-#if WINRT
-                if (!typeInfo.IsAssignableFrom(constructType.GetTypeInfo()))
-#else
                 if (!forType.IsAssignableFrom(constructType))
-#endif
                 {
                     throw new InvalidOperationException(forType.FullName + " cannot be assigned from " + constructType.FullName);
                 }
@@ -125,53 +115,33 @@ namespace AqlaSerializer.Serializers
 
             if (baseCtorCallbacks != null && baseCtorCallbacks.Length == 0) baseCtorCallbacks = null;
             this._baseCtorCallbacks = baseCtorCallbacks;
-#if !NO_GENERICS
             if (Helpers.GetNullableUnderlyingType(forType) != null)
             {
                 throw new ArgumentException("Cannot create a TypeSerializer for nullable types", nameof(forType));
             }
-#endif
 
-#if WINRT
-            if (iextensible.IsAssignableFrom(typeInfo))
-            {
-                if (typeInfo.IsValueType || !isRootType || hasSubTypes)
-#else
             if (model.MapType(iextensible).IsAssignableFrom(forType))
             {
                 if (forType.IsValueType || !isRootType || hasSubTypes)
-#endif
                 {
                     throw new NotSupportedException("IExtensible is not supported in structs or classes with inheritance");
                 }
                 _isExtensible = true;
             }
-#if WINRT
-            TypeInfo constructTypeInfo = constructType.GetTypeInfo();
-            _hasConstructor = !constructTypeInfo.IsAbstract && Helpers.GetConstructor(constructTypeInfo, Helpers.EmptyTypes, true) != null;
-#else
             _hasConstructor = !constructType.IsAbstract && Helpers.GetConstructor(constructType, Helpers.EmptyTypes, true) != null;
-#endif
             if (constructType != forType && useConstructor && !_hasConstructor)
             {
                 throw new ArgumentException("The supplied default implementation cannot be created: " + constructType.FullName, nameof(constructType));
             }
         }
-#if WINRT
-        private static readonly TypeInfo iextensible = typeof(IExtensible).GetTypeInfo();
-#else
+
         private static readonly System.Type iextensible = typeof(IExtensible);
-#endif
 
         private bool CanHaveInheritance
         {
             get
             {
-#if WINRT
-                return (typeInfo.IsClass || typeInfo.IsInterface) && !typeInfo.IsSealed && AllowInheritance;
-#else
                 return (ExpectedType.IsClass || ExpectedType.IsInterface) && !ExpectedType.IsSealed && AllowInheritance;
-#endif
             }
         }
         bool IProtoTypeSerializer.CanCreateInstance() { return true; }
@@ -273,7 +243,7 @@ namespace AqlaSerializer.Serializers
                             if (serType == ExpectedType && CanCreateInstance) value = CreateInstance(source, true);
                         }
                         value = ser.Read(value, source);
-                        
+
                         lastFieldIndex = i;
                         lastFieldNumber = fieldNumber;
                         fieldHandled = true;
@@ -327,7 +297,7 @@ namespace AqlaSerializer.Serializers
                             Type paramType = parameters[i].ParameterType;
                             if (paramType == typeof(SerializationContext)) val = context;
                             else if (paramType == typeof(System.Type)) val = constructType;
-#if PLAT_BINARYFORMATTER || (SILVERLIGHT && NET_4_0)
+#if PLAT_BINARYFORMATTER
                             else if (paramType == typeof(System.Runtime.Serialization.StreamingContext)) val = (System.Runtime.Serialization.StreamingContext)context;
 #endif
                             else
@@ -362,7 +332,7 @@ namespace AqlaSerializer.Serializers
             else if (_useConstructor && _hasConstructor)
             {
                 obj = Activator.CreateInstance(_constructType
-#if !CF && !SILVERLIGHT && !WINRT && !PORTABLE
+#if !PORTABLE
                 , nonPublic: true
 #endif
                 );
@@ -384,12 +354,12 @@ namespace AqlaSerializer.Serializers
         }
 #endif
         public bool RequiresOldValue => true;
-        
+
         public bool CanCancelWriting { get; }
 
 
 #if FEAT_COMPILER
-        public bool EmitReadReturnsValue { get; } = false; // updates field directly        
+        public bool EmitReadReturnsValue { get; } = false; // updates field directly
 
         void IProtoSerializer.EmitWrite(Compiler.CompilerContext ctx, Compiler.Local valueFrom)
         {

@@ -6,9 +6,7 @@
 using System;
 using System.Collections;
 using System.Diagnostics;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 #if !PORTABLE
 using System.Runtime.Serialization;
 #endif
@@ -44,21 +42,11 @@ using System.Security.Cryptography;
 
 namespace AqlaSerializer.Meta
 {
-#if !NO_GENERiCS
-    using TypeSet = Dictionary<Type, object>;
-    using TypeList = List<Type>;
-
-#else
-    using TypeSet = System.Collections.Hashtable;
-    using TypeList = System.Collections.ArrayList;
-#endif
-    
     partial class RuntimeTypeModel
     {
         internal ITypeMapper RunSharpTypeMapper { get; }
 
 
-#if !FX11
         /// <summary>
         /// Compiles the serializers individually; this is *not* a full
         /// standalone compile, but can significantly boost performance
@@ -76,7 +64,6 @@ namespace AqlaSerializer.Meta
                 type.CompileInPlace();
             }
         }
-#endif
 
 #if FEAT_IKVM
         readonly IKVM.Reflection.Universe universe;
@@ -118,7 +105,7 @@ namespace AqlaSerializer.Meta
         /// allowing additional configuration.
         /// </summary>
         public MetaType this[System.Type type] { get { return this[MapType(type)]; } }
-        
+
 #endif
 
         private void BuildAllSerializers()
@@ -133,7 +120,7 @@ namespace AqlaSerializer.Meta
                     throw new InvalidOperationException("No serializer available for " + mt.Type.Name);
             }
         }
-#if !SILVERLIGHT
+
         internal sealed class SerializerMethods : IComparable
         {
             int IComparable.CompareTo(object obj)
@@ -173,7 +160,7 @@ namespace AqlaSerializer.Meta
             public readonly SerializerMethodPair BasicPair;
             public readonly SerializerMethodPair RootPair;
             public readonly SerializerMethodPair LateReferencePair;
-            
+
             public SerializerMethods(int metaKey, int baseKey, MetaType type, SerializerMethodPair basicPair, SerializerMethodPair rootPair, SerializerMethodPair lateReferencePair)
             {
                 this.MetaKey = metaKey;
@@ -269,7 +256,7 @@ namespace AqlaSerializer.Meta
             }
 #endif
             Type result = universe.GetType(type.AssemblyQualifiedName);
-            
+
             if(result == null)
             {
                 // things also tend to move around... *a lot* - especially in WinRT; search all as a fallback strategy
@@ -311,7 +298,7 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// Represents configuration options for compiling a model to 
+        /// Represents configuration options for compiling a model to
         /// a standalone assembly.
         /// </summary>
         public sealed class CompilerOptions
@@ -561,13 +548,13 @@ namespace AqlaSerializer.Meta
             WriteAssemblyAttributes(options, assemblyName, asm, eqAttr);
 
             TypeBuilder type = WriteBasicTypeModel(options, typeName, module);
-            
+
             bool hasInheritance;
             SerializerMethods[] methodPairs;
             Compiler.CompilerContext.ILVersion ilVersion;
 
             WriteSerializers(options, assemblyName, type, out hasInheritance, out methodPairs, out ilVersion);
-            
+
             ILGenerator il;
             int knownTypesCategory;
             FieldBuilder knownTypes;
@@ -583,7 +570,7 @@ namespace AqlaSerializer.Meta
             Compiler.CompilerContext ctx = WriteSerializeDeserializeJumpTable(assemblyName, type, methodPairs, ilVersion, ref il);
 
             WriteConstructors(type, methodPairs, ref il, knownTypesCategory, knownTypes, knownTypesLookupType, ctx);
-            
+
             Type finalType = type.CreateType();
             if (!Helpers.IsNullOrEmpty(path))
             {
@@ -721,7 +708,7 @@ namespace AqlaSerializer.Meta
                 _assemblies.Add(asm);
                 return _assemblies.Count - 1;
             }
-            
+
             public bool CompareAttribute(int assembly, string fullName, object[] args)
             {
                 var attrs = System.Reflection.CustomAttributeData.GetCustomAttributes(_assemblies[assembly]);
@@ -957,11 +944,7 @@ namespace AqlaSerializer.Meta
             }
             else
             {
-#if NO_GENERICS
-                knownTypesLookupType = null;
-#else
                 knownTypesLookupType = MapType(typeof(System.Collections.Generic.Dictionary<System.Type, int>), false);
-#endif
                 if (knownTypesLookupType == null)
                 {
                     knownTypesLookupType = MapType(typeof(Hashtable), true);
@@ -1065,10 +1048,6 @@ namespace AqlaSerializer.Meta
                         il.EmitCall(OpCodes.Callvirt, knownTypesLookupType.GetProperty("Item").GetGetMethod(), null);
                         il.Emit(OpCodes.Dup);
                         il.Emit(OpCodes.Brfalse_S, otherwise);
-#if FX11
-                        il.Emit(OpCodes.Unbox, MapType(typeof(int)));
-                        il.Emit(OpCodes.Ldobj, MapType(typeof(int)));
-#else
                         if (ilVersion == Compiler.CompilerContext.ILVersion.Net1)
                         {
                             il.Emit(OpCodes.Unbox, MapType(typeof(int)));
@@ -1078,7 +1057,6 @@ namespace AqlaSerializer.Meta
                         {
                             il.Emit(OpCodes.Unbox_Any, MapType(typeof(int)));
                         }
-#endif
                         il.Emit(OpCodes.Ret);
                         il.MarkLabel(otherwise);
                         il.Emit(OpCodes.Pop);
@@ -1171,7 +1149,7 @@ namespace AqlaSerializer.Meta
                 for (int i = 0; i < methodPairs.Length; i++)
                 {
                     SerializerMethods methods = methodPairs[i];
-                    
+
                     Action<SerializerMethodPair> emitWrite = pair =>
                         {
                             Compiler.CompilerContext ctx = new Compiler.CompilerContext(
@@ -1311,7 +1289,7 @@ namespace AqlaSerializer.Meta
                 false,
                 out writeGenCtx);
         }
-        
+
         static void StartTask(List<ManualResetEvent> tasks, Action action, IList<Exception> exceptions)
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
@@ -1391,13 +1369,11 @@ namespace AqlaSerializer.Meta
 
             // copy assembly:InternalsVisibleTo
             Type internalsVisibleToAttribType = null;
-#if !FX11
             try
             {
                 internalsVisibleToAttribType = MapType(typeof(System.Runtime.CompilerServices.InternalsVisibleToAttribute));
             }
             catch { /* best endeavors only */ }
-#endif
             if (internalsVisibleToAttribType != null)
             {
                 BasicList internalAssemblies = new BasicList(), consideredAssemblies = new BasicList();
@@ -1455,7 +1431,7 @@ namespace AqlaSerializer.Meta
                 },
                 false,
                 out methodContext);
-            
+
             Compiler.CompilerContext ctx = new Compiler.CompilerContext(methodContext, true, false, methodPairs, model, ilVersion, assemblyName, model.MapType(typeof(object)));
             ctx.LoadValue(ctx.InputValue);
             Compiler.CodeLabel @null = ctx.DefineLabel();
@@ -1484,7 +1460,6 @@ namespace AqlaSerializer.Meta
             return methodContext;
         }
 
-#endif
         }
 }
 #endif

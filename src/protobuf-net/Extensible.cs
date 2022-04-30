@@ -1,7 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 using AqlaSerializer.Meta;
 using System.Collections;
 
@@ -65,7 +63,7 @@ namespace AqlaSerializer
             return extensionObject;
         }
 
-#if !NO_RUNTIME && !NO_GENERICS
+#if !NO_RUNTIME
         /// <summary>
         /// Appends the value as an additional (unexpected) data-field for the instance.
         /// Note that for non-repeated sub-objects, this equates to a merge operation;

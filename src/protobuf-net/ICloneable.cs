@@ -1,4 +1,4 @@
-﻿#if PHONE8 || SILVERLIGHT || WINRT || PORTABLE
+﻿#if PORTABLE
 namespace System
 {
     interface ICloneable

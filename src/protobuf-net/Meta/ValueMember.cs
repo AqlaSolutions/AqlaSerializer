@@ -389,7 +389,7 @@ namespace AqlaSerializer.Meta
 
         internal object GetRawEnumValue()
         {
-#if WINRT || PORTABLE || CF || FX11
+#if PORTABLE
             object value = ((FieldInfo)Member).GetValue(null);
             switch(Helpers.GetTypeCode(Enum.GetUnderlyingType(((FieldInfo)Member).FieldType)))
             {
@@ -482,10 +482,7 @@ namespace AqlaSerializer.Meta
             return vm;
         }
 
-        internal sealed class Comparer : System.Collections.IComparer
-#if !NO_GENERICS
-, System.Collections.Generic.IComparer<ValueMember>
-#endif
+        internal sealed class Comparer : System.Collections.IComparer, System.Collections.Generic.IComparer<ValueMember>
         {
             public static readonly ValueMember.Comparer Default = new Comparer();
             public int Compare(object x, object y)

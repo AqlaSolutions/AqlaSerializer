@@ -9,10 +9,6 @@ using AltLinq; using System.Linq;
 using AqlaSerializer.Meta;
 using AqlaSerializer.Serializers;
 
-#if MF
-using OverflowException = System.ApplicationException;
-#endif
-
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 #endif
@@ -21,7 +17,7 @@ namespace AqlaSerializer
 {
     /// <summary>
     /// Represents an output stream for writing protobuf data.
-    /// 
+    ///
     /// Why is the API backwards (static methods with writer arguments)?
     /// See: http://marcgravell.blogspot.com/2010/03/last-will-be-first-and-first-will-be.html
     /// </summary>
@@ -85,7 +81,7 @@ namespace AqlaSerializer
             {
                 throw new InvalidOperationException("Cannot serialize sub-objects unless a model is provided");
             }
-            
+
             if (key >= 0)
             {
                 writer._model.Serialize(key, value, writer, false);
@@ -107,7 +103,7 @@ namespace AqlaSerializer
             {
                 TypeModel.ThrowUnexpectedType(value.GetType());
             }
-#endif 
+#endif
         }
         /// <summary>
         /// Write an encapsulated sub-object, using the supplied unique key (reprasenting a type) - but the
@@ -175,7 +171,7 @@ namespace AqlaSerializer
                 writer._model.Serialize(key, value, writer, isRoot);
             }
             EndSubItem(token, writer, style);
-#endif       
+#endif
         }
 
         internal int GetTypeKey(ref Type type)
@@ -190,7 +186,7 @@ namespace AqlaSerializer
         }
 
         internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; } = new NetObjectKeyPositionsList();
-        
+
         private int _fieldNumber, _flushLock;
         WireType _wireType;
         public WireType WireType => _wireType;
@@ -215,7 +211,7 @@ namespace AqlaSerializer
         {
             writer._expectRoot = true;
         }
-        
+
         /// <summary>
         /// Root type should write length-prefixed data
         /// </summary>
@@ -224,14 +220,14 @@ namespace AqlaSerializer
         {
             writer._expectRootType = true;
         }
-        
+
         public bool HasIncompleteField => _fieldStarted;
 
         bool _fieldStarted;
         bool _ignoredFieldStarted;
-        
+
         // TODO compiler optimization to merge two consequence calls start-complete
-        
+
         /// <summary>
         /// Indicates that the next WriteFieldHeaderComplete call should be ignored
         /// </summary>
@@ -335,7 +331,7 @@ namespace AqlaSerializer
             if (writer._fieldStarted) throw new InvalidOperationException("Cannot write a field until a wire type for field " + writer._fieldNumber + " has been written");
             WriteFieldHeaderNoCheck(fieldNumber, wireType, writer);
         }
-        
+
         static void WriteFieldHeaderNoCheck(int fieldNumber, WireType wireType, ProtoWriter writer) {
 #if DEBUG
             switch (wireType)
@@ -351,7 +347,7 @@ namespace AqlaSerializer
                 case WireType.None:
                 case WireType.EndGroup:
                 default:
-                    throw new ArgumentException("Invalid wire-type: " + wireType.ToString(), nameof(wireType));                
+                    throw new ArgumentException("Invalid wire-type: " + wireType.ToString(), nameof(wireType));
             }
 #endif
             writer._expectRoot = false;
@@ -419,17 +415,17 @@ namespace AqlaSerializer
         {
             byte[] buffer = writer._ioBuffer;
             int space = buffer.Length - writer._ioIndex, bytesRead = 1; // 1 here to spoof case where already full
-            
-            // try filling the buffer first   
+
+            // try filling the buffer first
             while (space > 0 && (bytesRead = source.Read(buffer, writer._ioIndex, space)) > 0)
             {
                 writer._ioIndex += bytesRead;
                 writer._position64 += bytesRead;
-                space -= bytesRead;                
+                space -= bytesRead;
             }
             if (bytesRead <= 0) return; // all done using just the buffer; stream exhausted
 
-            // at this point the stream still has data, but buffer is full; 
+            // at this point the stream still has data, but buffer is full;
             if (writer._streamAsBufferAllowed || writer._flushLock == 0)
             {
                 // flush the buffer and write to the underlying stream instead
@@ -499,7 +495,7 @@ namespace AqlaSerializer
             // "ignored" is not checked here because field header is already fully written
             return StartSubItem(instance, writer, false);
         }
-        
+
         /// <summary>
         /// Indicates the start of a nested record of specified type when fieldNumber has not been written before.
         /// </summary>
@@ -545,7 +541,7 @@ namespace AqlaSerializer
         {
             return writer._depth > (writer._model?.RecursionDepthLimit ?? TypeModel.DefaultRecursionDepthLimit) / 2;
         }
-        
+
         private static SubItemToken StartSubItem(object instance, ProtoWriter writer, bool allowFixed)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
@@ -594,7 +590,7 @@ namespace AqlaSerializer
             _streamAsBufferAllowed = prev;
             _dest.Flush();
         }
-        
+
         /// <summary>
         /// Indicates the end of a nested record.
         /// </summary>
@@ -604,7 +600,7 @@ namespace AqlaSerializer
         {
             EndSubItem(token, writer, PrefixStyle.Base128);
         }
-        
+
         private static void EndSubItem(SubItemToken token, ProtoWriter writer, PrefixStyle style)
         {
             if (writer == null) throw new ArgumentNullException(nameof(writer));
@@ -648,7 +644,7 @@ namespace AqlaSerializer
             Debug.Assert(flushed >= 0, "Position should be always bigger or equal to ioIndex (it's total written length including flushed)");
 
             long inBufferPos = value - flushed;
-            
+
             byte[] buffer;
 
             // so we're backfilling the length into an existing sequence
@@ -702,7 +698,7 @@ namespace AqlaSerializer
             else // do the same thing but for stream
             {
                 long positionDiff = writer._position64 - value;
-                
+
                 byte[] temp = null;
                 int writeFromTemp = 0;
                 var dest = writer._dest;
@@ -731,7 +727,7 @@ namespace AqlaSerializer
                         // string - complicated because we only reserved one byte;
                         // if the prefix turns out to need more than this then
                         // we need to shuffle the existing data
-                        
+
                         // hack: len up to long
                         long len = positionDiff - 1;
                         int offset = 0;
@@ -821,7 +817,7 @@ namespace AqlaSerializer
                     default:
                         throw new ArgumentOutOfRangeException(nameof(style));
                 }
-                
+
                 if (writeFromTemp != 0)
                 {
                     Debug.Assert(temp != null, "temp != null");
@@ -829,7 +825,7 @@ namespace AqlaSerializer
                     int lengthInStream = (int)Math.Min(-inBufferPos, writeFromTemp);
                     dest.Position += inBufferPos;
                     dest.Write(temp, 0, lengthInStream);
-                    
+
                     if (lengthInStream != writeFromTemp)
                         Helpers.BlockCopy(temp, lengthInStream, writer._ioBuffer, 0, writeFromTemp - lengthInStream);
                 }
@@ -844,9 +840,9 @@ namespace AqlaSerializer
             {
                 ProtoWriter.Flush(writer);
             }
-            
+
         }
-        
+
         bool IsFlushAdvised()
         {
             return IsFlushAdvised(_ioIndex);
@@ -885,7 +881,7 @@ namespace AqlaSerializer
             this._context = context;
             InitialUnderlyingStreamPosition = dest.Position;
         }
-        
+
         private readonly SerializationContext _context;
         /// <summary>
         /// Addition information about this serialization operation.
@@ -910,7 +906,7 @@ namespace AqlaSerializer
         }
 
         private byte[] _ioBuffer;
-        
+
         private int _ioIndex;
 
         // note that this is used by some of the unit tests and should not be removed
@@ -972,7 +968,7 @@ namespace AqlaSerializer
 
             }
         }
-        
+
         /// <summary>
         /// Works only if position is in buffer and not flushed yet
         /// </summary>
@@ -1004,11 +1000,11 @@ namespace AqlaSerializer
             writer._ioBuffer[writer._ioIndex - 1] &= 0x7F;
             writer._position64 += count;
         }
- 
+
         static readonly UTF8Encoding Encoding = new UTF8Encoding();
-        
+
         internal static uint Zig(int value)
-        {        
+        {
             return (uint)((value << 1) ^ (value >> 31));
         }
         internal static ulong Zig(long value)
@@ -1042,19 +1038,12 @@ namespace AqlaSerializer
                 writer._wireType = WireType.None;
                 return; // just a header
             }
-#if MF
-            byte[] bytes = encoding.GetBytes(value);
-            int actual = bytes.Length;
-            writer.WriteUInt32Variant((uint)actual);
-            writer.Ensure(actual);
-            Helpers.BlockCopy(bytes, 0, writer.ioBuffer, writer.ioIndex, actual);
-#else
+
             int predicted = Encoding.GetByteCount(value);
             WriteUInt32Variant((uint)predicted, writer);
             DemandSpace(predicted, writer);
             int actual = Encoding.GetBytes(value, 0, value.Length, writer._ioBuffer, writer._ioIndex);
             Helpers.DebugAssert(predicted == actual);
-#endif
             IncrementedAndReset(actual, writer);
         }
         /// <summary>
@@ -1305,7 +1294,7 @@ namespace AqlaSerializer
             buffer[index + 1] = (byte)(value >> 16);
             buffer[index] = (byte)(value >> 24);
         }
-        
+
         /// <summary>
         /// Writes a signed 32-bit integer to the stream; supported wire-types: Variant, Fixed32, Fixed64, SignedVariant
         /// </summary>
@@ -1318,7 +1307,7 @@ namespace AqlaSerializer
             {
                 case WireType.Fixed32:
                     DemandSpace(4, writer);
-                    WriteInt32ToBuffer(value, writer._ioBuffer, writer._ioIndex);                    
+                    WriteInt32ToBuffer(value, writer._ioBuffer, writer._ioIndex);
                     IncrementedAndReset(4, writer);
                     return;
                 case WireType.Fixed64:
@@ -1362,7 +1351,7 @@ namespace AqlaSerializer
                 default:
                     throw CreateException(writer);
             }
-            
+
         }
         /// <summary>
         /// Writes a double-precision number to the stream; supported wire-types: Fixed32, Fixed64
@@ -1400,7 +1389,7 @@ namespace AqlaSerializer
         /// <summary>
         /// Writes a single-precision number to the stream; supported wire-types: Fixed32, Fixed64
         /// </summary>
-        public 
+        public
 #if !FEAT_SAFE
             unsafe
 #endif
@@ -1493,7 +1482,7 @@ namespace AqlaSerializer
 
             return bytes;
         }
-        
+
         internal string SerializeType(System.Type type)
         {
             return TypeModel.SerializeType(_model, type);

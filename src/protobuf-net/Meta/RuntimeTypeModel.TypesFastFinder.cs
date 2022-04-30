@@ -1,17 +1,12 @@
-﻿#if !PHONE8 && !PORTABLE && !SILVERLIGHT
+﻿#if !PORTABLE
 #define ENABLED
-#if WINRT
-#define SLIM
-#endif
 #endif
 
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016
 #if !NO_RUNTIME
 using System;
 using System.Collections;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 #if !PORTABLE
 using System.Runtime.Serialization;
 #endif

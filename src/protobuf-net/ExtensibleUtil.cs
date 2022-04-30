@@ -1,9 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 using System.IO;
 using AqlaSerializer.Meta;
 
@@ -24,7 +22,7 @@ namespace AqlaSerializer
             _typeModel = typeModel;
         }
 
-#if !NO_RUNTIME && !NO_GENERICS
+#if !NO_RUNTIME
         /// <summary>
         /// All this does is call GetExtendedValuesTyped with the correct type for "instance";
         /// this ensures that we don't get issues with subclasses declaring conflicting types -
@@ -55,16 +53,9 @@ namespace AqlaSerializer
 
             if (extn == null)
             {
-#if FX11
-                return new object[0];
-#else
                 yield break;
-#endif
             }
 
-#if FX11
-            BasicList result = new BasicList();
-#endif
             Stream stream = extn.BeginQuery();
             object value = null;
             ProtoReader reader = null;
@@ -75,27 +66,14 @@ namespace AqlaSerializer
                 {
                     if (!singleton)
                     {
-#if FX11
-                        result.Add(value);
-#else
                         yield return value;
-#endif
                         value = null; // fresh item each time
                     }
                 }
                 if (singleton && value != null)
                 {
-#if FX11
-                    result.Add(value);
-#else
                     yield return value;
-#endif
                 }
-#if FX11
-                object[] resultArr = new object[result.Count];
-                result.CopyTo(resultArr, 0);
-                return resultArr;
-#endif
             } finally {
                 ProtoReader.Recycle(reader);
                 extn.EndQuery(stream);
@@ -128,19 +106,6 @@ namespace AqlaSerializer
             }
 #endif
         }
-//#if !NO_GENERICS
-//        /// <summary>
-//        /// Stores the given value into the instance's stream; the serializer
-//        /// is inferred from TValue and format.
-//        /// </summary>
-//        /// <remarks>Needs to be public to be callable thru reflection in Silverlight</remarks>
-//        public void AppendExtendValueTyped<TSource, TValue>(
-//            TypeModel model, TSource instance, int tag, DataFormat format, TValue value)
-//            where TSource : class, IExtensible
-//        {
-//            AppendExtendValue(model, instance, tag, format, value);
-//        }
-//#endif
     }
 
 }

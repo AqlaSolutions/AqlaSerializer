@@ -106,9 +106,6 @@ namespace AqlaSerializer.Compiler
 
         public ContextualOperand IsAssignableFrom_bool(Operand targetType, Operand type)
         {
-#if WINRT
-            targetType = targetType.Invoke("GetTypeInfo");
-#endif
             return targetType.Invoke("IsAssignableFrom", g.TypeMapper, type);
         }
 

@@ -8,7 +8,7 @@ using NUnit.Framework;
 using AqlaSerializer;
 using AqlaSerializer.Meta;
 
-//#if (FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER) || (SILVERLIGHT && !PHONE7)
+//#if FEAT_SERVICEMODEL && PLAT_XMLSERIALIZER
 namespace Examples
 {
     using AqlaSerializer.ServiceModel;
