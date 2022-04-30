@@ -100,13 +100,6 @@ Some build configurations may be not available through nuget, you can download t
         <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETPortable4.0-Profile328" />
-      <group targetFramework=".NETCore4.5" />
-      <group targetFramework="Silverlight5.0">        
-        <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />  
-      </group>
-      <group targetFramework="WindowsPhone8.0">
-        <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />  
-      </group>
       <group targetFramework=".NETStandard2.1">
         <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />
         <dependency id="Lokad.ILPack" version="0.1.6" exclude="Build,Analyzers" />
@@ -124,7 +117,7 @@ Some build configurations may be not available through nuget, you can download t
       </group>
     </dependencies>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework2.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable4.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
       <frameworkAssembly assemblyName="System.configuration" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
       <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
       <frameworkAssembly assemblyName="System.Runtime.Serialization" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
