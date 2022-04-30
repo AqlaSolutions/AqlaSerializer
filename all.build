@@ -62,7 +62,7 @@
 
     <MSBuild Projects="assorted\RevisionGenerator\RevisionGenerator.csproj" Targets="Rebuild" Properties="Configuration=Release"/>
 
-    <Exec Command="assorted\RevisionGenerator\bin\Release\RevisionGenerator.exe 2021 1 > &quot;$(RevGeneratorOutputFile)&quot;" />
+    <Exec Command="assorted\RevisionGenerator\bin\Release\RevisionGenerator.exe 2020 12 > &quot;$(RevGeneratorOutputFile)&quot;" />
     <ReadLinesFromFile File="$(RevGeneratorOutputFile)">
        <Output TaskParameter="Lines" PropertyName="BuildRev"/>
     </ReadLinesFromFile>
