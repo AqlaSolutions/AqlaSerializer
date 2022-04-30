@@ -63,25 +63,26 @@ namespace AqlaSerializer
         }
 
 #if NETSTANDARD // this is inspired by DCS: https://github.com/dotnet/corefx/blob/c02d33b18398199f6acc17d375dab154e9a1df66/src/System.Private.DataContractSerialization/src/System/Runtime/Serialization/XmlFormatReaderGenerator.cs#L854-L894
-        static volatile Func<Type, object> getUninitializedObject;
         static internal object TryGetUninitializedObjectWithFormatterServices(Type type)
         {
-            if (getUninitializedObject == null)
+            if (_getUninitializedObject == null)
             {
                 try {
                     var formatterServiceType = typeof(string).GetTypeInfo().Assembly.GetType("System.Runtime.Serialization.FormatterServices");
                     MethodInfo method = formatterServiceType?.GetMethod("GetUninitializedObject", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
                     if (method != null)
                     {
-                        getUninitializedObject = (Func<Type, object>)method.CreateDelegate(typeof(Func<Type, object>));
+                        _getUninitializedObject = (Func<Type, object>)method.CreateDelegate(typeof(Func<Type, object>));
                     }
                 }
                 catch  { /* best efforts only */ }
-                if(getUninitializedObject == null) getUninitializedObject = x => null;
+                if(_getUninitializedObject == null) _getUninitializedObject = x => null;
             }
-            return getUninitializedObject(type);
+            return _getUninitializedObject(type);
         }
 #endif
+
+        static volatile Func<Type, object> _getUninitializedObject;
 
         const int FieldTimeSpanValue = 0x01, FieldTimeSpanScale = 0x02, FieldTimeSpanKind = 0x03;
 

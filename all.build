@@ -34,13 +34,6 @@
     <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=UnityCoreOnly</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
-            <Properties>Configuration=Silverlight2</Properties>
-    </ProjectToBuild>
-    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
-            <Properties>Configuration=Silverlight2CoreOnly</Properties>
-    </ProjectToBuild>
-
 
     <ProjectToBuild Include="src\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
             <Properties>Configuration=Release</Properties>
@@ -74,13 +67,6 @@
     <FileUpdate Files="src\protobuf-net\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-    <FileUpdate Files="assorted\protobuf-net.Extensions\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-    <FileUpdate Files="assorted\protobuf-net.Extensions\Properties\AssemblyInfo.cs"
-            Regex='(\[\s*assembly:\s*AssemblyFileVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
-            ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
-
     <FileUpdate Files="assorted\precompile\Properties\AssemblyInfo.cs"
             Regex='(\[\s*assembly:\s*AssemblyVersion\(\s*)"([^\.]+)\.([^\.]+)\.([^\.]+)(\.)([^\.]+)("\)\s*\])'
             ReplacementText='$1"$(VersionMajor).$(VersionMinor).$(VersionRevision).$(BuildRev)$7' />
@@ -127,10 +113,6 @@
     <SLFiles Include="bin-unsupported\Full\sl5\aqlaserializer.*"/>
     <SLFilesDep Include="bin-unsupported\Full\sl5\RunSharp.*"/>
     <SLFiles_CoreOnly Include="bin-unsupported\CoreOnly\sl5\aqlaserializer.*"/>
-    <WP8Files Include="bin-unsupported\Full\wp8\aqlaserializer.*"/>
-    <WP8FilesDep Include="bin-unsupported\Full\wp8\RunSharp.*"/>
-    <WP8Files_CoreOnly Include="bin-unsupported\CoreOnly\wp8\aqlaserializer.*"/>
-
     <PrecompileFiles Include="assorted\precompile\bin\Release\*.*"/>
 
 
@@ -174,12 +156,6 @@
     <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
     <Copy SourceFiles="@(SLFilesDep)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
     <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl5"/>
-
-    <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(NugetDirectory)\windowsphone8"/>
-    <Copy SourceFiles="@(WP8Files)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
-    <Copy SourceFiles="@(WP8FilesDep)" DestinationFolder="$(ZipDirectory)\Full\wp8"/>
-    <Copy SourceFiles="@(WP8Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\wp8"/>
-
 
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
