@@ -30,11 +30,7 @@ namespace AqlaSerializer.Meta
 {
     partial class MetaType
     {
-        internal sealed class Comparer
-            : IComparer
-#if !NO_GENERICS
-                , System.Collections.Generic.IComparer<MetaType>
-#endif
+        internal sealed class Comparer : IComparer, System.Collections.Generic.IComparer<MetaType>
         {
             public static readonly Comparer Default = new Comparer();
 
@@ -49,11 +45,7 @@ namespace AqlaSerializer.Meta
                 if (x == null) return -1;
                 if (y == null) return 1;
 
-#if FX11
-                return string.Compare(x.GetSchemaTypeName(), y.GetSchemaTypeName());
-#else
                 return string.Compare(x.GetSchemaTypeName(), y.GetSchemaTypeName(), StringComparison.Ordinal);
-#endif
             }
         }
     }

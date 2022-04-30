@@ -482,10 +482,7 @@ namespace AqlaSerializer.Meta
             return vm;
         }
 
-        internal sealed class Comparer : System.Collections.IComparer
-#if !NO_GENERICS
-, System.Collections.Generic.IComparer<ValueMember>
-#endif
+        internal sealed class Comparer : System.Collections.IComparer, System.Collections.Generic.IComparer<ValueMember>
         {
             public static readonly ValueMember.Comparer Default = new Comparer();
             public int Compare(object x, object y)

@@ -38,9 +38,7 @@ namespace AqlaSerializer.Meta
             if (!Helpers.IsNullOrEmpty(_settingsValueFinal.Name)) return _settingsValueFinal.Name;
 
             string typeName = Type.Name;
-#if !NO_GENERICS
-            if (Type
-                .IsGenericType)
+            if (Type.IsGenericType)
             {
                 StringBuilder sb = new StringBuilder(typeName);
                 int split = typeName.IndexOf('`');
@@ -63,7 +61,6 @@ namespace AqlaSerializer.Meta
                 }
                 return sb.ToString();
             }
-#endif
             return typeName;
         }
 

@@ -2,9 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 #if !PORTABLE
 using System.Runtime.Serialization;
 #endif
@@ -37,15 +35,6 @@ using System.IO;
 
 namespace AqlaSerializer.Meta
 {
-#if !NO_GENERiCS
-    using TypeSet = Dictionary<Type, object>;
-    using TypeList = List<Type>;
-
-#else
-    using TypeSet = System.Collections.Hashtable;
-    using TypeList = System.Collections.ArrayList;
-#endif
-
     partial class RuntimeTypeModel
     {
         internal string GetSchemaTypeName(Type effectiveType, BinaryDataFormat dataFormat, bool asReference, bool dynamicType, ref bool requiresBclImport)

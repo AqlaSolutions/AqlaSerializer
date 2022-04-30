@@ -229,7 +229,6 @@ namespace AqlaSerializer.Serializers
             RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writeProtoPacked, WireType expectedTailWireType,
             bool overwriteList, bool protoCompatibility, bool writeSubType, int arrayReadLengthLimit)
         {
-#if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
             if (ImmutableCollectionDecorator.IdentifyImmutable(model, declaredType, out builderFactory, out add, out addRange, out finish))
             {
@@ -247,7 +246,6 @@ namespace AqlaSerializer.Serializers
                     finish,
                     protoCompatibility);
             }
-#endif
             return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writeProtoPacked, expectedTailWireType, overwriteList, protoCompatibility, writeSubType, arrayReadLengthLimit);
         }
 
@@ -679,7 +677,6 @@ namespace AqlaSerializer.Serializers
                 moveNext = current = getEnumerator = null;
             }
 
-#if !NO_GENERICS
             // try IEnumerable<T>
             Type tmp = model.MapType(typeof(System.Collections.Generic.IEnumerable<>), false);
 
@@ -701,7 +698,6 @@ namespace AqlaSerializer.Serializers
                 current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
                 return getEnumerator;
             }
-#endif
             // give up and fall-back to non-generic IEnumerable
             enumeratorType = model.MapType(ienumerableType);
             getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");

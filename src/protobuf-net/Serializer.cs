@@ -2,9 +2,7 @@
 using AqlaSerializer.Meta;
 using System;
 using System.IO;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
@@ -25,18 +23,9 @@ namespace AqlaSerializer
     /// extensible, allowing a type to be deserialized / merged even if some data is
     /// not recognised.
     /// </remarks>
-    public
-#if FX11
-    sealed
-#else
-    static
-#endif
-        class Serializer
+    public static class Serializer
     {
-#if FX11
-        private Serializer() { } // not a static class for C# 1.2 reasons
-#endif
-#if !NO_RUNTIME && !NO_GENERICS
+#if !NO_RUNTIME
 
 #if !FEAT_IKVM
         /// <summary>
@@ -228,7 +217,7 @@ namespace AqlaSerializer
 #endif
 
         private const string ProtoBinaryField = "proto";
-#if PLAT_BINARYFORMATTER && !NO_GENERICS && !(PHONE8)
+#if PLAT_BINARYFORMATTER && !(PHONE8)
         /// <summary>
         /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
         /// </summary>
@@ -265,7 +254,6 @@ namespace AqlaSerializer
         }
 #endif
 
-#if !NO_GENERICS
         /// <summary>
         /// Precompiles the serializer for a given type.
         /// </summary>
@@ -277,7 +265,7 @@ namespace AqlaSerializer
 #endif
         }
 
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER && !PHONE8
         /// <summary>
         /// Creates a new IFormatter that uses protocol-buffer [de]serialization.
         /// </summary>
@@ -415,7 +403,7 @@ namespace AqlaSerializer
                 return TryReadLengthPrefix(source, style, out length);
             }
         }
-#endif
+
         /// <summary>
         /// The field number that is used as a default when serializing/deserializing a list of objects.
         /// The data is treated as repeated message with field number 1.
@@ -428,17 +416,8 @@ namespace AqlaSerializer
         /// <summary>
         /// Provides non-generic access to the default serializer.
         /// </summary>
-        public
-#if FX11
-    sealed
-#else
-    static
-#endif
-            class NonGeneric
+        public static class NonGeneric
         {
-#if FX11
-            private NonGeneric() { } // not a static class for C# 1.2 reasons
-#endif
             /// <summary>
             /// Create a deep clone of the supplied instance; any sub-items are also cloned.
             /// </summary>

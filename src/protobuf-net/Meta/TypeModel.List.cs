@@ -24,7 +24,6 @@ namespace AqlaSerializer.Meta
             Type[] types = { itemType };
             MethodInfo add = Helpers.GetInstanceMethod(listTypeInfo, "Add", types);
 
-#if !NO_GENERICS
             if (add == null)
             {   // fallback: look for ICollection<T>'s Add(typedObject) method
 
@@ -50,7 +49,6 @@ namespace AqlaSerializer.Meta
                     }
                 }
             }
-#endif
 
             if (add == null)
             {   // fallback: look for a public list.Add(object) method
@@ -85,7 +83,6 @@ namespace AqlaSerializer.Meta
 
             string name = listType.Name;
             bool isQueueStack = name != null && (name.IndexOf("Queue", System.StringComparison.Ordinal) >= 0 || name.IndexOf("Stack", System.StringComparison.Ordinal) >= 0);
-#if !NO_GENERICS
             if (!isQueueStack)
             {
                 TestEnumerableListPatterns(model, candidates, listType);
@@ -94,7 +91,6 @@ namespace AqlaSerializer.Meta
                     TestEnumerableListPatterns(model, candidates, iType);
                 }
             }
-#endif
             // more convenient GetProperty overload not supported on all platforms
             foreach (PropertyInfo indexer in listType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -122,7 +118,6 @@ namespace AqlaSerializer.Meta
 
         private static void TestEnumerableListPatterns(TypeModel model, BasicList candidates, Type iType)
         {
-#if !NO_GENERICS
             if (iType.IsGenericType)
             {
                 Type typeDef = iType.GetGenericTypeDefinition();
@@ -137,18 +132,13 @@ namespace AqlaSerializer.Meta
                     }
                 }
             }
-#endif
         }
 
         private static bool CheckDictionaryAccessors(TypeModel model, Type pair, Type value)
         {
 
-#if NO_GENERICS
-            return false;
-#else
             return pair.IsGenericType && pair.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.KeyValuePair<,>))
                 && pair.GetGenericArguments()[1] == value;
-#endif
         }
 
 #if !FEAT_IKVM
@@ -232,14 +222,12 @@ namespace AqlaSerializer.Meta
                 bool handled = false;
                 if (listType.IsInterface && (fullName = listType.FullName) != null && fullName.IndexOf("Dictionary", System.StringComparison.Ordinal) >= 0) // have to try to be frugal here...
                 {
-#if !NO_GENERICS
                     if (listType.IsGenericType && listType.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IDictionary<,>))
                     {
                         Type[] genericTypes = listType.GetGenericArguments();
                         concreteListType = typeof(System.Collections.Generic.Dictionary<,>).MakeGenericType(genericTypes);
                         handled = true;
                     }
-#endif
 #if !SILVERLIGHT && !PORTABLE
                     if (!handled && listType == typeof(IDictionary))
                     {
@@ -248,13 +236,11 @@ namespace AqlaSerializer.Meta
                     }
 #endif
                 }
-#if !NO_GENERICS
                 if (!handled)
                 {
                     concreteListType = typeof(System.Collections.Generic.List<>).MakeGenericType(itemType);
                     handled = true;
                 }
-#endif
 
 #if !SILVERLIGHT && !PORTABLE
                 if (!handled)

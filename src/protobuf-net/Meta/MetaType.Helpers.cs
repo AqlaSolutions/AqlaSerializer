@@ -196,9 +196,6 @@ namespace AqlaSerializer.Meta
                 {
                     if (type.IsInterface)
                     {
-#if NO_GENERICS
-                        defaultType = typeof(ArrayList);
-#else
                         Type[] genArgs;
                         if (type.IsGenericType &&
                             (type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IDictionary<,>))
@@ -215,7 +212,6 @@ namespace AqlaSerializer.Meta
                         {
                             defaultType = model.MapType(typeof(System.Collections.Generic.List<>)).MakeGenericType(itemType);
                         }
-#endif
                     }
                 }
                 // verify that the default type is appropriate

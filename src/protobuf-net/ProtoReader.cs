@@ -3,9 +3,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Linq; using AltLinq;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 using System.IO;
 using System.Text;
 using AqlaSerializer.Meta;
@@ -646,28 +644,6 @@ namespace AqlaSerializer
             throw EoF(this);
         }
 
-#if NO_GENERICS
-        private System.Collections.Hashtable stringInterner;
-        private string Intern(string value)
-        {
-            if (value == null) return null;
-            if (value.Length == 0) return "";
-            if (stringInterner == null)
-            {
-                stringInterner = new System.Collections.Hashtable();
-                stringInterner.Add(value, value);      
-            }
-            else if (stringInterner.ContainsKey(value))
-            {
-                value = (string)stringInterner[value];
-            }
-            else
-            {
-                stringInterner.Add(value, value);
-            }
-            return value;
-        }
-#else
         private System.Collections.Generic.Dictionary<string,string> _stringInterner;
         private string Intern(string value)
         {
@@ -689,7 +665,6 @@ namespace AqlaSerializer
             }
             return value;
         }
-#endif
 
         static readonly UTF8Encoding Encoding = new UTF8Encoding();
         /// <summary>
@@ -1724,11 +1699,8 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             return false;
         }
 
-#if NO_GENERICS
-        readonly Stack _trapNoteReserved = new Stack();
-#else
         readonly Stack<int> _trapNoteReserved = new Stack<int>();
-#endif
+
         int _trappedKey;
 
         public static int ReserveNoteObject(ProtoReader reader)

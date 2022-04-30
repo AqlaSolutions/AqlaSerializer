@@ -115,12 +115,10 @@ namespace AqlaSerializer.Serializers
 
             if (baseCtorCallbacks != null && baseCtorCallbacks.Length == 0) baseCtorCallbacks = null;
             this._baseCtorCallbacks = baseCtorCallbacks;
-#if !NO_GENERICS
             if (Helpers.GetNullableUnderlyingType(forType) != null)
             {
                 throw new ArgumentException("Cannot create a TypeSerializer for nullable types", nameof(forType));
             }
-#endif
 
             if (model.MapType(iextensible).IsAssignableFrom(forType))
             {

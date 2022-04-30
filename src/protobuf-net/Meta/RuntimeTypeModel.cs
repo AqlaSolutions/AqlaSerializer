@@ -2,9 +2,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 #if !PORTABLE
 using System.Runtime.Serialization;
 #endif
@@ -39,14 +37,6 @@ using AltLinq; using System.Linq;
 
 namespace AqlaSerializer.Meta
 {
-#if !NO_GENERiCS
-    using TypeSet = Dictionary<Type, object>;
-    using TypeList = List<Type>;
-#else
-    using TypeSet = System.Collections.Hashtable;
-    using TypeList = System.Collections.ArrayList;
-#endif
-
     /// <summary>
     /// Provides protobuf serialization support for a number of types that can be defined at runtime
     /// </summary>
@@ -589,28 +579,9 @@ namespace AqlaSerializer.Meta
 
         private MetaType RecogniseCommonTypes(Type type)
         {
-            //#if !NO_GENERICS
-            //            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.KeyValuePair<,>))
-            //            {
-            //                MetaType mt = new MetaType(this, type);
-
-            //                Type surrogate = typeof (KeyValuePairSurrogate<,>).MakeGenericType(type.GetGenericArguments());
-
-            //                mt.SetSurrogate(surrogate);
-            //                mt.IncludeSerializerMethod = false;
-            //                mt.Freeze();
-
-            //                MetaType surrogateMeta = (MetaType)types[FindOrAddAuto(surrogate, true, true, true)]; // this forcibly adds it if needed
-            //                if(surrogateMeta.IncludeSerializerMethod)
-            //                { // don't blindly set - it might be frozen
-            //                    surrogateMeta.IncludeSerializerMethod = false;
-            //                }
-            //                surrogateMeta.Freeze();
-            //                return mt;
-            //            }
-            //#endif
             return null;
         }
+
         private MetaType Create(Type type)
         {
             ThrowIfFrozen();

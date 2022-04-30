@@ -10,10 +10,7 @@ namespace AqlaSerializer.Meta
     /// </summary>
     public sealed class SubType
     {
-        internal sealed class Comparer : System.Collections.IComparer
-#if !NO_GENERICS
-, System.Collections.Generic.IComparer<SubType>
-#endif
+        internal sealed class Comparer : System.Collections.IComparer, System.Collections.Generic.IComparer<SubType>
         {
             public static readonly Comparer Default = new Comparer();
             public int Compare(object x, object y)

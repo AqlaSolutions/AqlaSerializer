@@ -6,9 +6,7 @@
 #if !NO_RUNTIME
 using System;
 using System.Collections;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 #if !PORTABLE
 using System.Runtime.Serialization;
 #endif

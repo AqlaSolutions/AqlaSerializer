@@ -1,9 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 using System.Collections;
-#if !NO_GENERICS
 using System.Collections.Generic;
-#endif
 using System.IO;
 using AqlaSerializer.Meta;
 
@@ -24,7 +22,7 @@ namespace AqlaSerializer
             _typeModel = typeModel;
         }
 
-#if !NO_RUNTIME && !NO_GENERICS
+#if !NO_RUNTIME
         /// <summary>
         /// All this does is call GetExtendedValuesTyped with the correct type for "instance";
         /// this ensures that we don't get issues with subclasses declaring conflicting types -
@@ -128,19 +126,6 @@ namespace AqlaSerializer
             }
 #endif
         }
-//#if !NO_GENERICS
-//        /// <summary>
-//        /// Stores the given value into the instance's stream; the serializer
-//        /// is inferred from TValue and format.
-//        /// </summary>
-//        /// <remarks>Needs to be public to be callable thru reflection in Silverlight</remarks>
-//        public void AppendExtendValueTyped<TSource, TValue>(
-//            TypeModel model, TSource instance, int tag, DataFormat format, TValue value)
-//            where TSource : class, IExtensible
-//        {
-//            AppendExtendValue(model, instance, tag, format, value);
-//        }
-//#endif
     }
 
 }

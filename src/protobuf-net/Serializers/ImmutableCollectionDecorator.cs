@@ -20,7 +20,6 @@ namespace AqlaSerializer.Serializers
     sealed class ImmutableCollectionDecorator : ListDecorator
     {
         protected override bool RequireAdd => false;
-#if !NO_GENERICS
 
         static Type ResolveIReadOnlyCollection(Type declaredType, Type t)
         {
@@ -117,7 +116,6 @@ namespace AqlaSerializer.Serializers
 
             return true;
         }
-#endif
 
         private readonly MethodInfo _builderFactory, _add, _addRange, _finish;
         internal ImmutableCollectionDecorator(RuntimeTypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, bool writePacked, WireType expectedTailWireType, bool overwriteList,
@@ -215,9 +213,7 @@ namespace AqlaSerializer.Serializers
                             ctx.BranchIfFalse(done, false); // old value null; nothing to add
                         }
                         PropertyInfo prop = Helpers.GetProperty(ExpectedType, "Length", false) ?? Helpers.GetProperty(ExpectedType, "Count", false);
-#if !NO_GENERICS
                         if (prop == null) prop = Helpers.GetProperty(ResolveIReadOnlyCollection(ExpectedType, Tail.ExpectedType), "Count", false);
-#endif
                         ctx.LoadAddress(value, value.Type);
                         ctx.EmitCall(Helpers.GetGetMethod(prop, false, false));
                         ctx.BranchIfFalse(done, false); // old list is empty; nothing to add

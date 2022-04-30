@@ -487,7 +487,6 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             return new DeserializeItemsIterator(this, source, type, style, expectedField, resolver, context);
         }
 
-#if !NO_GENERICS
         /// <summary>
         /// Reads a sequence of consecutive length-prefixed items from a stream, using
         /// either base-128 or fixed-length prefixes. Base-128 prefixes with a tag
@@ -538,7 +537,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             public DeserializeItemsIterator(TypeModel model, Stream source, PrefixStyle style, int expectedField, SerializationContext context)
                 : base(model, source, model.MapType(typeof(T)), style, expectedField, null, context) { }
         }
-#endif
+
         private class DeserializeItemsIterator : IEnumerator, IEnumerable
         {
             IEnumerator IEnumerable.GetEnumerator() { return this; }
@@ -643,7 +642,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             }
         }
 
-#if !NO_GENERICS && !IOS
+#if !IOS
         /// <summary>
         /// Applies a protocol-buffer stream to an existing instance (which may be null).
         /// </summary>
@@ -711,14 +710,12 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 }
             }
             bool autoCreate = true;
-#if !NO_GENERICS
             Type underlyingType = Helpers.GetNullableUnderlyingType(type);
             if (underlyingType != null)
             {
                 type = underlyingType;
                 autoCreate = false;
             }
-#endif
             return autoCreate;
         }
 
@@ -965,14 +962,11 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         protected internal static Type ResolveProxies(Type type)
         {
             if (type == null) return null;
-#if !NO_GENERICS
             if (type.IsGenericParameter) return null;
             var underlying = Helpers.GetNullableUnderlyingType(type);
             if (underlying != null && Helpers.GetTypeCode(underlying) != ProtoTypeCode.Unknown)
                 return underlying;
-#endif
 
-#if !(CF)
             // EF POCO
             string fullName = type.FullName;
             if (fullName != null && fullName.StartsWith("System.Data.Entity.DynamicProxies.", StringComparison.Ordinal)) return type.BaseType;
@@ -989,7 +983,6 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                         return type.BaseType;
                 }
             }
-#endif
             return null;
         }
         /// <summary>
@@ -1083,7 +1076,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
 
         internal bool ForceSerializationDuringClone { get; set; }
 
-#if !NO_GENERICS && !IOS
+#if !IOS
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
@@ -1206,14 +1199,12 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         protected internal static void ThrowUnexpectedType(Type type)
         {
             string fullName = type == null ? "(unknown)" : type.FullName;
-#if !NO_GENERICS
             Type baseType = type?.BaseType;
             if (baseType != null && baseType.IsGenericType && baseType.GetGenericTypeDefinition().Name == "GeneratedMessage`2")
             {
                 throw new InvalidOperationException(
                     "Are you mixing protobuf-net and protobuf-csharp-port? See http://stackoverflow.com/q/11564914; type: " + fullName);
             }
-#endif
             throw new InvalidOperationException("Type is not expected, and no contract can be inferred: " + fullName);
         }
         internal static Exception CreateNestedListsNotSupported()

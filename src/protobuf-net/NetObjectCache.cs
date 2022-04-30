@@ -109,36 +109,6 @@ namespace AqlaSerializer
             BasicList list = List;
             int index;
 
-#if NO_GENERICS
-            
-            if(s == null)
-            {
-                if (objectKeys == null)
-                {
-                    objectKeys = new ReferenceHashtable();
-                    index = -1;
-                }
-                else
-                {
-                    object tmp = objectKeys[value];
-                    index = tmp == null ? -1 : (int) tmp;
-                }
-            }
-            else
-            {
-                if (stringKeys == null)
-                {
-                    stringKeys = new Hashtable();
-                    index = -1;
-                }
-                else
-                {
-                    object tmp = stringKeys[s];
-                    index = tmp == null ? -1 : (int) tmp;
-                }
-            }
-#else
-
             if(s == null)
             {
 #if CF || PORTABLE // CF has very limited proper object ref-tracking; so instead, we'll search it the hard way
@@ -167,7 +137,6 @@ namespace AqlaSerializer
                     if (!_stringKeys.TryGetValue(s, out index)) index = -1;
                 }
             }
-#endif
 
             if (!(existing = index >= 0))
             {

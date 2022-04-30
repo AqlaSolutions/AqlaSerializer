@@ -383,12 +383,10 @@ namespace AqlaSerializer.Meta
             if (format != ValueFormat.Compact && _model.ProtoCompatibility.SuppressValueEnhancedFormat)
                 throw new InvalidOperationException("TryGetCoreSerializer should receive final format with ProtoCompatibility already taken into account");
             Type originalType = type;
-#if !NO_GENERICS
             {
                 Type tmp = Helpers.GetNullableUnderlyingType(type);
                 if (tmp != null) type = tmp;
             }
-#endif
             defaultWireType = WireType.None;
             IProtoSerializerWithWireType ser = null;
 
