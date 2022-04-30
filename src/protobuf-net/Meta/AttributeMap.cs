@@ -27,7 +27,7 @@ namespace AqlaSerializer.Meta
             value = newValue;
             return true;
         }
-        
+
         public bool TryGetNotEmpty(string memberName, ref string value, bool publicOnly = true)
         {
             object obj;
@@ -37,7 +37,7 @@ namespace AqlaSerializer.Meta
             value = newValue;
             return true;
         }
-        
+
         public abstract bool TryGet(string key, bool publicOnly, out object value);
         public bool TryGet(string key, out object value)
         {
@@ -57,11 +57,7 @@ namespace AqlaSerializer.Meta
             }
             return result;
 #else
-#if WINRT
-            Attribute[] all = System.Linq.Enumerable.ToArray(type.GetTypeInfo().GetCustomAttributes(inherit));
-#else
             object[] all = type.GetCustomAttributes(inherit);
-#endif
             AttributeMap[] result = new AttributeMap[all.Length];
             for(int i = 0 ; i < all.Length ; i++)
             {
@@ -94,7 +90,7 @@ namespace AqlaSerializer.Meta
             return member.GetCustomAttributes(typeof(T), inherit).Select(attr => (T)(object)attr).ToArray();
 #endif
         }
-        
+
         public static AttributeMap[] Create(TypeModel model, MemberInfo member, bool inherit)
         {
 #if FEAT_IKVM
@@ -107,11 +103,7 @@ namespace AqlaSerializer.Meta
             }
             return result;
 #else
-#if WINRT
-            Attribute[] all = System.Linq.Enumerable.ToArray(member.GetCustomAttributes(inherit));
-#else
             object[] all = member.GetCustomAttributes(inherit);
-#endif
             AttributeMap[] result = new AttributeMap[all.Length];
             for(int i = 0 ; i < all.Length ; i++)
             {
@@ -122,7 +114,7 @@ namespace AqlaSerializer.Meta
         }
         public static AttributeMap[] Create(TypeModel model, Assembly assembly)
         {
-            
+
 #if FEAT_IKVM
             const bool inherit = false;
             System.Collections.Generic.IList<CustomAttributeData> all = assembly.__GetCustomAttributes(model.MapType(typeof(Attribute)), inherit);
@@ -134,12 +126,8 @@ namespace AqlaSerializer.Meta
             }
             return result;
 #else
-#if WINRT
-            Attribute[] all = System.Linq.Enumerable.ToArray(assembly.GetCustomAttributes());
-#else
             const bool inherit = false;
             object[] all = assembly.GetCustomAttributes(inherit);
-#endif
             AttributeMap[] result = new AttributeMap[all.Length];
             for(int i = 0 ; i < all.Length ; i++)
             {

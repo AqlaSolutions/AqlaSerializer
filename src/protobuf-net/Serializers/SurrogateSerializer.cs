@@ -20,7 +20,7 @@ namespace AqlaSerializer.Serializers
             using (builder.SingleTailDecorator(this))
                 _rootTail.WriteDebugSchema(builder);
         }
-        
+
         public bool DemandWireTypeStabilityStatus() => _rootTail.DemandWireTypeStabilityStatus();
 
         bool IProtoTypeSerializer.HasCallbacks(AqlaSerializer.Meta.TypeModel.CallbackType callbackType)
@@ -56,7 +56,7 @@ namespace AqlaSerializer.Serializers
 #endif
 
         public bool RequiresOldValue => true;
-        
+
         public bool CanCancelWriting => true;
         public Type ExpectedType { get; }
         private readonly Type _declaredType;
@@ -82,19 +82,10 @@ namespace AqlaSerializer.Serializers
 
         private static bool HasCast(TypeModel model, Type type, Type from, Type to, out MethodInfo op)
         {
-#if WINRT
-            System.Collections.Generic.List<MethodInfo> list = new System.Collections.Generic.List<MethodInfo>();
-            foreach (var item in type.GetRuntimeMethods())
-            {
-                if (item.IsStatic) list.Add(item);
-            }
-            MethodInfo[] found = list.ToArray();
-#else
             const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
             MethodInfo[] found = type.GetMethods(flags);
-#endif
             ParameterInfo[] paramTypes;
-            
+
             for (int i = 0; i < found.Length; i++)
             {
                 MethodInfo m = found[i];
@@ -164,7 +155,7 @@ namespace AqlaSerializer.Serializers
 
             if (!Helpers.IsValueType(ExpectedType))
                 ProtoReader.NoteReservedTrappedObject(reservedTrap, r, source);
-            
+
             return r;
         }
 #endif

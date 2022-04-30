@@ -84,14 +84,8 @@ namespace AqlaSerializer.Meta
         {
             mappedMembers = null;
             if (type == null) throw new ArgumentNullException(nameof(type));
-#if WINRT
-            TypeInfo typeInfo = type.GetTypeInfo();
-            if (typeInfo.IsAbstract) return null; // as if!
-            ConstructorInfo[] ctors = Helpers.GetConstructors(typeInfo, false);
-#else
             if (type.IsAbstract) return null; // as if!
             ConstructorInfo[] ctors = Helpers.GetConstructors(type, false);
-#endif
             // need to have an interesting constructor to bother even checking this stuff
             if (ctors.Length == 0 || (ctors.Length == 1 && ctors[0].GetParameters().Length == 0)) return null;
 
@@ -194,47 +188,26 @@ namespace AqlaSerializer.Meta
 
             if (itemType != null && defaultType == null)
             {
-#if WINRT
-                TypeInfo typeInfo = type.GetTypeInfo();
-                if (typeInfo.IsClass && !typeInfo.IsAbstract && Helpers.GetConstructor(typeInfo, Helpers.EmptyTypes, true) != null)
-#else
                 if (type.IsClass && !type.IsAbstract && Helpers.GetConstructor(type, Helpers.EmptyTypes, true) != null)
-#endif
                 {
                     defaultType = type;
                 }
                 if (defaultType == null)
                 {
-#if WINRT
-                    if (typeInfo.IsInterface)
-#else
                     if (type.IsInterface)
-#endif
                     {
 #if NO_GENERICS
                         defaultType = typeof(ArrayList);
 #else
                         Type[] genArgs;
-#if WINRT
-                        if (typeInfo.IsGenericType &&
-                            (type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IDictionary<,>)
-                                || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlyDictionary<,>"))
-                            && itemType == typeof(System.Collections.Generic.KeyValuePair<,>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
-#else
                         if (type.IsGenericType &&
                             (type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IDictionary<,>))
                                 || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlyDictionary`2")
                             && itemType == model.MapType(typeof(System.Collections.Generic.KeyValuePair<,>)).MakeGenericType(genArgs = type.GetGenericArguments()))
-#endif
                         {
                             defaultType = model.MapType(typeof(System.Collections.Generic.Dictionary<,>)).MakeGenericType(genArgs);
                         }
-#if WINRT
-                        else if (typeInfo.IsGenericType && (type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.ISet`1" || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlySet`1"))
-#else
                         else if (type.IsGenericType && (type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.ISet`1" || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlySet`1"))
-#endif
-
                         {
                             defaultType = model.MapType(typeof(System.Collections.Generic.HashSet<>)).MakeGenericType(itemType);
                         }
@@ -256,23 +229,13 @@ namespace AqlaSerializer.Meta
             if (!Helpers.IsInterface(type)) return false;
             Type[] genArgs;
             var itemType = TypeModel.GetListItemType(model, type);
-#if WINRT
-            TypeInfo typeInfo = type.GetTypeInfo();
-            if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IDictionary<,>)
-                && itemType == typeof(System.Collections.Generic.KeyValuePair<,>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
-#else
             if (type.IsGenericType && type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IDictionary<,>))
                     && itemType == model.MapType(typeof(System.Collections.Generic.KeyValuePair<,>)).MakeGenericType(genArgs = type.GetGenericArguments()))
-#endif
             {
                 defaultType = model.MapType(typeof(System.Collections.Generic.Dictionary<,>)).MakeGenericType(genArgs);
                 return true;
             }
-#if WINRT
-            if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IList<>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
-#else
             if (type.IsGenericType && type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IList<>)).MakeGenericType(genArgs = type.GetGenericArguments()))
-#endif
             {
                 defaultType = model.MapType(typeof(System.Collections.Generic.List<>)).MakeGenericType(genArgs);
                 return true;
@@ -285,11 +248,7 @@ namespace AqlaSerializer.Meta
         private MethodInfo ResolveMethod(string name, bool instance)
         {
             if (Helpers.IsNullOrEmpty(name)) return null;
-#if WINRT
-            return instance ? Helpers.GetInstanceMethod(_typeInfo, name) : Helpers.GetStaticMethod(_typeInfo, name);
-#else
             return instance ? Helpers.GetInstanceMethod(Type, name) : Helpers.GetStaticMethod(Type, name);
-#endif
         }
         internal static Exception InbuiltType(Type type)
         {

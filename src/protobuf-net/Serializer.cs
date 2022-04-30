@@ -25,7 +25,7 @@ namespace AqlaSerializer
     /// extensible, allowing a type to be deserialized / merged even if some data is
     /// not recognised.
     /// </remarks>
-    public 
+    public
 #if FX11
     sealed
 #else
@@ -44,13 +44,7 @@ namespace AqlaSerializer
         /// </summary>
         public static void AddContracts(bool nonPublic)
         {
-#if !WINRT
             Assembly assembly = Assembly.GetCallingAssembly();
-#else
-            Assembly assembly = (Assembly)typeof(Assembly).GetTypeInfo()
-                .GetDeclaredMethod("GetCallingAssembly")
-                .Invoke(null, new object[0]);
-#endif
             AddContracts(assembly, nonPublic);
         }
 #endif
@@ -150,7 +144,7 @@ namespace AqlaSerializer
         {
             return RuntimeTypeModel.Default.ChangeType<TFrom, TTo>(instance);
         }
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER && !(PHONE8)
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied SerializationInfo.
         /// </summary>
@@ -234,7 +228,7 @@ namespace AqlaSerializer
 #endif
 
         private const string ProtoBinaryField = "proto";
-#if PLAT_BINARYFORMATTER && !NO_GENERICS && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER && !NO_GENERICS && !(PHONE8)
         /// <summary>
         /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
         /// </summary>
@@ -276,14 +270,14 @@ namespace AqlaSerializer
         /// Precompiles the serializer for a given type.
         /// </summary>
         public static void PrepareSerializer<T>()
-        { 
+        {
 #if FEAT_COMPILER
             RuntimeTypeModel model = RuntimeTypeModel.Default;
             model.PrepareSerializer<T>();
 #endif
         }
 
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER && !(PHONE8)
         /// <summary>
         /// Creates a new IFormatter that uses protocol-buffer [de]serialization.
         /// </summary>
@@ -500,7 +494,7 @@ namespace AqlaSerializer
             public static void SerializeWithLengthPrefix(Stream destination, object instance, PrefixStyle style, int fieldNumber)
             {
                 if (instance == null) throw new ArgumentNullException(nameof(instance));
-                RuntimeTypeModel model = RuntimeTypeModel.Default;                
+                RuntimeTypeModel model = RuntimeTypeModel.Default;
                 model.SerializeWithLengthPrefix(destination, instance, model.MapType(instance.GetType()), style, fieldNumber);
             }
             /// <summary>

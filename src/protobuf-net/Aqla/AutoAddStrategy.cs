@@ -119,29 +119,12 @@ namespace AqlaSerializer
                 var members = new List<MappedMember>();
 
                 bool isEnum = Helpers.IsEnum(type);
-#if WINRT
-                System.Collections.Generic.IEnumerable<MemberInfo> foundList;
-                if (isEnum) {
-                    foundList = type.GetRuntimeFields().Where(x => x.IsStatic && x.IsPublic);
-                }
-                else
-                {
-                    System.Collections.Generic.List<MemberInfo> list = new System.Collections.Generic.List<MemberInfo>();
-                    foreach(PropertyInfo prop in type.GetRuntimeProperties()) {
-                        MethodInfo getter = Helpers.GetGetMethod(prop, false, false);
-                        if(getter != null && !getter.IsStatic) list.Add(prop);
-                    }
-                    foreach(FieldInfo fld in type.GetRuntimeFields()) if(fld.IsPublic && !fld.IsStatic) list.Add(fld);
-                    foreach(MethodInfo mthd in type.GetRuntimeMethods()) if(mthd.IsPublic && !mthd.IsStatic) list.Add(mthd);
-                    foundList = list;
-                }
-#else
+
                 MemberInfo[] foundList = type.GetMembers(isEnum 
                     ? BindingFlags.Public | BindingFlags.Static
                     : BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 if (isEnum)
                     foundList = foundList.Where(x => x is FieldInfo).ToArray();
-#endif
                 foreach (MemberInfo member in foundList)
                 {
                     if (member.DeclaringType != type) continue;
@@ -495,7 +478,7 @@ namespace AqlaSerializer
                     if (callbacks == null) { callbacks = new MethodInfo[max + 1]; }
                     else if (callbacks[index] != null)
                     {
-#if WINRT || FEAT_IKVM
+#if FEAT_IKVM
                         Type reflected = method.DeclaringType;
 #else
                         Type reflected = method.ReflectedType;

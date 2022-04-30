@@ -646,21 +646,13 @@ namespace AqlaSerializer.Serializers
 
 
 
-#if WINRT
-        private static readonly TypeInfo ienumeratorType = typeof(IEnumerator).GetTypeInfo(), ienumerableType = typeof (IEnumerable).GetTypeInfo();
-#else
         static readonly System.Type ienumeratorType = typeof(IEnumerator);
         static readonly System.Type ienumerableType = typeof(IEnumerable);
-#endif
 
         protected MethodInfo GetEnumeratorInfo(TypeModel model, out MethodInfo moveNext, out MethodInfo current)
         {
 
-#if WINRT
-            TypeInfo enumeratorType = null, iteratorType, expectedType = ExpectedType.GetTypeInfo();
-#else
             Type enumeratorType = null, iteratorType, expectedType = ExpectedType;
-#endif
 
             // try a custom enumerator
             MethodInfo getEnumerator = Helpers.GetInstanceMethod(expectedType, "GetEnumerator", null);
@@ -670,11 +662,7 @@ namespace AqlaSerializer.Serializers
             if (getEnumerator != null)
             {
                 getReturnType = getEnumerator.ReturnType;
-                iteratorType = getReturnType
-#if WINRT
-                    .GetTypeInfo()
-#endif
-                    ;
+                iteratorType = getReturnType;
                 moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext", null);
                 PropertyInfo prop = Helpers.GetProperty(iteratorType, "Current", false);
                 current = prop == null ? null : Helpers.GetGetMethod(prop, false, false);
@@ -699,11 +687,7 @@ namespace AqlaSerializer.Serializers
             {
                 tmp = tmp.MakeGenericType(itemType);
 
-#if WINRT
-                enumeratorType = tmp.GetTypeInfo();
-#else
                 enumeratorType = tmp;
-#endif
             }
 
             if (enumeratorType != null && enumeratorType.IsAssignableFrom(expectedType))
@@ -711,11 +695,7 @@ namespace AqlaSerializer.Serializers
                 getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
                 getReturnType = getEnumerator.ReturnType;
 
-#if WINRT
-                iteratorType = getReturnType.GetTypeInfo();
-#else
                 iteratorType = getReturnType;
-#endif
 
                 moveNext = Helpers.GetInstanceMethod(model.MapType(ienumeratorType), "MoveNext");
                 current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
@@ -726,11 +706,7 @@ namespace AqlaSerializer.Serializers
             enumeratorType = model.MapType(ienumerableType);
             getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
             getReturnType = getEnumerator.ReturnType;
-            iteratorType = getReturnType
-#if WINRT
-                .GetTypeInfo()
-#endif
-                ;
+            iteratorType = getReturnType;
             moveNext = Helpers.GetInstanceMethod(iteratorType, "MoveNext");
             current = Helpers.GetGetMethod(Helpers.GetProperty(iteratorType, "Current", false), false, false);
             return getEnumerator;

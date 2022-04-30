@@ -43,7 +43,7 @@ namespace AqlaSerializer
             object obj = TryGetUninitializedObjectWithFormatterServices(type);
             if (obj != null) return obj;
 #endif
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER && !PHONE8
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
 #else
             if (_getUninitializedObject == null)
@@ -104,7 +104,7 @@ namespace AqlaSerializer
         };
 
 
-        
+
         /// <summary>
         /// Writes a TimeSpan to a protobuf stream
         /// </summary>
@@ -163,7 +163,7 @@ namespace AqlaSerializer
                     }
 
                     SubItemToken token = ProtoWriter.StartSubItemWithoutWritingHeader(null, dest);
-            
+
                     if(value != 0) {
                         ProtoWriter.WriteFieldHeader(FieldTimeSpanValue, WireType.SignedVariant, dest);
                         ProtoWriter.WriteInt64(value, dest);
@@ -188,7 +188,7 @@ namespace AqlaSerializer
         }
         /// <summary>
         /// Parses a TimeSpan from a protobuf stream
-        /// </summary>        
+        /// </summary>
         public static TimeSpan ReadTimeSpan(ProtoReader source)
         {
             DateTimeKind kind;
@@ -346,7 +346,7 @@ namespace AqlaSerializer
                     case FieldDecimalSignScale: signScale = reader.ReadUInt32(); break;
                     default: reader.SkipField(); break;
                 }
-                
+
             }
             ProtoReader.EndSubItem(token, reader);
 
@@ -391,7 +391,7 @@ namespace AqlaSerializer
         const int FieldGuidLow = 1, FieldGuidHigh = 2;
         /// <summary>
         /// Writes a Guid to a protobuf stream
-        /// </summary>        
+        /// </summary>
         public static void WriteGuid(Guid value, ProtoWriter dest)
         {
             byte[] blob = value.ToByteArray();
@@ -426,10 +426,10 @@ namespace AqlaSerializer
             ProtoReader.EndSubItem(token, source);
             if(low == 0 && high == 0) return Guid.Empty;
             uint a = (uint)(low >> 32), b = (uint)low, c = (uint)(high >> 32), d= (uint)high;
-            return new Guid((int)b, (short)a, (short)(a >> 16), 
+            return new Guid((int)b, (short)a, (short)(a >> 16),
                 (byte)d, (byte)(d >> 8), (byte)(d >> 16), (byte)(d >> 24),
                 (byte)c, (byte)(c >> 8), (byte)(c >> 16), (byte)(c >> 24));
-            
+
         }
 
 
@@ -457,7 +457,7 @@ namespace AqlaSerializer
             /// </summary>
             UseConstructor = 4,
             /// <summary>
-            /// Should not expect serializer to call NoteObject: usable for serializers of primitive immutable reference types (e.g. String, System.Type) 
+            /// Should not expect serializer to call NoteObject: usable for serializers of primitive immutable reference types (e.g. String, System.Type)
             /// </summary>
             LateSet = 8,
             /// <summary>

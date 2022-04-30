@@ -33,7 +33,7 @@ namespace AqlaSerializer
 
 #if PLAT_BINARYFORMATTER || (SILVERLIGHT && NET_4_0)
 
-#if !(WINRT || PHONE7 || PHONE8)
+#if !(PHONE7 || PHONE8)
         private System.Runtime.Serialization.StreamingContextStates _state = System.Runtime.Serialization.StreamingContextStates.Persistence;
         /// <summary>
         /// Gets or sets the source or destination of the transmitted data.
@@ -49,7 +49,7 @@ namespace AqlaSerializer
         /// </summary>
         public static implicit operator System.Runtime.Serialization.StreamingContext(SerializationContext ctx)
         {
-#if WINRT || PHONE7 || PHONE8
+#if PHONE7 || PHONE8
             return new System.Runtime.Serialization.StreamingContext();
 #else
             if (ctx == null) return new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.Persistence);
@@ -62,7 +62,7 @@ namespace AqlaSerializer
         public static implicit operator SerializationContext (System.Runtime.Serialization.StreamingContext ctx)
         {
             SerializationContext result = new SerializationContext();
-#if !(WINRT || PHONE7 || PHONE8)
+#if !(PHONE7 || PHONE8)
             result.Context = ctx.Context;
             result.State = ctx.State;
 #endif

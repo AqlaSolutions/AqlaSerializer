@@ -25,13 +25,8 @@ namespace AqlaSerializer.Serializers
         {
             expectedType = type;
             _tail = tail;
-#if WINRT
-            absoluteUriProperty = expectedType.GetTypeInfo().GetDeclaredProperty("AbsoluteUri");
-            typeConstructor = expectedType.GetTypeInfo().DeclaredConstructors.First(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType == typeof(string));
-#else
             absoluteUriProperty = expectedType.GetProperty("AbsoluteUri");
             typeConstructor = expectedType.GetConstructor(new Type[] { typeof(string) });
-#endif
         }
         public override Type ExpectedType { get { return expectedType; } }
         public override bool RequiresOldValue { get { return false; } }

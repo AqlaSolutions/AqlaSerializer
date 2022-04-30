@@ -33,7 +33,7 @@ namespace AqlaSerializer.Meta
         private BasicList _fields = new BasicList();
 
         internal System.Collections.IEnumerable Fields => this._fields;
-        
+
         public int GetNextFreeFieldNumber()
         {
             return GetNextFreeFieldNumber(1);
@@ -107,7 +107,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Adds a member (by name) to the MetaType
-        /// </summary>        
+        /// </summary>
         public MetaType Add(int fieldNumber, string memberName)
         {
             return Add(fieldNumber, memberName, false);
@@ -115,7 +115,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Adds a member (by name) to the MetaType
-        /// </summary>        
+        /// </summary>
         public MetaType Add(int fieldNumber, string memberName, bool useBackingFieldIfNoSetter)
         {
             AddField(fieldNumber, memberName, null, null, null, useBackingFieldIfNoSetter);
@@ -142,7 +142,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Adds a member (by name) to the MetaType
-        /// </summary>     
+        /// </summary>
         public MetaType Add(string memberName)
         {
             Add(GetNextFieldNumber(), memberName);
@@ -151,7 +151,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Adds a set of members (by name) to the MetaType
-        /// </summary>     
+        /// </summary>
         public MetaType Add(params string[] memberNames)
         {
             if (memberNames == null) throw new ArgumentNullException(nameof(memberNames));
@@ -166,7 +166,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Adds a member (by name) to the MetaType
-        /// </summary>        
+        /// </summary>
         public MetaType Add(int fieldNumber, string memberName, object defaultValue)
         {
             return Add(fieldNumber, memberName, defaultValue, false);
@@ -174,7 +174,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Adds a member (by name) to the MetaType
-        /// </summary>        
+        /// </summary>
         public MetaType Add(int fieldNumber, string memberName, object defaultValue, bool useBackingFieldIfNoSetter)
         {
             AddField(fieldNumber, memberName, null, null, defaultValue, useBackingFieldIfNoSetter);
@@ -225,17 +225,12 @@ namespace AqlaSerializer.Meta
         {
             if (Type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
             MemberInfo mi = null;
-#if WINRT
-            mi = Helpers.IsEnum(Type) ? Type.GetTypeInfo().GetDeclaredField(memberName) : Helpers.GetInstanceMember(Type.GetTypeInfo(), memberName);
-
-#else
             MemberInfo[] members = Type.GetMember(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (members != null && members.Length == 1) mi = members[0];
-#endif
             if (mi == null) throw new ArgumentException("Unable to determine member: " + memberName, nameof(memberName));
 
             Type miType;
-#if WINRT || PORTABLE
+#if PORTABLE
             PropertyInfo pi = mi as PropertyInfo;
             if (pi == null)
             {
@@ -307,11 +302,7 @@ namespace AqlaSerializer.Meta
                 member.MainValue = ms;
             }
             var vm = new ValueMember(member.MainValue, serializationSettings, member.BackedField ?? member.Member, this.Type, _model);
-#if WINRT
-            TypeInfo finalType = _typeInfo;
-#else
             Type finalType = this.Type;
-#endif
             PropertyInfo prop = Helpers.GetProperty(finalType, member.Member.Name + "Specified", true);
             MethodInfo getMethod = Helpers.GetGetMethod(prop, true, true);
             if (getMethod == null || getMethod.IsStatic) prop = null;

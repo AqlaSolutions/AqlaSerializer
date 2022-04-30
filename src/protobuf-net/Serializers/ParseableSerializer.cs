@@ -17,14 +17,10 @@ namespace AqlaSerializer.Serializers
         public static ParseableSerializer TryCreate(Type type, TypeModel model)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-#if WINRT || PORTABLE
+#if PORTABLE
             MethodInfo method = null;
             
-#if WINRT
-            foreach (MethodInfo tmp in type.GetTypeInfo().GetDeclaredMethods("Parse"))
-#else
             foreach (MethodInfo tmp in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly))
-#endif
             {
                 ParameterInfo[] p;
                 if (tmp.Name == "Parse" && tmp.IsPublic && tmp.IsStatic && tmp.DeclaringType == type && (p = tmp.GetParameters()) != null && p.Length == 1 && p[0].ParameterType == typeof(string))
@@ -51,13 +47,7 @@ namespace AqlaSerializer.Serializers
         }
         private static MethodInfo GetCustomToString(Type type)
         {
-#if WINRT
-            foreach (MethodInfo method in type.GetTypeInfo().GetDeclaredMethods("ToString"))
-            {
-                if (method.IsPublic && !method.IsStatic && method.GetParameters().Length == 0) return method;
-            }
-            return null;
-#elif PORTABLE
+#if PORTABLE
             MethodInfo method = Helpers.GetInstanceMethod(type, "ToString", Helpers.EmptyTypes);
             if (method == null || !method.IsPublic || method.IsStatic || method.DeclaringType != type) return null;
             return method;

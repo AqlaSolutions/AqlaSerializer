@@ -114,11 +114,7 @@ namespace AqlaSerializer.Meta
 
                 if (_settingsValueFinal.EnumPassthru == null && Helpers.IsEnum(Type))
                 {
-#if WINRT
-                    _settingsValueFinal.EnumPassthru = _typeInfo.IsDefined(typeof(FlagsAttribute), false);
-#else
                     _settingsValueFinal.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
-#endif
                 }
 
                 if (_settingsValueFinal.IgnoreListHandling)

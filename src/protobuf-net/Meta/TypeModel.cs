@@ -20,12 +20,6 @@ namespace AqlaSerializer.Meta
     public abstract partial class TypeModel
     {
         internal ExtensibleUtil ExtensibleUtil { get; }
-#if WINRT
-        internal TypeInfo MapType(TypeInfo type)
-        {
-            return type;
-        }
-#endif
 
         /// <summary>
         /// When you pass stream which CanSeek and CanRead the serializer may use it as a buffer when its own buffer grows too big. Default: true.
@@ -978,7 +972,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 return underlying;
 #endif
 
-#if !(WINRT || CF)
+#if !(CF)
             // EF POCO
             string fullName = type.FullName;
             if (fullName != null && fullName.StartsWith("System.Data.Entity.DynamicProxies.", StringComparison.Ordinal)) return type.BaseType;
@@ -1212,7 +1206,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         protected internal static void ThrowUnexpectedType(Type type)
         {
             string fullName = type == null ? "(unknown)" : type.FullName;
-#if !NO_GENERICS && !WINRT
+#if !NO_GENERICS
             Type baseType = type?.BaseType;
             if (baseType != null && baseType.IsGenericType && baseType.GetGenericTypeDefinition().Name == "GeneratedMessage`2")
             {
@@ -1344,7 +1338,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         /// </summary>
         public event TypeFormatEventHandler DynamicTypeFormatting;
 
-#if PLAT_BINARYFORMATTER && !(WINRT || PHONE8)
+#if PLAT_BINARYFORMATTER && !(PHONE8)
         /// <summary>
         /// Creates a new IFormatter that uses protocol-buffer [de]serialization.
         /// </summary>
@@ -1425,7 +1419,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             {
                 int i = name.IndexOf(',');
                 string fullName = (i > 0 ? name.Substring(0, i) : name).Trim();
-#if !(WINRT || FEAT_IKVM)
+#if !(FEAT_IKVM)
                 if (assembly == null) assembly = Assembly.GetCallingAssembly();
 #endif
                 Type type = assembly == null ? null : assembly.GetType(fullName);

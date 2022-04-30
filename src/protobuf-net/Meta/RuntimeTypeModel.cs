@@ -822,13 +822,7 @@ namespace AqlaSerializer.Meta
             if (newType != null) return newType; // return existing
             int opaqueToken = 0;
 
-#if WINRT
-            System.Reflection.TypeInfo typeInfo = System.Reflection.IntrospectionExtensions.GetTypeInfo(type);
-            if (typeInfo.IsInterface && MetaType.ienumerable.IsAssignableFrom(typeInfo)
-#else
-            if (type.IsInterface && MapType(MetaType.ienumerable).IsAssignableFrom(type)
-#endif
- && GetListItemType(this, type) == null)
+            if (type.IsInterface && MapType(MetaType.ienumerable).IsAssignableFrom(type) && GetListItemType(this, type) == null)
             {
                 throw new ArgumentException("IEnumerable[<T>] data cannot be used as a meta-type unless an Add method can be resolved");
             }

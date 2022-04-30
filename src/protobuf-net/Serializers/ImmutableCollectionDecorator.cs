@@ -24,38 +24,20 @@ namespace AqlaSerializer.Serializers
 
         static Type ResolveIReadOnlyCollection(Type declaredType, Type t)
         {
-#if WINRT
-            if (CheckIsIReadOnlyCollectionExactly(declaredType.GetTypeInfo())) return declaredType;
-            foreach (Type intImplBasic in declaredType.GetTypeInfo().ImplementedInterfaces)
-            {
-                TypeInfo intImpl = intImplBasic.GetTypeInfo();
-                if (CheckIsIReadOnlyCollectionExactly(intImpl)) return intImplBasic;
-            }
-#else
             if (CheckIsIReadOnlyCollectionExactly(declaredType)) return declaredType;
             foreach (Type intImpl in declaredType.GetInterfaces())
             {
                 if (CheckIsIReadOnlyCollectionExactly(intImpl)) return intImpl;
             }
-#endif
             return null;
         }
 
-#if WINRT
-        static bool CheckIsIReadOnlyCollectionExactly(TypeInfo t)
-#else
         static bool CheckIsIReadOnlyCollectionExactly(Type t)
-#endif
         {
             if (t != null && t.IsGenericType && t.Name.StartsWith("IReadOnlyCollection`", StringComparison.Ordinal))
             {
-#if WINRT
-                Type[] typeArgs = t.GenericTypeArguments;
-                if (typeArgs.Length != 1 && typeArgs[0].GetTypeInfo().Equals(t)) return false;
-#else
                 Type[] typeArgs = t.GetGenericArguments();
                 if (typeArgs.Length != 1 && typeArgs[0] != t) return false;
-#endif
 
                 return true;
             }
@@ -66,20 +48,12 @@ namespace AqlaSerializer.Serializers
         {
             builderFactory = add = addRange = finish = null;
             if (model == null || declaredType == null) return false;
-#if WINRT
-            TypeInfo declaredTypeInfo = declaredType.GetTypeInfo();
-#else
             Type declaredTypeInfo = declaredType;
-#endif
 
             // try to detect immutable collections; firstly, they are all generic, and all implement IReadOnlyCollection<T> for some T
             if(!declaredTypeInfo.IsGenericType) return false;
 
-#if WINRT
-            Type[] typeArgs = declaredTypeInfo.GenericTypeArguments, effectiveType;
-#else
             Type[] typeArgs = declaredTypeInfo.GetGenericArguments(), effectiveType;
-#endif
             switch (typeArgs.Length)
             {
                 case 1:
@@ -111,11 +85,7 @@ namespace AqlaSerializer.Serializers
             }
             if (outerType == null) return false;
 
-#if WINRT
-            foreach (MethodInfo method in outerType.GetTypeInfo().DeclaredMethods)
-#else
             foreach (MethodInfo method in outerType.GetMethods())
-#endif
             {
                 if (!method.IsStatic || method.Name != "CreateBuilder" || !method.IsGenericMethodDefinition || method.GetParameters().Length != 0
                     || method.GetGenericArguments().Length != typeArgs.Length) continue;

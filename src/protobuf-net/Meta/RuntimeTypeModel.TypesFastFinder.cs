@@ -1,8 +1,5 @@
 ﻿#if !PHONE8 && !PORTABLE && !SILVERLIGHT
 #define ENABLED
-#if WINRT
-#define SLIM
-#endif
 #endif
 
 // Modified by Vladyslav Taranov for AqlaSerializer, 2016

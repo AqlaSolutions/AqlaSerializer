@@ -241,11 +241,7 @@ namespace AqlaSerializer.Meta
                 Debug.Assert(_subTypes != null, "_subTypes != null");
                 foreach (SubType subType in _subTypes)
                 {
-#if WINRT
-                    if (!subType.DerivedType.IgnoreListHandling && ienumerable.IsAssignableFrom(subType.DerivedType.Type.GetTypeInfo()))
-#else
                     if (!subType.DerivedType.IgnoreListHandling && _model.MapType(ienumerable).IsAssignableFrom(subType.DerivedType.Type))
-#endif
                     {
                         throw new ArgumentException("Repeated data (a list, collection, etc) has inbuilt behaviour and cannot be used as a subclass");
                     }
