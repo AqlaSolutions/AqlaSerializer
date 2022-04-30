@@ -85,12 +85,6 @@ Some build configurations may be not available through nuget, you can download t
 * 1.0.0.58 - initial AqlaSerializer release
     </releaseNotes>
     <dependencies>
-      <group targetFramework=".NETFramework2.0">
-        <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />
-      </group>
-      <group targetFramework=".NETFramework3.0">
-        <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />
-      </group>
       <group targetFramework=".NETFramework3.5">
         <dependency id="aqla.runsharp" version="1.0.22" exclude="Build,Analyzers" />
       </group>
@@ -125,12 +119,12 @@ Some build configurations may be not available through nuget, you can download t
       </group>
     </dependencies>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework2.0, .NETFramework3.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
-      <frameworkAssembly assemblyName="System.configuration" targetFramework=".NETFramework3.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
-      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework3.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
-      <frameworkAssembly assemblyName="System.Runtime.Serialization" targetFramework=".NETFramework3.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
-      <frameworkAssembly assemblyName="System.ServiceModel" targetFramework=".NETFramework3.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
-      <frameworkAssembly assemblyName="System.Xml" targetFramework=".NETFramework3.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework2.0, .NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
+      <frameworkAssembly assemblyName="System.configuration" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
+      <frameworkAssembly assemblyName="System.Runtime.Serialization" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
+      <frameworkAssembly assemblyName="System.ServiceModel" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5" />
+      <frameworkAssembly assemblyName="System.Xml" targetFramework=".NETFramework3.5, .NETFramework4.0, .NETFramework4.5, .NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
       <frameworkAssembly assemblyName="System.Core" targetFramework=".NETPortable0.0-net4+sl50+win8+wpa81+wp8+android+ios+uap" />
     </frameworkAssemblies>
   </metadata>

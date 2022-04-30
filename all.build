@@ -103,10 +103,6 @@
     <iOSFiles Include="src\protobuf-net\bin\iOS\net30\aqlaserializer.*"/> 
     <UnityFiles Include="src\protobuf-net\bin\Unity\net35\aqlaserializer.*"/>
     <UnityFilesDep Include="src\protobuf-net\bin\Unity\net35\RunSharp.*"/>
-    <Net20SafeFiles Include="src\protobuf-net\bin\Safe\net20\aqlaserializer.*"/>
-    <Net20SafeFilesDep Include="src\protobuf-net\bin\Safe\net20\RunSharp.*"/>
-    <Net30SafeFiles Include="src\protobuf-net\bin\Safe\net30\aqlaserializer.*"/>
-    <Net30SafeFilesDep Include="src\protobuf-net\bin\Safe\net30\RunSharp.*"/>
     <Net35SafeFiles Include="src\protobuf-net\bin\Safe\net35\aqlaserializer.*"/>
     <Net35SafeFilesDep Include="src\protobuf-net\bin\Safe\net35\RunSharp.*"/>
     <Net40SafeFiles Include="src\protobuf-net\bin\Safe\net40\aqlaserializer.*"/>
@@ -121,9 +117,6 @@
     <Net45FilesDep Include="src\protobuf-net\bin\Release\net45\RunSharp.*"/>
     <Net20Files Include="src\protobuf-net\bin\Release\net20\aqlaserializer.*"/>
     <Net20FilesDep Include="src\protobuf-net\bin\Release\net20\RunSharp.*"/>
-    <Net30Files Include="src\protobuf-net\bin\Release\net30\aqlaserializer.*"/>
-    <Net30FilesDep Include="src\protobuf-net\bin\Release\net30\RunSharp.*"/>
-    <Net30Files_CoreOnly Include="src\protobuf-net\bin\CoreOnly\net30\aqlaserializer.*"/>
     <NetStandardFiles Include="src\protobuf-net\bin\Release\netstandard2.1\aqlaserializer.*"/>
     <NetStandardSafeFiles Include="src\protobuf-net\bin\Safe\netstandard2.1\aqlaserializer.*"/>
     <NetStandardFiles_CoreOnly Include="src\protobuf-net\bin\CoreOnly\netstandard2.1\aqlaserializer.*"/>
@@ -157,12 +150,6 @@
     <Copy SourceFiles="@(Net20FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
     <Copy SourceFiles="@(Net20SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>
     <Copy SourceFiles="@(Net20SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>    
-
-    <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(NugetDirectory)\net30"/>
-    <Copy SourceFiles="@(Net30Files)" DestinationFolder="$(ZipDirectory)\Full\net30"/>
-    <Copy SourceFiles="@(Net30FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net30"/>
-    <Copy SourceFiles="@(Net30SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
-    <Copy SourceFiles="@(Net30SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net30safe"/>
 
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net35"/>
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
@@ -209,7 +196,6 @@
 
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(iOSFilesDep)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
-    <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
   
