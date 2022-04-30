@@ -97,8 +97,6 @@
     <Net40FilesDep Include="src\protobuf-net\bin\Release\net40\RunSharp.*"/>
     <Net45Files Include="src\protobuf-net\bin\Release\net45\aqlaserializer.*"/>
     <Net45FilesDep Include="src\protobuf-net\bin\Release\net45\RunSharp.*"/>
-    <Net20Files Include="src\protobuf-net\bin\Release\net20\aqlaserializer.*"/>
-    <Net20FilesDep Include="src\protobuf-net\bin\Release\net20\RunSharp.*"/>
     <NetStandardFiles Include="src\protobuf-net\bin\Release\netstandard2.1\aqlaserializer.*"/>
     <NetStandardSafeFiles Include="src\protobuf-net\bin\Safe\netstandard2.1\aqlaserializer.*"/>
     <NetStandardFiles_CoreOnly Include="src\protobuf-net\bin\CoreOnly\netstandard2.1\aqlaserializer.*"/>
@@ -106,9 +104,6 @@
     <PortableFilesDep Include="src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\RunSharp.*"/>
     <PortableFiles_CoreOnly Include="src\protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
 
-    <SLFiles Include="bin-unsupported\Full\sl5\aqlaserializer.*"/>
-    <SLFilesDep Include="bin-unsupported\Full\sl5\RunSharp.*"/>
-    <SLFiles_CoreOnly Include="bin-unsupported\CoreOnly\sl5\aqlaserializer.*"/>
     <PrecompileFiles Include="assorted\precompile\bin\Release\*.*"/>
 
 
@@ -119,12 +114,6 @@
     <Copy SourceFiles="@(NetStandardFiles)" DestinationFolder="$(ZipDirectory)\Full\netstandard2.1"/>
     <Copy SourceFiles="@(NetStandardSafeFiles)" DestinationFolder="$(ZipDirectory)\Full\netstandard2.1safe"/>
     <Copy SourceFiles="@(NetStandardFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\netstandard2.1"/>
-
-    <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(NugetDirectory)\net20"/>
-    <Copy SourceFiles="@(Net20Files)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
-    <Copy SourceFiles="@(Net20FilesDep)" DestinationFolder="$(ZipDirectory)\Full\net20"/>
-    <Copy SourceFiles="@(Net20SafeFiles)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>
-    <Copy SourceFiles="@(Net20SafeFilesDep)" DestinationFolder="$(ZipDirectory)\Full\net20safe"/>
 
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(NugetDirectory)\net35"/>
     <Copy SourceFiles="@(Net35Files)" DestinationFolder="$(ZipDirectory)\Full\net35"/>
@@ -147,11 +136,6 @@
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(NugetDirectory)\unity3d"/>
     <Copy SourceFiles="@(UnityFiles)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
     <Copy SourceFiles="@(UnityFilesDep)" DestinationFolder="$(ZipDirectory)\Full\unity"/>
-
-    <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(NugetDirectory)\sl5"/>
-    <Copy SourceFiles="@(SLFiles)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
-    <Copy SourceFiles="@(SLFilesDep)" DestinationFolder="$(ZipDirectory)\Full\sl5"/>
-    <Copy SourceFiles="@(SLFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\sl5"/>
 
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(NugetDirectory)\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
