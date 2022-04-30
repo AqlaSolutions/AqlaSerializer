@@ -316,7 +316,7 @@ namespace AqlaSerializer.Serializers
                         }
                     case ProtoTypeCode.DateTime:
                         {
-#if FX11 || SILVERLIGHT
+#if SILVERLIGHT
                         ctx.LoadValue(((DateTime)_defaultValue).ToFileTime());
                         ctx.EmitCall(typeof(DateTime).GetMethod("FromFileTime"));                      
 #else

@@ -117,7 +117,7 @@ namespace AqlaSerializer.Meta
             {
                 _model.ReleaseLock(opaqueToken);
             }
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
             if (_model.AutoCompile) CompileInPlace();
 #endif
         }
@@ -344,7 +344,7 @@ namespace AqlaSerializer.Meta
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IProtoSerializerWithWireType ILateReferenceSerializerProxy.LateReferenceSerializer => LateReferenceSerializer;
 
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
 
         /// <summary>
         /// Compiles the serializer for this type; this is *not* a full
@@ -372,7 +372,7 @@ namespace AqlaSerializer.Meta
 
         internal bool IsPrepared()
         {
-#if FEAT_COMPILER && !FEAT_IKVM && !FX11
+#if FEAT_COMPILER && !FEAT_IKVM
             return _serializer is CompiledSerializer;
 #else
             return false;

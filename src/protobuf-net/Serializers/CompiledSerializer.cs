@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if FEAT_COMPILER && !(FX11 || FEAT_IKVM)
+#if FEAT_COMPILER && !(FEAT_IKVM)
 using System;
 using AqlaSerializer.Meta;
 

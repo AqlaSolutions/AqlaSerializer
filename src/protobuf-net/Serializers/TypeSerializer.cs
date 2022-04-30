@@ -332,7 +332,7 @@ namespace AqlaSerializer.Serializers
             else if (_useConstructor && _hasConstructor)
             {
                 obj = Activator.CreateInstance(_constructType
-#if !CF && !SILVERLIGHT && !PORTABLE
+#if !SILVERLIGHT && !PORTABLE
                 , nonPublic: true
 #endif
                 );

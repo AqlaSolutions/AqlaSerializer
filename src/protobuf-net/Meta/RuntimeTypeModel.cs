@@ -119,7 +119,7 @@ namespace AqlaSerializer.Meta
             OPTIONS_IsDefaultModel = 2,
             OPTIONS_Frozen = 4,
             OPTIONS_AutoAddMissingTypes = 8,
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
             OPTIONS_AutoCompile = 16,
 #endif
             OPTIONS_UseImplicitZeroDefaults = 32,
@@ -304,7 +304,7 @@ namespace AqlaSerializer.Meta
             AutomaticDynamicType = true;
             UseImplicitZeroDefaults = true;
             SetOption(OPTIONS_IsDefaultModel, isDefault);
-#if FEAT_COMPILER && !FX11 && !DEBUG
+#if FEAT_COMPILER && !DEBUG
             AutoCompile = true;
 #endif
             _autoAddStrategy = new AutoAddStrategy(this);
@@ -829,7 +829,7 @@ namespace AqlaSerializer.Meta
             return newType;
         }
 
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
         /// <summary>
         /// Should serializers be compiled on demand? It may be useful
         /// to disable this for debugging purposes.
@@ -1137,7 +1137,7 @@ namespace AqlaSerializer.Meta
             throw new NotSupportedException();
 #else
             if (serializer == null) throw new ArgumentNullException(nameof(serializer));
-#if FEAT_COMPILER && !FX11
+#if FEAT_COMPILER
             if (compiled) return Compiler.CompilerContext.BuildSerializer(serializer, this);
 #endif
             return serializer.Write;
@@ -1208,19 +1208,6 @@ namespace AqlaSerializer.Meta
 #if PORTABLE
             if(!Monitor.TryEnter(_types, _metadataTimeoutMilliseconds)) throw new TimeoutException(message);
             opaqueToken = Interlocked.CompareExchange(ref _contentionCounter, 0, 0); // just fetch current value (starts at 1)
-#elif CF2 || CF35
-            int remaining = metadataTimeoutMilliseconds;
-            bool lockTaken;
-            do {
-                lockTaken = Monitor.TryEnter(types);
-                if(!lockTaken)
-                {
-                    if(remaining <= 0) throw new TimeoutException(message);
-                    remaining -= 50;
-                    Thread.Sleep(50);
-                }
-            } while(!lockTaken);
-            opaqueToken = Interlocked.CompareExchange(ref _contentionCounter, 0, 0); // just fetch current value (starts at 1)
 #else
             if (Monitor.TryEnter(_types, _metadataTimeoutMilliseconds))
             {
@@ -1229,11 +1216,7 @@ namespace AqlaSerializer.Meta
             else
             {
                 AddContention();
-#if FX11
-                throw new InvalidOperationException(message);
-#else
                 throw new TimeoutException(message);
-#endif
             }
 #endif
 

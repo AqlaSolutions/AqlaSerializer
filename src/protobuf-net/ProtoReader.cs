@@ -1484,7 +1484,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
         }
         internal static Exception AddErrorData(Exception exception, ProtoReader source)
         {
-#if !CF && !FX11 && !PORTABLE
+#if !PORTABLE
             if (exception != null && source != null && !exception.Data.Contains("protoSource"))
             {
                 exception.Data.Add("protoSource", string.Format("tag={0}; wire-type={1}; offset={2}; depth={3}",

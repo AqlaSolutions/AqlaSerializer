@@ -23,13 +23,7 @@ namespace AqlaSerializer
     /// Provides support for common .NET types that do not have a direct representation
     /// in protobuf, using the definitions from bcl.proto
     /// </summary>
-    public
-#if FX11
-    sealed
-#else
-    static
-#endif
-        class BclHelpers
+    public static class BclHelpers
     {
         /// <summary>
         /// Creates a new instance of the specified type, bypassing the constructor.
@@ -89,12 +83,6 @@ namespace AqlaSerializer
         }
 #endif
 
-
-        static Func<Type, object> _getUninitializedObject;
-
-#if FX11
-        private BclHelpers() { } // not a static class for C# 1.2 reasons
-#endif
         const int FieldTimeSpanValue = 0x01, FieldTimeSpanScale = 0x02, FieldTimeSpanKind = 0x03;
 
         internal static readonly DateTime[] EpochOrigin = {

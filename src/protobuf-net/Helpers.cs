@@ -51,7 +51,7 @@ namespace AqlaSerializer
 
         public static int GetEnumMemberUnderlyingValue(MemberInfo member)
         {
-#if PORTABLE || CF || FX11
+#if PORTABLE
             return Convert.ToInt32(((FieldInfo)member).GetValue(null));
 #else
             return Convert.ToInt32(((FieldInfo)member).GetRawConstantValue());
@@ -136,17 +136,12 @@ namespace AqlaSerializer
 
         public static System.Text.StringBuilder AppendLine(System.Text.StringBuilder builder)
         {
-#if CF2
-            return builder.Append("\r\n");
-#elif FX11
-            return builder.Append(Environment.NewLine);
-#else
             return builder.AppendLine();
-#endif
         }
+
         public static bool IsNullOrEmpty(string value)
-        { // yes, FX11 lacks this!
-            return value == null || value.Length == 0;
+        {
+            return string.IsNullOrEmpty(value);
         }
 
         [System.Diagnostics.Conditional("DEBUG")]
@@ -182,7 +177,7 @@ namespace AqlaSerializer
 #if TRACE
 #if MF
             Microsoft.SPOT.Trace.Print(message);
-#elif SILVERLIGHT || MONODROID || CF2 || IOS || PORTABLE
+#elif SILVERLIGHT || MONODROID || IOS || PORTABLE
             System.Diagnostics.Debug.WriteLine(message);
 #else
             System.Diagnostics.Trace.WriteLine(message);
@@ -324,7 +319,7 @@ namespace AqlaSerializer
 #endif
         }
         public static readonly Type[] EmptyTypes =
-#if PORTABLE || CF2 || CF35
+#if PORTABLE
             new Type[0];
 #else
             Type.EmptyTypes;
@@ -337,7 +332,7 @@ namespace AqlaSerializer
 
         public static object GetPropertyValue(System.Reflection.PropertyInfo prop, object instance, object[] index)
         {
-#if !UNITY && (PORTABLE || CF2 || CF35)
+#if !UNITY && PORTABLE
             return prop.GetValue(instance, index);
 #else
             return prop.GetValue(instance, index);

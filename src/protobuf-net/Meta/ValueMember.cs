@@ -389,7 +389,7 @@ namespace AqlaSerializer.Meta
 
         internal object GetRawEnumValue()
         {
-#if PORTABLE || CF || FX11
+#if PORTABLE
             object value = ((FieldInfo)Member).GetValue(null);
             switch(Helpers.GetTypeCode(Enum.GetUnderlyingType(((FieldInfo)Member).FieldType)))
             {

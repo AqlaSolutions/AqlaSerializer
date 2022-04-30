@@ -129,7 +129,7 @@ namespace AqlaSerializer.Meta
                         {
                             object enumVal;
 
-#if PORTABLE || CF || FX11 || NETSTANDARD
+#if PORTABLE || NETSTANDARD
                             enumVal = Convert.ChangeType(field.GetValue(null), Enum.GetUnderlyingType(field.FieldType), System.Globalization.CultureInfo.InvariantCulture);
 #else
                             enumVal = field.GetRawConstantValue();

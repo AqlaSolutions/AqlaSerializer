@@ -47,7 +47,6 @@ namespace AqlaSerializer.Meta
         internal ITypeMapper RunSharpTypeMapper { get; }
 
 
-#if !FX11
         /// <summary>
         /// Compiles the serializers individually; this is *not* a full
         /// standalone compile, but can significantly boost performance
@@ -65,7 +64,6 @@ namespace AqlaSerializer.Meta
                 type.CompileInPlace();
             }
         }
-#endif
 
 #if FEAT_IKVM
         readonly IKVM.Reflection.Universe universe;
@@ -1050,10 +1048,6 @@ namespace AqlaSerializer.Meta
                         il.EmitCall(OpCodes.Callvirt, knownTypesLookupType.GetProperty("Item").GetGetMethod(), null);
                         il.Emit(OpCodes.Dup);
                         il.Emit(OpCodes.Brfalse_S, otherwise);
-#if FX11
-                        il.Emit(OpCodes.Unbox, MapType(typeof(int)));
-                        il.Emit(OpCodes.Ldobj, MapType(typeof(int)));
-#else
                         if (ilVersion == Compiler.CompilerContext.ILVersion.Net1)
                         {
                             il.Emit(OpCodes.Unbox, MapType(typeof(int)));
@@ -1063,7 +1057,6 @@ namespace AqlaSerializer.Meta
                         {
                             il.Emit(OpCodes.Unbox_Any, MapType(typeof(int)));
                         }
-#endif
                         il.Emit(OpCodes.Ret);
                         il.MarkLabel(otherwise);
                         il.Emit(OpCodes.Pop);
@@ -1376,13 +1369,11 @@ namespace AqlaSerializer.Meta
 
             // copy assembly:InternalsVisibleTo
             Type internalsVisibleToAttribType = null;
-#if !FX11
             try
             {
                 internalsVisibleToAttribType = MapType(typeof(System.Runtime.CompilerServices.InternalsVisibleToAttribute));
             }
             catch { /* best endeavors only */ }
-#endif
             if (internalsVisibleToAttribType != null)
             {
                 BasicList internalAssemblies = new BasicList(), consideredAssemblies = new BasicList();

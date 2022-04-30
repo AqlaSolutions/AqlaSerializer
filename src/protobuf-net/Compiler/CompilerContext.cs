@@ -38,7 +38,7 @@ namespace AqlaSerializer.Compiler
     {
         public TypeModel Model { get; }
 
-#if !(FX11 || FEAT_IKVM)
+#if !(FEAT_IKVM)
         readonly DynamicMethod _method;
         static int _next;
 #endif
@@ -47,7 +47,7 @@ namespace AqlaSerializer.Compiler
         {
             return _il.DeclareLocal(type);
         }
-        
+
         internal CodeLabel DefineLabel()
         {
             CodeLabel result = new CodeLabel(_il.DefineLabel(), _nextLabel++);
@@ -65,7 +65,7 @@ namespace AqlaSerializer.Compiler
             Helpers.DebugWriteLine(value);
         }
 
-#if !(FX11 || FEAT_IKVM)
+#if !(FEAT_IKVM)
         public static ProtoSerializer BuildSerializer(IProtoSerializer head, RuntimeTypeModel model)
         {
             Type type = head.ExpectedType;
@@ -113,9 +113,9 @@ namespace AqlaSerializer.Compiler
                         head.EmitCallback(ctx, typedVal, (TypeModel.CallbackType)i);
                     }
                     ctx.Return();
-                }                
+                }
             }
-            
+
             ctx.Emit(OpCodes.Ret);
             return (ProtoCallback)ctx.method.CreateDelegate(
                 typeof(ProtoCallback));
@@ -124,7 +124,7 @@ namespace AqlaSerializer.Compiler
         {
             Type type = head.ExpectedType;
             CompilerContext ctx = new CompilerContext(type, false, true, model, typeof(object));
-            
+
             using (Local typedVal = new Local(ctx, type))
             {
                 ctx.StoreValueOrDefaultFromObject(ctx.InputValue, typedVal);
@@ -217,13 +217,9 @@ namespace AqlaSerializer.Compiler
                         TraceCompile(OpCodes.Ldobj + ": " + type);
                         break;
                     default:
-#if FX11
-                        throw new NotSupportedException();
-#else
                         _il.Emit(OpCodes.Unbox_Any, type);
                         TraceCompile(OpCodes.Unbox_Any + ": " + type);
                         break;
-#endif
                 }
             }
             else
@@ -250,7 +246,7 @@ namespace AqlaSerializer.Compiler
             }
             throw new ArgumentException("Meta-key not found", nameof(metaKey));
         }
-        
+
         internal void EmitReadCall(CompilerContext ctx, Type expectedReturnType, MethodBuilder method)
         {
             ctx.LoadReaderWriter();
@@ -285,7 +281,7 @@ namespace AqlaSerializer.Compiler
 #endif
 
         private readonly bool _isWriter;
-#if FX11 || FEAT_IKVM
+#if FEAT_IKVM
         internal bool NonPublic { get { return false; } }
 #else
         internal bool NonPublic { get; }
@@ -315,15 +311,11 @@ namespace AqlaSerializer.Compiler
 #endif
         public ICodeGenContext RunSharpContext { get; }
 
-#if !(FX11 || FEAT_IKVM)
+#if !(FEAT_IKVM)
         private CompilerContext(Type associatedType, bool isWriter, bool isStatic, RuntimeTypeModel model, Type inputType)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
-#if FX11
-            metadataVersion = ILVersion.Net1;
-#else
             MetadataVersion = ILVersion.Net2;
-#endif
             this._isStatic = isStatic;
             this._isWriter = isWriter;
             this.Model = model;
@@ -383,8 +375,8 @@ namespace AqlaSerializer.Compiler
 
 #endif
         private readonly ILGenerator _il;
-        
-        
+
+
         private void Emit(OpCode opcode)
         {
             _il.Emit(opcode);
@@ -516,7 +508,7 @@ namespace AqlaSerializer.Compiler
 
         SerializerCodeGen _codeGen;
         public SerializerCodeGen G => _codeGen ?? (_codeGen = new SerializerCodeGen(this, RunSharpContext, false));
-        
+
         public int ArgIndexReadWriter => 1;
 
         public void StoreValue(Local local)
@@ -536,7 +528,6 @@ namespace AqlaSerializer.Compiler
         void EmitStloc(LocalBuilder local)
         {
             if (local == null) throw new ArgumentNullException(nameof(local));
-#if !FX11
             switch (local.LocalIndex)
             {
                 case 0: Emit(OpCodes.Stloc_0); break;
@@ -544,14 +535,11 @@ namespace AqlaSerializer.Compiler
                 case 2: Emit(OpCodes.Stloc_2); break;
                 case 3: Emit(OpCodes.Stloc_3); break;
                 default:
-#endif
                     OpCode code = UseShortForm(local) ? OpCodes.Stloc_S : OpCodes.Stloc;
                     _il.Emit(code, local);
                     TraceCompile(code + ": $" + local);
-#if !FX11
                     break;
             }
-#endif
         }
 
         public void LoadValue(Local local)
@@ -563,7 +551,6 @@ namespace AqlaSerializer.Compiler
             }
             else
             {
-#if !FX11
                 switch (local.Value.LocalIndex)
                 {
                     case 0: Emit(OpCodes.Ldloc_0); break;
@@ -571,14 +558,11 @@ namespace AqlaSerializer.Compiler
                     case 2: Emit(OpCodes.Ldloc_2); break;
                     case 3: Emit(OpCodes.Ldloc_3); break;
                     default:
-#endif             
                         OpCode code = UseShortForm(local) ? OpCodes.Ldloc_S :  OpCodes.Ldloc;
                         _il.Emit(code, local.Value);
                         TraceCompile(code + ": $" + local.Value);
-#if !FX11
                         break;
                 }
-#endif
             }
         }
 
@@ -720,9 +704,9 @@ namespace AqlaSerializer.Compiler
                 methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (method == null || method.ReturnType != expectedType
                 || method.GetParameters().Length != 0) throw new ArgumentException("methodName");
-            
+
             LoadReaderWriter();
-            EmitCall(method);           
+            EmitCall(method);
         }
         internal void EmitBasicRead(Type helperType, string methodName, Type expectedType)
         {
@@ -741,7 +725,7 @@ namespace AqlaSerializer.Compiler
             LoadValue(fromValue);
             LoadReaderWriter();
             EmitCall(GetWriterMethod(methodName));
-            
+
         }
         private MethodInfo GetWriterMethod(string methodName)
         {
@@ -766,7 +750,7 @@ namespace AqlaSerializer.Compiler
             LoadValue(valueFrom);
             LoadReaderWriter();
             EmitCall(method);
-            
+
         }
 
         /// <summary>
@@ -814,7 +798,7 @@ namespace AqlaSerializer.Compiler
             _il.EmitCall(opcode, method, null);
             TraceCompile(opcode + ": " + method + " on " + method.DeclaringType + (targetType == null ? "" : (" via " + targetType)));
         }
-        
+
         /// <summary>
         /// Pushes a null reference onto the stack. Note that this should only
         /// be used to return a null (or set a variable to null); for null-tests
@@ -832,9 +816,7 @@ namespace AqlaSerializer.Compiler
             if (Helpers.IsValueType(type))
             {
                 Type underlyingType = null;
-#if !FX11
                 underlyingType = Helpers.GetNullableUnderlyingType(type);
-#endif
                 if (underlyingType == null)
                 { // not a nullable T; can invoke directly
                     tail.EmitWrite(this, valueFrom);
@@ -875,9 +857,8 @@ namespace AqlaSerializer.Compiler
 
         internal void ReadNullCheckedTail(Type type, IProtoSerializer tail, Compiler.Local valueFrom)
         {
-#if !FX11
             Type underlyingType;
-            
+
             if (Helpers.IsValueType(type) && (underlyingType = Helpers.GetNullableUnderlyingType(type)) != null)
             {
                 if(tail.RequiresOldValue)
@@ -904,7 +885,6 @@ namespace AqlaSerializer.Compiler
                 }
                 return;
             }
-#endif
             // either a ref-type of a non-nullable struct; treat "as is", even if null
             // (the type-serializer will handle the null case; it needs to allow null
             // inputs to perform the correct type of subclass creation)
@@ -940,12 +920,12 @@ namespace AqlaSerializer.Compiler
                 EmitCtor(ctor);
             }
         }
-#if !(PHONE8 || SILVERLIGHT || FX11)
+#if !(PHONE8 || SILVERLIGHT)
         BasicList _knownTrustedAssemblies, _knownUntrustedAssemblies;
 #endif
         bool InternalsVisible(Assembly assembly)
         {
-#if PHONE8 || SILVERLIGHT || FX11
+#if PHONE8 || SILVERLIGHT
             return false;
 #else
             if (Helpers.IsNullOrEmpty(_assemblyName)) return false;
@@ -1046,7 +1026,7 @@ namespace AqlaSerializer.Compiler
 #if !SILVERLIGHT
                                 member is MethodBuilder ||
 #endif
-                                member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true; 
+                                member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true;
                         }
                         break;
                     case MemberTypes.Property:
@@ -1067,7 +1047,7 @@ namespace AqlaSerializer.Compiler
                             throw new InvalidOperationException("Non-public member cannot be used with full dll compilation: " +
                                 member.DeclaringType.FullName + "." + member.Name);
                     }
-                    
+
                 }
             }
         }
@@ -1146,11 +1126,7 @@ namespace AqlaSerializer.Compiler
 
         private bool UseShortForm(LocalBuilder local)
         {
-#if FX11
-            return locals.Count < 256;
-#else
             return local.LocalIndex < 256;
-#endif
         }
 
 #if FEAT_IKVM
@@ -1283,7 +1259,7 @@ namespace AqlaSerializer.Compiler
                         blockLabels[i] = _il.DefineLabel();
                     }
                     CodeLabel endOfSwitch = DefineLabel();
-                    
+
                     LoadValue(val);
                     LoadValue(MAX_JUMPS);
                     Emit(OpCodes.Div);
@@ -1350,13 +1326,12 @@ namespace AqlaSerializer.Compiler
             TraceCompile("BeginExceptionBlock: " + label.Index);
             return label;
         }
-#if !FX11
+
         internal void Constrain(Type type)
         {
             _il.Emit(OpCodes.Constrained, type);
             TraceCompile(OpCodes.Constrained + ": " + type);
         }
-#endif
 
         internal void TryCast(Type type)
         {
@@ -1382,7 +1357,7 @@ namespace AqlaSerializer.Compiler
             /// the variable must exist, and note that (unlike in C#) it is
             /// the variables *final* value that gets disposed. If you need
             /// *original* disposal, copy your variable first.
-            /// 
+            ///
             /// It is the callers responsibility to ensure that the variable's
             /// scope fully-encapsulates the "using"; if not, the variable
             /// may be re-used (and thus re-assigned) unexpectedly.
@@ -1404,7 +1379,7 @@ namespace AqlaSerializer.Compiler
                 this._local = local;
                 this._ctx = ctx;
                 _label = ctx.BeginTry();
-                
+
             }
             public void Dispose()
             {
@@ -1427,20 +1402,16 @@ namespace AqlaSerializer.Compiler
                             _ctx.CastToObject(type);
                             break;
                         default:
-#if FX11
-                            throw new NotSupportedException();
-#else
                             _ctx.Constrain(type);
                             break;
-#endif
                     }
-                    _ctx.EmitCall(dispose);                    
+                    _ctx.EmitCall(dispose);
                 }
                 else
                 {
                     Compiler.CodeLabel @null = _ctx.DefineLabel();
                     if (disposableType.IsAssignableFrom(type))
-                    {   // *known* to be IDisposable; just needs a null-check                            
+                    {   // *known* to be IDisposable; just needs a null-check
                         _ctx.LoadValue(_local);
                         _ctx.BranchIfFalse(@null, true);
                         _ctx.LoadAddress(_local, type);
@@ -1538,10 +1509,10 @@ namespace AqlaSerializer.Compiler
                     {
                         Emit(OpCodes.Ldelem_Ref);
                     }
-             
+
                     break;
             }
-            
+
         }
 
 

@@ -506,17 +506,8 @@ namespace AqlaSerializer
         /// <summary>
         /// Global switches that change the behavior of protobuf-net
         /// </summary>
-        public
-#if FX11
-    sealed
-#else
-    static
-#endif
-            class GlobalOptions
+        public static class GlobalOptions
         {
-#if FX11
-            private GlobalOptions() { } // not a static class for C# 1.2 reasons
-#endif
             /// <summary>
             /// <see cref="RuntimeTypeModel.InferTagFromNameDefault"/>
             /// </summary>

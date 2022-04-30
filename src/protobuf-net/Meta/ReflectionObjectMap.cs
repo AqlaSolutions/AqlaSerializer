@@ -13,11 +13,7 @@ namespace AqlaSerializer.Meta
         {
             foreach (MemberInfo member in publicOnly ? _membersPublic : _membersAll)
             {
-#if FX11
-                if (member.Name.ToUpper() == key.ToUpper())
-#else
                 if (string.Equals(member.Name, key, StringComparison.OrdinalIgnoreCase))
-#endif
                 {
                     PropertyInfo prop = member as PropertyInfo;
                     if (prop != null)

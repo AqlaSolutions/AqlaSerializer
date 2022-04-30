@@ -53,16 +53,9 @@ namespace AqlaSerializer
 
             if (extn == null)
             {
-#if FX11
-                return new object[0];
-#else
                 yield break;
-#endif
             }
 
-#if FX11
-            BasicList result = new BasicList();
-#endif
             Stream stream = extn.BeginQuery();
             object value = null;
             ProtoReader reader = null;
@@ -73,27 +66,14 @@ namespace AqlaSerializer
                 {
                     if (!singleton)
                     {
-#if FX11
-                        result.Add(value);
-#else
                         yield return value;
-#endif
                         value = null; // fresh item each time
                     }
                 }
                 if (singleton && value != null)
                 {
-#if FX11
-                    result.Add(value);
-#else
                     yield return value;
-#endif
                 }
-#if FX11
-                object[] resultArr = new object[result.Count];
-                result.CopyTo(resultArr, 0);
-                return resultArr;
-#endif
             } finally {
                 ProtoReader.Recycle(reader);
                 extn.EndQuery(stream);
