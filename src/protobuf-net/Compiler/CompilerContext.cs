@@ -1004,7 +1004,7 @@ namespace AqlaSerializer.Compiler
                         if (!isPublic)
                         {
                             // allow calls to TypeModel protected methods, and methods we are in the process of creating
-                            if(member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true;
+                            if(member is MethodBuilder || member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true;
                         }
                         break;
                     case MemberTypes.Property:
