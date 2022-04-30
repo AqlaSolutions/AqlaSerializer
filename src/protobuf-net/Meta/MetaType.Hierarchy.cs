@@ -94,7 +94,7 @@ namespace AqlaSerializer.Meta
             }
             return false;
         }
-        
+
         /// <summary>
         /// Adds a known sub-type to the inheritance model
         /// </summary>
@@ -105,9 +105,6 @@ namespace AqlaSerializer.Meta
 
             if (Type.IsArray)
                 throw new ArgumentException("An array has inbuilt behaviour and cannot be subclassed");
-
-            if (derivedType.IsArray)
-                throw new ArgumentException("An array has inbuilt behaviour and cannot be as used as a subclass");
 
 #if WINRT
             if (!CanHaveSubType(_typeInfo)) {

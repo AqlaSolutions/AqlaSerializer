@@ -96,7 +96,7 @@ namespace AqlaSerializer.Serializers
             }
 
             if (ResolveIReadOnlyCollection(declaredType, null) == null) return false; // no IReadOnlyCollection<T> found
-            
+
             // and we want to use the builder API, so for generic Foo<T> or IFoo<T> we want to use Foo.CreateBuilder<T>
             string name = declaredType.Name;
             int i = name.IndexOf('`');
@@ -152,14 +152,14 @@ namespace AqlaSerializer.Serializers
         private readonly MethodInfo _builderFactory, _add, _addRange, _finish;
         internal ImmutableCollectionDecorator(RuntimeTypeModel model, Type declaredType, Type concreteType, IProtoSerializerWithWireType tail, bool writePacked, WireType expectedTailWireType, bool overwriteList,
             MethodInfo builderFactory, MethodInfo add, MethodInfo addRange, MethodInfo finish, bool protoCompatibility)
-            : base(model, declaredType, concreteType, tail, writePacked, expectedTailWireType, overwriteList, protoCompatibility, false)
+            : base(model, declaredType, concreteType, tail, writePacked, expectedTailWireType, overwriteList, protoCompatibility, false, 0)
         {
             this._builderFactory = builderFactory;
             this._add = add;
             this._addRange = addRange;
             this._finish = finish;
         }
-        
+
 #if !FEAT_IKVM
 
 
@@ -178,7 +178,7 @@ namespace AqlaSerializer.Serializers
             object[] args = new object[1];
 
             if (AppendToCollection && value != null && ((IList)value).Count != 0)
-            {   
+            {
                 if(_addRange !=null)
                 {
                     args[0] = value;
@@ -201,7 +201,7 @@ namespace AqlaSerializer.Serializers
                         _add.Invoke(builderInstance, args);
                     },
                 source);
-            
+
             var r = _finish.Invoke(builderInstance, null);
             ProtoReader.NoteReservedTrappedObject(trappedKey, r, source);
             return r;

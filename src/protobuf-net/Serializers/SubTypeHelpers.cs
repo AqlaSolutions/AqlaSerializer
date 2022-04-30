@@ -19,7 +19,7 @@ using AqlaSerializer.Meta;
 namespace AqlaSerializer.Serializers
 {
     /// <summary>
-    /// Used to read and write type number. To provide versioning (e.g. for adding subtypes) 
+    /// Used to read and write type number. To provide versioning (e.g. for adding subtypes)
     /// we don't use any global type identifiers and instead write a hierarchy of sub types.
     /// </summary>
     class SubTypeHelpers
@@ -100,7 +100,7 @@ namespace AqlaSerializer.Serializers
             SubItemToken? token = null;
             if (recursionLevel == 0)
                 token = ProtoReader.StartSubItem(source);
-            
+
             try
             {
                 if ((recursionLevel == 0 && subTypes.Length == 0) || !ProtoReader.HasSubValue(WireType.Variant, source))
@@ -219,7 +219,7 @@ namespace AqlaSerializer.Serializers
                         g.ctx.MarkDebug("// jump out of SubTypeHelpers.EmitTryRead");
                         g.Goto(jumpOut);
                     };
-                
+
                 EmitTryRead(
                     g,
                     fieldNumber,
@@ -232,7 +232,7 @@ namespace AqlaSerializer.Serializers
 
                             if (r == null)
                                 returnGen(null);
-                            else if (!oldValue.IsNullRef()) // check local exists
+                            else if (!r.Type.IsArray && !oldValue.IsNullRef()) // we can reuse value and local exists
                             {
                                 g.If(oldValue.AsOperand.Is(r.Type));
                                 {
@@ -281,7 +281,7 @@ namespace AqlaSerializer.Serializers
                     returnGen(metaType);
                 }
                 g.End();
-                
+
                 g.Assign(fieldNumber, g.ReaderFunc.ReadInt32() - 1);
                 EmitTryRead_GenSwitch(
                     g,

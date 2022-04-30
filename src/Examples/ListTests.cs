@@ -675,5 +675,22 @@ namespace Examples
             public IReadOnlySet<int> Collection;
         }
 #endif
+        [Test]
+        public void CloneListOfList([Values(true,false)] bool setDefaultType)
+        {
+            var model = TypeModel.Create();
+            MetaType outer = model.Add(typeof(List<IList<int>>), true);
+            if (setDefaultType)
+                outer.SetNestedSettingsWhenRoot(x => x.V.Collection.ConcreteType = typeof(int[]), 1);
+            else
+            {
+                model.Add(typeof(IList<int>), true)
+                    .AddSubType(1, typeof(int[]));
+            }
+            var listOfList = new List<IList<int>> { new[] { 1, 2 } };
+            var clone = model.DeepClone(listOfList);
+            CollectionAssert.AreEqual(listOfList, clone);
+            Assert.AreEqual(listOfList[0].GetType(), clone[0].GetType());
+        }
     }
 }

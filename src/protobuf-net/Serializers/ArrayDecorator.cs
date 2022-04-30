@@ -51,7 +51,7 @@ namespace AqlaSerializer.Serializers
         public override object Read(object value, ProtoReader source)
         {
             Array result = null;
-            BasicList list = null;
+            List<object> list = null;
             int reservedTrap = -1;
             int index = 0;
             int? length = null;
@@ -62,7 +62,7 @@ namespace AqlaSerializer.Serializers
                         {
                             // we write length to construct an array before deserializing
                             // so we can handle references to array from inside it
-                            
+
                             length = source.ReadInt32();
                             return true;
                         }
@@ -83,7 +83,12 @@ namespace AqlaSerializer.Serializers
                         else
                         {
                             reservedTrap = ProtoReader.ReserveNoteObject(source);
-                            list = new BasicList();
+                            list = new List<object>();
+                            if (AppendToCollection)
+                            {
+                                foreach (var el in (Array)value)
+                                    list.Add(el);
+                            }
                         }
                     },
                 v =>
@@ -99,7 +104,7 @@ namespace AqlaSerializer.Serializers
             {
                 int oldLen;
                 result = Read_CreateInstance(value, list.Count, reservedTrap, out oldLen, source);
-                list.CopyTo(result, oldLen);
+                ((IList)list).CopyTo(result, oldLen);
             }
             return result;
         }
@@ -126,7 +131,7 @@ namespace AqlaSerializer.Serializers
 
 
         bool AppendToCollection => !_overwriteList;
-        
+
         public ArrayDecorator(TypeModel model, IProtoSerializerWithWireType tail, bool writeProtoPacked, WireType expectedTailWireType, Type arrayType, bool overwriteList, int readLengthLimit, bool protoCompatibility)
             : base(tail)
         {

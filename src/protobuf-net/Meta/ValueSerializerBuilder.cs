@@ -42,20 +42,20 @@ namespace AqlaSerializer.Meta
                 var l2 = CompleteLevel(settings, levelNumber, out defaultValue);
                 Debug.Assert(l.Equals(l2.Basic));
             }
-            
+
             Debug.Assert(l.ContentBinaryFormatHint != null, "l.ContentBinaryFormatHint != null");
             Debug.Assert(l.WriteAsDynamicType != null, "l.WriteAsDynamicType != null");
             Debug.Assert(l.Collection.Append != null, "l.Collection.Append != null");
-            
+
             // postpone all checks for types when adding member till BuildSerializer, resolve everything only on buildserializer! till that have only local not inherited settings.
             // do not allow EnumPassthru and other settings to affect anything until buildling serializer
             wireType = 0;
             Type itemType = l.Collection.ItemType ?? l.EffectiveType;
-            
+
             bool itemTypeCanBeNull = CanTypeBeNull(itemType);
 
             bool protoPacked = CanBePackedCollection(l);
-            
+
             IProtoSerializerWithWireType ser = null;
 
             if (l.Collection.IsCollection)
@@ -68,10 +68,10 @@ namespace AqlaSerializer.Meta
                     MetaType.ResolveListTypes(_model, itemType, ref nestedItemType, ref nestedDefaultType);
 
                 bool itemIsNestedCollection = nestedItemType != null;
-                
+
                 // primitive types except System.Object may be handled as nested through recursion
                 bool tryHandleAsRegistered = !isMemberOrNested || itemType == _model.MapType(typeof(object));
-                
+
                 if (tryHandleAsRegistered)
                 {
                     var nestedLevel = settings.GetSettingsCopy(levelNumber + 1);
@@ -81,7 +81,7 @@ namespace AqlaSerializer.Meta
                     ser = BuildValueFinalSerializer(settings, true, out wireType, levelNumber + 1);
 
                     //object dummy = null;
-                    
+
                     //ser = TryGetCoreSerializer(l.ContentBinaryFormatHint.Value, nestedLevel.Basic.EffectiveType, out wireType, ref nestedLevel.Basic.Format, nestedLevel.Basic.WriteAsDynamicType.GetValueOrDefault(), l.Collection.Append.Value, isPacked, true, ref dummy);
                     //if (ser != null)
                     //    ThrowIfHasMoreLevels(settings, levelNumber + 1, l, ", no more nested type detected");
@@ -92,7 +92,7 @@ namespace AqlaSerializer.Meta
                     nestedLevel = PrepareNestedLevelForBuild(nestedLevel, itemType);
                     nestedLevel.Basic.Collection.ItemType = null; // IgnoreListHandling or not a collection
                     settings.SetSettings(nestedLevel, levelNumber + 1);
-                    
+
                     ser = BuildValueFinalSerializer(settings, true, out wireType, levelNumber + 1);
                 }
 
@@ -235,7 +235,8 @@ namespace AqlaSerializer.Meta
                         expectedTailWireType,
                         !l.Collection.Append.Value,
                         protoCompatibility,
-                        true);
+                        true,
+                        l.Collection.ArrayLengthReadLimit.Value);
                 }
 
                 if (isMemberOrNested)
@@ -436,7 +437,7 @@ namespace AqlaSerializer.Meta
                 int baseKey = _model.GetKey(type, false, true);
 
                 defaultWireType = WireType.StartGroup; // NetObjectHelpers always use Group
-                
+
                 if (baseKey >= 0 || dynamicType)
                 {
                     if (dynamicType)
@@ -458,7 +459,7 @@ namespace AqlaSerializer.Meta
                     if (format == ValueFormat.LateReference && CanTypeBeAsLateReferenceOnBuildStage(baseKey, _model))
                     { }
                     else if (MetaType.IsNetObjectValueDecoratorNecessary(_model, format))
-                    { }    
+                    { }
                     else
                     {
                         defaultWireType = _model.ProtoCompatibility.UseLengthPrefixedNestingAsDefault ? WireType.String : WireType.StartGroup;
@@ -515,7 +516,7 @@ namespace AqlaSerializer.Meta
             MetaType mt = model[key];
             return CanTypeBeAsLateReference(mt.Type) && mt.GetSurrogateOrSelf() == mt && !mt.GetFinalSettingsCopy().IsAutoTuple && !model.ProtoCompatibility.SuppressOwnRootFormat;
         }
-        
+
         internal static bool CanTypeBeAsLateReference(Type type)
         {
             return !type.IsArray && CanTypeBeAsReference(type);
@@ -679,7 +680,7 @@ namespace AqlaSerializer.Meta
             return Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
 #endif
         }
-        
+
         ValueSerializationSettings.LevelValue CompleteLevel(ValueSerializationSettings vs, int levelNr, out object defaultValue)
         {
             var lv = vs.GetSettingsCopy(levelNr);
@@ -713,7 +714,7 @@ namespace AqlaSerializer.Meta
             MemberDefaultsMode defaultsMode = level.DefaultsMode.GetValueOrDefault();
             if (level.Format == ValueFormat.NotSpecified && defaultsMode == MemberDefaultsMode.Legacy)
                 level.Format = GetDefaultLegacyFormat(level.EffectiveType, _model);
-            
+
             if (level.Format == ValueFormat.LateReference)
             {
                 if (vs.MaxSpecifiedNestedLevel > levelNr)
@@ -764,7 +765,7 @@ namespace AqlaSerializer.Meta
                         ResetCollectionSettings(ref level);
                     else
                     {
-                        // should not override with default because: what if specified something like List<string> for IList? 
+                        // should not override with default because: what if specified something like List<string> for IList?
                         if (level.Collection.ConcreteType != null)
                         {
                             if (!Helpers.IsAssignableFrom(level.EffectiveType, level.Collection.ConcreteType))
@@ -781,7 +782,7 @@ namespace AqlaSerializer.Meta
                             }
                         }
                         else level.Collection.ConcreteType = newCollectionConcreteType;
-                        
+
                         if (!level.Collection.Append.GetValueOrDefault() && lv.IsNotAssignable)
                         {
                             if (level.Collection.Append == null)
@@ -792,8 +793,8 @@ namespace AqlaSerializer.Meta
 
                         if (level.Collection.PackedWireTypeForRead == null)
                             level.Collection.PackedWireTypeForRead = WireType.None;
-                        else if (level.Collection.PackedWireTypeForRead != WireType.None 
-                            && (level.Collection.Format == CollectionFormat.ProtobufNotPacked 
+                        else if (level.Collection.PackedWireTypeForRead != WireType.None
+                            && (level.Collection.Format == CollectionFormat.ProtobufNotPacked
                                 || (level.Collection.Format == CollectionFormat.Protobuf && !CanPackProtoCompatible(level.Collection.ItemType, level.ContentBinaryFormatHint))))
                         {
                                 throw new ProtoException("PackedWireTypeForRead " + level.Collection.PackedWireTypeForRead + " specified but type can't be packed");
@@ -812,18 +813,14 @@ namespace AqlaSerializer.Meta
                     }
                 }
 
-                if (!level.EffectiveType.IsArray)
-                {
-                    if (level.Collection.ArrayLengthReadLimit != null) throw new ProtoException("ArrayLengthReadLimit specified for non-array");
-                }
-                else if (level.Collection.ArrayLengthReadLimit == null)
+                if (level.Collection.ArrayLengthReadLimit == null)
                     level.Collection.ArrayLengthReadLimit = TypeModel.DefaultArrayLengthReadLimit;
                 else if (level.Collection.ArrayLengthReadLimit <= 0)
                     throw new ProtoException("ArrayLengthReadLimit should be greater than zero or not specified");
             }
 
             #endregion
-            
+
             lv.Basic = level.GetInitializedToValueOrDefault();
 
             vs.SetSettings(lv, levelNr);

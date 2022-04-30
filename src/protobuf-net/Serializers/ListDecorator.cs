@@ -16,6 +16,7 @@ using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
 #else
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 #endif
 
@@ -60,33 +61,51 @@ namespace AqlaSerializer.Serializers
             object[] args = null;
             bool createdNew = false;
             bool asList = IsList && !SuppressIList;
+            int length = 0;
+            int oldLength = 0;
 
             // can't call clear? => create new!
             bool forceNewInstance = !AppendToCollection && !asList;
-            
+
             ListHelpers.Read(
                 () =>
+                {
+                    if (source.FieldNumber == ListHelpers.FieldLength)
                     {
-                        if (_metaType != null && source.FieldNumber == ListHelpers.FieldSubtype)
+                        // we write length to construct an array before deserializing
+                        // so we can handle references to array from inside it
+
+                        length = source.ReadInt32();
+                        return true;
+                    }
+                    if (_metaType != null && source.FieldNumber == ListHelpers.FieldSubtype)
+                    {
+                        MetaType mt = _subTypeHelpers.TryRead(_metaType, forceNewInstance ? null : value?.GetType(), source);
+                        if (mt != null)
                         {
-                            MetaType mt = _subTypeHelpers.TryRead(_metaType, forceNewInstance ? null : value?.GetType(), source);
-                            if (mt != null)
-                            {
-                                value = mt.Serializer.CreateInstance(source);
-                                createdNew = true;
-                            }
-                            return true;
+                            if (mt.Type.IsArray)
+                                Read_CheckLength(length);
+                            value = mt.Type.IsArray
+                                ? Read_CreateInstance(mt.Type, length, source)
+                                : mt.Serializer.CreateInstance(source);
+                            createdNew = true;
                         }
-                        return false;
-                    },
+                        return true;
+                    }
+                    return false;
+                },
                 () =>
                     {
                         if (value == null || (forceNewInstance && !createdNew))
                         {
                             createdNew = true;
-                            value = Activator.CreateInstance(_concreteTypeDefault);
-                            ProtoReader.NoteObject(value, source);
-                            if (asList)
+                            if (_concreteTypeDefault.IsArray)
+                                Read_CheckLength(length);
+                            value = Read_CreateInstance(_concreteTypeDefault, length, source);
+
+                            if (_concreteTypeDefault.IsArray)
+                                list = new List<object>();
+                            else if (asList)
                             {
                                 list = (IList)value;
                                 Debug.Assert(list != null);
@@ -94,24 +113,48 @@ namespace AqlaSerializer.Serializers
                         }
                         else
                         {
-                            if (!createdNew)
-                                ProtoReader.NoteObject(value, source);
-
-                            if (asList)
+                            if (value is Array existingArray)
                             {
-                                list = (IList)value;
-                                Debug.Assert(list != null);
-                                if (!AppendToCollection && !createdNew)
-                                    list.Clear();
+                                list = new List<object>();
+
+                                if (!createdNew)
+                                {
+                                    if (AppendToCollection)
+                                    {
+                                        oldLength = existingArray.Length;
+                                        foreach (var el in existingArray)
+                                            list.Add(el);
+                                    }
+
+                                    if (existingArray.Length != length + oldLength)
+                                    {
+                                        createdNew = true;
+                                        Read_CheckLength(length); // check only new elements length
+                                        value = Read_CreateInstance(_concreteTypeDefault, length + oldLength, source);
+                                    }
+                                    else ProtoReader.NoteObject(value, source);
+                                }
+                            }
+                            else
+                            {
+                                if (!createdNew)
+                                    ProtoReader.NoteObject(value, source);
+                                if (asList)
+                                {
+                                    list = (IList)value;
+                                    Debug.Assert(list != null);
+                                    if (!AppendToCollection && !createdNew)
+                                        list.Clear();
+                                }
                             }
                         }
 
-                        if (!asList)
+                        if (list == null)
                             args = new object[1];
                     },
                 v =>
                     {
-                        if (asList)
+                        if (list != null)
                             list.Add(v);
                         else
                         {
@@ -121,7 +164,26 @@ namespace AqlaSerializer.Serializers
                     },
                 source);
 
+            if (value is Array array)
+                list.CopyTo(array, oldLength);
+
             return value;
+        }
+
+        private void Read_CheckLength(int length)
+        {
+            if (length > _arrayReadLengthLimit)
+                ArrayDecorator.ThrowExceededLengthLimit(length, _arrayReadLengthLimit);
+        }
+
+        private object Read_CreateInstance(Type type, int arrayLength, ProtoReader source)
+        {
+            var r = type.IsArray
+                ? Array.CreateInstance(Tail.ExpectedType, arrayLength)
+                : Activator.CreateInstance(type);
+
+            ProtoReader.NoteObject(r, source);
+            return r;
         }
 
 #endif
@@ -154,17 +216,18 @@ namespace AqlaSerializer.Serializers
         bool SuppressIList => (_options & OPTIONS_SuppressIList) != 0;
         protected bool WritePacked => (_options & OPTIONS_WritePacked) != 0;
         protected readonly WireType ExpectedTailWireType;
-        
+
         readonly bool _protoCompatibility;
         readonly bool _writeSubType;
 
         protected readonly ListHelpers ListHelpers;
         readonly SubTypeHelpers _subTypeHelpers = new SubTypeHelpers();
         readonly MetaType _metaType;
+        readonly int _arrayReadLengthLimit;
 
         internal static ListDecorator Create(
             RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writeProtoPacked, WireType expectedTailWireType,
-            bool overwriteList, bool protoCompatibility, bool writeSubType)
+            bool overwriteList, bool protoCompatibility, bool writeSubType, int arrayReadLengthLimit)
         {
 #if !NO_GENERICS
             MethodInfo builderFactory, add, addRange, finish;
@@ -185,12 +248,12 @@ namespace AqlaSerializer.Serializers
                     protoCompatibility);
             }
 #endif
-            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writeProtoPacked, expectedTailWireType, overwriteList, protoCompatibility, writeSubType);
+            return new ListDecorator(model, declaredType, concreteTypeDefault, tail, writeProtoPacked, expectedTailWireType, overwriteList, protoCompatibility, writeSubType, arrayReadLengthLimit);
         }
 
         protected ListDecorator(
             RuntimeTypeModel model, Type declaredType, Type concreteTypeDefault, IProtoSerializerWithWireType tail, bool writePacked, WireType expectedTailWireType,
-            bool overwriteList, bool protoCompatibility, bool writeSubType)
+            bool overwriteList, bool protoCompatibility, bool writeSubType, int arrayReadLengthLimit)
             : base(tail)
         {
             if (overwriteList) _options |= OPTIONS_OverwriteList;
@@ -232,6 +295,7 @@ namespace AqlaSerializer.Serializers
                 else
                     _writeSubType = false; // warn?
             }
+            _arrayReadLengthLimit = arrayReadLengthLimit;
         }
 
         protected virtual bool RequireAdd => true;
@@ -249,22 +313,36 @@ namespace AqlaSerializer.Serializers
         {
             var g = ctx.G;
             using (ctx.StartDebugBlockAuto(this))
+            using (Compiler.Local tempList = ctx.Local(ctx.MapType(typeof(List<>)).MakeGenericType(Tail.ExpectedType)))
             using (Compiler.Local value = ctx.GetLocalWithValueForEmitRead(this, valueFrom))
             using (Compiler.Local oldValueForSubTypeHelpers = ctx.Local(value.Type))
             using (Compiler.Local createdNew = ctx.Local(typeof(bool), true))
+            using (Compiler.Local length = ctx.Local(typeof(int), true))
+            using (Compiler.Local oldLen = ctx.Local(typeof(int)))
+            using (Compiler.Local asArray = ctx.Local(Tail.ExpectedType.MakeArrayType()))
             {
                 bool asList = IsList && !SuppressIList;
 
+                bool canBeArray = ExpectedType.IsAssignableFrom(ctx.MapType(asArray.Type));
+                if (canBeArray)
+                    g.InitObj(asArray);
+
                 // can't call clear? => create new!
                 bool forceNewInstance = !AppendToCollection && !asList;
-                
+
                 ListHelpers.EmitRead(
                     ctx.G,
-                    (fieldNumber, onSuccess, onFail) =>
+                    (fieldNumber, onSuccess, onFail) => {
+                        using (ctx.StartDebugBlockAuto(this, "readNextMeta"))
                         {
-                            using (ctx.StartDebugBlockAuto(this, "readNextMeta"))
+                            if (_metaType != null)
                             {
-                                if (_metaType != null)
+                                g.If(fieldNumber == ListHelpers.FieldLength);
+                                {
+                                    g.Assign(length, g.ReaderFunc.ReadInt32());
+                                    onSuccess();
+                                }
+                                g.Else();
                                 {
                                     g.If(fieldNumber == ListHelpers.FieldSubtype);
                                     {
@@ -275,19 +353,26 @@ namespace AqlaSerializer.Serializers
                                                 g,
                                                 oldValueForSubTypeHelpers,
                                                 _metaType,
-                                                r =>
+                                                r => {
+                                                    using (ctx.StartDebugBlockAuto(this, "subtype handler - read"))
                                                     {
-                                                        using (ctx.StartDebugBlockAuto(this, "subtype handler - read"))
+                                                        if (r != null)
                                                         {
-                                                            if (r != null)
+                                                            ctx.MarkDebug("// creating list subtype");
+                                                            if (r.Type.IsArray)
                                                             {
-                                                                ctx.MarkDebug("// creating list subtype");
-                                                                r.Serializer.EmitCreateInstance(ctx);
-                                                                ctx.StoreValue(value);
-                                                                g.Assign(createdNew, true);
+                                                                EmitRead_CheckLength(g, length);
+                                                                EmitRead_CreateInstance(g, r.Type, length);
                                                             }
+                                                            else
+                                                            {
+                                                                r.Serializer.EmitCreateInstance(ctx);
+                                                            }
+                                                            ctx.StoreValue(value);
+                                                            g.Assign(createdNew, true);
                                                         }
-                                                    });
+                                                    }
+                                                });
                                         }
                                         onSuccess();
                                     }
@@ -297,45 +382,104 @@ namespace AqlaSerializer.Serializers
                                     }
                                     g.End();
                                 }
-                                else onFail();
+                                g.End();
                             }
+                            else onFail();
                         }
+                    }
                     ,
-                    () =>
+                    () => {
+                        using (ctx.StartDebugBlockAuto(this, "prepareInstance"))
                         {
-                            using (ctx.StartDebugBlockAuto(this, "prepareInstance"))
+                            var createInstanceCondition = value.AsOperand == null;
+
+                            // also create new if should clear existing instance on not lists
+                            if (forceNewInstance)
+                                createInstanceCondition = createInstanceCondition || !createdNew.AsOperand;
+
+                            g.If(createInstanceCondition);
                             {
-                                var createInstanceCondition = value.AsOperand == null;
-
-                                // also create new if should clear existing instance on not lists
-                                if (forceNewInstance)
-                                    createInstanceCondition = createInstanceCondition || !createdNew.AsOperand;
-
-                                g.If(createInstanceCondition);
+                                ctx.MarkDebug("// creating new list");
+                                if (_concreteTypeDefault.IsArray)
+                                    EmitRead_CheckLength(g, length);
+                                EmitRead_CreateInstance(g, _concreteTypeDefault, length);
+                                if (_concreteTypeDefault.IsArray)
                                 {
-                                    ctx.MarkDebug("// creating new list");
-                                    EmitCreateInstance(ctx);
-                                    ctx.StoreValue(value);
-                                    g.Reader.NoteObject(value);
+                                    ctx.CopyValue();
+                                    g.Assign(asArray, g.GetStackValueOperand(_concreteTypeDefault));
+                                    g.Assign(tempList, g.ExpressionFactory.New(tempList.Type));
                                 }
-                                g.Else();
+                                ctx.StoreValue(value);
+                            }
+                            g.Else();
+                            {
+                                if (canBeArray)
                                 {
+                                    g.Assign(asArray, value.AsOperand.As(asArray.Type));
+                                    g.If(asArray.AsOperand != null);
+                                    {
+                                        g.Assign(tempList, g.ExpressionFactory.New(tempList.Type));
+
+                                        g.If(!createdNew.AsOperand);
+                                        {
+                                            if (AppendToCollection)
+                                            {
+                                                g.Assign(oldLen, asArray.AsOperand.ArrayLength());
+                                                using (var i = ctx.Local(typeof(int)))
+                                                {
+                                                    g.For(i.AsOperand.Assign(0), i < oldLen.AsOperand, i.AsOperand.Increment());
+                                                    {
+                                                        g.Invoke(tempList, "Add", asArray.AsOperand[i]);
+                                                    }
+                                                    g.End();
+                                                }
+                                            }
+                                            else g.Assign(oldLen, 0);
+                                            g.If(asArray.AsOperand.ArrayLength() != length + oldLen.AsOperand);
+                                            {
+                                                // createdNew = true
+                                                EmitRead_CheckLength(g, length);
+                                                EmitRead_CreateInstance(g, asArray.Type, length + oldLen.AsOperand);
+                                                ctx.CopyValue();
+                                                g.Assign(asArray, g.GetStackValueOperand(asArray.Type));
+                                                ctx.StoreValue(value);
+                                            }
+                                            g.Else();
+                                            {
+                                                g.Reader.NoteObject(value);
+                                            }
+                                            g.End();
+                                        }
+                                        g.Else();
+                                        {
+                                            g.Assign(oldLen, 0);
+                                        }
+                                        g.End();
+                                    }
+                                    g.Else();
+                                }
+                                // if not array
+                                {
+
                                     g.If(!createdNew.AsOperand);
                                     {
                                         g.Reader.NoteObject(value);
-
-                                        if (asList && !AppendToCollection)
-                                        {
-                                            ctx.MarkDebug("// clearing existing list");
-                                            // ReSharper disable once PossibleNullReferenceException
-                                            g.Invoke(value, "Clear");
-                                        }
                                     }
                                     g.End();
+
+                                    if (asList && !AppendToCollection)
+                                    {
+                                        ctx.MarkDebug("// clearing existing list");
+                                        // ReSharper disable once PossibleNullReferenceException
+                                        g.Invoke(value, "Clear");
+                                    }
                                 }
-                                g.End();
+                                if (canBeArray)
+                                    g.End();
                             }
-                        },
+                            g.End();
+                        }
+                    },
                     v =>
                         {
                             // TODO do null checks without allowing user == operators!
@@ -348,33 +492,88 @@ namespace AqlaSerializer.Serializers
                                 }
                                 g.End();
 #endif
-                                if (asList)
+                                if (canBeArray)
                                 {
-                                    ctx.MarkDebug("// using Add method");
-                                    Operand instance = value;
-                                    if (_add != null && !Helpers.IsAssignableFrom(_add.DeclaringType, ExpectedType))
-                                        instance = instance.Cast(_add.DeclaringType); // TODO optimize to local
-                                    g.Invoke(instance, "Add", v);
+                                    g.If(asArray.AsOperand != null);
+                                    {
+                                        ctx.MarkDebug("// using Add method on tempList");
+                                        g.Invoke(tempList, "Add", v);
+                                    }
+                                    g.Else();
                                 }
-                                else
+                                // if not array
                                 {
-                                    ctx.MarkDebug("// using add delegate");
-                                    ctx.LoadAddress(value, ExpectedType);
-                                    if (!Helpers.IsAssignableFrom(_add.DeclaringType, ExpectedType))
-                                        ctx.Cast(_add.DeclaringType);
-                                    ctx.LoadValue(v);
-                                    ctx.EmitCall(this._add);
-                                    if (this._add.ReturnType != null && this._add.ReturnType != ctx.MapType(typeof(void)))
-                                        ctx.DiscardValue();
+                                    if (asList)
+                                    {
+                                        ctx.MarkDebug("// using Add method");
+                                        Operand instance = value;
+                                        // call using a type where _add in declared
+                                        if (_add != null && !Helpers.IsAssignableFrom(_add.DeclaringType, ExpectedType))
+                                            instance = instance.Cast(_add.DeclaringType); // TODO optimize to local
+                                        // don't use delegate here even if it's set
+                                        // there is a bug in RunSharp that doesn't box v when calling with MethodInfo
+                                        g.Invoke(instance, "Add", v);
+                                    }
+                                    else
+                                    {
+                                        ctx.MarkDebug("// using add delegate");
+                                        ctx.LoadAddress(value, ExpectedType);
+                                        if (!Helpers.IsAssignableFrom(_add.DeclaringType, ExpectedType))
+                                            ctx.Cast(_add.DeclaringType);
+                                        ctx.LoadValue(v);
+                                        ctx.EmitCall(this._add);
+                                        if (this._add.ReturnType != null && this._add.ReturnType != ctx.MapType(typeof(void)))
+                                            ctx.DiscardValue();
+                                    }
                                 }
+                                if (canBeArray)
+                                    g.End();
                             }
                         }
                     );
+
+                if (canBeArray)
+                {
+                    g.If(asArray.AsOperand != null);
+                    {
+                        g.Invoke(tempList.AsOperand, g.TypeMapper.MapType(typeof(ICollection)).GetMethod("CopyTo"), asArray, oldLen);
+                    }
+                    g.End();
+                }
+
                 if (EmitReadReturnsValue)
                 {
                     ctx.MarkDebug("returning list");
                     ctx.LoadValue(value);
                 }
+            }
+        }
+
+        private void EmitRead_CheckLength(SerializerCodeGen g, Local length)
+        {
+            g.If(length.AsOperand > _arrayReadLengthLimit);
+            {
+                ArrayDecorator.EmitThrowExceededLengthLimit(g, length, _arrayReadLengthLimit);
+            }
+            g.End();
+        }
+
+        void EmitRead_CreateInstance(SerializerCodeGen g, Type type, Operand length)
+        {
+            var ctx = g.ctx;
+            using (ctx.StartDebugBlockAuto("EmitRead_CreateInstance"))
+            {
+                if (type.IsArray)
+                {
+                    ctx.G.LeaveNextReturnOnStack();
+                    ctx.G.Eval(ctx.G.ExpressionFactory.NewArray(Tail.ExpectedType, length));
+                }
+                else
+                    ctx.EmitCtor(_concreteTypeDefault);
+
+                ctx.CopyValue();
+                // we can use stack value here because note object on reader is static (backwards API)
+                ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(ExpectedType));
             }
         }
 
@@ -506,7 +705,7 @@ namespace AqlaSerializer.Serializers
                 enumeratorType = tmp;
 #endif
             }
-            
+
             if (enumeratorType != null && enumeratorType.IsAssignableFrom(expectedType))
             {
                 getEnumerator = Helpers.GetInstanceMethod(enumeratorType, "GetEnumerator");
@@ -552,9 +751,7 @@ namespace AqlaSerializer.Serializers
 #if !FEAT_IKVM
         public virtual object CreateInstance(ProtoReader source)
         {
-            var r = Activator.CreateInstance(_concreteTypeDefault);
-            ProtoReader.NoteObject(r, source);
-            return r;
+            return Read_CreateInstance(_concreteTypeDefault, 0, source);
         }
 
         public virtual void Callback(object value, TypeModel.CallbackType callbackType, SerializationContext context)
@@ -572,7 +769,14 @@ namespace AqlaSerializer.Serializers
         {
             using (ctx.StartDebugBlockAuto(this))
             {
-                ctx.EmitCtor(_concreteTypeDefault);
+                if (_concreteTypeDefault.IsArray)
+                {
+                    ctx.G.LeaveNextReturnOnStack();
+                    ctx.G.Eval(ctx.G.ExpressionFactory.NewArray(Tail.ExpectedType, 0));
+                }
+                else
+                    ctx.EmitCtor(_concreteTypeDefault);
+
                 ctx.CopyValue();
                 // we can use stack value here because note object on reader is static (backwards API)
                 ctx.G.Reader.NoteObject(ctx.G.GetStackValueOperand(ExpectedType));
