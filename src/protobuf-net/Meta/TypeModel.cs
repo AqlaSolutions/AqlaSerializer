@@ -1076,7 +1076,6 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
 
         internal bool ForceSerializationDuringClone { get; set; }
 
-#if !IOS
         /// <summary>
         /// Create a deep clone of the supplied instance; any sub-items are also cloned.
         /// </summary>
@@ -1084,7 +1083,6 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
         {
             return (T)DeepClone(value: (object)genericValue);
         }
-        #endif
 
                 /// <summary>
                 /// Create a deep clone of the supplied instance; any sub-items are also cloned.
@@ -1419,7 +1417,7 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
             catch { }
             return null;
         }
-#if !IOS
+
         /// <summary>
         /// Serializes a given instance and deserializes it as a different type;
         /// this can be used to translate between wire-compatible objects (where
@@ -1440,7 +1438,6 @@ protected internal virtual bool SerializeDateTimeKind() { return false; }
                 return Deserialize<TTo>(ms);
             }
         }
-#endif
 
         /// <summary>
         /// Serializes a given instance and deserializes it as a different type;

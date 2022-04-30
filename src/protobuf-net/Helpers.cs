@@ -177,7 +177,7 @@ namespace AqlaSerializer
 #if TRACE
 #if MF
             Microsoft.SPOT.Trace.Print(message);
-#elif MONODROID || IOS || PORTABLE
+#elif MONODROID || PORTABLE
             System.Diagnostics.Debug.WriteLine(message);
 #else
             System.Diagnostics.Trace.WriteLine(message);

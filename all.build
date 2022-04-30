@@ -83,7 +83,6 @@
     <Exec Command="src\Tools\AOTCompatlyzer.exe &quot;src\protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.dll&quot; &quot;src\protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
 
   <ItemGroup>
-    <iOSFiles Include="src\protobuf-net\bin\iOS\net30\aqlaserializer.*"/>
     <UnityFiles Include="src\protobuf-net\bin\Unity\net35\aqlaserializer.*"/>
     <UnityFilesDep Include="src\protobuf-net\bin\Unity\net35\RunSharp.*"/>
     <Net35SafeFiles Include="src\protobuf-net\bin\Safe\net35\aqlaserializer.*"/>
@@ -158,9 +157,6 @@
     <Copy SourceFiles="@(PortableFiles)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFilesDep)" DestinationFolder="$(ZipDirectory)\Full\portable-sl5+net40+wp81+windows8+android+ios"/>
     <Copy SourceFiles="@(PortableFiles_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\portable"/>
-
-    <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
-    <Copy SourceFiles="@(iOSFilesDep)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
 
