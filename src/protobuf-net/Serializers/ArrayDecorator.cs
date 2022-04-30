@@ -84,7 +84,7 @@ namespace AqlaSerializer.Serializers
                         {
                             reservedTrap = ProtoReader.ReserveNoteObject(source);
                             list = new List<object>();
-                            if (AppendToCollection)
+                        if (AppendToCollection && value != null)
                             {
                                 foreach (var el in (Array)value)
                                     list.Add(el);

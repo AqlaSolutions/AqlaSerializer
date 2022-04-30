@@ -216,36 +216,28 @@ namespace AqlaSerializer.Meta
 #else
                         Type[] genArgs;
 #if WINRT
-                        if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IDictionary<,>)
+                        if (typeInfo.IsGenericType &&
+                            (type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IDictionary<,>)
+                                || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlyDictionary<,>"))
                             && itemType == typeof(System.Collections.Generic.KeyValuePair<,>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
 #else
-                        if (type.IsGenericType && type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IDictionary<,>))
+                        if (type.IsGenericType &&
+                            (type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IDictionary<,>))
+                                || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlyDictionary`2")
                             && itemType == model.MapType(typeof(System.Collections.Generic.KeyValuePair<,>)).MakeGenericType(genArgs = type.GetGenericArguments()))
 #endif
                         {
                             defaultType = model.MapType(typeof(System.Collections.Generic.Dictionary<,>)).MakeGenericType(genArgs);
                         }
-#if NETSTANDARD
 #if WINRT
-                        else if (typeInfo.IsGenericType && (type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.ISet<>)) || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlySet`1"))
+                        else if (typeInfo.IsGenericType && (type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.ISet`1" || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlySet`1"))
 #else
-                        else if (type.IsGenericType && (type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.ISet<>)) || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlySet`1"))
+                        else if (type.IsGenericType && (type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.ISet`1" || type.GetGenericTypeDefinition().FullName == "System.Collections.Generic.IReadOnlySet`1"))
 #endif
 
                         {
                             defaultType = model.MapType(typeof(System.Collections.Generic.HashSet<>)).MakeGenericType(itemType);
                         }
-#if WINRT
-                        else if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(System.Collections.Generic.IReadOnlyDictionary<,>)
-                            && itemType == typeof(System.Collections.Generic.KeyValuePair<,>).MakeGenericType(genArgs = typeInfo.GenericTypeArguments))
-#else
-                        else if (type.IsGenericType && type.GetGenericTypeDefinition() == model.MapType(typeof(System.Collections.Generic.IReadOnlyDictionary<,>))
-                            && itemType == model.MapType(typeof(System.Collections.Generic.KeyValuePair<,>)).MakeGenericType(genArgs = type.GetGenericArguments()))
-#endif
-                        {
-                            defaultType = model.MapType(typeof(System.Collections.Generic.Dictionary<,>)).MakeGenericType(genArgs);
-                        }
-#endif
                         else
                         {
                             defaultType = model.MapType(typeof(System.Collections.Generic.List<>)).MakeGenericType(itemType);

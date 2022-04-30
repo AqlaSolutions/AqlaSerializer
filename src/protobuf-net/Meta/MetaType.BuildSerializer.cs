@@ -163,7 +163,7 @@ namespace AqlaSerializer.Meta
             mayContainReferencesInside = false;
             // reference tracking decorators (RootDecorator, NetObjectDecorator, NetObjectValueDecorator)
             // should always be applied only one time (otherwise will consider new objects as already written):
-            // #1 For collection types references are handled either by RootDecorator or 
+            // #1 For collection types references are handled either by RootDecorator or
             // by ValueMember which owns the value (so outside of this scope)
             // because the value is treated as single object
             // #2 For members: ordinal ValueMembers are used and they will handle references when appropriate
@@ -173,7 +173,7 @@ namespace AqlaSerializer.Meta
                 Debug.Assert(IsSimpleValue);
                 return new WireTypeDecorator(WireType.Variant, new EnumSerializer(Type, GetEnumMap(), true));
             }
-            
+
             Type itemType = _settingsValueFinal.Member.Collection.ItemType;
 
             if (itemType != null)
@@ -194,7 +194,6 @@ namespace AqlaSerializer.Meta
                 s.EffectiveType = Type; // not merged with anything so assign
                 s.Collection.ConcreteType = _settingsValueFinal.ConstructType ?? defaultType;
                 s.Collection.Append = false; // allowed only on members
-                s.WriteAsDynamicType = false; // allowed only on members
                 // this should be handled as collection
                 if (s.Collection.ItemType == null) s.Collection.ItemType = itemType;
 
@@ -230,7 +229,7 @@ namespace AqlaSerializer.Meta
 
             var fields = new BasicList(_fields.Cast<object>());
             fields.Trim();
-            
+
             int fieldCount = fields.Count;
             int subTypeCount = _subTypes?.Count ?? 0;
             int[] fieldNumbers = new int[fieldCount + subTypeCount];
