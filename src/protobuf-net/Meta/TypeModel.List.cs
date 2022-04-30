@@ -228,7 +228,7 @@ namespace AqlaSerializer.Meta
                         concreteListType = typeof(System.Collections.Generic.Dictionary<,>).MakeGenericType(genericTypes);
                         handled = true;
                     }
-#if !SILVERLIGHT && !PORTABLE
+#if !PORTABLE
                     if (!handled && listType == typeof(IDictionary))
                     {
                         concreteListType = typeof(Hashtable);
@@ -242,7 +242,7 @@ namespace AqlaSerializer.Meta
                     handled = true;
                 }
 
-#if !SILVERLIGHT && !PORTABLE
+#if !PORTABLE
                 if (!handled)
                 {
                     concreteListType = typeof(ArrayList);

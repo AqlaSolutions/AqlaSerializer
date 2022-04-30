@@ -177,7 +177,7 @@ namespace AqlaSerializer
 #if TRACE
 #if MF
             Microsoft.SPOT.Trace.Print(message);
-#elif SILVERLIGHT || MONODROID || IOS || PORTABLE
+#elif MONODROID || IOS || PORTABLE
             System.Diagnostics.Debug.WriteLine(message);
 #else
             System.Diagnostics.Trace.WriteLine(message);
@@ -697,7 +697,7 @@ namespace AqlaSerializer
                 throw new ArgumentOutOfRangeException(rethrowMsg, ex);
             if (ex is ArgumentException)
             {
-#if SILVERLIGHT || PORTABLE
+#if PORTABLE
                 throw new ArgumentException(rethrowMsg, ex);
 #else
                 throw new ArgumentException(rethrowMsg, ((ArgumentException)ex).ParamName, ex);

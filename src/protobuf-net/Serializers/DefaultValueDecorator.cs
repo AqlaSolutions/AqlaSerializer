@@ -316,14 +316,8 @@ namespace AqlaSerializer.Serializers
                         }
                     case ProtoTypeCode.DateTime:
                         {
-#if SILVERLIGHT
-                        ctx.LoadValue(((DateTime)_defaultValue).ToFileTime());
-                        ctx.EmitCall(typeof(DateTime).GetMethod("FromFileTime"));                      
-#else
                             ctx.LoadValue(((DateTime)_defaultValue).ToBinary());
                             ctx.EmitCall(ctx.MapType(typeof(DateTime)).GetMethod("FromBinary"));
-#endif
-
                             EmitBeq(ctx, label, expected);
                             break;
                         }

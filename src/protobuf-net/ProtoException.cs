@@ -1,7 +1,7 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
 using System;
 
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
 using System.Runtime.Serialization;
 #endif
 namespace AqlaSerializer
@@ -9,7 +9,7 @@ namespace AqlaSerializer
     /// <summary>
     /// Indicates an error during serialization/deserialization of a proto stream.
     /// </summary>
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
     [Serializable]
 #endif
     public class ProtoException : Exception
@@ -23,7 +23,7 @@ namespace AqlaSerializer
         /// <summary>Creates a new ProtoException instance.</summary>
         public ProtoException(string message, Exception innerException) : base(message, innerException) { }
 
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>Creates a new ProtoException instance.</summary>
         protected ProtoException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 #endif

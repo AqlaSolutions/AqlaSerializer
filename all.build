@@ -26,9 +26,6 @@
             <Properties>Configuration=Safe</Properties>
     </ProjectToBuild>
     <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
-            <Properties>Configuration=iOS</Properties>
-    </ProjectToBuild>
-    <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
             <Properties>Configuration=Unity</Properties>
     </ProjectToBuild>
     <ProjectToBuild Include="src\protobuf-net\aqlaserializer.csproj">
@@ -83,7 +80,7 @@
 
     <MSBuild Projects="@(ProjectToBuild)" Targets="Restore;Clean;Rebuild" BuildInParallel="true"/>
 
-    <Exec Command="src\Tools\AOTCompatlyzer.exe &quot;src\protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\iOS\net30\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
+    <Exec Command="src\Tools\AOTCompatlyzer.exe &quot;src\protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.dll&quot; &quot;src\protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
 
   <ItemGroup>
     <iOSFiles Include="src\protobuf-net\bin\iOS\net30\aqlaserializer.*"/>

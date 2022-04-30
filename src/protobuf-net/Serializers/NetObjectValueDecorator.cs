@@ -63,11 +63,7 @@ namespace AqlaSerializer.Serializers
             if (!Helpers.IsValueType(type) && key >= 0 && baseKey >= 0 && ValueSerializerBuilder.CanTypeBeAsLateReferenceOnBuildStage(key, model, true))
             {
                 var mt = model[key];
-#if SILVERLIGHT
-                _lateReferenceTail = new LateReferenceSerializer(mt.Type, key, baseKey, model);
-#else
                 _lateReferenceTail = new LateReferenceSerializerProxyCaller(mt, mt.Type, key);
-#endif
             }
             else if (asLateReference) throw new ArgumentException("Can't use late reference with non-model or value type " + type.Name);
 

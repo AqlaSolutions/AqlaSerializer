@@ -7,9 +7,9 @@
     <RootNamespace>AqlaSerializer</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyOriginatorKeyFile>..\..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
-    <Configurations>Debug;Release;Safe;Profile;iOS;Unity;CoreOnly;UnityCoreOnly</Configurations>
+    <Configurations>Debug;Release;Safe;Profile;Unity;CoreOnly;UnityCoreOnly</Configurations>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='iOS' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
+  <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
     <TargetFrameworks>netstandard2.1;net35;net40;net45;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='CoreOnly'">
@@ -57,11 +57,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Safe'">
     <DefineConstants>$(DefineConstants); FEAT_SAFE</DefineConstants>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'iOS' ">
-    <DefineConstants>TRACE; NO_RUNTIME FEAT_SAFE IOS PLAT_NO_INTERLOCKED</DefineConstants>
-    <TargetFramework>net35</TargetFramework>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Unity' ">

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AltLinq;
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
 using System.Runtime.Serialization;
 #endif
 namespace AqlaSerializer
@@ -12,7 +12,7 @@ namespace AqlaSerializer
     /// <summary>
     /// Indicates an error during serialization/deserialization of a proto stream.
     /// </summary>
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
     [Serializable]
 #endif
     public class ProtoAggregateException : ProtoException
@@ -48,7 +48,7 @@ namespace AqlaSerializer
         }
 
         
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>Creates a new ProtoAggregateException instance.</summary>
         protected ProtoAggregateException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 #endif

@@ -133,7 +133,7 @@ namespace AqlaSerializer
         {
             return RuntimeTypeModel.Default.ChangeType<TFrom, TTo>(instance);
         }
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied SerializationInfo.
         /// </summary>
@@ -217,7 +217,7 @@ namespace AqlaSerializer
 #endif
 
         private const string ProtoBinaryField = "proto";
-#if PLAT_BINARYFORMATTER && !(PHONE8)
+#if PLAT_BINARYFORMATTER
         /// <summary>
         /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
         /// </summary>
@@ -265,7 +265,7 @@ namespace AqlaSerializer
 #endif
         }
 
-#if PLAT_BINARYFORMATTER && !PHONE8
+#if PLAT_BINARYFORMATTER
         /// <summary>
         /// Creates a new IFormatter that uses protocol-buffer [de]serialization.
         /// </summary>

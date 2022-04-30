@@ -29,7 +29,7 @@ namespace AqlaSerializer.Serializers
                     ser.WriteDebugSchema(b);
             }
         }
-        
+
         public bool DemandWireTypeStabilityStatus() => _concreteSerializerProxy.Serializer.DemandWireTypeStabilityStatus();
 
         private readonly int _baseKey;
@@ -49,7 +49,7 @@ namespace AqlaSerializer.Serializers
 
         public Type ExpectedType { get; }
         bool IProtoSerializer.RequiresOldValue => true;
-        
+
         public bool CanCancelWriting { get; }
 
 #if !FEAT_IKVM
@@ -69,9 +69,6 @@ namespace AqlaSerializer.Serializers
 
         bool EmitDedicatedMethod(Compiler.CompilerContext ctx, Compiler.Local valueFrom, bool read)
         {
-#if SILVERLIGHT
-            return false;
-#else
             var pair = ctx.GetDedicatedMethod(_baseKey)?.BasicPair;
             MethodBuilder method = read ? pair?.Deserialize : pair?.Serialize;
             if (method == null) return false;
@@ -81,7 +78,6 @@ namespace AqlaSerializer.Serializers
                 ctx.EmitReadCall(ctx, ExpectedType, method);
             else
                 ctx.EmitWriteCall(ctx, method);
-#endif
             return true;
         }
 

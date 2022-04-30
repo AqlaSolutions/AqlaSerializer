@@ -1,4 +1,4 @@
-﻿#if !PHONE8 && !PORTABLE && !SILVERLIGHT
+﻿#if !PORTABLE
 #define ENABLED
 #endif
 

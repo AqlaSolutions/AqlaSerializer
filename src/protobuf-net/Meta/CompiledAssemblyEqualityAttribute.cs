@@ -3,7 +3,7 @@
 namespace AqlaSerializer.Meta
 {
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false)]
-#if !PHONE8 && !PORTABLE && !SILVERLIGHT
+#if !PORTABLE
     [System.Serializable]
 #endif
     public class CompiledAssemblyEqualityAttribute : Attribute

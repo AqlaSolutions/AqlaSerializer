@@ -37,7 +37,7 @@ namespace AqlaSerializer
             object obj = TryGetUninitializedObjectWithFormatterServices(type);
             if (obj != null) return obj;
 #endif
-#if PLAT_BINARYFORMATTER && !PHONE8
+#if PLAT_BINARYFORMATTER
             return System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
 #else
             if (_getUninitializedObject == null)

@@ -120,7 +120,7 @@ namespace AqlaSerializer.Meta
                     throw new InvalidOperationException("No serializer available for " + mt.Type.Name);
             }
         }
-#if !SILVERLIGHT
+
         internal sealed class SerializerMethods : IComparable
         {
             int IComparable.CompareTo(object obj)
@@ -1460,7 +1460,6 @@ namespace AqlaSerializer.Meta
             return methodContext;
         }
 
-#endif
         }
 }
 #endif

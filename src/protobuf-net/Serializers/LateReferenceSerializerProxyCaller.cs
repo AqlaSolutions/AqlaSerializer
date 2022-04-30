@@ -1,4 +1,4 @@
-#if !NO_RUNTIME && !SILVERLIGHT
+#if !NO_RUNTIME
 using System;
 #if FEAT_COMPILER
 using AqlaSerializer.Compiler;

@@ -297,7 +297,7 @@ namespace AqlaSerializer.Serializers
                             Type paramType = parameters[i].ParameterType;
                             if (paramType == typeof(SerializationContext)) val = context;
                             else if (paramType == typeof(System.Type)) val = constructType;
-#if PLAT_BINARYFORMATTER || (SILVERLIGHT && NET_4_0)
+#if PLAT_BINARYFORMATTER
                             else if (paramType == typeof(System.Runtime.Serialization.StreamingContext)) val = (System.Runtime.Serialization.StreamingContext)context;
 #endif
                             else
@@ -332,7 +332,7 @@ namespace AqlaSerializer.Serializers
             else if (_useConstructor && _hasConstructor)
             {
                 obj = Activator.CreateInstance(_constructType
-#if !SILVERLIGHT && !PORTABLE
+#if !PORTABLE
                 , nonPublic: true
 #endif
                 );

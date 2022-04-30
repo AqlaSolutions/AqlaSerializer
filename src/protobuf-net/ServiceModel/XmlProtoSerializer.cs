@@ -1,5 +1,5 @@
 ﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-#if (PLAT_XMLSERIALIZER) || (SILVERLIGHT && !PHONE7)
+#if PLAT_XMLSERIALIZER
 using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
@@ -83,7 +83,7 @@ namespace AqlaSerializer.ServiceModel
 
             isList = false;
             return -1;
-            
+
         }
         /// <summary>
         /// Ends an object in the output

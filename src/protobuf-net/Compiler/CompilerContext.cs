@@ -230,7 +230,6 @@ namespace AqlaSerializer.Compiler
         }
         private readonly bool _isStatic;
 
-#if !SILVERLIGHT
         private readonly RuntimeTypeModel.SerializerMethods[] _methodPairs;
         public bool SupportsMultipleMethods => _methodPairs != null;
         internal RuntimeTypeModel.SerializerMethods GetDedicatedMethod(int metaKey)
@@ -272,13 +271,6 @@ namespace AqlaSerializer.Compiler
             }
             throw new ArgumentException("Key could not be mapped: " + metaKey.ToString(), nameof(metaKey));
         }
-#else
-        public bool SupportsMultipleMethods => false;
-        internal int MapMetaKeyToCompiledKey(int metaKey)
-        {
-            return metaKey;
-        }
-#endif
 
         private readonly bool _isWriter;
 #if FEAT_IKVM
@@ -289,7 +281,6 @@ namespace AqlaSerializer.Compiler
 
 
         public Local InputValue { get; }
-#if !(SILVERLIGHT || PHONE8)
         private readonly string _assemblyName;
         internal CompilerContext(MethodContext context, bool isStatic, bool isWriter, RuntimeTypeModel.SerializerMethods[] methodPairs, TypeModel model, ILVersion metadataVersion, string assemblyName, Type inputType)
         {
@@ -308,7 +299,7 @@ namespace AqlaSerializer.Compiler
             this.MetadataVersion = metadataVersion;
             if (inputType != null) this.InputValue = new Local(this, inputType, false);
         }
-#endif
+
         public ICodeGenContext RunSharpContext { get; }
 
 #if !(FEAT_IKVM)
@@ -352,11 +343,7 @@ namespace AqlaSerializer.Compiler
             string name = "proto_" + uniqueIdentifier.ToString();
 
             Type ownerType = (associatedType.IsInterface || associatedType.IsArray) ? typeof(object) : associatedType;
-            _method = new DynamicMethod(name, returnType, paramTypes
-#if !SILVERLIGHT
-                , ownerType, true
-#endif
-                );
+            _method = new DynamicMethod(name, returnType, paramTypes, ownerType, true);
             this._il = _method.GetILGenerator();
 
             var methodGen = new MethodContext.MethodGenInfo(
@@ -920,14 +907,10 @@ namespace AqlaSerializer.Compiler
                 EmitCtor(ctor);
             }
         }
-#if !(PHONE8 || SILVERLIGHT)
         BasicList _knownTrustedAssemblies, _knownUntrustedAssemblies;
-#endif
+
         bool InternalsVisible(Assembly assembly)
         {
-#if PHONE8 || SILVERLIGHT
-            return false;
-#else
             if (Helpers.IsNullOrEmpty(_assemblyName)) return false;
             if (_knownTrustedAssemblies != null)
             {
@@ -980,7 +963,6 @@ namespace AqlaSerializer.Compiler
                 _knownUntrustedAssemblies.Add(assembly);
             }
             return isTrusted;
-#endif
         }
         internal void CheckAccessibility(MemberInfo member)
         {
@@ -1022,11 +1004,7 @@ namespace AqlaSerializer.Compiler
                         if (!isPublic)
                         {
                             // allow calls to TypeModel protected methods, and methods we are in the process of creating
-                            if(
-#if !SILVERLIGHT
-                                member is MethodBuilder ||
-#endif
-                                member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true;
+                            if(member.DeclaringType == MapType(typeof(TypeModel))) isPublic = true;
                         }
                         break;
                     case MemberTypes.Property:
