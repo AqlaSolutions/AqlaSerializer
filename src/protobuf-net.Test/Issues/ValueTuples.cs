@@ -1,15 +1,17 @@
 ﻿#if NET5_0
 using AqlaSerializer.Meta;
+using NUnit.Framework;
 using System;
 using System.IO;
 using Xunit;
+using Assert = Xunit.Assert;
 
 namespace AqlaSerializer.Issues
 {
-
+    [TestFixture]
     public class ValueTuples
     {
-        [Fact]
+        [Test]
         public void CanRoundTripValueTuples()
         {
             var foo = GetNamedTupleData();
@@ -22,7 +24,7 @@ namespace AqlaSerializer.Issues
 
         }
 
-        [Fact]
+        [Test]
         public void CheckLayoutEquivalence()
         {
             string hex;
