@@ -9,6 +9,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using System.Net;
+using AqlaSerializer.Meta;
+using Serializer = AqlaSerializer.Serializer;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -376,7 +380,7 @@ namespace Examples
         [Test]
         public void TestNonEmptyMyListOfEntity()
         {
-            var foos = new MyList() 
+            var foos = new MyList()
             {
                 new Entity { Foo = "abc"},
                 new Entity { Foo = "def"},
@@ -534,8 +538,8 @@ namespace Examples
 
         class CustomBox : Dictionary<string, CompositeType>
         {
-            
-        } 
+
+        }
 
         [ProtoContract]
         [ProtoInclude(1, typeof(CompositeType<int>))]
@@ -552,7 +556,7 @@ namespace Examples
             public object Value
             {
                 get { return ValueImpl; }
-                set { ValueImpl = value; } 
+                set { ValueImpl = value; }
             }
         }
         [ProtoContract]
@@ -583,7 +587,7 @@ namespace Examples
                 new Test3 { C = new Test1 { A = 456}},
                 new Test3 { C = new Test1 { A = 789}}
             };
-            
+
             var clone = Serializer.DeepClone(list);
             CheckLists(list, clone);
         }
@@ -812,5 +816,52 @@ namespace Examples
                 Items = new LinkedList<BasicItem>();
             }
         }
+
+        [Test]
+        public void SetTest()
+        {
+            var obj = new WithISet() { Collection = new HashSet<int>() { 1, 2, 3, 4, 5 } };
+            var cloned = Serializer.DeepClone(obj);
+            CollectionAssert.AreEquivalent(obj.Collection, cloned.Collection);
+        }
+
+        [SerializableType]
+        public class WithISet
+        {
+            [SerializableMember(1)]
+            public ISet<int> Collection;
+        }
+
+        [Test]
+        public void ReadOnlyDictionaryTest()
+        {
+            var obj = new WithReadOnlyDictinary() { Collection = new Dictionary<int, byte>() { [1] = 11, [2] = 22, [3] = 33 } };
+            var cloned = Serializer.DeepClone(obj);
+            CollectionAssert.AreEquivalent(obj.Collection, cloned.Collection);
+        }
+
+        [SerializableType]
+        public class WithReadOnlyDictinary
+        {
+            [SerializableMember(1)]
+            public IReadOnlyDictionary<int, byte> Collection;
+        }
+
+#if NET5_0_OR_GREATER
+        [Test]
+        public void ReadOnlySetTest()
+        {
+            var obj = new WithReadOnlySet() { Collection = new HashSet<int>() { 1, 2, 3, 4, 5 } };
+            var cloned = Serializer.DeepClone(obj);
+            CollectionAssert.AreEquivalent(obj.Collection, cloned.Collection);
+        }
+
+        [SerializableType]
+        public class WithReadOnlySet
+        {
+            [SerializableMember(1)]
+            public IReadOnlySet<int> Collection;
+        }
+#endif
     }
 }

@@ -1,3 +1,3 @@
 extensions: designer.cs generated.cs
 extensions: .cs .cpp .h
-// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+// Modified by Vladyslav Taranov for AqlaSerializer, 2022

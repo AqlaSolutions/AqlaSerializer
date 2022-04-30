@@ -1,14 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<!--
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" Condition="'$(TargetFramework)'=='net45'" />
+-->
   <PropertyGroup>
     <AssemblyName>aqlaserializer</AssemblyName>
-    <RootNamespace>aqlaserializer</RootNamespace>
+    <RootNamespace>AqlaSerializer</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyOriginatorKeyFile>..\..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
     <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly;Silverlight2CoreOnly;UnityCoreOnly</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug' AND '$(Configuration)'!='Silverlight2' AND '$(Configuration)'!='iOS' AND '$(Configuration)'!='Unity' AND '$(Configuration)'!='CoreOnly' AND '$(Configuration)'!='Profile'">
-    <TargetFrameworks>netstandard2.1;net20;net35;net40;net45;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net35;net40;net45;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='CoreOnly'">
     <TargetFrameworks>netstandard2.1;net35;portable-net4+sl50+win8+wpa81+wp8+android+ios+uap</TargetFrameworks>
@@ -98,6 +100,14 @@
    <PackageReference Include="microsoft.netframework.referenceassemblies.net35"
                      Version="1.0.2" PrivateAssets="All" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net40'">
+   <PackageReference Include="microsoft.netframework.referenceassemblies.net40"
+                     Version="1.0.2" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net45'">
+   <PackageReference Include="microsoft.netframework.referenceassemblies.net45"
+                     Version="1.0.2" PrivateAssets="All" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'!='netstandard2.1'">
     <Reference Include="System">
       <Aliases>global</Aliases>
@@ -114,11 +124,14 @@
     <Reference Include="System.Runtime.Serialization">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Condition="!$(DefineConstants.Contains('PORTABLE'))" Include="System.ServiceModel">
+    <Reference Condition="!$(TargetFramework.Contains('portable-'))" Include="System.ServiceModel">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition="$(DefineConstants.Contains('PORTABLE'))">
+  <ItemGroup Condition="!$(TargetFramework.Contains('portable-'))">
+    <PackageReference Include="aqla.runsharp" Version="1.0.23" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.Contains('portable-'))">
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
@@ -161,11 +174,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup Condition="$(DefineConstants.Contains('PORTABLE'))">
+  <ItemGroup Condition="$(TargetFramework.Contains('portable-'))">
     <PackageReference Include="MSBuild.Sdk.Extras" Version="1.0.5" PrivateAssets="all" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="aqla.runsharp" Version="1.0.23" />
   </ItemGroup>
   <Import Project="$(MSBuildSDKExtrasTargets)" Condition="Exists('$(MSBuildSDKExtrasTargets)')" />
 </Project>

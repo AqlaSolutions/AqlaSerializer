@@ -45,20 +45,9 @@
     <ProjectToBuild Include="src\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
             <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
-    <ProjectToBuild Include="src\protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
-            <Properties>Configuration=Release</Properties>
-    </ProjectToBuild>
     <ProjectToBuild Include="src\protobuf-net_IKVM\aqlaserializer_IKVM.csproj">
             <Properties>Configuration=CoreOnly</Properties>
-    </ProjectToBuild>
-    <ProjectToBuild Include="src\protobuf-net_MonoDroid\aqlaserializer_MonoDroid.csproj">
-            <Properties>Configuration=CoreOnly</Properties>
-    </ProjectToBuild>
-
-    
-    <ProjectToBuild Include="assorted\protobuf-net.Enyim\protobuf-net.Enyim\aqlaserializer.Enyim.csproj">
-            <Properties>Configuration=Release</Properties>
-    </ProjectToBuild>
+    </ProjectToBuild>    
     <ProjectToBuild Include="assorted\precompile\precompile.csproj">
             <Properties>Configuration=Release</Properties>
     </ProjectToBuild>
@@ -106,7 +95,7 @@
     <Copy SourceFiles="Licence.txt" DestinationFolder="$(ZipDirectory)"/>
     <Copy SourceFiles="What Files Do I Need.txt" DestinationFolder="$(ZipDirectory)"/>
 
-    <MSBuild Projects="@(ProjectToBuild)" Targets="Clean;Rebuild" BuildInParallel="true"/>
+    <MSBuild Projects="@(ProjectToBuild)" Targets="Restore;Clean;Rebuild" BuildInParallel="true"/>
 
     <Exec Command="src\Tools\AOTCompatlyzer.exe &quot;src\protobuf-net\bin\Unity\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\UnityCoreOnly\net35\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot; &quot;src\protobuf-net\bin\iOS\net30\aqlaserializer.dll&quot; &quot;AqlaSerializer2Key.snk&quot;"/>
 
@@ -141,8 +130,6 @@
     <PortableFiles Include="src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
     <PortableFilesDep Include="src\protobuf-net\bin\Release\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\RunSharp.*"/>
     <PortableFiles_CoreOnly Include="src\protobuf-net\bin\CoreOnly\portable-net4+sl50+win8+wpa81+wp8+android+ios+uap\aqlaserializer.*"/>
-    <AndroidFiles Include="src\protobuf-net_MonoDroid\bin\Release\aqlaserializer.*"/>
-    <AndroidFilesDep Include="src\protobuf-net_MonoDroid\bin\Release\RunSharp.*"/>
 
     <SLFiles Include="bin-unsupported\Full\sl5\aqlaserializer.*"/>
     <SLFilesDep Include="bin-unsupported\Full\sl5\RunSharp.*"/>
@@ -155,8 +142,6 @@
     <WinRTFiles_CoreOnly Include="bin-unsupported\CoreOnly\winrt\aqlaserializer.*"/>
     
     <PrecompileFiles Include="assorted\precompile\bin\Release\*.*"/>
-
-    <EnyimFiles Include="assorted\protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\*.*" Exclude="assorted\protobuf-net.Enyim\protobuf-net.Enyim\bin\Release\Licence.txt"/>
 
 
 
@@ -225,14 +210,6 @@
     <Copy SourceFiles="@(iOSFiles)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(iOSFilesDep)" DestinationFolder="$(ZipDirectory)\CoreOnly\ios"/>
     <Copy SourceFiles="@(Net30Files_CoreOnly)" DestinationFolder="$(ZipDirectory)\CoreOnly\net30"/>
-
-
-    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(ZipDirectory)\Full\android"/>
-    <Copy SourceFiles="@(AndroidFilesDep)" DestinationFolder="$(ZipDirectory)\Full\android"/> 
-
-    <Copy SourceFiles="@(AndroidFiles)" DestinationFolder="$(NugetDirectory)\Xamarin.Android"/>
-
-    <Copy SourceFiles="@(EnyimFiles)" DestinationFolder="$(ZipDirectory)\Full\net30+enyim"/>
 
     <Copy SourceFiles="@(PrecompileFiles)" DestinationFolder="$(ZipDirectory)\Precompile"/>
   
