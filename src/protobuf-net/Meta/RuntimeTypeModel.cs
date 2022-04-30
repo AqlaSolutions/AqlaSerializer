@@ -53,10 +53,10 @@ namespace AqlaSerializer.Meta
     public sealed partial class RuntimeTypeModel : TypeModel
     {
         public ProtoCompatibilitySettingsValue ProtoCompatibility { get; private set; }
-        
+
         internal bool IsFrozen => GetOption(OPTIONS_Frozen);
         internal IValueSerializerBuilder ValueSerializerBuilder { get; private set; }
-        
+
         public static bool CheckTypeCanBeAdded(RuntimeTypeModel model, Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
@@ -73,13 +73,12 @@ namespace AqlaSerializer.Meta
                 return CheckTypeCanBeAdded(model, underlying);
 
             return type != model.MapType(typeof(Enum))
-                   && type != model.MapType(typeof(object))
                    && type != model.MapType(typeof(ValueType))
                    && (Helpers.IsEnum(type) || Helpers.GetTypeCode(type) == ProtoTypeCode.Unknown)
                    && !model.IsInbuiltType(type);
             //&& !MetaType.IsDictionaryOrListInterface(model, type);
         }
-        
+
         /// <summary>
         /// Some types which can't be handled by Auxiliary should be always registered even without a contract
         /// </summary>
@@ -94,7 +93,11 @@ namespace AqlaSerializer.Meta
             // ArrayList can't be added without contract
             // because it's item type can't be serialized normally
             // should be dynamic?
-            if (itemType == null || itemType == model.MapType(typeof(object))) return false;
+            if (itemType == null || itemType == model.MapType(typeof(object)))
+            {
+                if (model.AutomaticDynamicType && (type.IsInterface || type == model.MapType(typeof(object)))) return true;
+                return false;
+            }
             if (model.AlwaysUseTypeRegistrationForCollections)
                 return true;
 
@@ -131,7 +134,10 @@ namespace AqlaSerializer.Meta
 #endif
             OPTIONS_UseImplicitZeroDefaults = 32,
             OPTIONS_AllowParseableTypes = 64,
-            OPTIONS_IncludeDateTimeKind = 256;
+            OPTIONS_IncludeDateTimeKind = 256,
+            OPTIONS_AutomaticDynamicType = 512
+
+            ;
 
         private bool GetOption(short option)
         {
@@ -160,9 +166,9 @@ namespace AqlaSerializer.Meta
         /// Global switch that enables or disables the implicit
         /// handling of "zero defaults"; meanning: if no other default is specified,
         /// it assumes bools always default to false, integers to zero, etc.
-        /// 
+        ///
         /// If this is disabled, no such assumptions are made and only *explicit*
-        /// default values are processed. This is enabled by default to 
+        /// default values are processed. This is enabled by default to
         /// preserve similar logic to v1 but disabled for the Create(newestBehavior: true) mode.
         /// </summary>
         public bool UseImplicitZeroDefaults
@@ -228,7 +234,16 @@ namespace AqlaSerializer.Meta
         {
             return GetOption(OPTIONS_IncludeDateTimeKind);
         }
-        
+
+        /// <summary>
+        /// Adds even interfaces without a contract. Also adds <see cref="System.Object"/>. Doesn't works when <see cref="AutoAddMissingTypes"/> is set to false.
+        /// Non-collection interfaces and <see cref="System.Object"/> without any subtype use dynamic type mode by default.
+        /// </summary>
+        public bool AutomaticDynamicType
+        {
+            get { return GetOption(OPTIONS_AutomaticDynamicType); }
+            set { SetOption(OPTIONS_AutomaticDynamicType, value); }
+        }
 
         private sealed class Singleton
         {
@@ -282,7 +297,7 @@ namespace AqlaSerializer.Meta
                 return r;
             }
         }
-        
+
         internal RuntimeTypeModel(bool isDefault, ProtoCompatibilitySettingsValue protoCompatibility)
         {
             ProtoCompatibility = protoCompatibility.Clone();
@@ -296,6 +311,7 @@ namespace AqlaSerializer.Meta
 #endif
 #endif
             AutoAddMissingTypes = true;
+            AutomaticDynamicType = true;
             UseImplicitZeroDefaults = true;
             SetOption(OPTIONS_IsDefaultModel, isDefault);
 #if FEAT_COMPILER && !FX11 && !DEBUG
@@ -412,7 +428,7 @@ namespace AqlaSerializer.Meta
             metaType = null;
             var info = GetTypeInfoFromDictionary(type);
             int key = -1;
-            
+
             // the fast happy path: meta-types we've already seen
             if (info != null)
             {
@@ -475,7 +491,7 @@ namespace AqlaSerializer.Meta
                         }
 
                         if (!shouldAdd || (
-                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this,type)))
+                            !Helpers.IsEnum(type) && addWithContractOnly && family == MetaType.AttributeFamily.None && !CheckTypeDoesntRequireContract(this, type)))
                         {
                             if (demand) ThrowUnexpectedType(type);
                             return key;
@@ -570,7 +586,7 @@ namespace AqlaSerializer.Meta
                 ReleaseLock(opaqueToken);
             }
         }
-        
+
         private MetaType RecogniseCommonTypes(Type type)
         {
             //#if !NO_GENERICS
@@ -600,12 +616,12 @@ namespace AqlaSerializer.Meta
             ThrowIfFrozen();
             return new MetaType(this, type, _defaultFactory);
         }
-        
+
         /// <summary>
         /// If enabled all Arrays and Lists will be handled in extended mode to always support reference tracking and null (which will break without runtime/pre-compiled dll) but may have a size overhead (going to fix that in later releases)
         /// </summary>
         public bool AlwaysUseTypeRegistrationForCollections { get; set; }
-        
+
         /// <summary>
         /// Adds all types inside the specified assembly. Surrogates are not detected automatically, set surrogates before calling this!
         /// </summary>
@@ -613,7 +629,7 @@ namespace AqlaSerializer.Meta
         {
             Add(assembly, nonPublic, applyDefaultBehavior, t => rootFilter == null || (_autoAddStrategy.GetContractFamily(t) & rootFilter.Value) != 0);
         }
-        
+
         /// <summary>
         /// Adds all types inside the specified assembly. Surrogates are not detected automatically, set surrogates before calling this!
         /// </summary>
@@ -622,7 +638,7 @@ namespace AqlaSerializer.Meta
             if (assembly == null) throw new ArgumentNullException(nameof(assembly));
             if (rootFilter == null) throw new ArgumentNullException(nameof(rootFilter));
             Type[] list = nonPublic ? Helpers.GetTypes(assembly) : Helpers.GetExportedTypes(assembly);
-            
+
             // types order actually does not matter
             // but subtypes does
             Array.Sort(list, new TypeNamesSortComparer());
@@ -653,7 +669,7 @@ namespace AqlaSerializer.Meta
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="list"></param>
         /// <param name="applyDefaultBehaviorIfNew"></param>
@@ -698,7 +714,7 @@ namespace AqlaSerializer.Meta
                     {
                         Add(t.Type, false);
                     }
-                    
+
                     foreach (var t in data.Types)
                     {
                         ImportTypeRelationsElement(t);
@@ -1067,7 +1083,7 @@ namespace AqlaSerializer.Meta
             if (!SkipCompiledVsNotCheck && (result == null || result.GetType().IsPublic || result.GetType().IsNestedPublic) && isRoot)
             {
                 var rtm = GetInvertedVersionForCheckCompiledVsNot(key, metaType);
-                
+
                 var stream = source.UnderlyingStream;
                 if (stream.CanSeek)
                 {
@@ -1084,7 +1100,7 @@ namespace AqlaSerializer.Meta
                         pr.SkipBytes(initialSourcePosition);
                         var invType = rtm[key];
                         var invSer = invType.RootSerializer;
-                        
+
                         var copy = invSer.Read(null, pr);
 
                         if (copy == null || result == null)
@@ -1175,7 +1191,7 @@ namespace AqlaSerializer.Meta
         //    throw new KeyNotFoundException();
 
         //}
-        
+
         //internal bool IsDefined(Type type, int fieldNumber)
         //{
         //    return FindWithoutAdd(type).IsDefined(fieldNumber);
@@ -1337,7 +1353,7 @@ namespace AqlaSerializer.Meta
             return universe.GetType(fullName, false);
         }
 #endif
-        
+
         /// <summary>
         /// Designate a factory-method to use to create instances of any type; note that this only affect types seen by the serializer *after* setting the factory.
         /// </summary>
@@ -1366,7 +1382,7 @@ namespace AqlaSerializer.Meta
             this[MapType(typeof(T))].CompileInPlace();
 #endif
         }
-        
+
         /// <summary>
         /// Returns a full deep copy of a model with all settings and added types
         /// </summary>

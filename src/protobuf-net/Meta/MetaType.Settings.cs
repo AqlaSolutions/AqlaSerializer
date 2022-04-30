@@ -132,6 +132,17 @@ namespace AqlaSerializer.Meta
 
                 m.Collection.ConcreteType = _settingsValueFinal.ConstructType;
 
+                if (_model.AutomaticDynamicType
+                    && m.WriteAsDynamicType == null
+                    && !HasSurrogate
+                    && !HasSubtypes
+                    && m.Collection.ItemType == null
+                    && _settingsValueFinal.ConstructType == null
+                    && (Type.IsInterface || Type == _model.MapType(typeof(object))))
+                {
+                    m.WriteAsDynamicType = true;
+                }
+
                 if (_settingsValueFinal.PrefixLength == null)
                     _settingsValueFinal.PrefixLength = _model.ProtoCompatibility.UseLengthPrefixedNestingAsDefault;
 

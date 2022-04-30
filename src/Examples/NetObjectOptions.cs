@@ -20,7 +20,7 @@ namespace Examples
             [ProtoBuf.ProtoMember(2, AsReference = true)]
             public BasicReferenceTestInner Bar { get; set; }
 
-            
+
         }
         [ProtoBuf.ProtoContract]
         public class BasicReferenceTestInner {
@@ -236,8 +236,68 @@ namespace Examples
             Assert.AreEqual("abc", d.Foo);
         }
 
+        [Test]
+        public void AutomaticDynamicTypeTest()
+        {
+            var model = TypeModel.Create();
+            MetaType metaTypeA = model.Add(typeof(ClassA), true);
+            MetaType metaTypeB = model.Add(typeof(ClassB), true);
+
+            metaTypeB.AddSubType(1, typeof(ClassA));
+
+            var a = new ClassA { Value1 = 1, Value2 = 2, Value3 = 3 };
+            var c = new TestClass {
+                ClassA = new ClassA { Value1 = 1, Value2 = 2, Value3 = 3 },
+                ClassB = new ClassB { Value2 = 22 },
+                Interface1 = a,
+            };
+
+            var cClone = model.DeepClone(c);
+            Assert.AreEqual(c.ClassA.Value1, cClone.ClassA.Value1);
+            Assert.AreEqual(c.ClassA.Value2, cClone.ClassA.Value2);
+            Assert.AreEqual(c.ClassA.Value3, cClone.ClassA.Value3);
+
+            var aClone = (ClassA)model.DeepClone((Interface1)a);
+            Assert.AreEqual(a.Value1, aClone.Value1);
+            Assert.AreEqual(a.Value2, aClone.Value2);
+            Assert.AreEqual(a.Value3, aClone.Value3);
+        }
+
+        [SerializableType]
+        class TestClass
+        {
+            [SerializableMember(1)]
+            public Interface1 Interface1 { get; set; }
+            [SerializableMember(2)]
+            public ClassB ClassB { get; set; }
+            [SerializableMember(3)]
+            public ClassA ClassA { get; set; }
+        }
+
+        [SerializableType]
+        private class ClassA : ClassB, Interface1
+        {
+            [SerializableMember(1)]
+            public int Value3 { get; set; }
+            [SerializableMember(2)]
+            public int Value1 { get; set; }
+        }
+
+        [SerializableType]
+        [SerializeDerivedType(1, typeof(ClassA))]
+        private class ClassB
+        {
+            [SerializableMember(2)]
+            public int Value2 { get; set; }
+        }
+
+        public interface Interface1
+        {
+            public int Value1 { get; set; }
+        }
+
     }
 
 
-    
+
 }
