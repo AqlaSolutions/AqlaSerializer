@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <AssemblyName>aqlaserializer</AssemblyName>
-    <RootNamespace>aqlaserializer</RootNamespace>
+    <RootNamespace>AqlaSerializer</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyOriginatorKeyFile>..\..\AqlaSerializer2Key.snk</AssemblyOriginatorKeyFile>
     <Configurations>Debug;Release;Safe;Profile;Silverlight2;iOS;Unity;CoreOnly;Silverlight2CoreOnly;UnityCoreOnly</Configurations>

@@ -31,7 +31,7 @@ namespace AqlaSerializer.Meta
     partial class MetaType
     {
         ValueSerializationSettings _rootNestedVs = new ValueSerializationSettings();
-        
+
         /// <summary>
         /// These settings are only applicable for collection types when they are serialized not as a member (root or LateReference)
         /// </summary>
@@ -40,7 +40,7 @@ namespace AqlaSerializer.Meta
             if (level == 0) throw new ArgumentOutOfRangeException(nameof(level), "Zero level settings should be obtained through DefaultX properties on MetaType");
             return _rootNestedVs.GetSettingsCopy(level).Basic;
         }
-        
+
         public TypeSettingsValue GetFinalSettingsCopy()
         {
             FinalizeSettingsValue();
@@ -120,7 +120,7 @@ namespace AqlaSerializer.Meta
                     _settingsValueFinal.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
 #endif
                 }
-                
+
                 if (_settingsValueFinal.IgnoreListHandling)
                 {
                     m.Collection.ItemType = null;
@@ -128,7 +128,7 @@ namespace AqlaSerializer.Meta
                     m.Collection.PackedWireTypeForRead = null;
                 }
                 else if (m.Collection.ItemType == null)
-                    m.Collection.ItemType = Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type);  
+                    m.Collection.ItemType = Type.IsArray ? Type.GetElementType() : TypeModel.GetListItemType(_model, Type);
 
                 m.Collection.ConcreteType = _settingsValueFinal.ConstructType;
 
@@ -158,7 +158,7 @@ namespace AqlaSerializer.Meta
             if (sv.Member.Collection.ConcreteType != null && !Helpers.IsAssignableFrom(this.Type, sv.Member.Collection.ConcreteType))
                 throw new ArgumentException("Specified collection concrete type " + sv.Member.Collection.ConcreteType.Name + " is not assignable to " + this.Type.Name);
         }
-        
+
         /// <summary>
         /// Gets or sets the name of this contract.
         /// </summary>
@@ -193,9 +193,9 @@ namespace AqlaSerializer.Meta
                         });
             }
         }
-        
+
         /// <summary>
-        /// Maximum allowed array allocation length counting all 
+        /// Maximum allowed array allocation length counting all
         /// </summary>
         public int? ArrayLengthReadLimit
         {
@@ -284,6 +284,24 @@ namespace AqlaSerializer.Meta
             }
         }
 
+        // TODO auto enable this for interfaces and object?
+        public bool? WriteAsDynamicTypeDefault
+        {
+            get
+            {
+                return _settingsValueByClient.Member.WriteAsDynamicType;
+            }
+            set
+            {
+                ChangeSettings(
+                    sv =>
+                    {
+                        sv.Member.WriteAsDynamicType = value;
+                        return sv;
+                    });
+            }
+        }
+
         public ValueFormat DefaultFormat
         {
             get
@@ -300,7 +318,7 @@ namespace AqlaSerializer.Meta
                     });
             }
         }
-        
+
         public BinaryDataFormat? ContentBinaryFormatHint
         {
             get { return _settingsValueByClient.Member.ContentBinaryFormatHint; }
@@ -413,7 +431,7 @@ namespace AqlaSerializer.Meta
                         });
             }
         }
-        
+
         void ChangeSettings(Func<TypeSettingsValue, TypeSettingsValue> setter)
         {
             ThrowIfFrozen();

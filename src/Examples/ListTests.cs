@@ -9,6 +9,7 @@ using System.Collections;
 using System.Net;
 using AqlaSerializer.Meta;
 using Serializer = AqlaSerializer.Serializer;
+using AqlaSerializer;
 
 namespace Examples
 {
@@ -216,7 +217,7 @@ namespace Examples
             Assert.AreNotSame(item.Items, clone.List);
             Assert.IsTrue(item.Items.SequenceEqual(clone.List));
         }
-        
+
         [Test]
         public void PackedEmptyListDeserializesAsEmpty()
         {
@@ -224,19 +225,19 @@ namespace Examples
             Assert.IsNull(item.ListNoDefault);
             EntityWithPackedInts clone;// = Serializer.DeepClone(item);
             //Assert.IsNull(clone.ListNoDefault);
-           
+
             item.ListNoDefault = new List<int>();
             clone = Serializer.DeepClone(item);
             Assert.IsNotNull(clone.ListNoDefault);
             Assert.AreEqual(0, clone.ListNoDefault.Count);
-           
+
             item.ListNoDefault.Add(123);
             clone = Serializer.DeepClone(item);
             Assert.IsNotNull(clone.ListNoDefault);
             Assert.AreEqual(1, clone.ListNoDefault.Count);
             Assert.AreEqual(123, clone.ListNoDefault[0]);
         }
-        
+
         [Test]
         public void PackedEmptyArrayDeserializesAsEmpty()
         {
@@ -256,7 +257,7 @@ namespace Examples
             Assert.AreEqual(1, clone.ItemArray.Length);
             Assert.AreEqual(123, clone.ItemArray[0]);
         }
-        
+
         [Test]
         public void PackedNullListDeserializesAsNull()
         {
@@ -264,12 +265,12 @@ namespace Examples
             Assert.IsNull(item.ListNoDefault);
             var clone = Serializer.DeepClone(item);
             Assert.IsNull(clone.ListNoDefault);
-           
+
             item.ListNoDefault = null;
             clone = Serializer.DeepClone(item);
             Assert.IsNull(clone.ListNoDefault);
         }
-        
+
         [Test]
         public void PackedNullArrayDeserializesAsNull()
         {
@@ -282,7 +283,7 @@ namespace Examples
             clone = Serializer.DeepClone(item);
             Assert.IsNull(clone.ItemArray);
         }
-        
+
         [Test]
         public void PackedEmptyCustomDeserializesAsEmpty()
         {
@@ -338,7 +339,7 @@ namespace Examples
         [Test]
         public void TestNonEmptyMyListOfEntity()
         {
-            var foos = new MyList() 
+            var foos = new MyList()
             {
                 new Entity { Foo = "abc"},
                 new Entity { Foo = "def"},
@@ -391,8 +392,8 @@ namespace Examples
 
         public class CustomBox : Dictionary<string, CompositeType>
         {
-            
-        } 
+
+        }
 
         [ProtoBuf.ProtoContract]
         [ProtoBuf.ProtoInclude(1, typeof(CompositeType<int>))]
@@ -409,7 +410,7 @@ namespace Examples
             public object Value
             {
                 get { return ValueImpl; }
-                set { ValueImpl = value; } 
+                set { ValueImpl = value; }
             }
         }
         [ProtoBuf.ProtoContract]
@@ -442,7 +443,7 @@ namespace Examples
                 new Test3 { C = new Test1 { A = 456}},
                 new Test3 { C = new Test1 { A = 789}}
             };
-            
+
             var clone = Serializer.DeepClone(list);
             CheckLists(list, clone);
         }
@@ -627,5 +628,52 @@ namespace Examples
                 Items = new LinkedList<BasicItem>();
             }
         }
+
+        [Test]
+        public void SetTest()
+        {
+            var obj = new WithISet() { Collection = new HashSet<int>() { 1, 2, 3, 4, 5 } };
+            var cloned = Serializer.DeepClone(obj);
+            CollectionAssert.AreEquivalent(obj.Collection, cloned.Collection);
+        }
+
+        [SerializableType]
+        public class WithISet
+        {
+            [SerializableMember(1)]
+            public ISet<int> Collection;
+        }
+
+        [Test]
+        public void ReadOnlyDictionaryTest()
+        {
+            var obj = new WithReadOnlyDictinary() { Collection = new Dictionary<int, byte>() { [1] = 11, [2] = 22, [3] = 33 } };
+            var cloned = Serializer.DeepClone(obj);
+            CollectionAssert.AreEquivalent(obj.Collection, cloned.Collection);
+        }
+
+        [SerializableType]
+        public class WithReadOnlyDictinary
+        {
+            [SerializableMember(1)]
+            public IReadOnlyDictionary<int, byte> Collection;
+        }
+
+#if NET5_0_OR_GREATER
+        [Test]
+        public void ReadOnlySetTest()
+        {
+            var obj = new WithReadOnlySet() { Collection = new HashSet<int>() { 1, 2, 3, 4, 5 } };
+            var cloned = Serializer.DeepClone(obj);
+            CollectionAssert.AreEquivalent(obj.Collection, cloned.Collection);
+        }
+
+        [SerializableType]
+        public class WithReadOnlySet
+        {
+            [SerializableMember(1)]
+            public IReadOnlySet<int> Collection;
+        }
+#endif
     }
 }
