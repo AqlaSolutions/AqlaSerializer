@@ -8,7 +8,7 @@ AqlaSerializer is an *object* serializer, it's primary goal is to support import
 
 It is a free open source project in which you can participiate.
 
-The implementation is compatible with most of the .NET family, including .NET 2.0/3.0/3.5/4.0, .NET Standard 2.1 (.NET Core 3, .NET 5), Windows Phone 8, Silverlight, Xamarin.Android, etc. The code is heavily based on Marc Gravell's protobuf-net but there are a lot of improvements and fixes.
+The implementation is compatible with most of the .NET family, including .NET 3.5/4.0/4.5, .NET Standard 2.1 (.NET Core 3/3.1, .NET 5, .NET 6), Windows Phone 8, Silverlight 5, Android, iOS, UAP. The code is heavily based on Marc Gravell's protobuf-net but there are a lot of improvements and fixes.
 
 Nuget: <a href="https://www.nuget.org/packages/aqlaserializer/">aqlaserializer</a>.
 
