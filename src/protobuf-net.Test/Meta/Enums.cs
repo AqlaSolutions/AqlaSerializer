@@ -1,16 +1,17 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
-using AqlaSerializer.Meta;
+using ProtoBuf.Meta;
 using System.ComponentModel;
 using System.IO;
+using ProtoBuf.Internal;
+using ProtoBuf.Serializers;
 
-namespace AqlaSerializer.unittest.Meta
+namespace ProtoBuf.unittest.Meta
 {
-    [TestFixture]
+    
     public class Enums
     {
         public enum I8 : sbyte { A, B, C }
@@ -22,33 +23,34 @@ namespace AqlaSerializer.unittest.Meta
         public enum I64 : long { A, B, C }
         public enum U64 : ulong { A, B, C }
 
-        [ProtoBuf.ProtoContract]
+        [ProtoContract]
         public class AllTheEnums {
-            [ProtoBuf.ProtoMember(1)] public I8 I8 { get; set; }
-            [ProtoBuf.ProtoMember(2)] public U8 U8 { get; set; }
-            [ProtoBuf.ProtoMember(3), DefaultValue(I16.C)] public I16 I16 { get; set; }
-            [ProtoBuf.ProtoMember(4), DefaultValue("C")] public U16 U16 { get; set; }
-            [ProtoBuf.ProtoMember(5), DefaultValue(3)] public I32 I32 { get; set; }
-            [ProtoBuf.ProtoMember(6)] public U32 U32 { get; set; }
-            [ProtoBuf.ProtoMember(7)] public I64 I64 { get; set; }
-            [ProtoBuf.ProtoMember(8)] public U64 U64 { get; set; }
+            [ProtoMember(1)] public I8 I8 { get; set; }
+            [ProtoMember(2)] public U8 U8 { get; set; }
+            [ProtoMember(3), DefaultValue(I16.C)] public I16 I16 { get; set; }
+            [ProtoMember(4), DefaultValue("C")] public U16 U16 { get; set; }
+            [ProtoMember(5), DefaultValue(3)] public I32 I32 { get; set; }
+            [ProtoMember(6)] public U32 U32 { get; set; }
+            [ProtoMember(7)] public I64 I64 { get; set; }
+            [ProtoMember(8)] public U64 U64 { get; set; }
         }
         static RuntimeTypeModel BuildModel(bool withPassThru) {
-            var model = TypeModel.Create();
+            var model = RuntimeTypeModel.Create();
             if (withPassThru)
             {
-                model.Add(typeof (I8), true).EnumPassthru = true;
-                model.Add(typeof (U8), true).EnumPassthru = true;
-                model.Add(typeof (I16), true).EnumPassthru = true;
-                model.Add(typeof (U16), true).EnumPassthru = true;
-                model.Add(typeof (I32), true).EnumPassthru = true;
-                model.Add(typeof (U32), true).EnumPassthru = true;
-                model.Add(typeof (I64), true).EnumPassthru = true;
-                model.Add(typeof (U64), true).EnumPassthru = true;
+                model.Add(typeof(I8), true);
+                model.Add(typeof(U8), true);
+                model.Add(typeof(I16), true);
+                model.Add(typeof(U16), true);
+                model.Add(typeof(I32), true);
+                model.Add(typeof(U32), true);
+                model.Add(typeof(I64), true);
+                model.Add(typeof(U64), true);
             }
             model.Add(typeof(AllTheEnums), true);
             return model;
         }
+
         [Test]
         public void CanCompileEnumsAsPassthru()
         {
@@ -56,6 +58,7 @@ namespace AqlaSerializer.unittest.Meta
             model.Compile("AllTheEnumsPassThru", "AllTheEnumsPassThru.dll");
             PEVerify.Verify("AllTheEnumsPassThru.dll");
         }
+
         [Test]
         public void CanCompileEnumsAsMapped()
         {
@@ -114,86 +117,100 @@ namespace AqlaSerializer.unittest.Meta
             clone = (AllTheEnums)model.Compile().DeepClone(ate);
             CompareAgainstClone(ate, clone, "Compile");
         }
+
+#pragma warning disable IDE0060
         static void CompareAgainstClone(AllTheEnums original, AllTheEnums clone, string caption)
+#pragma warning restore IDE0060
         {
-            Assert.IsNotNull(original, caption + " (original)");
-            Assert.IsNotNull(clone, caption + " (clone)");
-            Assert.AreNotSame(original, clone, caption);
-            Assert.AreEqual(original.I8, clone.I8, caption);
-            Assert.AreEqual(original.U8, clone.U8, caption);
-            Assert.AreEqual(original.I16, clone.I16, caption);
-            Assert.AreEqual(original.U16, clone.U16, caption);
-            Assert.AreEqual(original.I32, clone.I32, caption);
-            Assert.AreEqual(original.U32, clone.U32, caption);
-            Assert.AreEqual(original.I64, clone.I64, caption);
-            Assert.AreEqual(original.U64, clone.U64, caption);
+            Assert.NotNull(original); //, caption + " (original)");
+            Assert.NotNull(clone); //, caption + " (clone)");
+            Assert.AreNotSame(original, clone); //, caption);
+            Assert.AreEqual(original.I8, clone.I8); //, caption);
+            Assert.AreEqual(original.U8, clone.U8); //, caption);
+            Assert.AreEqual(original.I16, clone.I16); //, caption);
+            Assert.AreEqual(original.U16, clone.U16); //, caption);
+            Assert.AreEqual(original.I32, clone.I32); //, caption);
+            Assert.AreEqual(original.U32, clone.U32); //, caption);
+            Assert.AreEqual(original.I64, clone.I64); //, caption);
+            Assert.AreEqual(original.U64, clone.U64); //, caption);
         }
 
-        [ProtoBuf.ProtoContract]
-        public class MappedValuesA
-        {
-            [ProtoBuf.ProtoMember(1)]
-            public EnumA Value { get; set; }
-        }
-        [ProtoBuf.ProtoContract]
-        public class MappedValuesB
-        {
-            [ProtoBuf.ProtoMember(1)]
-            public EnumB Value { get; set; }
-        }
-        public enum EnumA : short
-        {
-            [ProtoBuf.ProtoEnum(Value = 7)] X = 0,
-            [ProtoBuf.ProtoEnum(Value = 8)] Y = 1,
-            [ProtoBuf.ProtoEnum(Value = 9)] Z = 2,
-        }
-        public enum EnumB : long
-        {
-            [ProtoBuf.ProtoEnum(Value = 9)] X = 3,
-            [ProtoBuf.ProtoEnum(Value = 10)] Y = 4,
-            [ProtoBuf.ProtoEnum(Value = 11)] Z = 5,
-        }
-        RuntimeTypeModel CreateRemappingModel()
-        {
-            var model = TypeModel.Create();
-            model.Add(typeof(EnumA), true);
-            model.Add(typeof(EnumB), true);
-            model.Add(typeof(MappedValuesA), true);
-            model.Add(typeof(MappedValuesB), true);
-            return model;
-        }
         [Test]
-        public void RemappingCanCompile()
+        public void AddInvalidEnum() // which is now perfectly legal
         {
-            var model = CreateRemappingModel();
-            model.Compile("CreateRemappingModel", "CreateRemappingModel.dll");
-            PEVerify.Verify("CreateRemappingModel.dll");
+            var model = RuntimeTypeModel.Create();
+            var mt = model.Add(typeof(EnumWithThings), false);
+            var fields = mt.GetFields();
+            CollectionAssert.IsEmpty(fields);
+            var arr = new[] { EnumMember.Create(EnumWithThings.HazThis) };
+            mt.SetEnumValues(arr);
+            var defined = mt.GetEnumValues();
+            var single = Assert.Single(defined);
+            Assert.AreEqual(nameof(EnumWithThings.HazThis), single.Name);
+            Assert.IsType<int>(single.Value);
+            Assert.AreEqual(42, single.Value);
+
+            fields = mt.GetFields();
+            CollectionAssert.IsEmpty(fields);
         }
-        TTo ChangeType<TTo>(TypeModel model, object value)
+        public enum EnumWithThings
         {
-            using (var ms = new MemoryStream())
+            None = 0,
+            HazThis = 42,
+        }
+
+        [Test]
+        public void CanSerializeUnknownEnum()
+        {
+            var model = RuntimeTypeModel.Create();
+
+            Assert.True(model.CanSerialize(typeof(EnumWithThings)));
+            Assert.True(DynamicStub.CanSerialize(typeof(EnumWithThings), model, out var features));
+            Assert.AreEqual(SerializerFeatures.CategoryScalar, features.GetCategory());
+            Assert.True(DynamicStub.CanSerialize(typeof(EnumWithThings?), model, out features));
+            Assert.AreEqual(SerializerFeatures.CategoryScalar, features.GetCategory());
+
+            using var ms = new MemoryStream();
+
+
+            var writeState = new ProtoWriter(ms, null);
+            try
             {
-                model.Serialize(ms, value);
-                ms.Position = 0;
-                return (TTo)model.Deserialize(ms, null, typeof (TTo));
+                Assert.True(DynamicStub.TrySerializeAny(1, WireType.Varint.AsFeatures(), typeof(EnumWithThings), model, ref writeState, EnumWithThings.HazThis));
+                Assert.True(DynamicStub.TrySerializeAny(2, WireType.Varint.AsFeatures(), typeof(EnumWithThings?), model, ref writeState, EnumWithThings.HazThis));
+                writeState.Close();
             }
-        }
-        [Test]
-        public void RemapValuesMakeSense()
-        {
-            var model = BuildModel(true);
+            catch
+            {
+                writeState.Abandon();
+                throw;
+            }
+            finally
+            {
+                writeState.Dispose();
+            }
+            ms.Position = 0;
 
-            var orig = new MappedValuesA {Value = EnumA.Z};
+            var readState = new ProtoReader(ms, null);
+            try
+            {
+                object val = null;
+                Assert.AreEqual(1, readState.ReadFieldHeader());
+                Assert.True(DynamicStub.TryDeserialize(ObjectScope.Scalar, typeof(EnumWithThings), model, ref readState, ref val));
+                Assert.AreEqual(typeof(EnumWithThings), val.GetType());
 
-            var clone = ChangeType<MappedValuesB>(model, orig);
-            Assert.AreEqual(EnumB.X, clone.Value, "Runtime");
+                val = null;
+                Assert.AreEqual(2, readState.ReadFieldHeader());
+                Assert.True(DynamicStub.TryDeserialize(ObjectScope.Scalar, typeof(EnumWithThings?), model, ref readState, ref val));
+                Assert.AreEqual(typeof(EnumWithThings), val.GetType());
+                val = null;
 
-            model.CompileInPlace();
-            clone = ChangeType<MappedValuesB>(model, orig);
-            Assert.AreEqual(EnumB.X, clone.Value, "CompileInPlace");
-
-            clone = ChangeType<MappedValuesB>(model.Compile(), orig);
-            Assert.AreEqual(EnumB.X, clone.Value, "Compile");
+                Assert.AreEqual(0, readState.ReadFieldHeader());
+            }
+            finally
+            {
+                readState.Dispose();
+            }
         }
     }
 }

@@ -1,0 +1,147 @@
+﻿using ProtoBuf.Meta;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using NUnit.Framework;
+
+namespace ProtoBuf.Issues
+{
+    public class GenericArraySchemaErrorTest
+    {
+        [Test]
+        public void CanGenerateGenericArraySchema()
+        {
+            var typeModel = RuntimeTypeModel.Create();
+
+            typeModel.Add(typeof(ClassWithGenericField<SimpleClass[]>), true);
+
+            // Will throw System.ArgumentException in v3.0.0-alpha.43
+            // "Data of this type has inbuilt behaviour, and cannot be added to a model in this way: SciTech.Rpc.BaseClass[]"
+            string schema = typeModel.GetSchema(null, ProtoSyntax.Default);
+
+            Assert.NotEmpty(schema);
+        }
+
+
+        [Test]
+        [TestCase(typeof(ClassWithGenericField<SimpleClass[]>), "repeated SimpleClass Value = 1;", "ClassWithGenericField_Array_SimpleClass")]
+        [TestCase(typeof(ClassWithGenericField<byte[]>), "bytes Value = 1;", "ClassWithGenericField_Array_Byte")]
+        [TestCase(typeof(ClassWithGenericField<int[]>), "repeated int32 Value = 1;", "ClassWithGenericField_Array_Int32")]
+        public void HasValidGenericArraySchema(Type genericArrayType ,string expectedValueDecl, string expectedMessageName)
+        {
+            // Combined generic test similar to CanGenerateGenericArraySchema and 
+            // HasValidGenericArrayMessageName, for different array types
+            var typeModel = RuntimeTypeModel.Create();
+
+            typeModel.Add(genericArrayType, true);
+
+            // Will throw System.ArgumentException in v3.0.0-alpha.43 (except for byte[])
+            string schema = typeModel.GetSchema(null, ProtoSyntax.Proto2);
+
+            // Validate schema. Can be significantly improved, but should suffice for this 
+            // bug fix I think.
+            Assert.Contains(expectedValueDecl, schema);
+            Assert.Contains(expectedMessageName, schema);
+
+            Assert.DoesNotContain("[]", schema);
+        }
+
+
+        [Test]
+        [TestCase(typeof(ClassWithGenericBytesMember), new string[] {
+            "message ClassWithGenericBytesMember",
+            "ClassWithGenericField_Array_Byte BytesInMember = 1;",
+            "bytes BytesValue = 2;",
+            "message ClassWithGenericField_Array_Byte",
+            "bytes Value = 1;" }
+            )]
+        [TestCase(typeof(ClassWithGenericClassMember), new string[] {
+            "message ClassWithGenericClassMember",
+            "ClassWithGenericField_Array_SimpleClass ClassArrayInMember = 1;",
+            "repeated SimpleClass ClassArrayValue = 2;",
+            "message ClassWithGenericField_Array_SimpleClass",
+            "repeated SimpleClass Value = 1;" })]
+        public void HasValidGenericArrayMemberSchema(Type genericArrayType, string[] expectedSchemaElements)
+        {
+            // Combined generic test similar to CanGenerateGenericArraySchema and 
+            // HasValidGenericArrayMessageName, for different array types
+            var typeModel = RuntimeTypeModel.Create();
+
+            typeModel.Add(genericArrayType, true);
+
+            // Will throw System.ArgumentException in v3.0.0-alpha.43 (except for byte[])
+            string schema = typeModel.GetSchema(null, ProtoSyntax.Default);
+
+            // Validate schema. Can be significantly improved, but should suffice for this 
+            // bug fix I think.
+            foreach (var schemaElement in expectedSchemaElements)
+            {
+                Assert.Contains(schemaElement, schema);
+            }
+
+            Assert.DoesNotContain("[]", schema);
+        }
+
+        [Test]
+        [TestCase(typeof(ClassWithGenericField<List<SimpleClass[]>>))]
+        [TestCase(typeof(ClassWithGenericField<List<SimpleClass>[]>))]
+        [TestCase(typeof(ClassWithGenericField<SimpleClass[][]>))]
+        [TestCase(typeof(ClassWithGenericField<SimpleClass[,]>))]
+        // byte[][] does not throw NotSupportedException, which it should probably do.
+        //[Values(typeof(ClassWithGenericField<byte[][]>))]
+        // byte[,] does not throw NotSupportedException, which it should probably do.
+        //[Values(typeof(ClassWithGenericField<byte[,]>))]
+        [TestCase(typeof(ClassWithGenericField<int[][]>))]
+        [TestCase(typeof(ClassWithGenericField<int[,]>))]
+        public void InvalidNestedGenericField(Type genericArrayType)
+        {
+            // Combined generic test similar to CanGenerateGenericArraySchema and 
+            // HasValidGenericArrayMessageName, for byte arrays
+            var typeModel = RuntimeTypeModel.Create();
+            var schema = typeModel.GetSchema(null, ProtoSyntax.Default);
+            Assert.Throws<NotSupportedException>( ()=>
+            {
+                typeModel.Add(genericArrayType, true);
+                schema = typeModel.GetSchema(null, ProtoSyntax.Default);
+            });
+        }
+    }
+
+
+
+    [ProtoContract]
+    public sealed class ClassWithGenericBytesMember
+    {
+        [ProtoMember(1)]
+        public ClassWithGenericField<byte[]> BytesInMember;
+
+        [ProtoMember(2)]
+        public byte[] BytesValue;
+    }
+
+    [ProtoContract]
+    public sealed class ClassWithGenericClassMember
+    {
+        [ProtoMember(1)]
+        public ClassWithGenericField<SimpleClass[]> ClassArrayInMember;
+
+        [ProtoMember(2)]
+        public SimpleClass[] ClassArrayValue;
+    }
+
+
+    [ProtoContract]
+    public sealed class ClassWithGenericField<T>
+    {
+        [ProtoMember(1)]
+        public T Value;
+    }
+
+    [ProtoContract]
+    public sealed class SimpleClass
+    {
+        [ProtoMember(1)]
+        public int Value;
+    }
+}

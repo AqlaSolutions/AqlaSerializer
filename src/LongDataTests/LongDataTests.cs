@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Xunit;
-using Xunit.Abstractions;
+using NUnit.Framework;
+
 
 namespace AqlaSerializer.LongDataTests
 {
@@ -77,7 +77,7 @@ namespace AqlaSerializer.LongDataTests
             _output = output;
         }
 
-        [Fact]//(Skip="long running")]
+        [Test]//(Skip="long running")]
         public void CanSerializeLongData()
         {
             _output.WriteLine($"PID: {Process.GetCurrentProcess().Id}");
@@ -117,7 +117,7 @@ namespace AqlaSerializer.LongDataTests
                 watch.Stop();
                 var newHash = clone.GetHashCode();
                 _output.WriteLine($"{oldHash} vs {newHash}, {newHash == oldHash}, {watch.ElapsedMilliseconds}ms");
-                Assert.Equal(oldHash, newHash);
+                Assert.AreEqual(oldHash, newHash);
             }
         }
     }

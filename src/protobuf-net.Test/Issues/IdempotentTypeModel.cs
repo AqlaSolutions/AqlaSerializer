@@ -2,13 +2,13 @@
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
-using Xunit;
+using NUnit.Framework;
 
 namespace AqlaSerializer.Issues
 {
     public class IdempotentTypeModel
     {
-        [Fact]
+        [Test]
         public void ChangingSupportNullToSameValueWorks()
         {
             // can change any number of times before we serialize
@@ -19,7 +19,7 @@ namespace AqlaSerializer.Issues
             RuntimeTypeModel.Default[typeof(ProtoList<string>)][1].SupportNull = true;
 
             // do the first serialization here (model becomes frozen)
-            Assert.Equal("abc,def",
+            Assert.AreEqual("abc,def",
                 string.Join(",", Serializer.DeepClone(
                     new ProtoList<string> { List = new[] { "abc", "def" } }
                 ).List));
@@ -29,7 +29,7 @@ namespace AqlaSerializer.Issues
             // even after serialization
             RuntimeTypeModel.Default[typeof(ProtoList<string>)][1].SupportNull = true;
 
-            Assert.Equal("ghi,jkl",
+            Assert.AreEqual("ghi,jkl",
                 string.Join(",", Serializer.DeepClone(
                     new ProtoList<string> { List = new[] { "ghi", "jkl" } }
                 ).List));
@@ -42,7 +42,7 @@ namespace AqlaSerializer.Issues
             {
                 RuntimeTypeModel.Default[typeof(ProtoList<string>)][1].SupportNull = false;
             });
-            Assert.Equal(
+            Assert.AreEqual(
                 "The type cannot be changed once a serializer has been generated",
                 ex.Message);
         }

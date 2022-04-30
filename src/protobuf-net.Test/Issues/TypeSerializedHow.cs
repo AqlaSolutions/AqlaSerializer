@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Xunit;
+using NUnit.Framework;
 using ProtoBuf;
 
 namespace AqlaSerializer.Issues
 {
     public class TypeSerializedHow
     {
-        [Fact]
+        [Test]
         public void TypeRoundtrips()
         {
             var obj = new ModelWithTypeMember
@@ -18,12 +18,12 @@ namespace AqlaSerializer.Issues
             };
 
             var clone = Serializer.DeepClone(obj);
-            Assert.NotSame(obj, clone);
-            Assert.Equal(123, clone.Id);
+            Assert.AreNotSame(obj, clone);
+            Assert.AreEqual(123, clone.Id);
             Assert.Same(typeof(Uri), clone.SomeType);
         }
 
-        [Fact]
+        [Test]
         public void ProveTypeEquivalence()
         {
             var obj = new ModelWithTypeMember
@@ -33,15 +33,15 @@ namespace AqlaSerializer.Issues
             };
 
             var clone = Serializer.ChangeType<ModelWithTypeMember,EquivModel>(obj);
-            Assert.Equal(123, clone.Id);
-            Assert.Equal(obj.SomeType.AssemblyQualifiedName, clone.SomeType);
+            Assert.AreEqual(123, clone.Id);
+            Assert.AreEqual(obj.SomeType.AssemblyQualifiedName, clone.SomeType);
         }
 
-        [Fact]
+        [Test]
         public void TypeGeneratesProto()
         {
             var proto = Serializer.GetProto<ModelWithTypeMember>();
-            Assert.Equal(@"package AqlaSerializer.Issues;
+            Assert.AreEqual(@"package AqlaSerializer.Issues;
 
 message ModelWithTypeMember {
    optional int32 Id = 1 [default = 0];

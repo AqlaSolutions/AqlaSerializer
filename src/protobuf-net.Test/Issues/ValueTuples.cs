@@ -2,27 +2,27 @@
 using AqlaSerializer.Meta;
 using System;
 using System.IO;
-using Xunit;
+using NUnit.Framework;
 
 namespace AqlaSerializer.Issues
 {
 
     public class ValueTuples
     {
-        [Fact]
+        [Test]
         public void CanRoundTripValueTuples()
         {
             var foo = GetNamedTupleData();
 
             var bar = Serializer.DeepClone(foo);
-            Assert.Equal(123, bar.a);
-            Assert.Equal("def", bar.b);
-            Assert.Equal(true, bar.c.d);
-            Assert.Equal("abc,def", string.Join(",", bar.c.e));
+            Assert.AreEqual(123, bar.a);
+            Assert.AreEqual("def", bar.b);
+            Assert.AreEqual(true, bar.c.d);
+            Assert.AreEqual("abc,def", string.Join(",", bar.c.e));
 
         }
 
-        [Fact]
+        [Test]
         public void CheckLayoutEquivalence()
         {
             string hex;
@@ -33,7 +33,7 @@ namespace AqlaSerializer.Issues
                 hex = BitConverter.ToString(ms.ToArray()); // GetBuffer() not available on all TFMs
             }
 
-            Assert.Equal(@"08-7B-12-03-64-65-66-1A-0C-08-01-12-03-61-62-63-12-03-64-65-66", hex);
+            Assert.AreEqual(@"08-7B-12-03-64-65-66-1A-0C-08-01-12-03-61-62-63-12-03-64-65-66", hex);
             // 08-7B: field 1: 123
             // 12-03: field 2, 3 bytes
             //   64-65-66: "abc"

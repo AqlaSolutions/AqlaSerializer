@@ -1,110 +1,57 @@
-﻿// Modified by Vladyslav Taranov for AqlaSerializer, 2016
+﻿using ProtoBuf;
+using ProtoBuf.Meta;
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using NUnit.Framework;
-using AqlaSerializer;
-using System.Runtime.Serialization;
-using AqlaSerializer.Meta;
 
 namespace Examples.DesignIdeas
 {
-    /// <summary>
-    /// would like to be able to specify custom values for enums;
-    /// implementation note: some kind of map: Dictionary&lt;TValue, long&gt;?
-    /// note: how to handle -ves? (ArgumentOutOfRangeException?)
-    /// note: how to handle flags? (NotSupportedException? at least for now?
-    ///             could later use a bitmap sweep?)
-    /// </summary>
-    [ProtoBuf.ProtoContract(Name="blah")]
-    public enum SomeEnum
+    [ProtoContract]
+    class EnumNullableFoo
     {
-        [ProtoBuf.ProtoEnum(Name="FOO")]
-        ChangeName = 3,
-
-        [ProtoBuf.ProtoEnum(Value = 19)]
-        ChangeValue = 5,
-
-        [ProtoBuf.ProtoEnum(Name="BAR", Value=92)]
-        ChangeBoth = 7,
-        
-        LeaveAlone = 22,
-
-
-        Default = 2
-    }
-    [ProtoBuf.ProtoContract]
-    public class EnumFoo
-    {
-        public EnumFoo() { Bar = SomeEnum.Default; }
-        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
-        public SomeEnum Bar { get; set; }
+        public EnumNullableFoo() { Bar = NegEnum.B; }
+        [ProtoMember(1), DefaultValue(NegEnum.B)]
+        public NegEnum? Bar { get; set; }
     }
 
-    [ProtoBuf.ProtoContract]
-    public class EnumNullableFoo
+    [ProtoContract]
+    class EnumFoo
     {
-        public EnumNullableFoo() { Bar = SomeEnum.Default; }
-        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
-        public SomeEnum? Bar { get; set; }
+        public EnumFoo() { Bar = NegEnum.B; }
+        [ProtoMember(1), DefaultValue(NegEnum.B)]
+        public NegEnum Bar { get; set; }
     }
 
-    public enum NegEnum
+    [ProtoContract(Name = "blah")]
+    enum NegEnum
     {
         A = -1, B = 0, C = 1
     }
-    [ProtoBuf.ProtoContract]
-    public class NegEnumType
+    [ProtoContract]
+    class NegEnumType
     {
-        [ProtoBuf.ProtoMember(1)]
+        [ProtoMember(1)]
         public NegEnum Value { get; set; }
     }
-    public enum HasConflictingKeys
-    {
-        [ProtoBuf.ProtoEnum(Value = 1)]
-        Foo = 0,
-        [ProtoBuf.ProtoEnum(Value = 2)]
-        Bar = 0
-    }
-    public enum HasConflictingValues
-    {
-        [ProtoBuf.ProtoEnum(Value=2)]
-        Foo = 0,
-        [ProtoBuf.ProtoEnum(Value = 2)]
-        Bar = 1
-    }
-    [ProtoBuf.ProtoContract]
-    public class TypeDuffKeys
-    {
-        [ProtoBuf.ProtoMember(1)]
-        public HasConflictingKeys Value {get;set;}
-    }
-    [ProtoBuf.ProtoContract]
-    public class TypeDuffValues
-    {
-        [ProtoBuf.ProtoMember(1)]
-        public HasConflictingValues Value {get;set;}
-    }
 
-    [ProtoBuf.ProtoContract]
-    public class NonNullValues
+    [ProtoContract]
+    class NonNullValues
     {
-        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
-        SomeEnum Foo { get; set; }
-        [ProtoBuf.ProtoMember(2)]
+        [ProtoMember(1), DefaultValue(NegEnum.B)]
+        NegEnum Foo { get; set; }
+        [ProtoMember(2)]
         bool Bar { get; set; }
     }
-    [ProtoBuf.ProtoContract]
-    public class NullValues
+    [ProtoContract]
+    class NullValues
     {
-        [ProtoBuf.ProtoMember(1), DefaultValue(SomeEnum.Default)]
-        SomeEnum? Foo { get; set; }
-        [ProtoBuf.ProtoMember(2)]
+        [ProtoMember(1), DefaultValue(NegEnum.B)]
+        NegEnum? Foo { get; set; }
+        [ProtoMember(2)]
         bool? Bar { get; set; }
     }
 
-    [TestFixture]
+
     public class EnumTests
     {
 
@@ -112,19 +59,18 @@ namespace Examples.DesignIdeas
         public void EnumGeneration()
         {
 
-            string proto = Serializer.GetProto<EnumFoo>();
+            string proto = Serializer.GetProto<EnumFoo>(ProtoSyntax.Proto2);
 
-            Assert.AreEqual(@"package Examples.DesignIdeas;
+            Assert.AreEqual(@"syntax = ""proto2"";
+package Examples.DesignIdeas;
 
 message EnumFoo {
-   optional blah Bar = 1 [default = Default];
+   optional blah Bar = 1 [default = B];
 }
 enum blah {
-   Default = 2;
-   FOO = 3;
-   ChangeValue = 19;
-   LeaveAlone = 22;
-   BAR = 92;
+   B = 0;
+   A = -1;
+   C = 1;
 }
 ", proto);
         }
@@ -133,72 +79,110 @@ enum blah {
         [Test]
         public void TestNonNullValues()
         {
-            var model = TypeModel.Create();
+            var model = RuntimeTypeModel.Create();
             model.UseImplicitZeroDefaults = false;
 
-            string proto = model.GetSchema(typeof (NonNullValues));
+            string proto = model.GetSchema(typeof (NonNullValues), ProtoSyntax.Proto2);
 
-            Assert.AreEqual(@"package Examples.DesignIdeas;
+            Assert.AreEqual(@"syntax = ""proto2"";
+package Examples.DesignIdeas;
 
 message NonNullValues {
-   optional blah Foo = 1 [default = Default];
+   optional blah Foo = 1 [default = B];
    optional bool Bar = 2;
 }
 enum blah {
-   Default = 2;
-   FOO = 3;
-   ChangeValue = 19;
-   LeaveAlone = 22;
-   BAR = 92;
+   B = 0;
+   A = -1;
+   C = 1;
 }
 ", proto);
+        }
+
+        [Test]
+        public void TestOutOfRangeValues()
+        {
+            var model = RuntimeTypeModel.Create();
+            model.UseImplicitZeroDefaults = false;
+
+            string proto = model.GetSchema(typeof(HazOutOfRange), ProtoSyntax.Proto3);
+
+            Assert.AreEqual(@"syntax = ""proto3"";
+package Examples.DesignIdeas;
+
+message HazOutOfRange {
+   int64 OutOfRange = 1; // declared as invalid enum: OutOfRangeEnum
+   InRangeEnum InRange = 2;
+}
+enum InRangeEnum {
+   ZERO = 0; // proto3 requires a zero value as the first item (it can be named anything)
+   A = 1;
+   B = 4;
+   C = 2147483647;
+   E = -2147483647;
+}
+/* for context only
+enum OutOfRangeEnum {
+   ZERO = 0; // proto3 requires a zero value as the first item (it can be named anything)
+   A = 1;
+   B = 4;
+   C = 2147483647;
+   // D = 2147483648; // note: enums should be valid 32-bit integers
+   E = -2147483647;
+   // F = -2147483649; // note: enums should be valid 32-bit integers
+}
+*/
+", proto);
+        }
+
+        public enum InRangeEnum : long
+        {
+            A = 1,
+            B = 4,
+            C = int.MaxValue,
+            E = -int.MaxValue,
+        }
+
+        public enum OutOfRangeEnum : long
+        {
+            A = 1,
+            B = 4,
+            C = int.MaxValue,
+            D = ((long)int.MaxValue) + 1,
+            E = -int.MaxValue,
+            F = ((long)int.MinValue) -1,
+        }
+
+        [ProtoContract]
+        public class HazOutOfRange
+        {
+            [ProtoMember(1)]
+            public OutOfRangeEnum OutOfRange { get; set; }
+
+            [ProtoMember(2)]
+            public InRangeEnum InRange { get; set; }
         }
 
         [Test]
         public void TestNullValues()
         {
-            RuntimeTypeModel tm = TypeModel.Create();
-            tm.SkipCompiledVsNotCheck = true;
-            string proto = tm.GetSchema(typeof(NullValues));
 
-            Assert.AreEqual(@"package Examples.DesignIdeas;
+            string proto = Serializer.GetProto<NullValues>(ProtoSyntax.Proto2);
+
+            Assert.AreEqual(@"syntax = ""proto2"";
+package Examples.DesignIdeas;
 
 message NullValues {
-   optional blah Foo = 1 [default = Default];
+   optional blah Foo = 1 [default = B];
    optional bool Bar = 2;
 }
 enum blah {
-   Default = 2;
-   FOO = 3;
-   ChangeValue = 19;
-   LeaveAlone = 22;
-   BAR = 92;
+   B = 0;
+   A = -1;
+   C = 1;
 }
 ", proto);
         }
-
-        [Test]
-        public void TestConflictingKeys()
-        {
-            Assert.Throws<ProtoException>(() => {
-                TypeModel.Create().Serialize(Stream.Null, new TypeDuffKeys { Value = HasConflictingKeys.Foo });
-            });
-        }
-
-        [Test]
-        public void TestConflictingValues()
-        {
-            Assert.Throws<ProtoException>(() => {
-                TypeModel.Create().Serialize(Stream.Null, new TypeDuffValues { Value = HasConflictingValues.Foo });
-            });
-        }
-
-        [Test]
-        public void TestEnumNameValueMapped()
-        {
-            CheckValue(SomeEnum.ChangeBoth, 0x08, 92);
-        }
-
 
         [Test]
         public void TestFlagsEnum()
@@ -208,74 +192,34 @@ enum blah {
             Assert.AreEqual(orig.Foo, clone.Foo);
         }
 
-        [ProtoBuf.ProtoContract]
-        public class TypeWithFlags
+        [ProtoContract]
+        class TypeWithFlags
         {
             [Flags]
             public enum FlagsEnum
             {
                 None = 0, A = 1, B = 2, C = 4
             }
-            [ProtoBuf.ProtoMember(1)]
+            [ProtoMember(1)]
             public FlagsEnum Foo { get; set; }
-        }
-
-        [Test]
-        public void TestNulalbleEnumNameValueMapped()
-        {
-            var orig = new EnumNullableFoo { Bar = SomeEnum.ChangeBoth };
-            var clone = Serializer.DeepClone(orig);
-            Assert.AreEqual(orig.Bar, clone.Bar);
-        }
-        [Test]
-        public void TestEnumNameMapped() {
-            CheckValue(SomeEnum.ChangeName, 0x08, 03);
-        }
-        [Test]
-        public void TestEnumValueMapped() {
-            CheckValue(SomeEnum.ChangeValue, 0x08, 19);
-        }
-        [Test]
-        public void TestEnumNoMap() {
-            CheckValue(SomeEnum.LeaveAlone, 0x08, 22);
-        }
-
-        static void CheckValue(SomeEnum val, params byte[] expected)
-        {
-            EnumFoo foo = new EnumFoo { Bar = val };
-            using (MemoryStream ms = new MemoryStream())
-            {
-                var tm = TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility);
-                tm.Serialize(ms, foo);
-                ms.Position = 0;
-                byte[] buffer = ms.ToArray();
-                Assert.IsTrue(Program.ArraysEqual(buffer, expected), "Byte mismatch");
-
-                EnumFoo clone = tm.Deserialize<EnumFoo>(ms);
-                Assert.AreEqual(val, clone.Bar);
-            }
         }
 
         [Test]
         public void TestNegEnum()
         {
-            TestNegEnum(NegEnum.A);
-            TestNegEnum(NegEnum.B);
-            TestNegEnum(NegEnum.C);
+            TestNegEnumImpl(NegEnum.A);
+            TestNegEnumImpl(NegEnum.B);
+            TestNegEnumImpl(NegEnum.C);
         }
         [Test]
         public void TestNegEnumnotDefinedNeg()
         {
-            Assert.Throws<ProtoException>(() => {
-                TestNegEnum((NegEnum)(-2));
-            });
+            TestNegEnumImpl((NegEnum)(-2));
         }
         [Test]
         public void TestNegEnumnotDefinedPos()
         {
-            Assert.Throws<ProtoException>(() => {
-                TestNegEnum((NegEnum)2);
-            });
+            TestNegEnumImpl((NegEnum)2);
         }
         [Test]
         public void ShouldBeAbleToSerializeExactDuplicatedEnumValues()
@@ -285,28 +229,28 @@ enum blah {
             Assert.AreEqual(NastDuplicates.A, clone.Value);
             Assert.AreEqual(NastDuplicates.B, clone.Value);
         }
-        [ProtoBuf.ProtoContract]
-        public class HasDuplicatedEnumProp
+        [ProtoContract]
+        class HasDuplicatedEnumProp
         {
-            [ProtoBuf.ProtoMember(1)]
+            [ProtoMember(1)]
             public NastDuplicates Value { get; set; }
         }
-        public enum NastDuplicates
+        enum NastDuplicates
         {
             None = 0,
             A = 1,
             B = 1
         }
 
-        private static void TestNegEnum(NegEnum value)
+        private static void TestNegEnumImpl(NegEnum value)
         {
             NegEnumType obj = new NegEnumType { Value = value },
-                clone = TypeModel.Create().DeepClone(obj);
-            Assert.AreEqual(obj.Value, clone.Value, value.ToString());
+                clone = Serializer.DeepClone(obj);
+            Assert.AreEqual(obj.Value, clone.Value); //, value.ToString());
         }
 
 
-        [ProtoBuf.ProtoContract]
+        [ProtoContract]
         enum EnumMarkedContract : ushort
         {
             None = 0, A, B, C, D
@@ -320,16 +264,16 @@ enum blah {
         public void RoundTripTopLevelContract()
         {
             EnumMarkedContract value = EnumMarkedContract.C;
-            Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
+            Assert.True(Program.CheckBytes(value, 8, 3));
+            Assert.AreEqual(value, Serializer.DeepClone(value));
         }
 
         [Test]
         public void RoundTripTopLevelNullableContract()
         {
             EnumMarkedContract? value = EnumMarkedContract.C;
-            Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
+            Assert.True(Program.CheckBytes(value, 8, 3));
+            Assert.AreEqual(value, Serializer.DeepClone(value));
         }
         [Test]
         public void RoundTripTopLevelNullableContractNull()
@@ -341,16 +285,16 @@ enum blah {
         public void RoundTripTopLevelNoContract()
         {
             EnumNoContract value = EnumNoContract.C;
-            Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
+            Assert.True(Program.CheckBytes(value, 8, 3));
+            Assert.AreEqual(value, Serializer.DeepClone(value));
         }
 
         [Test]
         public void RoundTripTopLevelNullableNoContract()
         {
             EnumNoContract? value = EnumNoContract.C;
-            Assert.IsTrue(Program.CheckBytes(value, 8, 3));
-            Assert.AreEqual(value, TypeModel.Create(false, ProtoCompatibilitySettingsValue.FullCompatibility).DeepClone(value));
+            Assert.True(Program.CheckBytes(value, 8, 3));
+            Assert.AreEqual(value, Serializer.DeepClone(value));
         }
         [Test]
         public void RoundTripTopLevelNullableNoContractNull()
