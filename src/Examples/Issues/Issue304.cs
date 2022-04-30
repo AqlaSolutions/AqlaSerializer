@@ -11,16 +11,12 @@ namespace Examples.Issues
         [Test]
         public void DefaultValuesForBoolMustBeLowerCase()
         {
-            Assert.AreEqual(@"package Examples.Issues;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.Issues;
 
 message Foo {
    optional bool Bar = 1 [default = true];
 }
-",
-
-        Serializer.GetProto<Foo>()
-
-        );
+", actual: Serializer.GetProto<Foo>());
         }
         [ProtoBuf.ProtoContract]
         public class Foo

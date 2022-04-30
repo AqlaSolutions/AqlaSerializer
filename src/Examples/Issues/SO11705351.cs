@@ -11,7 +11,7 @@ namespace Examples.Issues
     // note that some additional changes were needed beyond what is shown on SO
     // in order to fully test standalone compilation / PEVerify; mainly due to
     // public readonly fields, which protobuf-net will still try and mutate
-    [TestFixture] 
+    [TestFixture]
     public class SO11705351
     {
         [ProtoBuf.ProtoContract]
@@ -136,7 +136,7 @@ namespace Examples.Issues
 
             string schema = model.GetSchema(null);
 
-            Assert.AreEqual(@"package Examples.Issues;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.Issues;
 import ""bcl.proto""; // schema for protobuf-net's handling of core .NET types
 
 message Assemblage {
@@ -152,7 +152,7 @@ message PartCollectionSurrogate {
 message Whole {
    optional PartCollectionSurrogate Parts = 1;
 }
-", schema);
+", actual: schema);
         }
     }
 }

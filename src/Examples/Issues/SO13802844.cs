@@ -23,13 +23,13 @@ namespace Examples.Issues
         {
             string s = Serializer.GetProto<AnimationCode>();
 
-            Assert.AreEqual(@"package Examples.Issues;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.Issues;
 
 enum AnimationCode {
    AnimationCode_None = 0;
    Idle = 1;
 }
-", s);
+", actual: s);
         }
     }
 }

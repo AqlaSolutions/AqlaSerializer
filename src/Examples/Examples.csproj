@@ -45,7 +45,7 @@
     </Reference>
     <Reference Include="System.ServiceModel.Web">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    </Reference><PackageReference Include="xunit" Version="2.4.1" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="protobuf-net">
@@ -56,6 +56,7 @@
     <PackageReference Include="aqla.runsharp" Version="1.0.23" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+    <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
     <Reference Include="NHibernate">
       <HintPath>..\Tools\NHibernate.dll</HintPath>

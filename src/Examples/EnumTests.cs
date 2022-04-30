@@ -28,7 +28,7 @@ namespace Examples.DesignIdeas
 
         [ProtoBuf.ProtoEnum(Name="BAR", Value=92)]
         ChangeBoth = 7,
-        
+
         LeaveAlone = 22,
 
 
@@ -114,7 +114,7 @@ namespace Examples.DesignIdeas
 
             string proto = Serializer.GetProto<EnumFoo>();
 
-            Assert.AreEqual(@"package Examples.DesignIdeas;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.DesignIdeas;
 
 message EnumFoo {
    optional blah Bar = 1 [default = Default];
@@ -126,7 +126,7 @@ enum blah {
    LeaveAlone = 22;
    BAR = 92;
 }
-", proto);
+", actual: proto);
         }
 
 
@@ -138,7 +138,7 @@ enum blah {
 
             string proto = model.GetSchema(typeof (NonNullValues));
 
-            Assert.AreEqual(@"package Examples.DesignIdeas;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.DesignIdeas;
 
 message NonNullValues {
    optional blah Foo = 1 [default = Default];
@@ -151,7 +151,7 @@ enum blah {
    LeaveAlone = 22;
    BAR = 92;
 }
-", proto);
+", actual: proto);
         }
 
         [Test]
@@ -161,7 +161,7 @@ enum blah {
             tm.SkipCompiledVsNotCheck = true;
             string proto = tm.GetSchema(typeof(NullValues));
 
-            Assert.AreEqual(@"package Examples.DesignIdeas;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.DesignIdeas;
 
 message NullValues {
    optional blah Foo = 1 [default = Default];
@@ -174,7 +174,7 @@ enum blah {
    LeaveAlone = 22;
    BAR = 92;
 }
-", proto);
+", actual: proto);
         }
 
         [Test]

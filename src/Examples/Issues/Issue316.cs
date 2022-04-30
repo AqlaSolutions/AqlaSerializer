@@ -24,16 +24,16 @@ namespace Examples.Issues
 
             string proto = runtimeTypeModel.GetSchema(null);
 
-            Assert.AreEqual(@"package Examples.Issues;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.Issues;
 
 message BinarySerializationSurrogate_MyException {
    optional bytes objectData = 1;
 }
-", proto);
+", actual: proto);
         }
 
         public class MyException : Exception { }
-        
+
 
 
  /// <summary>

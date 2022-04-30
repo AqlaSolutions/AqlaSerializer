@@ -38,7 +38,7 @@ namespace Examples.Issues
         public void FlagsEnumGeneration()
         {
             string proto = Serializer.GetProto<Foo>();
-            Assert.AreEqual(@"package Examples.Issues;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples.Issues;
 
 enum ETheoFlags {
    // this is a composite/flags enumeration
@@ -58,7 +58,7 @@ enum ETheoFlags {
 message Foo {
    optional ETheoFlags Flags = 1 [default = TF_P];
 }
-", proto);
+", actual: proto);
         }
     }
 }

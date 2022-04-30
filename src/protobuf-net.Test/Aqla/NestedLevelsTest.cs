@@ -49,7 +49,7 @@ namespace AqlaSerializer.unittest.Aqla
 
             var schema = tm.GetDebugSchema(typeof(Foo));
 
-            Assert.That(schema, Is.EqualTo(@"Root : Foo
+            Xunit.Assert.Equal(@"Root : Foo
  -> NetObject : Foo = AsReference, UseConstructor
  -> ModelType : Foo
  -> LinkTo [AqlaSerializer.unittest.Aqla.NestedLevelsTest+Foo]
@@ -101,7 +101,7 @@ Type : Foo
 }
 
 
-"));
+", schema, ignoreLineEndingDifferences: true);
 
         }
     }

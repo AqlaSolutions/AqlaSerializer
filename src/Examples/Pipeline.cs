@@ -44,7 +44,7 @@ message EnumWrapper {
    repeated int32 SubData = 1;
 }
 ";
-            Assert.AreEqual(expected, proto);
+            Xunit.Assert.Equal(expected, proto, ignoreLineEndingDifferences: true);
         }
         [Test]
         public void TestEnumerableGroup()
@@ -115,7 +115,7 @@ message EnumWrapper {
    repeated int32 SubData = 1;
 }
 ";
-            Assert.AreEqual(expected, proto);
+            Xunit.Assert.Equal(expected, proto, ignoreLineEndingDifferences: true);
         }
 
         [Test]
@@ -195,7 +195,7 @@ message EnumWrapper {
    repeated int32 SubData = 1;
 }
 ";
-            Assert.AreEqual(expected, proto);
+            Xunit.Assert.Equal(expected, proto, ignoreLineEndingDifferences: true);
         }
     }
 

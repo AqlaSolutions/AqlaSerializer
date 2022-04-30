@@ -21,13 +21,13 @@ namespace Examples
 
             string proto = model.GetSchema(typeof(Test1));
 
-            Assert.AreEqual(
+            Xunit.Assert.Equal(
 @"package Examples.SimpleStream;
 
 message Test1 {
    required int32 a = 1;
 }
-", proto);
+", proto, ignoreLineEndingDifferences: true);
         }
 
         [Test]
@@ -38,14 +38,14 @@ message Test1 {
 
             string proto = model.GetSchema(typeof(Test2));
 
-            Assert.AreEqual(
+            Xunit.Assert.Equal(
 @"package Examples;
 
 message abc {
    required uint32 ghi = 2;
    required bytes def = 3;
 }
-", proto);
+", proto, ignoreLineEndingDifferences: true);
         }
 
         [DataContract(Name="abc")]
@@ -64,11 +64,11 @@ message abc {
 
             string proto = Serializer.GetProto<MyClass>();
 
-            Assert.AreEqual(@"
+            Xunit.Assert.Equal(@"
 message MyClass {
    optional string TestString = 1 [default = ""Test Test TEst""];
 }
-", proto);
+", proto, ignoreLineEndingDifferences: true);
         }
 
         [Test]
@@ -82,7 +82,7 @@ message MyClass {
         {
             string proto = Serializer.GetProto<ProtoGenerationTypes.SelfGenericProto.EvilParent>();
 
-            Assert.AreEqual(@"package ProtoGenerationTypes.SelfGenericProto;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package ProtoGenerationTypes.SelfGenericProto;
 
 message EvilGeneric_EvilParent {
    optional int32 X = 1 [default = 0];
@@ -90,73 +90,73 @@ message EvilGeneric_EvilParent {
 message EvilParent {
    optional EvilGeneric_EvilParent X = 1;
 }
-", proto);
+", actual: proto);
         }
 
         [Test]
         public void ProtoForContractListsShouldGenerateSchema()
         {
             string proto = GetSurrogateModel().GetSchema(typeof(List<MySurrogate>));
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message List_MySurrogate {
    repeated MySurrogate items = 1;
 }
 message MySurrogate {
 }
-", proto);
+", actual: proto);
         }
 
         [Test]
         public void ProtoForContractViaSurrogateListsShouldGenerateSchema()
         {
             string proto = GetSurrogateModel().GetSchema(typeof(List<MyNonSurrogate>));
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message List_MyNonSurrogate {
    repeated MySurrogate items = 1;
 }
 message MySurrogate {
 }
-", proto);
+", actual: proto);
         }
 
         [Test]
         public void ProtoForPrimitiveListsShouldGenerateSchema()
         {
             string proto = Serializer.GetProto<List<int>>();
-            Assert.AreEqual(@"
+            Xunit.Assert.Equal(@"
 message List_Int32 {
    repeated int32 items = 1;
 }
-", proto);
+", actual: proto, ignoreLineEndingDifferences: true);
         }
 
         [Test]
         public void ProtoForPrimitiveShouldGenerateSchema()
         {
             string proto = Serializer.GetProto<int>();
-            Assert.AreEqual(@"
+            Xunit.Assert.Equal(@"
 message Int32 {
    optional int32 value = 1;
 }
-", proto);
+", actual: proto, ignoreLineEndingDifferences: true);
         }
         [Test]
         public void ProtoForNullablePrimitiveShouldGenerateSchema()
         {
             string proto = Serializer.GetProto<int?>();
-            Assert.AreEqual(@"
+            Xunit.Assert.Equal(@"
 message Int32 {
    optional int32 value = 1;
 }
-", proto);
+", actual: proto, ignoreLineEndingDifferences: true);
         }
         [Test]
         public void ProtoForDictionaryShouldGenerateSchema()
         {
             string proto = Serializer.GetProto<Dictionary<string,int>>();
-            Assert.AreEqual(@"
+            Xunit.Assert.Equal(@"
 message Dictionary_String_Int32 {
    repeated KeyValuePair_String_Int32 items = 1;
 }
@@ -164,13 +164,13 @@ message KeyValuePair_String_Int32 {
    optional string Key = 1;
    optional int32 Value = 2;
 }
-", proto);
+", actual: proto, ignoreLineEndingDifferences: true);
         }
         [Test]
         public void ProtoForDictionaryShouldIncludeSchemasForContainedTypes()
         {
             string proto = Serializer.GetProto<Dictionary<string, MySurrogate>>();
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message Dictionary_String_MySurrogate {
    repeated KeyValuePair_String_MySurrogate items = 1;
@@ -181,14 +181,14 @@ message KeyValuePair_String_MySurrogate {
 }
 message MySurrogate {
 }
-", proto);
+", actual: proto);
         }
 
         [Test]
         public void InheritanceShouldCiteBaseType()
         {
             string proto = Serializer.GetProto<Dictionary<string, Cat>>();
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message Animal {
    // the following represent sub-types; at most 1 should have a value
@@ -203,7 +203,7 @@ message KeyValuePair_String_Cat {
    optional string Key = 1;
    optional Animal Value = 2;
 }
-", proto);
+", actual: proto);
         }
 
         [ProtoBuf.ProtoContract, ProtoBuf.ProtoInclude(1, typeof(Cat))] public class Animal {}
@@ -227,13 +227,13 @@ Parameter name: type"));
         {
             string proto = Serializer.GetProto<ProtoGenerationTypes.BclImports.HasPrimitives>();
 
-            Assert.AreEqual(@"package ProtoGenerationTypes.BclImports;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package ProtoGenerationTypes.BclImports;
 import ""bcl.proto""; // schema for protobuf-net's handling of core .NET types
 
 message HasPrimitives {
    optional bcl.DateTime When = 1;
 }
-", proto);
+", actual: proto);
         }
 
         static TypeModel GetSurrogateModel() {
@@ -252,32 +252,32 @@ message HasPrimitives {
         [Test]
         public void SchemaNameForSurrogateShouldBeSane()
         {
-            
+
             string proto = GetSurrogateModel().GetSchema(typeof(MySurrogate));
 
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message MySurrogate {
 }
-", proto);
+", actual: proto);
         }
         [Test]
         public void SchemaNameForNonSurrogateShouldBeSane()
         {
             string proto = GetSurrogateModel().GetSchema(typeof(MyNonSurrogate));
 
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message MySurrogate {
 }
-", proto);
+", actual: proto);
         }
         [Test]
         public void SchemaNameForTypeUsingSurrogatesShouldBeSane()
         {
             string proto = GetSurrogateModel().GetSchema(typeof(UsesSurrogates));
 
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message MySurrogate {
 }
@@ -285,14 +285,14 @@ message UsesSurrogates {
    optional MySurrogate A = 1;
    optional MySurrogate B = 2;
 }
-", proto);
+", actual: proto);
         }
         [Test]
         public void EntireSchemaShouldNotIncludeNonSurrogates()
         {
             string proto = GetSurrogateModel().GetSchema(null);
 
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message MySurrogate {
 }
@@ -300,7 +300,7 @@ message UsesSurrogates {
    optional MySurrogate A = 1;
    optional MySurrogate B = 2;
 }
-", proto);
+", actual: proto);
         }
 
 
@@ -376,7 +376,7 @@ message UsesSurrogates {
 
             model = TypeModel.Create();
             string s = model.GetSchema(typeof(TestCase));
-            Assert.AreEqual(@"package Examples;
+            Xunit.Assert.Equal(ignoreLineEndingDifferences: true, expected: @"package Examples;
 
 message A {
    optional int32 DataA = 1 [default = 0];
@@ -394,7 +394,7 @@ message C {
 message TestCase {
    optional A Data = 10;
 }
-", s);
+", actual: s);
         }
     }
 }

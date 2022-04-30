@@ -51,7 +51,7 @@ namespace AqlaSerializer.unittest.Aqla
         {
             var tm = TypeModel.Create();
             var s = tm.GetDebugSchema(typeof(Container));
-            Assert.That(s, Is.EqualTo(@"Root : Container
+            Xunit.Assert.Equal(actual: s, ignoreLineEndingDifferences: true, expected: @"Root : Container
  -> NetObject : Container = AsReference, UseConstructor
  -> ModelType : Container
  -> LinkTo [AqlaSerializer.unittest.Aqla.SubTypeDebugSchema+Container]
@@ -135,7 +135,7 @@ Type : Nested1Derived
 }
 
 
-"));
+");
         }
     }
 }
