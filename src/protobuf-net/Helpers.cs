@@ -164,20 +164,14 @@ namespace AqlaSerializer
         public static void DebugWriteLine(string message)
         {
 #if DEBUG
-#if MF
-            Microsoft.SPOT.Debug.Print(message);
-#else
             System.Diagnostics.Debug.WriteLine(message);
-#endif
 #endif
         }
         [System.Diagnostics.Conditional("TRACE")]
         public static void TraceWriteLine(string message)
         {
 #if TRACE
-#if MF
-            Microsoft.SPOT.Trace.Print(message);
-#elif MONODROID || PORTABLE
+#if PORTABLE
             System.Diagnostics.Debug.WriteLine(message);
 #else
             System.Diagnostics.Trace.WriteLine(message);
@@ -191,12 +185,8 @@ namespace AqlaSerializer
 #if DEBUG
             if (!condition)
             {
-#if MF
-                Microsoft.SPOT.Debug.Assert(false, message);
-#else
                 System.Diagnostics.Debug.Assert(false, message);
             }
-#endif
 #endif
         }
         [System.Diagnostics.Conditional("DEBUG")]
@@ -210,12 +200,8 @@ namespace AqlaSerializer
         public static void DebugAssert(bool condition)
         {
 #if DEBUG
-#if MF
-            Microsoft.SPOT.Debug.Assert(condition);
-#else
             if(!condition && System.Diagnostics.Debugger.IsAttached) System.Diagnostics.Debugger.Break();
             System.Diagnostics.Debug.Assert(condition);
-#endif
 #endif
         }
 
@@ -311,12 +297,7 @@ namespace AqlaSerializer
 
         public static bool IsInfinity(double value)
         {
-#if MF
-            const double inf = (double)1.0 / (double)0.0, minf = (double)-1.0F / (double)0.0;
-            return value == inf || value == minf;
-#else
             return double.IsInfinity(value);
-#endif
         }
         public static readonly Type[] EmptyTypes =
 #if PORTABLE

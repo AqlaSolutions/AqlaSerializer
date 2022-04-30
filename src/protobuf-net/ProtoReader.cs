@@ -13,11 +13,6 @@ using AqlaSerializer.Serializers;
 using Type = IKVM.Reflection.Type;
 #endif
 
-#if MF
-using EndOfStreamException = System.ApplicationException;
-using OverflowException = System.ApplicationException;
-#endif
-
 namespace AqlaSerializer
 {
     /// <summary>
@@ -677,19 +672,7 @@ namespace AqlaSerializer
                 int bytes = (int)ReadUInt32Variant(false);
                 if (bytes == 0) return "";
                 if (_available < bytes) Ensure(bytes, true);
-#if MF
-                byte[] tmp;
-                if(ioIndex == 0 && bytes == ioBuffer.Length) {
-                    // unlikely, but...
-                    tmp = ioBuffer;
-                } else {
-                    tmp = new byte[bytes];
-                    Helpers.BlockCopy(ioBuffer, ioIndex, tmp, 0, bytes);
-                }
-                string s = new string(encoding.GetChars(tmp));
-#else
                 string s = Encoding.GetString(_ioBuffer, _ioIndex, bytes);
-#endif
                 if (_internStrings) { s = Intern(s); }
                 _available -= bytes;
                 _position64 += bytes;
