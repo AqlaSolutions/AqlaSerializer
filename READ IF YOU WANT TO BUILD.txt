@@ -2,7 +2,7 @@ Install .NET Framework 3.5 in Windows Features: https://www.tenforums.com/tutori
 
 Install .NET 4.5 Targeting Pack and .NET Portable Library Targeting Pack using Visual Studio Installer.
 
-When you open solution Visual Studio will ask you to install some extra sdks. 
+When you open solution Visual Studio will ask you to install some extra sdks.  Also popups might appear saying that .NET Framework 3.5 projects can't be loaded. Ignore it and then just reload these projects.
 
 Find PEVerify.exe in your SDK folder and copy to src/Tools
 
