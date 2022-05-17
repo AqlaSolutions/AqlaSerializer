@@ -28,7 +28,7 @@ namespace AqlaSerializer
         internal long FixedLength { get; private set; }
 
         internal NetObjectKeyPositionsList NetCacheKeyPositionsList { get; private set; } = new NetObjectKeyPositionsList();
-        
+
         byte[] _ioBuffer;
         long _position64, _blockEnd64, _dataRemaining64;
         TypeModel _model;
@@ -82,32 +82,20 @@ namespace AqlaSerializer
 
         public bool CanSeek => _source.CanSeek;
         public bool AllowReferenceVersioningSeeking => CanSeek && (_model?.AllowReferenceVersioningSeeking ?? true);
-        
+
         /// <summary>
         /// Creates a new reader against a stream
         /// </summary>
         /// <param name="source">The source stream</param>
         /// <param name="model">The model to use for serialization; this can be null, but this will impair the ability to deserialize sub-objects</param>
         /// <param name="context">Additional context about this serialization operation</param>
-        public ProtoReader(Stream source, TypeModel model, SerializationContext context) 
+        public ProtoReader(Stream source, TypeModel model, SerializationContext context)
         {
             Init(this, source, model, context, TO_EOF);
         }
 
-        public ProtoReader MakeSubReader(int anyPositionFromRootReaderStart)
-        {
-            // subreader will have true initial position when initializing
-            // we seek before any reading so don't have to care to set it back or about interference with subreader
-            // seeking is always required for subreaders so no need to check CanSeek
-            _source.Position = InitialUnderlyingStreamPosition;
-            var r = new ProtoReader(_source, _model, _context, _isFixedLength ? FixedLength : TO_EOF);
-            r.SkipBytes(anyPositionFromRootReaderStart);
-            return r;
-        }
-
         internal const int TO_EOF = -1;
-        
-        
+
         /// <summary>
         /// Gets / sets a flag indicating whether strings should be checked for repetition; if
         /// true, any repeated UTF-8 byte sequence will result in the same String instance, rather
@@ -143,7 +131,7 @@ namespace AqlaSerializer
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (!source.CanRead) throw new ArgumentException("Cannot read from stream", nameof(source));
-            reader._underlyingPosition = reader.InitialUnderlyingStreamPosition = source.Position;
+            reader._underlyingPosition = reader.InitialUnderlyingStreamPosition = source.CanSeek ? source.Position : 0;
             reader._source = source;
             reader._ioBuffer = BufferPool.GetBuffer();
             reader._model = model;
@@ -175,7 +163,7 @@ namespace AqlaSerializer
         /// </summary>
         public SerializationContext Context { get { return _context; } }
         /// <summary>
-        /// Releases resources used by the reader, but importantly <b>does not</b> Dispose the 
+        /// Releases resources used by the reader, but importantly <b>does not</b> Dispose the
         /// underlying stream; in many typical use-cases the stream is used for different
         /// processes, so it is assumed that the consumer will Dispose their stream separately.
         /// </summary>
@@ -194,7 +182,7 @@ namespace AqlaSerializer
             _lateReferences.Reset();
             NetCacheKeyPositionsList.Reset();
         }
-        
+
         LateReferencesCache _lateReferences = new LateReferencesCache();
 
         public static void NoteLateReference(int typeKey, object value, ProtoReader reader)
@@ -329,7 +317,7 @@ namespace AqlaSerializer
                     throw CreateWireTypeException();
             }
         }
-        
+
         /// <summary>
         /// Returns the position of the current reader (note that this is not necessarily the same as the position
         /// in the underlying stream, if multiple readers are used on the same stream)
@@ -399,7 +387,7 @@ namespace AqlaSerializer
             var t = StartSubItem(this);
             if (ReadFieldHeader() != ListHelpers.FieldLength) throw new ProtoException("Array length expected");
             int count = ReadInt32();
-            
+
             while (ReadFieldHeader() > 0 && FieldNumber != ListHelpers.FieldItem)
                 SkipField();
 
@@ -793,7 +781,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             }
             if (skipToEnd)
                 while (reader.ReadFieldHeader() != 0) reader.SkipField(); // skip field will recursively go through nested objects
-            
+
             switch (reader._wireType)
             {
                 case WireType.EndGroup:
@@ -811,7 +799,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                         {
                             if (reader.ReadFieldHeader() != 0 || reader._wireType != WireType.EndGroup) throw reader.CreateException("Group not read entirely or other group end problem");
                             goto endGroup;
-                    }
+                        }
                         throw reader.CreateException("Sub-message not read entirely");
                     }
                     if (reader._blockEnd64 != reader._position64 && reader._blockEnd64 != long.MaxValue)
@@ -1056,6 +1044,9 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
 
         public long SeekAndExchangeBlockEnd(long anyPositionFromRootReaderStart, long newBlockEnd = long.MaxValue)
         {
+            if (!_source.CanSeek)
+                throw new NotSupportedException("Source doesn't support seeking, some advanced features require it");
+
             if (newBlockEnd < anyPositionFromRootReaderStart)
             {
                 if (newBlockEnd == -1)
@@ -1393,8 +1384,8 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             }
         }
 
-        
-        
+
+
         /// <returns>The number of bytes consumed; 0 if no data available</returns>
         private static int TryReadUInt64Variant(Stream source, out ulong value)
         {
@@ -1535,7 +1526,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                     throw CreateWireTypeException();
             }
         }
-        
+
         /// <summary>
         /// Indicates whether the reader still has data remaining in the current sub-item,
         /// additionally setting the wire-type for the next field if there is more data.
@@ -1589,7 +1580,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 reader._trapCount--;
             }
         }
-        
+
         /// <summary>
         /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
         /// </summary>
@@ -1702,7 +1693,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
             _netCache.SetKeyedObject(newObjectKey, null); // use null as a temp
             _trappedKey = newObjectKey;
         }
-       
+
         internal void CheckFullyConsumed()
         {
             if (_isFixedLength)
@@ -1772,7 +1763,7 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 ProtoReader tmp = lastReader;
                 lastReader = null;
                 return tmp;
-            }            
+            }
         }
         internal static void Recycle(ProtoReader reader)
         {

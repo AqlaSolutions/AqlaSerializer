@@ -879,7 +879,6 @@ namespace AqlaSerializer
             if (context == null) { context = SerializationContext.Default; }
             else { context.Freeze(); }
             this._context = context;
-            InitialUnderlyingStreamPosition = dest.Position;
         }
 
         private readonly SerializationContext _context;
@@ -913,7 +912,6 @@ namespace AqlaSerializer
         public static long GetLongPosition(ProtoWriter writer) { return writer._position64; }
         // note that this is used by some of the unit tests and should not be removed
         public static int GetPosition(ProtoWriter writer) { return checked((int) writer._position64); }
-        internal long InitialUnderlyingStreamPosition { get; }
         private long _position64;
         private static void DemandSpace(int required, ProtoWriter writer)
         {
