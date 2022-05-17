@@ -30,7 +30,7 @@ namespace AqlaSerializer.Serializers
                 }
             }
         }
-        
+
         public bool DemandWireTypeStabilityStatus() => true;
         readonly ValueMember[] _members;
         readonly bool _prefixLength;
@@ -63,7 +63,7 @@ namespace AqlaSerializer.Serializers
         {
             PropertyInfo prop;
             FieldInfo field;
-            
+
             if ((prop = _members[index].Member as PropertyInfo) != null)
             {
                 if (obj == null)
@@ -79,7 +79,7 @@ namespace AqlaSerializer.Serializers
             else
             {
                 throw new InvalidOperationException();
-            }          
+            }
         }
         public object Read(object value, ProtoReader source)
         {
@@ -129,25 +129,19 @@ namespace AqlaSerializer.Serializers
                 // members of Tuple can't have default values so we don't mix up default value and null
                 // (default value simply don't write the field while NetObjectValueDecorator explicitely writes empty group)
                 // so this simple check will be more size-efficient
-                if (val != null)
-                {
-                    ProtoWriter.WriteFieldHeaderBegin(i + 1, dest);
-                    _tails[i].Write(val, dest);
-                }
+                // BUT we need to be able to ChangeType from tuple to normal contract
+                // so we still need to use NetObjectValueDecorator for compatibility!
+                // If NetObjectValueDecorator is absent NoNullDecorator will be automatically added (without throw on null).
+                ProtoWriter.WriteFieldHeaderBegin(i + 1, dest);
+                _tails[i].Write(val, dest);
             }
             ProtoWriter.EndSubItem(token, dest);
         }
 #endif
         public bool RequiresOldValue => true;
-        
+
         public bool CanCancelWriting { get; }
 
-        Type GetMemberType(int index)
-        {
-            Type result = _members[index].MemberType;
-            if (result == null) throw new InvalidOperationException();
-            return result;
-        }
         bool IProtoTypeSerializer.CanCreateInstance() { return false; }
 
 #if FEAT_COMPILER
@@ -165,7 +159,6 @@ namespace AqlaSerializer.Serializers
                     g.Assign(token, g.WriterFunc.StartSubItem(value, _prefixLength));
                     for (int i = 0; i < _tails.Length; i++)
                     {
-                        Type type = GetMemberType(i);
                         ctx.LoadAddress(value, ExpectedType);
 
                         if (_members[i].Member is FieldInfo fi)
@@ -180,7 +173,9 @@ namespace AqlaSerializer.Serializers
                         ctx.LoadValue(i + 1);
                         ctx.LoadReaderWriter();
                         ctx.EmitCall(ctx.MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderBegin)));
-                        ctx.WriteNullCheckedTail(type, _tails[i], null, true);
+                        _tails[i].EmitWrite(ctx, null);
+                        //ctx.WriteNullCheckedTail(type, _tails[i], null, true);
+
                     }
                     g.Writer.EndSubItem(token);
                 }
@@ -210,7 +205,7 @@ namespace AqlaSerializer.Serializers
 
                         for (int i = 0; i < locals.Length; i++)
                         {
-                            Type type = GetMemberType(i);
+                            Type type = _tails[i].ExpectedType;
                             bool store = true;
                             locals[i] = new Compiler.Local(ctx, type);
                             if (!ExpectedType.IsValueType)
@@ -315,7 +310,7 @@ namespace AqlaSerializer.Serializers
                                 ctx.MarkLabel(handlers[i]);
                                 IProtoSerializer tail = _tails[i];
                                 Compiler.Local oldValIfNeeded = tail.RequiresOldValue ? locals[i] : null;
-                                ctx.ReadNullCheckedTail(locals[i].Type, tail, oldValIfNeeded);
+                                tail.EmitRead(ctx, oldValIfNeeded);
                                 if (tail.EmitReadReturnsValue)
                                 {
                                     if (locals[i].Type.IsValueType)

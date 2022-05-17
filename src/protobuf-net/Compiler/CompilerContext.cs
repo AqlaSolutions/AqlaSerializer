@@ -814,11 +814,21 @@ namespace AqlaSerializer.Compiler
                     {
                         LoadAddress(valOrNull, type);
                         LoadValue(type.GetProperty("HasValue"));
-                        CodeLabel @end = DefineLabel();
-                        BranchIfFalse(@end, false);
+                        CodeLabel @end = DefineLabel(), hasVal = DefineLabel();
+
+                        BranchIfTrue(hasVal, true);
+                        if (cancelField)
+                        {
+                            LoadReaderWriter();
+                            EmitCall(MapType(typeof(ProtoWriter)).GetMethod(nameof(ProtoWriter.WriteFieldHeaderCancelBegin)));
+                        }
+                        Branch(end, false);
+
+                        MarkLabel(hasVal);
                         LoadAddress(valOrNull, type);
                         EmitCall(type.GetMethod("GetValueOrDefault", Helpers.EmptyTypes));
                         tail.EmitWrite(this, null);
+
                         MarkLabel(@end);
                     }
                 }

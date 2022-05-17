@@ -15,7 +15,7 @@ namespace Examples
         [Test]
         public void TestComplexNestedTupleWithCrazyMovingParts()
         {
-            
+
             var model = TypeModel.Create();
             model.AutoCompile = false;
             Check(model);
@@ -30,7 +30,7 @@ namespace Examples
         }
         void Check(TypeModel model)
         {
-            
+
             var obj = Tuple.Create(
                 123, new[] { Tuple.Create(1, 2, 3, 4, 5, 6, 7, new List<Tuple<float, float>> { Tuple.Create(1F,2F) }), Tuple.Create(9, 10, 11, 12, 13, 14, 15, new List<Tuple<float, float>> { Tuple.Create(3F,4F) }) }, true);
 
@@ -93,7 +93,29 @@ namespace Examples
         public class WithQuasiMutableTuple
         {
             [ProtoBuf.ProtoMember(1)]
-            public QuasiMutableTuple Value { get; set;} 
+            public QuasiMutableTuple Value { get; set;}
         }
+
+#if NETCOREAPP3_1_OR_GREATER
+        [Test]
+        public void TestValueTuples()
+        {
+            (int Number1, int? Number2) obj = (1, null);
+            var clone = Serializer.DeepClone(obj);
+
+            Assert.AreEqual(clone.Number1, obj.Number1);
+            Assert.AreEqual(clone.Number2, obj.Number2);
+        }
+
+        [Test]
+        public void TestValueTuples2()
+        {
+            (int Number1, int? Number2) obj = (1, 2);
+            var clone = Serializer.DeepClone(obj);
+
+            Assert.AreEqual(clone.Number1, obj.Number1);
+            Assert.AreEqual(clone.Number2, obj.Number2);
+        }
+#endif
     }
 }
