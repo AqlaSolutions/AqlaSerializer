@@ -1,4 +1,5 @@
-﻿using AqlaSerializer.Meta;
+﻿using AqlaSerializer;
+using AqlaSerializer.Meta;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -16,15 +17,12 @@ namespace Examples
         [Test]
         public void TestCompress()
         {
-            var rtm = TypeModel.Create();
-            rtm.SkipCompiledVsNotCheck = true;
-
             byte[] bytes;
             using (MemoryStream stream = new MemoryStream())
             {
                 using (DeflateStream dest = new DeflateStream(stream, CompressionMode.Compress))
                 {
-                    rtm.Serialize(dest, "Test");
+                    Serializer.Serialize(dest, "Test");
                 }
 
                 bytes = stream.ToArray();
@@ -33,7 +31,7 @@ namespace Examples
             using (var stream = new MemoryStream(bytes))
             using (DeflateStream dest = new DeflateStream(stream, CompressionMode.Decompress))
             {
-                var str = rtm.Deserialize<string>(dest);
+                var str = Serializer.Deserialize<string>(dest);
                 Assert.AreEqual("Test", str);
             }
         }
