@@ -62,6 +62,10 @@
       <HintPath>..\Tools\NHibernate.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net45'">
+    <PackageReference Include="microsoft.netframework.referenceassemblies.net45"
+                      Version="1.0.2" PrivateAssets="All" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net5.0'">
     <PackageReference Include="Microsoft.ILVerification" Version="5.0.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
