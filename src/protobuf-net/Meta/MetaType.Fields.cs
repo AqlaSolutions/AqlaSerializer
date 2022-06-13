@@ -110,15 +110,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MetaType Add(int fieldNumber, string memberName)
         {
-            return Add(fieldNumber, memberName, false);
-        }
-
-        /// <summary>
-        /// Adds a member (by name) to the MetaType
-        /// </summary>
-        public MetaType Add(int fieldNumber, string memberName, bool useBackingFieldIfNoSetter)
-        {
-            AddField(fieldNumber, memberName, null, null, null, useBackingFieldIfNoSetter);
+            AddField(fieldNumber, memberName, null, null, null);
             return this;
         }
 
@@ -128,16 +120,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public ValueMember AddField(int fieldNumber, string memberName)
         {
-            return AddField(fieldNumber, memberName, false);
-        }
-
-        /// <summary>
-        /// Adds a member (by name) to the MetaType, returning the ValueMember rather than the fluent API.
-        /// This is otherwise identical to Add.
-        /// </summary>
-        public ValueMember AddField(int fieldNumber, string memberName, bool useBackingFieldIfNoSetter)
-        {
-            return AddField(fieldNumber, memberName, null, null, null, useBackingFieldIfNoSetter);
+            return AddField(fieldNumber, memberName, null, null, null);
         }
 
         /// <summary>
@@ -163,21 +146,12 @@ namespace AqlaSerializer.Meta
             return this;
         }
 
-
         /// <summary>
         /// Adds a member (by name) to the MetaType
         /// </summary>
         public MetaType Add(int fieldNumber, string memberName, object defaultValue)
         {
-            return Add(fieldNumber, memberName, defaultValue, false);
-        }
-
-        /// <summary>
-        /// Adds a member (by name) to the MetaType
-        /// </summary>
-        public MetaType Add(int fieldNumber, string memberName, object defaultValue, bool useBackingFieldIfNoSetter)
-        {
-            AddField(fieldNumber, memberName, null, null, defaultValue, useBackingFieldIfNoSetter);
+            AddField(fieldNumber, memberName, null, null, defaultValue);
             return this;
         }
 
@@ -186,15 +160,7 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public MetaType Add(int fieldNumber, string memberName, Type itemType, Type defaultType)
         {
-            return Add(fieldNumber, memberName, itemType, defaultType, false);
-        }
-
-        /// <summary>
-        /// Adds a member (by name) to the MetaType, including an itemType and defaultType for representing lists
-        /// </summary>
-        public MetaType Add(int fieldNumber, string memberName, Type itemType, Type defaultType, bool useBackingFieldIfNoSetter)
-        {
-            AddField(fieldNumber, memberName, itemType, defaultType, null, useBackingFieldIfNoSetter);
+            AddField(fieldNumber, memberName, itemType, defaultType, null);
             return this;
         }
 
@@ -204,24 +170,10 @@ namespace AqlaSerializer.Meta
         /// </summary>
         public ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType)
         {
-            return AddField(fieldNumber, memberName, itemType, defaultType, false);
-        }
-
-        /// <summary>
-        /// Adds a member (by name) to the MetaType, including an itemType and defaultType for representing lists, returning the ValueMember rather than the fluent API.
-        /// This is otherwise identical to Add.
-        /// </summary>
-        public ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, bool useBackingFieldIfNoSetter)
-        {
-            return AddField(fieldNumber, memberName, itemType, defaultType, null, useBackingFieldIfNoSetter);
+            return AddField(fieldNumber, memberName, itemType, defaultType);
         }
 
         private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue)
-        {
-            return AddField(fieldNumber, memberName, itemType, defaultType, defaultValue, false);
-        }
-
-        private ValueMember AddField(int fieldNumber, string memberName, Type itemType, Type defaultType, object defaultValue, bool useBackingFieldIfNoSetter)
         {
             if (Type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
             MemberInfo mi = null;
@@ -264,7 +216,7 @@ namespace AqlaSerializer.Meta
             ResolveListTypes(_model, miType, ref itemType, ref defaultType);
 
             MemberInfo backingField = null;
-            if (useBackingFieldIfNoSetter && (mi as PropertyInfo)?.CanWrite == false)
+            if ((mi as PropertyInfo)?.CanWrite == false)
             {
                 var backingMembers = Type.GetMember($"<{((PropertyInfo)mi).Name}>k__BackingField", Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 if (backingMembers != null && backingMembers.Length == 1 && (backingMembers[0] as FieldInfo) != null)
