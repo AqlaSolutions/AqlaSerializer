@@ -41,7 +41,7 @@ namespace AqlaSerializer.unittest.Aqla
             RuntimeTypeModel m = TypeModel.Create();
             m.SkipCompiledVsNotCheck = true;
             m.AutoCompile = false;
-            ((AutoAddStrategy)m.AutoAddStrategy).UseBackingFieldsIfNoSetter = true;
+            //((AutoAddStrategy)m.AutoAddStrategy).UseBackingFieldsIfNoSetter = true;
             var clone = (TestClass)m.DeepClone(obj);
 
             Assert.AreEqual(obj.PublicProperty, clone.PublicProperty);

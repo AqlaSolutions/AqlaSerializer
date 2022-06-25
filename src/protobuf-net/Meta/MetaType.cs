@@ -194,13 +194,13 @@ namespace AqlaSerializer.Meta
             return mt;
         }
 
-		/// <summary>
-		/// Throws an exception if the type has been made immutable
-		/// </summary>
-		protected internal void ThrowIfFrozen()
-		{
-		    if (IsFrozen) ThrowFrozen();
-		}
+        /// <summary>
+        /// Throws an exception if the type has been made immutable
+        /// </summary>
+        protected internal void ThrowIfFrozen()
+        {
+            if (IsFrozen) ThrowFrozen();
+        }
 
         void ThrowFrozen()
         {
