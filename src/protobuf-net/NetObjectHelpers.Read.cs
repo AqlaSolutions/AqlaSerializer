@@ -44,6 +44,8 @@ namespace AqlaSerializer
                     if (lateSet)
                     {
                         source.NetCache.SetKeyedObject(r.NewObjectKey, value, true);
+                        // if lateset was false initially, we called TrapNextObject previously (e.g. dynamic string) 
+                        ProtoReader.TryCancelTrapNextObject(r.NewObjectKey, source);
                     }
                 }
                 if (r.NewTypeRefKey >= 0) source.NetCache.SetKeyedObject(r.NewTypeRefKey, type);

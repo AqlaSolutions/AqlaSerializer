@@ -1580,6 +1580,17 @@ public static object ReadTypedObject(object value, int key, ProtoReader reader, 
                 reader._trapCount--;
             }
         }
+        
+        public static bool TryCancelTrapNextObject(int trappedKey, ProtoReader reader)
+        {
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
+            if (reader._trapCount != 0 && trappedKey == reader._trappedKey)
+            {
+                reader._trapCount--;
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Utility method, not intended for public use; this helps maintain the root object is complex scenarios
