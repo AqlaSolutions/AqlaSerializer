@@ -113,9 +113,7 @@ namespace AqlaSerializer.Meta
                 MemberLevelSettingsValue m = _settingsValueFinal.Member;
 
                 if (_settingsValueFinal.EnumPassthru == null && Helpers.IsEnum(Type))
-                {
-                    _settingsValueFinal.EnumPassthru = Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false);
-                }
+                    _settingsValueFinal.EnumPassthru = true;
 
                 if (_settingsValueFinal.IgnoreListHandling)
                 {
@@ -185,7 +183,7 @@ namespace AqlaSerializer.Meta
 
         /// <summary>
         /// Gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
-        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
+        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums. Default: true.
         /// </summary>
         public bool? EnumPassthru
         {

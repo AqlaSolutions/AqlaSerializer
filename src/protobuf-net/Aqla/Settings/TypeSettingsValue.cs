@@ -31,7 +31,7 @@ namespace AqlaSerializer.Settings
         {
             var x = this;
             x.PrefixLength = x.PrefixLength.GetValueOrDefault(false);
-            x.EnumPassthru = x.EnumPassthru.GetValueOrDefault();
+            x.EnumPassthru = x.EnumPassthru ?? true;
             x.Member = x.Member.GetInitializedToValueOrDefault();
             return x;
         }

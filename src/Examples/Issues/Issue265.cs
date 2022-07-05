@@ -10,6 +10,7 @@ namespace Examples.Issues
     [TestFixture]
     public class Issue265
     {
+        [ProtoBuf.ProtoContract]
         public enum E
         {
             [ProtoBuf.ProtoEnum(Value = 3)]

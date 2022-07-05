@@ -22,7 +22,7 @@ namespace Examples.Issues
             model.Add(typeof(G), true);
             model.Add(typeof(H), true);
             model.CompileInPlace();
-            Assert.IsFalse(GetEnumPassthrough(model[typeof(A)]), "A");
+            Assert.IsTrue(GetEnumPassthrough(model[typeof(A)]), "A");
             Assert.IsTrue(GetEnumPassthrough(model[typeof(B)]), "B");
 
             Assert.IsFalse(GetEnumPassthrough(model[typeof(C)]), "C");
@@ -40,7 +40,6 @@ namespace Examples.Issues
             return metaType.GetFinalSettingsCopy().EnumPassthru.Value;
         }
 
-        // no ProtoContract; with [Flags] is pass-thru, else not
         public enum A { X, Y, Z }
         [Flags]
         public enum B { X, Y, Z }

@@ -113,7 +113,7 @@ namespace AqlaSerializer.Meta
             else if (Helpers.IsEnum(Type))
             {
                 NewLine(builder, indent).Append("enum ").Append(GetSchemaTypeName()).Append(" {");
-                if (_settingsValueFinal.EnumPassthru.GetValueOrDefault())
+                if (_settingsValueFinal.EnumPassthru ?? true)
                 {
                     if (Type.IsDefined(_model.MapType(typeof(FlagsAttribute)), false))
                     {

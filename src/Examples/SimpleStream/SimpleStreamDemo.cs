@@ -235,6 +235,7 @@ namespace Examples.SimpleStream
             Assert.IsTrue(Program.CheckBytes(blob, 0x0A, 0x03, 0x01, 0x02, 0x03), "Stream should match");
         }
 
+        [ProtoBuf.ProtoContract]
         public enum SomeEnum
         {
             [ProtoBuf.ProtoEnum(Value = 3)]

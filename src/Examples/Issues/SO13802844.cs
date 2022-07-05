@@ -12,6 +12,7 @@ namespace Examples.Issues
     [TestFixture]
     public class SO13802844
     {
+        [ProtoBuf.ProtoContract]
         enum AnimationCode {
             [ProtoBuf.ProtoEnum(Name = "AnimationCode_None")]
             None = 0,

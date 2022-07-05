@@ -50,6 +50,7 @@ namespace Examples.DesignIdeas
         public SomeEnum? Bar { get; set; }
     }
 
+    [ProtoBuf.ProtoContract]
     public enum NegEnum
     {
         A = -1, B = 0, C = 1
@@ -60,6 +61,7 @@ namespace Examples.DesignIdeas
         [ProtoBuf.ProtoMember(1)]
         public NegEnum Value { get; set; }
     }
+    [ProtoBuf.ProtoContract]
     public enum HasConflictingKeys
     {
         [ProtoBuf.ProtoEnum(Value = 1)]
@@ -67,6 +69,7 @@ namespace Examples.DesignIdeas
         [ProtoBuf.ProtoEnum(Value = 2)]
         Bar = 0
     }
+    [ProtoBuf.ProtoContract]
     public enum HasConflictingValues
     {
         [ProtoBuf.ProtoEnum(Value=2)]

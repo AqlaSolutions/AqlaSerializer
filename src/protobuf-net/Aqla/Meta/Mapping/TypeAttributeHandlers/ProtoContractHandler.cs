@@ -2,15 +2,6 @@
 
 #if !NO_RUNTIME
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using AltLinq; using System.Linq;
-using AqlaSerializer;
-using AqlaSerializer.Meta;
-using AqlaSerializer.Meta.Mapping.MemberHandlers;
-using AqlaSerializer.Serializers;
-using AqlaSerializer.Settings;
 #if FEAT_IKVM
 using Type = IKVM.Reflection.Type;
 using IKVM.Reflection;
@@ -38,13 +29,16 @@ namespace AqlaSerializer.Meta.Mapping.TypeAttributeHandlers
                 if (item.TryGet("Name", out tmp)) main.Name = (string)tmp;
                 if (Helpers.IsEnum(s.Type)) // note this is subtly different to AsEnum; want to do this even if [Flags]
                 {
+                    bool isExplicit = false;
 #if !FEAT_IKVM
                     // IKVM can't access EnumPassthruHasValue, but conveniently, InferTagFromName will only be returned if set via ctor or property
-                    if (item.TryGet("EnumPassthruHasValue", false, out tmp) && (bool)tmp)
+                    isExplicit = item.TryGet("EnumPassthruHasValue", false, out tmp) && (bool)tmp;
 #endif
+                    if (item.TryGet("EnumPassthru", out tmp)) 
                     {
-                        if (item.TryGet("EnumPassthru", out tmp))
-                            main.EnumPassthru = (bool)tmp;
+                        main.EnumPassthru = (bool)tmp;
+                        if (!isExplicit && !main.EnumPassthru.Value && s.Type.IsDefined(model.MapType(typeof(FlagsAttribute)), false)) 
+                            main.EnumPassthru = true;
                     }
                 }
                 else

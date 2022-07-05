@@ -141,12 +141,14 @@ namespace AqlaSerializer.unittest.Meta
             [ProtoBuf.ProtoMember(1)]
             public EnumB Value { get; set; }
         }
+        [ProtoBuf.ProtoContract]
         public enum EnumA : short
         {
             [ProtoBuf.ProtoEnum(Value = 7)] X = 0,
             [ProtoBuf.ProtoEnum(Value = 8)] Y = 1,
             [ProtoBuf.ProtoEnum(Value = 9)] Z = 2,
         }
+        [ProtoBuf.ProtoContract]
         public enum EnumB : long
         {
             [ProtoBuf.ProtoEnum(Value = 9)] X = 3,

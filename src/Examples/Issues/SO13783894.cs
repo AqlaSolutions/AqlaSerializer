@@ -39,7 +39,9 @@ namespace Examples.Issues
         public void ConfigureExplicitEnumValuesAtRuntime()
         {
             var model = TypeModel.Create();
-            model.Add(typeof(MyEnum), false).Add(1, "Default").Add(10, "Foo");
+            var t = model.Add(typeof(MyEnum), false);
+            t.EnumPassthru = false;
+            t.Add(1, "Default").Add(10, "Foo");
 
             var obj1 = new Test<MyEnum> { Value = MyEnum.Default };
             var obj2 = new Test<MyEnum> { Value = MyEnum.Foo };

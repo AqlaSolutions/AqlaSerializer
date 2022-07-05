@@ -44,7 +44,7 @@ namespace AqlaSerializer
 
         /// <summary>
         /// Applies only to enums (not to DTO classes themselves); gets or sets a value indicating that an enum should be treated directly as an int/short/etc, rather
-        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums.
+        /// than enforcing .proto enum rules. This is useful *in particul* for [Flags] enums. Default: <see langword="true"/>.
         /// </summary>
         public bool EnumPassthru { get { return TypeSettings.EnumPassthru.Value; } set { TypeSettings.EnumPassthru = value; } }
 
