@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>aqlaserializer</id>
-    <version>2.0.1.1069</version>
+    <version>2.0.1.1170</version>
     <authors>Vladyslav Taranov</authors>
     <copyright>Vladyslav Taranov 2022, fork source from Marc Gravell 2016</copyright>
     <owners>Vladyslav Taranov</owners>
@@ -26,6 +26,10 @@ Some build configurations may be not available through nuget, you can download t
     <tags>Reflection.Emit binary serialization protocol buffers protobuf protobuf-net deserialization aqlaserializer aqla aqlasolutions</tags>
     <language>en-US</language>
     <releaseNotes>
+* 2.0.1.1070:
+- dynamic string reference tracking fix
+- UseBackingFieldsIfNoSetter is parameter is removed and enabled by default
+
 * 2.0.1.1069:
 - AutoTuple nullables serialization fix
 - Stream.Position is not used unless it's necessary
