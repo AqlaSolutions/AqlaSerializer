@@ -177,15 +177,10 @@ namespace AqlaSerializer.Meta
         {
             if (Type.IsArray) throw new InvalidOperationException("Can't add fields to array type");
             MemberInfo mi = null;
-            mi = Type.GetField(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (mi == null)
-            {
-                mi = Type.GetProperty(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            }
-            if (mi == null)
-            {
-                throw new ArgumentException("Unable to determine member: " + memberName, nameof(memberName));
-            }
+            MemberInfo[] members = Type.GetMember(memberName, Helpers.IsEnum(Type) ? BindingFlags.Static | BindingFlags.Public : BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(x => x.MemberType == MemberTypes.Field || x.MemberType == MemberTypes.Property).ToArray();
+            if (members != null && members.Length == 1) mi = members[0];
+            if (mi == null) throw new ArgumentException("Unable to determine member: " + memberName, nameof(memberName));
 
             Type miType;
 #if PORTABLE

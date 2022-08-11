@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly Obfuscated2
+.assembly Obfuscated
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -103,7 +103,7 @@
 
     IL_000a:  ldloc.0
     IL_000b:  ret
-  } // end of method Class1::c
+  } // end of method a::a
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -114,9 +114,57 @@
     IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
     IL_0006:  nop
     IL_0007:  ret
-  } // end of method Class1::.ctor
+  } // end of method a::.ctor
 
-} // end of class Obfuscated.Class1
+
+} // end of class a
+
+.class public auto ansi beforefieldinit d
+       extends [mscorlib]System.Object
+{
+  .field public int32 d
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method d::.ctor
+
+  .method public hidebysig specialname instance int32 
+          get_d() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      int32 d::'<d>k__BackingField'
+    IL_0006:  ret
+  } // end of method d::get_d
+
+  .method public hidebysig specialname instance void 
+          set_d(int32 'value') cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  stfld      int32 d::'<d>k__BackingField'
+    IL_0007:  ret
+  } // end of method d::set_d
+
+  .property instance int32 d()
+  {
+    .get instance int32 d::get_d()
+    .set instance void d::set_d(int32)
+  } // end of property d::d
+
+} // end of class d
 
 
 // =============================================================
