@@ -15,7 +15,7 @@ namespace Examples.Issues
 
             var assembly = Assembly.LoadFrom(@"..\..\..\..\..\assorted\Obfuscated\bin\Debug\Obfuscated.dll");
 #else
-            var assembly = Assembly.LoadFrom("..\..\..\..\..\assorted\Obfuscated\bin\Release\Obfuscated.dll");
+            var assembly = Assembly.LoadFrom(@"..\..\..\..\..\assorted\Obfuscated\bin\Release\Obfuscated.dll");
 #endif
             Type obfuscatedType = assembly.GetType("a");
             var instance = Activator.CreateInstance(obfuscatedType);
