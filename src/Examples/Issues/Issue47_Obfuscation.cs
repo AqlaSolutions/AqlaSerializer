@@ -66,5 +66,21 @@ namespace Examples.Issues
             Assert.That(ex.Message.Contains("Parameter"));
             Assert.That(ex.Message.Contains("memberName"));
         }
+
+        [Test]
+        public void TestNonexistentFieldName()
+        {
+            Type obfuscatedType = _assembly.GetType("d");
+
+            var metaType = AqlaSerializer.Meta.RuntimeTypeModel.Default.Add(obfuscatedType, false);
+
+            var ex = Assert.Throws<ArgumentException>(() => {
+                metaType.AddField(metaType.GetNextFreeFieldNumber(), "x");
+            });
+
+            Assert.That(ex.Message.StartsWith("Unable to determine member: x"));
+            Assert.That(ex.Message.Contains("Parameter"));
+            Assert.That(ex.Message.Contains("memberName"));
+        }
     }
 }
