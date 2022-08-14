@@ -1,0 +1,33 @@
+This folder contains an example of an obfuscated class created by disassembling Unobfuscated.dll and modifying the IL to generate name clashes, similar to the behavior of tools such as Dotfuscator.
+
+The project file has been modified to call ILAsm to build the DLL to be tested.
+
+The relevant test is in Issue47_Obfuscation.cs
+
+Unobfuscated.Class1 -> a
+	int b() -> int a()
+    int c(int x) -> int a(int x)
+    class X -> class a
+    int a -> int a
+
+The original class was:
+
+namespace Unobfuscated
+{
+    public class Class1
+    {
+        public int b()
+        {
+            return a;
+        }
+        public int c(int x)
+        {
+            return b();
+        }
+        public class X
+		{
+            public int x;
+		}
+        public int a;
+    }
+}
